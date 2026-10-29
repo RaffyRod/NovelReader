@@ -80,6 +80,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.lagradost.quicknovel.ui.common.CoverImage
 import com.lagradost.cloudstream4.compose.Colors
 import com.lagradost.cloudstream4.compose.RoundedShape
 import com.lagradost.cloudstream4.compose.SingleSelectDialog
@@ -283,8 +284,7 @@ fun ResultScreenImpl(
                     .padding(10.dp)
                     .scale(1.0f - scrollAlpha.value * 0.05f)
             ) {
-                AsyncImage(
-                    contentScale = ContentScale.Crop,
+                CoverImage(
                     modifier = Modifier
                         .size(width = 100.dp, height = 150.dp)
                         .indication(

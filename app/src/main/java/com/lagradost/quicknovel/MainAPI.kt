@@ -17,6 +17,7 @@ import com.lagradost.quicknovel.util.DefaultImagesHeaders
 import kotlinx.coroutines.sync.Mutex
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.Entities
 
 const val USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
@@ -129,7 +130,15 @@ val String?.textClean: String?
         ?.replace("\\+([A-z])".toRegex(), "$1") //\+([^-\s])
             )
 
-fun packageAsXHtml(title: String, bodyHtml: String): String {
+/** Renders the visible chapter header, or an empty string when there is no heading. */
+fun chapterHeadingHtml(heading: String?): String {
+    val clean = heading?.trim().orEmpty()
+    return if (clean.isEmpty()) "" else "<h2 class=\"chapter-title\">${Entities.escape(clean)}</h2>"
+}
+
+/** Wraps [bodyHtml] in an XHTML page; a non-null [heading] is shown at the top as the chapter header. */
+fun packageAsXHtml(title: String, bodyHtml: String, heading: String? = null): String {
+    val headingHtml = chapterHeadingHtml(heading)
     return """
         <?xml version='1.0' encoding='utf-8'?>
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> 
@@ -139,6 +148,7 @@ fun packageAsXHtml(title: String, bodyHtml: String): String {
             <link rel="stylesheet" type="text/css" href="style.css"/>
         </head>
         <body>
+            $headingHtml
             $bodyHtml
         </body>
         </html>

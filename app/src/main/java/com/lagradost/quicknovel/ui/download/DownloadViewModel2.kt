@@ -28,6 +28,7 @@ import com.lagradost.quicknovel.DownloadProgressState
 import com.lagradost.quicknovel.DownloadState
 import com.lagradost.quicknovel.RESULT_BOOKMARK
 import com.lagradost.quicknovel.RESULT_BOOKMARK_STATE
+import com.lagradost.quicknovel.RESULT_FAVORITE
 import com.lagradost.quicknovel.ui.ReadType
 import com.lagradost.quicknovel.ui.common.ImmutableDownloadState
 import com.lagradost.quicknovel.ui.common.ImmutableSearchList
@@ -93,6 +94,9 @@ class DownloadViewModel2 : ViewModel(), ActionHandler<DownloadPageAction>,
             ReadType.COMPLETED,
             ReadType.DROPPED,
         )
+
+        /** Last tab of the library, after the downloads page and one page per [readList] entry. */
+        val FAVORITES_PAGE = readList.size + 1
     }
 
     private val searchPipe = DebounceQuery()
@@ -103,7 +107,7 @@ class DownloadViewModel2 : ViewModel(), ActionHandler<DownloadPageAction>,
                     val page = state.value.activePage
                     if (page == 0) {
                         refreshDownloads()
-                    } else {
+                    } else if (page != FAVORITES_PAGE) {
                         refreshPage(page)
                     }
                 }
@@ -202,6 +206,12 @@ class DownloadViewModel2 : ViewModel(), ActionHandler<DownloadPageAction>,
                     }
                 },
             )
+        }
+        if (result != null && getKey<Boolean>(RESULT_FAVORITE, id.toString()) == true) {
+            val favorite = ImmutableSearchResponse.from(result)
+            updateState {
+                copy(pages = pages.updateRow(FAVORITES_PAGE) { insert(id, favorite) })
+            }
         }
         if (result == null || state == null) {
             return@launch
@@ -306,6 +316,7 @@ class DownloadViewModel2 : ViewModel(), ActionHandler<DownloadPageAction>,
                 } else {
                     removeKey(RESULT_BOOKMARK, id.toString())
                     removeKey(RESULT_BOOKMARK_STATE, id.toString())
+                    removeKey(RESULT_FAVORITE, id.toString())
 
                     updateState {
                         copy(
@@ -584,6 +595,18 @@ class DownloadViewModel2 : ViewModel(), ActionHandler<DownloadPageAction>,
                     )
                 )
             }
+            val favorites = (getKeys(RESULT_FAVORITE) ?: emptyList()).mapNotNull { key ->
+                val id = key.replaceFirst(RESULT_FAVORITE, RESULT_BOOKMARK)
+                val cached = getKey<ResultCached>(id) ?: return@mapNotNull null
+                cached.id to ImmutableSearchResponse.from(cached)
+            }
+            add(
+                ImmutableSearchList.new(
+                    favorites.toMap().toPersistentHashMap(),
+                    stateValue.query,
+                    stateValue.regularSortingMethod
+                )
+            )
         }
 
         val pages = concat.toPersistentList()

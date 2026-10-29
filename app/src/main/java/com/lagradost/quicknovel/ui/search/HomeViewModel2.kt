@@ -16,6 +16,8 @@ import com.lagradost.quicknovel.ui.common.SearchResponseAction
 import com.lagradost.quicknovel.ui.mainpage.FilterQuery
 import com.lagradost.quicknovel.ui.search.HomeEffect.NavigateToMainPage
 import com.lagradost.quicknovel.util.Apis
+import com.lagradost.quicknovel.util.ProviderLanguages
+import com.lagradost.quicknovel.util.RecentSearches
 import com.lagradost.quicknovel.util.cmap
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
@@ -41,6 +43,9 @@ data class HomeViewModelState(
     val isLoading: Boolean = false,
     val isQueryOpen: Boolean = false,
     val openRow: SearchRow? = null,
+    val recentSearches: ImmutableList<String> = persistentListOf(),
+    val popular: ImmutableList<ImmutableSearchResponse> = persistentListOf(),
+    val popularLoading: Boolean = false,
 )
 
 @Immutable
@@ -62,11 +67,15 @@ sealed class HomeAction {
     data class ResultAction(val action: SearchResponseAction) : HomeAction()
     data class OpenRow(val row: SearchRow) : HomeAction()
     object CloseRow : HomeAction()
+    object ClearRecent : HomeAction()
 }
 @Immutable
 sealed class HomeEffect {
     data class NavigateToMainPage(val api: String, val filter: FilterQuery) : HomeEffect()
 }
+
+private const val POPULAR_ATTEMPTS = 3
+private const val POPULAR_COUNT = 12
 
 class HomeViewModel2 : ViewModel(),
     StateContainer<HomeViewModelState> by DefaultStateContainer(HomeViewModelState()),
@@ -141,6 +150,7 @@ class HomeViewModel2 : ViewModel(),
                         )
                     )
                 }
+                loadPopular()
             }
 
             is HomeAction.ConfigureApisLanguages -> {
@@ -154,6 +164,7 @@ class HomeViewModel2 : ViewModel(),
                         )
                     )
                 }
+                loadPopular()
             }
 
             HomeAction.CloseQuery -> updateState {
@@ -162,6 +173,11 @@ class HomeViewModel2 : ViewModel(),
 
             is HomeAction.ResultAction -> {
                 resultAction(action.action)
+            }
+
+            HomeAction.ClearRecent -> {
+                RecentSearches.save(emptyList())
+                updateState { copy(recentSearches = persistentListOf()) }
             }
 
             HomeAction.CloseRow -> {
@@ -182,9 +198,42 @@ class HomeViewModel2 : ViewModel(),
         action.doAction()
     }
 
+    init {
+        updateState { copy(recentSearches = RecentSearches.load().toImmutableList()) }
+    }
+
+    private var popularRequested = false
+
+    /** First page of the first provider that has one, shown on the search start page. */
+    private fun loadPopular() {
+        val apis = state.value.shownMainPageApis.sortedBy { it.lang != ProviderLanguages.DEFAULT }
+        if (popularRequested || apis.isEmpty()) return
+        popularRequested = true
+        viewModelScope.launch(Dispatchers.IO) {
+            updateState { copy(popularLoading = true) }
+            for (api in apis.take(POPULAR_ATTEMPTS)) {
+                val repo = APIRepository(api)
+                val page = repo.loadMainPageResult(
+                    page = 1,
+                    mainCategory = api.mainCategories.getOrNull(0)?.second,
+                    orderBy = api.orderBys.getOrNull(0)?.second,
+                    tag = api.tags.getOrNull(0)?.second,
+                ).getOrNull()
+                if (page != null && page.list.isNotEmpty()) {
+                    updateState { copy(popular = page.list.take(POPULAR_COUNT).toImmutableList()) }
+                    break
+                }
+            }
+            updateState { copy(popularLoading = false) }
+        }
+    }
+
     val searchQuery = SingleActiveQuery(Dispatchers.IO)
 
     private fun search(query: String) = viewModelScope.launch {
+        val recent = RecentSearches.add(state.value.recentSearches, query)
+        RecentSearches.save(recent)
+        updateState { copy(recentSearches = recent.toImmutableList()) }
         searchQuery.launch {
             val state = state.value
             val searchApis = filterApis(state.allApis, state.filterNames, state.filterLanguages)

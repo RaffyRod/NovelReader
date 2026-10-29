@@ -178,7 +178,7 @@ class HistoryViewModel2 : ViewModel(),
             updateState {
                 copy(loading = true)
             }
-            val keys = getKeys(HISTORY_FOLDER) ?: return@withContext
+            val keys = getKeys(HISTORY_FOLDER) ?: emptyList()
             val data =
                 keys.mapNotNull { key ->
                     val cached = getKey<ResultCached>(key) ?: return@mapNotNull null

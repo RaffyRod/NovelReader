@@ -16,6 +16,7 @@
     <ImageView
             android:duplicateParentState="true"
             android:id="@+id/imageView"
+            android:background="@drawable/cover_placeholder"
             android:scaleType="centerCrop"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

@@ -44,7 +44,28 @@ import com.lagradost.cloudstream4.theme.CloudStreamPreviewTheme
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.compose.BaseSearchBar
 import com.lagradost.quicknovel.compose.IsScrolling
-import com.lagradost.quicknovel.ui.common.SearchList
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.lagradost.cloudstream4.compose.rounded
+import com.lagradost.quicknovel.compose.isLandscape
+import com.lagradost.quicknovel.ui.common.ImmutableSearchList
+import com.lagradost.quicknovel.ui.common.SearchResponseItem
+import com.lagradost.quicknovel.ui.common.SearchResponseRow
+import com.lagradost.quicknovel.ui.common.SkeletonList
+import com.lagradost.quicknovel.ui.common.staggeredEnter
+import com.lagradost.quicknovel.util.DateGroup
+import com.lagradost.quicknovel.util.DateGroups
 import com.lagradost.quicknovel.ui.common.SearchResponseAction
 import com.lagradost.quicknovel.ui.common.SearchResponseOperation
 import com.lagradost.quicknovel.ui.common.normalSortingMethods
@@ -173,19 +194,121 @@ fun HistoryScreen(
             fabExpanded = false
         })
 
-        SearchList(
-            isRow = historyIsRowState,
-            lazyGridState = lazyGridState,
-            modifier = Modifier
-                // This fixes the double padding from the bottom nav bar
-                .padding(
-                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                    top = innerPadding.calculateTopPadding()
-                ),
-            state = state.history,
-            searchAction = searchAction
-        )
+        val listModifier = Modifier
+            // This fixes the double padding from the bottom nav bar
+            .padding(
+                start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                top = innerPadding.calculateTopPadding()
+            )
+        if (state.loading && state.history.sorted.isEmpty()) {
+            SkeletonList(listModifier)
+        } else {
+            GroupedHistory(
+                isRow = historyIsRowState,
+                lazyGridState = lazyGridState,
+                modifier = listModifier,
+                state = state.history,
+                searchAction = searchAction
+            )
+        }
+    }
+}
+
+private fun DateGroup.title(): Int = when (this) {
+    DateGroup.TODAY -> R.string.history_today
+    DateGroup.YESTERDAY -> R.string.history_yesterday
+    DateGroup.THIS_WEEK -> R.string.history_this_week
+    DateGroup.EARLIER -> R.string.history_earlier
+}
+
+/** The history split in sections (today, yesterday, this week, earlier); swipe a row to remove it. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupedHistory(
+    isRow: Boolean,
+    lazyGridState: LazyGridState,
+    modifier: Modifier,
+    state: ImmutableSearchList,
+    searchAction: (SearchResponseAction) -> Unit,
+) {
+    val now = remember(state) { System.currentTimeMillis() }
+    val sections = remember(state, now) {
+        state.sorted
+            .mapNotNull { id -> state.data[id] }
+            .groupBy { DateGroups.of(it.timeOfCached, now) }
+            .toSortedMap()
+    }
+    val columns = if (isRow) (if (isLandscape) 2 else 1) else (if (isLandscape) 6 else 3)
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        state = lazyGridState,
+        modifier = modifier,
+        contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 80.dp),
+        verticalArrangement = Arrangement.spacedBy(if (isRow) 5.dp else 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        var position = 0
+        sections.forEach { (group, items) ->
+            item(key = "group_${group.name}", span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = stringResource(group.title()),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 12.dp, bottom = 4.dp)
+                )
+            }
+            items.forEach { response ->
+                val index = position++
+                item(key = response.id ?: response.randomUuid) {
+                    if (isRow) {
+                        val dismiss = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { value ->
+                                if (value == SwipeToDismissBoxValue.EndToStart) {
+                                    searchAction(SearchResponseAction(response, SearchResponseOperation.AskDelete))
+                                }
+                                false
+                            }
+                        )
+                        SwipeToDismissBox(
+                            state = dismiss,
+                            enableDismissFromStartToEnd = false,
+                            backgroundContent = {
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .rounded()
+                                        .background(MaterialTheme.colorScheme.errorContainer)
+                                        .padding(end = 24.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.delete_24px),
+                                        contentDescription = stringResource(R.string.remove_history),
+                                        tint = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .animateItem()
+                                .staggeredEnter(index)
+                        ) {
+                            SearchResponseRow(response = response, action = searchAction)
+                        }
+                    } else {
+                        SearchResponseItem(
+                            response = response,
+                            action = searchAction,
+                            modifier = Modifier
+                                .animateItem()
+                                .staggeredEnter(index)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

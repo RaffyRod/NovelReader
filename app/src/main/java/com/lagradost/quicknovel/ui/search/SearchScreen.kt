@@ -1,6 +1,21 @@
 package com.lagradost.quicknovel.ui.search
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontWeight
+import com.lagradost.quicknovel.ui.common.SkeletonCover
+import com.lagradost.quicknovel.ui.common.SkeletonGrid
+import com.lagradost.quicknovel.ui.common.staggeredEnter
+import kotlinx.collections.immutable.ImmutableList
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -69,6 +84,7 @@ import com.lagradost.quicknovel.ui.common.SearchResponseItem
 import com.lagradost.quicknovel.ui.mainpage.MainPageFragment
 import com.lagradost.quicknovel.ui.mainpage.SearchResponseDialog
 import com.lagradost.quicknovel.ui.settings.searchLangList
+import com.lagradost.quicknovel.util.ProviderLanguages
 import com.lagradost.quicknovel.ui.settings.searchProvidersList
 import com.lagradost.quicknovel.util.Apis.Companion.apis
 import com.lagradost.quicknovel.util.SubtitleHelper
@@ -93,8 +109,10 @@ object SearchScreen : Screen {
         }
 
         val selectionLangState by store.provider.searchLangList.collectAsState()
-        LaunchedEffect(selectionLangState) {
-            viewModel.onAction(HomeAction.ConfigureApisLanguages(selectionLangState.toPersistentSet()))
+        val showEnglish by store.provider.showEnglishProviders.collectAsState()
+        LaunchedEffect(selectionLangState, showEnglish) {
+            val languages = ProviderLanguages.effective(selectionLangState, showEnglish)
+            viewModel.onAction(HomeAction.ConfigureApisLanguages(languages.toPersistentSet()))
         }
 
         ObserveEffect(viewModel.effect) { effect ->
@@ -119,7 +137,7 @@ fun SearchScreen(state: HomeViewModelState, action: (HomeAction) -> Unit) {
         action(HomeAction.CloseQuery)
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(snapAnimationSpec = null)
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val listState = rememberLazyGridState()
 
 
@@ -190,45 +208,180 @@ fun SearchScreen(state: HomeViewModelState, action: (HomeAction) -> Unit) {
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { innerPadding ->
+        val contentModifier = Modifier
+            .fillMaxSize()
+            // This fixes the double padding from the bottom nav bar
+            .padding(
+                start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                top = innerPadding.calculateTopPadding()
+            )
         if (state.isQueryOpen) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    // This fixes the double padding from the bottom nav bar
-                    .padding(
-                        start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                        end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                        top = innerPadding.calculateTopPadding()
-                    ),
-            ) {
-                items(state.searchRows, key = { item -> item.name }) { row ->
-                    SearchRow(row, action)
-                }
-            }
+            SearchResults(state, action, searchAction, contentModifier)
         } else {
+            val columns = if (isLandscape) 6 else 3
             LazyVerticalGrid(
-                columns = GridCells.Fixed(if (isLandscape) 6 else 3),
+                columns = GridCells.Fixed(columns),
                 state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    // This fixes the double padding from the bottom nav bar
-                    .padding(
-                        start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                        end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                        top = innerPadding.calculateTopPadding()
-                    ),
+                modifier = contentModifier,
                 contentPadding = PaddingValues(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(state.shownMainPageApis, key = { item -> item.name }) { api ->
-                    MainAPIItem(api = api, action = action)
+                if (state.recentSearches.isNotEmpty()) {
+                    item(key = "recent", span = { GridItemSpan(maxLineSpan) }) {
+                        RecentSearchesSection(state.recentSearches, action)
+                    }
+                }
+                if (state.popularLoading || state.popular.isNotEmpty()) {
+                    item(key = "popular", span = { GridItemSpan(maxLineSpan) }) {
+                        PopularSection(state, searchAction)
+                    }
+                }
+                item(key = "providers_title", span = { GridItemSpan(maxLineSpan) }) {
+                    SectionTitle(stringResource(R.string.search_providers_title))
+                }
+                itemsIndexed(state.shownMainPageApis, key = { _, item -> item.name }) { index, api ->
+                    MainAPIItem(
+                        api = api,
+                        action = action,
+                        modifier = Modifier.staggeredEnter(index)
+                    )
                 }
             }
         }
     }
 }
 
+@Composable
+private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        color = MaterialTheme.colorScheme.onBackground,
+        fontWeight = FontWeight.Bold,
+        fontSize = 15.sp,
+        modifier = modifier.padding(start = 6.dp, top = 10.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun RecentSearchesSection(recent: ImmutableList<String>, action: (HomeAction) -> Unit) {
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SectionTitle(stringResource(R.string.search_recent))
+            TextButton(onClick = { action(HomeAction.ClearRecent) }) {
+                Text(stringResource(R.string.search_recent_clear))
+            }
+        }
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 6.dp)
+        ) {
+            items(recent, key = { it }) { query ->
+                AssistChip(onClick = { action(HomeAction.Search(query)) }, label = { Text(query) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun PopularSection(state: HomeViewModelState, searchAction: (SearchResponseAction) -> Unit) {
+    Column {
+        SectionTitle(stringResource(R.string.search_popular))
+        if (state.popular.isEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(horizontal = 6.dp)
+            ) {
+                repeat(3) { SkeletonCover(Modifier.width(104.dp)) }
+            }
+        } else {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(horizontal = 6.dp)
+            ) {
+                items(state.popular, key = { it.randomUuid }) { response ->
+                    SearchResponseItem(
+                        response = response,
+                        action = searchAction,
+                        modifier = Modifier.width(104.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Every result in one grid, with chips to keep only the ones of a single provider. */
+@Composable
+private fun SearchResults(
+    state: HomeViewModelState,
+    action: (HomeAction) -> Unit,
+    searchAction: (SearchResponseAction) -> Unit,
+    modifier: Modifier,
+) {
+    val withResults = state.searchRows.filter { it.items.isNotEmpty() }
+    var selected by rememberSaveable { mutableStateOf<String?>(null) }
+    val shownRows = if (selected == null) withResults else withResults.filter { it.name == selected }
+    val items = shownRows.flatMap { it.items }
+    val columns = if (isLandscape) 6 else 3
+
+    Column(modifier) {
+        if (withResults.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                item(key = "all") {
+                    FilterChip(
+                        selected = selected == null,
+                        onClick = { selected = null },
+                        label = { Text("${stringResource(R.string.search_filter_all)} (${withResults.sumOf { it.items.size }})") }
+                    )
+                }
+                items(withResults, key = { it.name }) { row ->
+                    FilterChip(
+                        selected = selected == row.name,
+                        onClick = { selected = row.name },
+                        label = { Text("${row.name} (${row.items.size})") }
+                    )
+                }
+            }
+        }
+        when {
+            items.isNotEmpty() -> LazyVerticalGrid(
+                columns = GridCells.Fixed(columns),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                itemsIndexed(items, key = { _, item -> item.randomUuid }) { index, response ->
+                    SearchResponseItem(
+                        response = response,
+                        action = searchAction,
+                        modifier = Modifier
+                            .animateItem()
+                            .staggeredEnter(index)
+                    )
+                }
+            }
+
+            state.isLoading -> SkeletonGrid(Modifier.fillMaxSize())
+
+            else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    stringResource(R.string.search_no_results),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
 @Composable
 fun ShowDialog(
     filterLanguages: ImmutableSet<String>, isDialogShown: Boolean, action: (HomeAction) -> Unit

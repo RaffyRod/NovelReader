@@ -2,6 +2,7 @@ package com.lagradost.quicknovel
 
 import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
 import android.util.Log
@@ -116,10 +117,24 @@ object CommonActivity {
         resources.updateConfiguration(config, resources.displayMetrics)
     }
 
+    /**
+     * A context that keeps the app language when the system changes its configuration, for
+     * example when the keyboard opens, which otherwise brings the system language back.
+     */
+    fun withAppLocale(base: Context): Context {
+        val settingsManager = PreferenceManager.getDefaultSharedPreferences(base)
+        val localeCode = settingsManager.getString(base.getString(R.string.locale_key), "es") ?: "es"
+        val locale = Locale(localeCode)
+        Locale.setDefault(locale)
+        val config = Configuration(base.resources.configuration)
+        config.setLocale(locale)
+        return base.createConfigurationContext(config)
+    }
+
     fun Context?.updateLocale() {
         if (this == null) return
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
-        val localeCode = settingsManager.getString(this.getString(R.string.locale_key), null)
+        val localeCode = settingsManager.getString(this.getString(R.string.locale_key), "es")
         setLocale(this, localeCode)
     }
 

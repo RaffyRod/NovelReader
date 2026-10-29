@@ -1,9 +1,21 @@
 package com.mihon.presentation.settings
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.runtime.CompositionLocalProvider
+import com.lagradost.cloudstream4.rememberAppSettings
+import com.mihon.presentation.settings.widget.LocalItemPosition
+import com.mihon.presentation.settings.widget.LocalSettingsStyle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,6 +40,7 @@ fun PreferenceScreen(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val state = rememberLazyListState()
+    val style = rememberAppSettings().ui.settingsStyle.collectAsState().value.toIntOrNull() ?: 1
     val highlightKey = SearchableSettings.highlightKey
     if (highlightKey != null) {
         LaunchedEffect(Unit) {
@@ -40,6 +53,7 @@ fun PreferenceScreen(
         }
     }
 
+    CompositionLocalProvider(LocalSettingsStyle provides style) {
     LazyColumn(
         modifier = modifier,
         state = state,
@@ -56,11 +70,31 @@ fun PreferenceScreen(
                             PreferenceGroupHeader(title = preference.title)
                         }
                     }
-                    items(preference.preferenceItems) { item ->
-                        PreferenceItem(
-                            item = item,
-                            highlightKey = highlightKey,
-                        )
+                    if (style == 2) {
+                        items(preference.preferenceItems.chunked(2)) { pair ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                                    .height(IntrinsicSize.Min),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                pair.forEach { item ->
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                                        PreferenceItem(item = item, highlightKey = highlightKey)
+                                    }
+                                }
+                                if (pair.size == 1) Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    } else {
+                        itemsIndexed(preference.preferenceItems) { index, item ->
+                            CompositionLocalProvider(
+                                LocalItemPosition provides (index to preference.preferenceItems.size),
+                            ) {
+                                PreferenceItem(item = item, highlightKey = highlightKey)
+                            }
+                        }
                     }
                     item {
                         if (i < items.lastIndex) {
@@ -78,6 +112,7 @@ fun PreferenceScreen(
                 }
             }
         }
+    }
     }
 }
 

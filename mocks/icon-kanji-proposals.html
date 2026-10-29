@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel Ultimate - Iconos kanji de fuego</title>
+<style>
+  :root { --text:#F4EBE6; --muted:#A89A98; --red:#E5322D; --r:34px; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0a0506; color:var(--text); font-family:system-ui,"Segoe UI",Roboto,sans-serif; padding:24px 18px 140px; }
+  h1 { font-size:26px; margin:0 0 6px; } h1 span { color:var(--red); }
+  p.lead { color:var(--muted); margin:0 0 18px; max-width:860px; font-size:14px; }
+  .toolbar { position:sticky; top:0; z-index:20; background:#0a0506ee; backdrop-filter:blur(6px); padding:10px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid #2a1b1d; margin-bottom:22px; }
+  .toolbar b { font-size:13px; color:var(--muted); }
+  .seg button { all:unset; cursor:pointer; padding:7px 14px; border:1px solid #3a2326; font-size:13px; color:var(--muted); }
+  .seg button:first-child { border-radius:18px 0 0 18px; } .seg button:last-child { border-radius:0 18px 18px 0; }
+  .seg button.on { background:var(--red); border-color:var(--red); color:#fff; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:22px; }
+  label.card { display:flex; flex-direction:column; gap:12px; background:#140a0c; border:1px solid #3a2326; border-radius:20px; padding:18px; cursor:pointer; transition:all .2s; }
+  label.card:hover { transform:translateY(-3px); }
+  label.card input { position:absolute; opacity:0; }
+  label.card:has(input:checked) { border-color:var(--red); box-shadow:0 0 0 2px #E5322D66, 0 10px 30px #000a; }
+  .name { font-weight:700; font-size:14px; display:flex; gap:8px; align-items:flex-start; }
+  .name::before { content:""; width:16px; height:16px; margin-top:2px; border-radius:50%; border:2px solid #5a3a3e; flex:none; }
+  label.card:has(input:checked) .name::before { background:var(--red); border-color:var(--red); box-shadow:0 0 0 3px #E5322D44; }
+  .name small { display:block; color:var(--muted); font-weight:400; font-size:12px; margin-top:2px; }
+  .big { display:grid; place-items:center; padding:6px 0; }
+  .big svg { width:150px; height:150px; border-radius:var(--r); box-shadow:0 8px 24px #000a; }
+  .sizes { display:flex; gap:14px; align-items:flex-end; justify-content:center; }
+  .sizes svg { border-radius:var(--r); }
+  .home { display:flex; gap:12px; justify-content:center; background:linear-gradient(160deg,#2b3550,#10131f); padding:12px; border-radius:14px; }
+  .home div { text-align:center; font-size:10px; color:#fff; } .home svg { width:48px; height:48px; border-radius:var(--r); display:block; margin:0 auto 4px; }
+  .home .ph { width:48px; height:48px; border-radius:14px; background:#ffffff22; margin:0 auto 4px; display:block; }
+  .summary { position:fixed; left:0; right:0; bottom:0; z-index:30; background:#14090b; border-top:2px solid var(--red); padding:10px 18px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .summary pre { margin:0; font-size:12px; color:var(--muted); flex:1; min-width:240px; white-space:pre-wrap; }
+  .summary button { all:unset; cursor:pointer; background:var(--red); color:#fff; padding:9px 16px; border-radius:12px; font-weight:600; font-size:13px; }
+  svg text { font-family:"Yu Mincho","Hiragino Mincho ProN","Noto Serif JP","MS Mincho",serif; font-weight:900; }
+  svg text.sans { font-family:"Yu Gothic","Hiragino Sans","Noto Sans JP","Meiryo",sans-serif; }
+</style>
+</head>
+<body>
+<h1>QuickNovel <span>Ultimate</span> - Iconos kanji de fuego</h1>
+<p class="lead">Ocho propuestas con un kanji como protagonista, en rojo oscuro y fuego: 炎 (llama), 燃 (arder), 読 (leer), 火 (fuego), 本 (libro), 魂 (alma) y 焔 (llamarada). Cambia la máscara para ver cómo queda en distintos teléfonos. Elige uno y copia el resumen. Si eliges uno, el kanji se dibujará como forma vectorial para que se vea igual en todos los teléfonos.</p>
+
+<div class="toolbar">
+  <b>Forma de máscara:</b>
+  <div class="seg" id="shapes">
+    <button data-r="50%">Círculo</button>
+    <button data-r="34px" class="on">Squircle</button>
+    <button data-r="14px">Cuadrado redondeado</button>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="bgDark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a0710"/><stop offset="1" stop-color="#0e0305"/></linearGradient>
+    <linearGradient id="bgBlood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a0f1a"/><stop offset="1" stop-color="#1a0408"/></linearGradient>
+    <linearGradient id="bgBlack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b0b0e"/><stop offset="1" stop-color="#070203"/></linearGradient>
+    <linearGradient id="fire" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#b3101c"/><stop offset=".5" stop-color="#ff4a1c"/><stop offset="1" stop-color="#ffc247"/></linearGradient>
+    <linearGradient id="fireDeep" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7a0b14"/><stop offset=".6" stop-color="#d4231f"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#c98a1f"/></linearGradient>
+    <radialGradient id="aura" cx=".5" cy=".55" r=".55"><stop offset="0" stop-color="#ff3b1c" stop-opacity=".7"/><stop offset="1" stop-color="#ff3b1c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vignette" cx=".5" cy=".5" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <path id="tongue" d="M50 0 C57 18 76 28 76 52 C76 72 64 86 50 86 C36 86 24 72 24 52 C24 40 32 34 35 24 C39 31 43 33 45 30 C44 20 46 10 50 0 Z"/>
+  </defs>
+</svg>
+
+<div class="grid" id="grid"></div>
+
+<div class="summary">
+  <div><b>Mi selección</b><pre id="sumtext">Aún no has elegido nada.</pre></div>
+  <button id="copy">Copiar resumen</button>
+</div>
+
+<script>
+/* Each icon is a 108x108 SVG; kanji are text here and would be converted to vector paths in the real app. */
+const EMBERS = (n = 9) => Array.from({ length: n }, (_, i) => {
+  const x = 14 + ((i * 37) % 80), y = 16 + ((i * 53) % 78), r = 0.8 + (i % 3) * 0.5;
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffb347" opacity="${0.35 + (i % 4) * 0.15}"/>`;
+}).join('');
+
+const ICONS = [
+ { id:'1', name:'1. 炎 (llama) grande con degradado de fuego', desc:'Un solo kanji enorme sobre rojo muy oscuro, con aura de fuego y brasas. El más directo y fácil de reconocer.',
+   svg:`<rect width="108" height="108" fill="url(#bgDark)"/><ellipse cx="54" cy="62" rx="46" ry="40" fill="url(#aura)"/>${EMBERS()}
+   <text x="54" y="84" text-anchor="middle" font-size="84" fill="url(#fire)" filter="url(#glow)">炎</text><rect width="108" height="108" fill="url(#vignette)"/>` },
+ { id:'2', name:'2. 燃 (arder) dentro de un círculo ensō', desc:'El kanji de "arder" encerrado en un círculo de pincel abierto (ensō), en rojo sangre y negro. Zen, oscuro y elegante.',
+   svg:`<rect width="108" height="108" fill="url(#bgBlack)"/><ellipse cx="54" cy="54" rx="44" ry="44" fill="url(#aura)" opacity=".6"/>
+   <path d="M54 12 C80 10 98 30 96 56 C94 82 72 98 48 94 C26 90 12 70 14 50 C16 30 32 16 54 14" fill="none" stroke="url(#fireDeep)" stroke-width="7" stroke-linecap="round"/>
+   <text x="54" y="72" text-anchor="middle" font-size="50" fill="#ff5a2a" filter="url(#glow)">燃</text>` },
+ { id:'3', name:'3. 読 (leer) dentro de una llama', desc:'Silueta de llama en rojo oscuro con el kanji de "leer" encendido al centro. Une fuego y lectura en un solo símbolo.',
+   svg:`<rect width="108" height="108" fill="url(#bgBlack)"/>
+   <g transform="translate(9 6) scale(1.0 1.1)"><use href="#tongue" fill="url(#fireDeep)"/></g>
+   <g transform="translate(30 30) scale(.5 .55)"><use href="#tongue" fill="#2a0508" opacity=".55"/></g>
+   <text x="54" y="74" text-anchor="middle" font-size="38" fill="#ffe3a0" filter="url(#glow)">読</text>` },
+ { id:'4', name:'4. 火 (fuego) sobre libro abierto', desc:'Kanji simple de fuego y debajo un libro abierto en negativo, rojo oscuro de fondo. Sencillo y legible a tamaño pequeño.',
+   svg:`<rect width="108" height="108" fill="url(#bgBlood)"/><ellipse cx="54" cy="40" rx="34" ry="34" fill="url(#aura)"/>
+   <text x="54" y="64" text-anchor="middle" font-size="58" fill="url(#gold)" filter="url(#glow)">火</text>
+   <path d="M10 76 Q32 68 54 78 Q76 68 98 76 L98 92 Q76 84 54 94 Q32 84 10 92 Z" fill="#12050a" stroke="#ff5a2a" stroke-width="1.6"/><path d="M54 78 L54 94" stroke="#ff5a2a" stroke-width="1.6"/>` },
+ { id:'5', name:'5. 炎 vertical con sello dorado', desc:'Kanji de llama en negro con borde de brasa y un pequeño sello dorado 読. Aspecto de pergamino oscuro, más lujoso.',
+   svg:`<rect width="108" height="108" fill="url(#bgDark)"/><rect x="6" y="6" width="96" height="96" rx="10" fill="none" stroke="url(#gold)" stroke-width="1.6" opacity=".8"/>
+   <text x="54" y="80" text-anchor="middle" font-size="76" fill="#0c0204" stroke="#ff4a1c" stroke-width="2.4" paint-order="stroke" filter="url(#glow)">炎</text>
+   <rect x="74" y="74" width="22" height="22" rx="3" fill="url(#gold)"/><text x="85" y="91" text-anchor="middle" font-size="17" fill="#3a0710">読</text>` },
+ { id:'6', name:'6. 本 (libro) con llamas encima', desc:'El kanji de "libro" en crema, con lenguas de fuego saliendo de su parte superior. Es literalmente un libro en llamas.',
+   svg:`<rect width="108" height="108" fill="url(#bgBlack)"/><ellipse cx="54" cy="50" rx="46" ry="42" fill="url(#aura)"/>
+   <g transform="translate(26 -4) scale(.56 .62)"><use href="#tongue" fill="url(#fire)" filter="url(#glow)"/></g>
+   <g transform="translate(6 12) scale(.34 .5)"><use href="#tongue" fill="url(#fireDeep)"/></g><g transform="translate(66 12) scale(.34 .5)"><use href="#tongue" fill="url(#fireDeep)"/></g>
+   <text x="54" y="96" text-anchor="middle" font-size="68" fill="#f3e3c8">本</text>` },
+ { id:'7', name:'7. 魂 (alma) con aura ardiente', desc:'El kanji de "alma/espíritu" en blanco cálido con un aura roja oscura que parece respirar. Más misterioso, estilo shonen oscuro.',
+   svg:`<rect width="108" height="108" fill="#0b0204"/><circle cx="54" cy="54" r="46" fill="url(#aura)"/><circle cx="54" cy="54" r="36" fill="none" stroke="#b3101c" stroke-width="1.5" stroke-dasharray="3 4" opacity=".8"/>
+   <text x="54" y="76" text-anchor="middle" font-size="60" fill="#fff1d6" filter="url(#glow)">魂</text>${EMBERS(12)}` },
+ { id:'8', name:'8. 焔 (llamarada) en sello oscuro', desc:'Kanji raro y bonito de "llamarada" dentro de un sello cuadrado rojo oscuro con borde de oro. El más distintivo y menos común.',
+   svg:`<rect width="108" height="108" fill="#120306"/><rect x="14" y="14" width="80" height="80" rx="6" fill="url(#bgBlood)" stroke="url(#gold)" stroke-width="2.4"/><rect x="20" y="20" width="68" height="68" rx="3" fill="none" stroke="#ff5a2a" stroke-width="1" opacity=".7"/>
+   <text x="54" y="76" text-anchor="middle" font-size="56" fill="url(#fire)" filter="url(#glow)">焔</text>` },
+];
+
+const grid = document.getElementById('grid');
+const svgOf = (i, s) => `<svg viewBox="0 0 108 108" width="${s}" height="${s}">${i.svg}</svg>`;
+ICONS.forEach(i => {
+  const el = document.createElement('label');
+  el.className = 'card';
+  el.innerHTML = `<input type="radio" name="icon" value="${i.id}">
+    <div class="name"><div>${i.name}<small>${i.desc}</small></div></div>
+    <div class="big">${svgOf(i, 150)}</div>
+    <div class="sizes">${[72, 48, 32, 24].map(s => svgOf(i, s)).join('')}</div>
+    <div class="home"><div>${svgOf(i, 48)}QuickNovel</div><div><span class="ph"></span>Mensajes</div><div><span class="ph"></span>Cámara</div></div>`;
+  el.querySelector('input').addEventListener('change', () => {
+    document.getElementById('sumtext').textContent = `Icono de la app (kanji): ${i.name} (máscara: ${document.querySelector('#shapes .on').textContent})`;
+  });
+  grid.appendChild(el);
+});
+
+document.querySelectorAll('#shapes button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#shapes button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  document.documentElement.style.setProperty('--r', b.dataset.r);
+});
+document.getElementById('copy').onclick = () => navigator.clipboard.writeText(document.getElementById('sumtext').textContent);
+</script>
+</body>
+</html>

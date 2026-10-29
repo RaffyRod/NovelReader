@@ -35,6 +35,7 @@ const val RESULT_CHAPTER_FILTER_DOWNLOADED: String = "result_chapter_filter_down
 const val RESULT_CHAPTER_FILTER_BOOKMARKED: String = "result_chapter_filter_bookmarked"
 const val RESULT_CHAPTER_FILTER_READ: String = "result_chapter_filter_read"
 const val RESULT_CHAPTER_FILTER_UNREAD: String = "result_chapter_filter_unread"
+const val RESULT_CHAPTERS_PER_PAGE: String = "result_chapters_per_page"
 const val EPUB_TTS_SET_PITCH: String = "reader_epub_tts_pitch"
 const val EPUB_BG_COLOR: String = "reader_epub_bg_color"
 const val EPUB_TEXT_COLOR: String = "reader_epub_text_color"
@@ -61,6 +62,10 @@ const val EPUB_CURRENT_POSITION_READ_AT: String = "reader_epub_position_read"
 const val EPUB_CURRENT_POSITION_CHAPTER: String = "reader_epub_position_chapter"
 const val RESULT_BOOKMARK: String = "result_bookmarked"
 const val RESULT_BOOKMARK_STATE: String = "result_bookmarked_state"
+const val RESULT_FAVORITE: String = "result_favorite"
+
+/** Last chapter count seen by the new chapters check, per novel id. */
+const val NEW_CHAPTERS_KNOWN: String = "new_chapters_known"
 const val HISTORY_FOLDER: String = "result_history"
 const val CURRENT_TAB : String = "current_tab"
 /** When inserting many keys use this function, this is because apply for every key is very expensive on memory */

@@ -355,7 +355,10 @@ object UIHelper {
         sample: Int = 3,
         //colorCallback: ((Palette) -> Unit)? = null
     ): Boolean {
-        if (url.isNullOrBlank()) return false
+        if (url.isNullOrBlank()) {
+            this?.setImageResource(R.drawable.cover_placeholder)
+            return false
+        }
         this.setImage(
             UiImage.Image(url, headers, errorImageDrawable),
             errorImageDrawable,

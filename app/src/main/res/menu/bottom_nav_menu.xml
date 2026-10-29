@@ -17,4 +17,9 @@
             android:id="@+id/navigation_settings"
             android:icon="@drawable/ic_outline_settings_24"
             android:title="@string/title_settings"/>
+    <item
+            android:id="@+id/navigation_sections"
+            android:icon="@drawable/ic_baseline_checklist_24"
+            android:visible="false"
+            android:title="@string/library_sections_short"/>
 </menu>

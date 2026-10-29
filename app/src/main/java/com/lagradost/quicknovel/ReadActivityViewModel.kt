@@ -240,7 +240,7 @@ class QuickBook(val data: QuickStreamData) : AbstractBook() {
     }
 
     override fun getChapterTitle(index: Int): UiText {
-        return data.data[index].name.toUiText()
+        return ChapterSpec.numberedTitle(index + 1, data.data[index].name).toUiText()
     }
 
     override fun getLoadingStatus(index: Int): String {

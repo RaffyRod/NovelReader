@@ -28,12 +28,16 @@ android {
         targetSdkVersion 37
         versionCode 56
         versionName "3.8.1"
+        // Only the languages the app is translated to; libraries ship dozens more.
+        resConfigs "en", "es", "ru", "tr"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            // Shrinks unused library code and resources; names are kept (see proguard-rules.pro).
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
@@ -44,6 +48,23 @@ android {
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // One APK per processor type for release builds; debug stays a single APK so emulators work.
+    splits {
+        abi {
+            enable gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
+            reset()
+            include "arm64-v8a", "armeabi-v7a"
+            universalApk false
+        }
+    }
+
+    // Compress native libraries inside the APK so the download is smaller.
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 

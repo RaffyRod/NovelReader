@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel Ultimate - Propuestas de iconos</title>
+<style>
+  :root {
+    --bg: #130B0C; --surface: #1C1112; --card: #2A1B1D; --text: #F4EBE6; --muted: #A89A98;
+    --red: #E5322D; --orange: #FF7A1A; --gold: #FFC247; --ease: cubic-bezier(.2,.8,.2,1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0a0506; color: var(--text); font-family: system-ui, "Segoe UI", Roboto, sans-serif; padding: 32px 20px 80px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h1 span { color: var(--red); }
+  h2 { font-size: 18px; margin: 48px 0 6px; border-left: 4px solid var(--red); padding-left: 10px; }
+  p.lead { color: var(--muted); margin: 0 0 20px; max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 28px; }
+  .option { display: flex; flex-direction: column; gap: 10px; }
+  .option > .tag { font-weight: 700; font-size: 14px; }
+  .option > .tag small { color: var(--muted); font-weight: 400; display: block; }
+  .phone { width: 340px; background: var(--bg); border: 1px solid #3a2326; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px #000a; }
+  .phone .screen { height: 170px; padding: 16px; color: var(--muted); font-size: 13px; display: flex; flex-direction: column; gap: 10px; }
+  .phone .screen .bar { height: 38px; border-radius: 20px; background: var(--surface); display: flex; align-items: center; padding: 0 14px; gap: 10px; }
+  .phone .screen .row { height: 10px; border-radius: 6px; background: var(--card); }
+  svg.i { width: 24px; height: 24px; display: block; }
+
+  /* Bottom navigation (shared) */
+  nav.bn { display: flex; justify-content: space-around; padding: 8px 6px 12px; background: var(--surface); position: relative; }
+  nav.bn button { all: unset; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; padding: 6px 0; position: relative; transition: color .25s var(--ease); }
+  nav.bn button .ico { position: relative; display: grid; place-items: center; transition: transform .35s var(--ease); }
+  nav.bn button.on { color: var(--text); }
+  nav.bn button.on .ico { transform: translateY(-2px) scale(1.08); }
+
+  /* A: outline + pill indicator */
+  .navA button .ico { width: 58px; height: 30px; border-radius: 16px; transition: background .3s var(--ease), transform .35s var(--ease); }
+  .navA button.on .ico { background: #E5322D33; color: var(--red); }
+  .navA svg { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* B: solid + flame dot */
+  .navB svg { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: fill-opacity .3s; }
+  .navB button.on svg { fill-opacity: 1; color: var(--red); }
+  .navB button::after { content: ""; position: absolute; bottom: -2px; width: 5px; height: 5px; border-radius: 50%; background: linear-gradient(var(--gold), var(--red)); transform: scale(0); transition: transform .3s var(--ease); }
+  .navB button.on::after { transform: scale(1); }
+
+  /* C: duotone + gradient icon */
+  .navC svg { fill: currentColor; fill-opacity: .18; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .navC button.on { color: var(--orange); }
+  .navC button.on svg { fill-opacity: .45; filter: drop-shadow(0 0 6px #FF5A3C88); }
+  .navC button.on span { font-weight: 700; }
+
+  /* D: kanji */
+  .navD button { gap: 2px; }
+  .navD .k { font-size: 24px; line-height: 28px; font-family: "Yu Mincho", "Noto Serif JP", "MS Mincho", serif; font-weight: 700; transition: transform .35s var(--ease), color .25s, text-shadow .25s; }
+  .navD button.on .k { color: var(--red); transform: translateY(-2px) scale(1.15); text-shadow: 0 0 12px #E5322D99; }
+  .navD button.on { color: var(--text); }
+  .navD button::before { content: ""; position: absolute; top: -8px; width: 28px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--red), var(--gold)); transform: scaleX(0); transition: transform .3s var(--ease); }
+  .navD button.on::before { transform: scaleX(1); }
+
+  /* Settings menus */
+  .settings { width: 340px; background: var(--bg); border: 1px solid #3a2326; border-radius: 28px; padding: 18px 14px 20px; box-shadow: 0 10px 30px #000a; }
+  .settings h3 { margin: 4px 6px 12px; font-size: 22px; font-weight: 600; }
+  .grp { font-size: 12px; color: var(--muted); margin: 14px 8px 6px; letter-spacing: .04em; text-transform: uppercase; }
+  .item svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; width: 22px; height: 22px; }
+  .item .t b { display: block; font-weight: 500; font-size: 14.5px; }
+  .item .t small { color: var(--muted); font-size: 12px; }
+
+  /* S1: list with colored tiles */
+  .s1 .item { display: flex; align-items: center; gap: 14px; padding: 9px 8px; border-radius: 14px; transition: background .2s, transform .2s var(--ease); cursor: pointer; }
+  .s1 .item:hover { background: var(--surface); transform: translateX(3px); }
+  .s1 .tile { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; color: #fff; flex: none; }
+  .c1 { background: linear-gradient(135deg,#E5322D,#B3001B); } .c2 { background: linear-gradient(135deg,#FF7A1A,#E5322D); }
+  .c3 { background: linear-gradient(135deg,#FFC247,#FF7A1A); color:#3a1500 !important; } .c4 { background: linear-gradient(135deg,#7a3cff,#4b1fb8); }
+  .c5 { background: linear-gradient(135deg,#1fb88a,#0a7d5c); } .c6 { background: linear-gradient(135deg,#2f7bff,#1b4fc2); }
+
+  /* S2: tile grid */
+  .s2 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .s2 .item { background: var(--surface); border-radius: 18px; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; min-height: 108px; cursor: pointer; border: 1px solid transparent; transition: transform .25s var(--ease), border-color .25s, background .25s; }
+  .s2 .item:hover { transform: translateY(-3px); border-color: var(--red); background: var(--card); }
+  .s2 .item svg { width: 28px; height: 28px; color: var(--red); }
+  .s2 .item:nth-child(even) svg { color: var(--orange); }
+
+  /* S3: grouped card with chevrons and kanji badges */
+  .s3 .card { background: var(--surface); border-radius: 18px; overflow: hidden; }
+  .s3 .item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #ffffff10; cursor: pointer; transition: background .2s; }
+  .s3 .item:last-child { border-bottom: 0; }
+  .s3 .item:hover { background: var(--card); }
+  .s3 .item .t { flex: 1; }
+  .s3 .item svg.ch { width: 18px; height: 18px; color: var(--muted); }
+  .s3 .kb { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-family: "Yu Mincho","Noto Serif JP","MS Mincho",serif; font-weight: 700; font-size: 18px; color: var(--gold); background: #E5322D22; border: 1px solid #E5322D55; flex: none; }
+  .toggle { width: 38px; height: 22px; border-radius: 12px; background: var(--red); position: relative; flex: none; }
+  .toggle::after { content: ""; position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  footer { margin-top: 60px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- SVG sprite: every icon is a single shape set so styles can outline, fill or duotone it. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="library" viewBox="0 0 24 24"><path d="M3 4h4v16H3z"/><path d="M9 4h4v16H9z"/><path d="M15.2 5.6l3.9-1 3 14.6-3.9 1z"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></symbol>
+    <symbol id="history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="gear" viewBox="0 0 24 24"><path d="M12 2.5l1.6 2.4 2.8-.6.9 2.7 2.7.9-.6 2.8L21.5 12l-2.1 1.6.6 2.8-2.7.9-.9 2.7-2.8-.6L12 21.5l-1.6-2.4-2.8.6-.9-2.7-2.7-.9.6-2.8L2.5 12l2.1-1.6-.6-2.8 2.7-.9.9-2.7 2.8.6z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18"/><path d="M12 3c-3 3-3 15 0 18"/></symbol>
+    <symbol id="grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
+    <symbol id="palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18c1.5 0 2-1 1.5-2.2-.5-1.2.3-2.3 1.6-2.3H17a4 4 0 004-4c0-5-4-9.5-9-9.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></symbol>
+    <symbol id="drop" viewBox="0 0 24 24"><path d="M12 3s6 6.2 6 10.5a6 6 0 01-12 0C6 9.2 12 3 12 3z"/></symbol>
+    <symbol id="star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+    <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 21h4"/></symbol>
+    <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></symbol>
+    <symbol id="book" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-1.5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-13c-3-.5-6 0-8 1.5z"/><path d="M12 6v13"/></symbol>
+    <symbol id="translate" viewBox="0 0 24 24"><path d="M4 5h9"/><path d="M8.5 3v2"/><path d="M6 5c.5 4 3 7 6 8"/><path d="M12 5c-.5 3-3 6-7 8"/><path d="M13 21l4-10 4 10"/><path d="M14.5 17.5h5"/></symbol>
+    <symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 01-.5-9A6 6 0 0118 10a4 4 0 010 8z"/></symbol>
+    <symbol id="folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2.5h7a2 2 0 012 2V18a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+    <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6v.01"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<h1>QuickNovel <span>Ultimate</span> - Propuestas de iconos</h1>
+<p class="lead">Toca los botones de cada barra para ver la animación. Las propuestas usan la paleta carmesí / fuego del logo. Dime qué <b>navegación</b> (A, B, C o D) y qué <b>menú de ajustes</b> (1, 2 o 3) prefieres, y se pueden combinar.</p>
+
+<h2>Menú inferior</h2>
+<p class="lead">Las cuatro secciones actuales: Biblioteca (descargas), Buscar, Historial y Ajustes.</p>
+<div class="grid" id="navs"></div>
+
+<h2>Menú de configuración</h2>
+<p class="lead">Mismos ajustes de hoy (idioma, proveedores, tema, notificaciones...) con tres maneras distintas de presentarlos.</p>
+<div class="grid">
+
+  <div class="option">
+    <div class="tag">Ajustes 1 - Lista con fichas de color<small>Ícono en una ficha con degradado, resalta al pasar el dedo</small></div>
+    <div class="settings s1">
+      <h3>Ajustes</h3>
+      <div class="grp">General</div>
+      <div class="item"><div class="tile c1"><svg><use href="#globe"/></svg></div><div class="t"><b>Idioma de la aplicación</b><small>Español</small></div></div>
+      <div class="item"><div class="tile c2"><svg><use href="#grid"/></svg></div><div class="t"><b>Proveedores</b><small>3 activos</small></div></div>
+      <div class="item"><div class="tile c3"><svg><use href="#translate"/></svg></div><div class="t"><b>Mostrar proveedores en inglés</b><small>Desactivado</small></div></div>
+      <div class="grp">Apariencia</div>
+      <div class="item"><div class="tile c4"><svg><use href="#palette"/></svg></div><div class="t"><b>Tema</b><small>Oscuro</small></div></div>
+      <div class="item"><div class="tile c1"><svg><use href="#drop"/></svg></div><div class="t"><b>Color principal</b><small>Carmesí</small></div></div>
+      <div class="item"><div class="tile c3"><svg><use href="#star"/></svg></div><div class="t"><b>Formato de puntuación</b><small>5 estrellas</small></div></div>
+      <div class="grp">Lectura y datos</div>
+      <div class="item"><div class="tile c5"><svg><use href="#bell"/></svg></div><div class="t"><b>Nuevos capítulos</b><small>Cada 12 horas</small></div></div>
+      <div class="item"><div class="tile c6"><svg><use href="#cloud"/></svg></div><div class="t"><b>Copia de seguridad</b><small>Guardar y restaurar</small></div></div>
+    </div>
+  </div>
+
+  <div class="option">
+    <div class="tag">Ajustes 2 - Mosaicos<small>Accesos grandes en cuadrícula, más táctil y visual</small></div>
+    <div class="settings s2">
+      <h3>Ajustes</h3>
+      <div class="tiles">
+        <div class="item"><svg><use href="#globe"/></svg><div class="t"><b>Idioma</b><small>Español</small></div></div>
+        <div class="item"><svg><use href="#grid"/></svg><div class="t"><b>Proveedores</b><small>3 activos</small></div></div>
+        <div class="item"><svg><use href="#palette"/></svg><div class="t"><b>Tema</b><small>Oscuro</small></div></div>
+        <div class="item"><svg><use href="#drop"/></svg><div class="t"><b>Color</b><small>Carmesí</small></div></div>
+        <div class="item"><svg><use href="#bell"/></svg><div class="t"><b>Avisos</b><small>Nuevos capítulos</small></div></div>
+        <div class="item"><svg><use href="#book"/></svg><div class="t"><b>Lector</b><small>App externa</small></div></div>
+        <div class="item"><svg><use href="#translate"/></svg><div class="t"><b>Traducción</b><small>Gemini</small></div></div>
+        <div class="item"><svg><use href="#cloud"/></svg><div class="t"><b>Respaldo</b><small>Guardar y restaurar</small></div></div>
+        <div class="item"><svg><use href="#folder"/></svg><div class="t"><b>Descargas</b><small>My Novels</small></div></div>
+        <div class="item"><svg><use href="#info"/></svg><div class="t"><b>Acerca de</b><small>v3.8.1</small></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option">
+    <div class="tag">Ajustes 3 - Tarjetas con kanji<small>Insignia con kanji + flechas y interruptores, estilo de la marca</small></div>
+    <div class="settings s3">
+      <h3>Ajustes</h3>
+      <div class="grp">General</div>
+      <div class="card">
+        <div class="item"><div class="kb">言</div><div class="t"><b>Idioma de la aplicación</b><small>Español</small></div><svg class="ch"><use href="#chev"/></svg></div>
+        <div class="item"><div class="kb">源</div><div class="t"><b>Proveedores</b><small>3 activos</small></div><svg class="ch"><use href="#chev"/></svg></div>
+        <div class="item"><div class="kb">英</div><div class="t"><b>Mostrar proveedores en inglés</b><small>Además de los de español</small></div><div class="toggle"></div></div>
+      </div>
+      <div class="grp">Apariencia</div>
+      <div class="card">
+        <div class="item"><div class="kb">彩</div><div class="t"><b>Tema</b><small>Oscuro</small></div><svg class="ch"><use href="#chev"/></svg></div>
+        <div class="item"><div class="kb">火</div><div class="t"><b>Color principal</b><small>Carmesí</small></div><svg class="ch"><use href="#chev"/></svg></div>
+      </div>
+      <div class="grp">Lectura</div>
+      <div class="card">
+        <div class="item"><div class="kb">知</div><div class="t"><b>Nuevos capítulos</b><small>Avisarme</small></div><div class="toggle"></div></div>
+        <div class="item"><div class="kb">書</div><div class="t"><b>Abrir en app externa</b><small>Al terminar la descarga</small></div><div class="toggle"></div></div>
+        <div class="item"><div class="kb">訳</div><div class="t"><b>Traducción con Gemini</b><small>Clave configurada</small></div><svg class="ch"><use href="#chev"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Los íconos de estas propuestas son SVG propios (trazo redondeado, 24 px). Al elegir, los convierto a vectores de Android.</footer>
+
+<script>
+  const tabs = [
+    { id: 'library', label: 'Biblioteca', k: '本' },
+    { id: 'search',  label: 'Buscar',     k: '探' },
+    { id: 'history', label: 'Historial',  k: '歴' },
+    { id: 'gear',    label: 'Ajustes',    k: '設' },
+  ];
+  const variants = [
+    { cls: 'navA', name: 'Navegación A - Contorno + píldora', note: 'Íconos de línea; el activo se ilumina dentro de una píldora roja translúcida' },
+    { cls: 'navB', name: 'Navegación B - Sólido + brasa', note: 'Se rellena al activarse y deja un punto de fuego debajo' },
+    { cls: 'navC', name: 'Navegación C - Duotono con brillo', note: 'Doble tono; el activo se vuelve naranja con resplandor' },
+    { cls: 'navD', name: 'Navegación D - Kanji', note: '本 biblioteca, 探 buscar, 歴 historial, 設 ajustes; subrayado de fuego' },
+  ];
+  const root = document.getElementById('navs');
+  for (const v of variants) {
+    const el = document.createElement('div');
+    el.className = 'option';
+    const buttons = tabs.map((t, i) => {
+      const inner = v.cls === 'navD'
+        ? `<span class="k">${t.k}</span>`
+        : `<span class="ico"><svg class="i"><use href="#${t.id}"/></svg></span>`;
+      return `<button class="${i === 1 ? 'on' : ''}" aria-label="${t.label}">${inner}<span>${t.label}</span></button>`;
+    }).join('');
+    el.innerHTML = `
+      <div class="tag">${v.name}<small>${v.note}</small></div>
+      <div class="phone">
+        <div class="screen"><div class="bar">Buscar novelas...</div><div class="row" style="width:90%"></div><div class="row" style="width:70%"></div><div class="row" style="width:80%"></div></div>
+        <nav class="bn ${v.cls}">${buttons}</nav>
+      </div>`;
+    root.appendChild(el);
+  }
+  root.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  });
+</script>
+</body>
+</html>

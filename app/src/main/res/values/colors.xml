@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="readerBackground">#292832</color> <!--3c3c3c-->
+    <color name="readerBackground">#231A1C</color> <!--3c3c3c-->
     <color name="readerTextColor">#cccccc</color>
     <color name="readerHightlightedTextColor">#6600ABFF</color>
     <color name="readerHightlightedMetaInfo">#191919</color>
@@ -24,21 +24,21 @@
     <color name="whiteRipple">#33FFFFFF</color>
     <color name="blackRipple">#33000000</color>
 
-    <color name="colorPrimary">#3d50fa</color>
+    <color name="colorPrimary">#E5322D</color>
     <color name="colorPrimarySecond">@color/colorPrimary</color>
-    <color name="colorSearch">#303135</color> <!--#3444D1 @color/itemBackground-->
+    <color name="colorSearch">#2E1D20</color> <!--#3444D1 @color/itemBackground-->
     <color name="colorOngoing">#F53B66</color> <!--FF8181-->
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#3b65f5</color> <!-- 818fff-->
+    <color name="colorPrimaryDark">#8E0F1A</color>
+    <color name="colorAccent">#FF5A3C</color> <!-- 818fff-->
 
-    <color name="primaryGrayBackground">#2B2C30</color> <!--0f0f10 0E0E10 303135 2B2C30-->
-    <color name="primaryBlackBackground">#111111</color> <!--1C1C20 191a1f 19181E 202125 1C1C20-->
-    <color name="iconGrayBackground">#1C1C20</color> <!--141419 202125-->
-    <color name="boxItemBackground">#161616</color> <!-- 17171B 1B1B20-->
+    <color name="primaryGrayBackground">#2A1B1D</color> <!--0f0f10 0E0E10 303135 2B2C30-->
+    <color name="primaryBlackBackground">#130B0C</color> <!--1C1C20 191a1f 19181E 202125 1C1C20-->
+    <color name="iconGrayBackground">#1C1112</color> <!--141419 202125-->
+    <color name="boxItemBackground">#180F10</color> <!-- 17171B 1B1B20-->
 
-    <color name="textColor">#e9eaee</color> <!--FFF-->
+    <color name="textColor">#F4EBE6</color> <!--FFF-->
     <color name="semiWhite">#1AFFFFFF</color> <!--FFF-->
-    <color name="grayTextColor">#9ba0a4</color> <!-- 5e5f62-->
+    <color name="grayTextColor">#A89A98</color> <!-- 5e5f62-->
     <color name="grayShimmer">#DCDCDC</color> <!-- 5e5f62-->
 
     <color name="searchColorTransparent">#1AFFFFFF</color> <!--DADADA-->

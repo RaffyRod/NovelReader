@@ -1,6 +1,10 @@
 package com.lagradost.quicknovel.ui.common
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,7 +30,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -73,6 +79,7 @@ fun SearchList(
     state: ImmutableSearchList,
     searchAction: (SearchResponseAction) -> Unit,
     footer: @Composable (() -> Unit)? = null,
+    header: @Composable (() -> Unit)? = null,
 ) {
     if (isRow) {
         SearchListRow(
@@ -80,7 +87,8 @@ fun SearchList(
             modifier = modifier,
             state = state,
             searchAction = searchAction,
-            footer = footer
+            footer = footer,
+            header = header
         )
     } else {
         SearchResponseGrid(
@@ -88,7 +96,8 @@ fun SearchList(
             modifier = modifier,
             state = state,
             searchAction = searchAction,
-            footer = footer
+            footer = footer,
+            header = header
         )
     }
 }
@@ -150,6 +159,7 @@ fun SearchListRow(
     state: ImmutableSearchList,
     searchAction: (SearchResponseAction) -> Unit,
     footer: @Composable (() -> Unit)? = null,
+    header: @Composable (() -> Unit)? = null,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(if (isLandscape) 2 else 1),
@@ -158,12 +168,19 @@ fun SearchListRow(
         contentPadding = PaddingValues(start = 10.dp, end = 10.dp, top = 10.dp, bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        items(
-            state.sorted, key = { id -> id }) { id ->
+        if (header != null) {
+            item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
+                header()
+            }
+        }
+        itemsIndexed(
+            state.sorted, key = { _, id -> id }) { index, id ->
             SearchResponseRow(
                 response = state.data[id]!!,
                 action = searchAction,
-                modifier = Modifier.animateItem()
+                modifier = Modifier
+                    .animateItem()
+                    .staggeredEnter(index)
             )
         }
         if (footer != null) {
@@ -221,8 +238,7 @@ fun SearchResponseRow(
             }
 
     ) {
-        AsyncImage(
-            contentScale = ContentScale.Crop,
+        CoverImage(
             model = imageRequest,
             contentDescription = response.name,
             modifier = Modifier
@@ -468,10 +484,20 @@ fun SearchResponseItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val imageRequest = response.imageRequest()
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.94f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "coverPressScale"
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            }
             .combinedClickable(interactionSource = interactionSource, indication = null, onClick = {
                 action(
                     SearchResponseAction(
@@ -497,8 +523,7 @@ fun SearchResponseItem(
                 .indication(interactionSource = interactionSource, indication = ripple()),
             contentAlignment = Alignment.BottomStart
         ) {
-            AsyncImage(
-                contentScale = ContentScale.Crop,
+            CoverImage(
                 model = imageRequest,
                 contentDescription = response.name,
                 modifier = Modifier.fillMaxSize()
@@ -565,6 +590,7 @@ fun SearchResponseGrid(
     searchAction: (SearchResponseAction) -> Unit,
     modifier: Modifier,
     footer: @Composable (() -> Unit)? = null,
+    header: @Composable (() -> Unit)? = null,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(if (isLandscape) 6 else 3),
@@ -574,15 +600,21 @@ fun SearchResponseGrid(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        items(
+        if (header != null) {
+            item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
+                header()
+            }
+        }
+        itemsIndexed(
             items = state.sorted,
-            key = { id -> id },
-        ) { id ->
+            key = { _, id -> id },
+        ) { index, id ->
             SearchResponseItem(
                 response = state.data[id]!!,
                 action = searchAction,
                 modifier = Modifier
                     .animateItem()
+                    .staggeredEnter(index)
                     .fillMaxWidth()
                     .wrapContentHeight()
             )

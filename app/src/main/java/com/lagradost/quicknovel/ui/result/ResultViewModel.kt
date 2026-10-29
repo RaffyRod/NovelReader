@@ -1,10 +1,16 @@
 package com.lagradost.quicknovel.ui.result
 
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import com.lagradost.quicknovel.ChapterPage
+import com.lagradost.quicknovel.ChapterPaging
+import com.lagradost.quicknovel.RESULT_CHAPTERS_PER_PAGE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lagradost.quicknovel.APIRepository
@@ -14,10 +20,22 @@ import com.lagradost.quicknovel.BaseApplication.Companion.removeKey
 import com.lagradost.quicknovel.BaseApplication.Companion.setKey
 import com.lagradost.quicknovel.BookDownloader2
 import com.lagradost.quicknovel.BookDownloader2.downloadProgress
+import com.lagradost.cloudstream4.AppSettings
+import com.lagradost.quicknovel.GeminiTranslator
+import com.lagradost.quicknovel.TranslationException
 import com.lagradost.quicknovel.BookDownloader2Helper
+import com.lagradost.quicknovel.BookDownloader2Helper.clearChapterCache
+import com.lagradost.quicknovel.BookDownloader2Helper.createQuickStream
 import com.lagradost.quicknovel.BookDownloader2Helper.generateId
+import com.lagradost.quicknovel.BookDownloader2Helper.getFilePath
+import com.lagradost.quicknovel.BookDownloader2Helper.getStripAuthorNodes
+import com.lagradost.quicknovel.ChapterSpec
+import com.lagradost.quicknovel.LoadedChapter
+import com.lagradost.quicknovel.BookDownloader2Helper.getQuickChapter
 import com.lagradost.quicknovel.ChapterData
+import com.lagradost.quicknovel.ChapterPdfExporter
 import com.lagradost.quicknovel.CommonActivity.activity
+import com.lagradost.quicknovel.CommonActivity.showToast
 import com.lagradost.quicknovel.DOWNLOAD_EPUB_LAST_ACCESS
 import com.lagradost.quicknovel.DownloadActionType
 import com.lagradost.quicknovel.DownloadProgressState
@@ -27,12 +45,19 @@ import com.lagradost.quicknovel.EPUB_CURRENT_POSITION_CHAPTER
 import com.lagradost.quicknovel.EPUB_CURRENT_POSITION_READ_AT
 import com.lagradost.quicknovel.EPUB_CURRENT_POSITION_SCROLL_CHAR
 import com.lagradost.quicknovel.ErrorLoadingException
+import com.lagradost.quicknovel.ExportedFile
+import com.lagradost.quicknovel.ExportedFiles
+import com.lagradost.quicknovel.FileHelper
 import com.lagradost.quicknovel.HISTORY_FOLDER
 import com.lagradost.quicknovel.LoadResponse
+import com.lagradost.quicknovel.PdfChapter
 import com.lagradost.quicknovel.PreferenceDelegate
+import com.lagradost.quicknovel.QuickStreamData
+import com.lagradost.quicknovel.QuickStreamMetaData
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.RESULT_BOOKMARK
 import com.lagradost.quicknovel.RESULT_BOOKMARK_STATE
+import com.lagradost.quicknovel.RESULT_FAVORITE
 import com.lagradost.quicknovel.RESULT_CHAPTER_FILTER_BOOKMARKED
 import com.lagradost.quicknovel.RESULT_CHAPTER_FILTER_DOWNLOADED
 import com.lagradost.quicknovel.RESULT_CHAPTER_FILTER_READ
@@ -40,8 +65,10 @@ import com.lagradost.quicknovel.RESULT_CHAPTER_FILTER_UNREAD
 import com.lagradost.quicknovel.RESULT_CHAPTER_SORT
 import com.lagradost.quicknovel.StreamResponse
 import com.lagradost.quicknovel.UserReview
+import com.lagradost.quicknovel.WaitOrCancel
 import com.lagradost.quicknovel.mvvm.Resource
 import com.lagradost.quicknovel.mvvm.launchSafe
+import com.lagradost.quicknovel.mvvm.logError
 import com.lagradost.quicknovel.ui.ReadType
 import com.lagradost.quicknovel.ui.common.ImmutableSearchResponse
 import com.lagradost.quicknovel.ui.download.CHAPTER_SORT
@@ -54,7 +81,13 @@ import com.lagradost.quicknovel.ui.download.SortingMethod
 import com.lagradost.quicknovel.util.Apis
 import com.lagradost.quicknovel.util.Coroutines.ioSafe
 import com.lagradost.quicknovel.util.ResultCached
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -86,6 +119,11 @@ class ResultViewModel : ViewModel() {
             RESULT_CHAPTER_FILTER_UNREAD,
             true,
             Boolean::class
+        )
+        var chaptersPerPage by PreferenceDelegate(
+            RESULT_CHAPTERS_PER_PAGE,
+            ChapterPaging.DEFAULT_SIZE,
+            Int::class
         )
 
     }
@@ -151,6 +189,7 @@ class ResultViewModel : ViewModel() {
     fun clear() {
         loadResponse.postValue(null)
         chapters.postValue(null)
+        pageIndex.postValue(0)
     }
 
     fun hasReadChapter(chapter: ChapterData): Boolean {
@@ -220,6 +259,45 @@ class ResultViewModel : ViewModel() {
 
     val chapters: MutableLiveData<List<ChapterData>?> =
         MutableLiveData<List<ChapterData>?>()
+
+    private val pageIndex = MutableLiveData(0)
+    private val pageSize = MutableLiveData(ChapterPaging.normalizeSize(chaptersPerPage))
+
+    /** The part of [chapters] the user is looking at, according to the page and the page size. */
+    val chapterPage = MediatorLiveData<ChapterPage<ChapterData>?>().apply {
+        fun update() {
+            val list = chapters.value
+            value = if (list == null) {
+                null
+            } else {
+                ChapterPaging.pageOf(
+                    list,
+                    pageIndex.value ?: 0,
+                    pageSize.value ?: ChapterPaging.DEFAULT_SIZE
+                )
+            }
+        }
+        addSource(chapters) { update() }
+        addSource(pageIndex) { update() }
+        addSource(pageSize) { update() }
+    }
+
+    fun goToChapterPage(page: Int) {
+        pageIndex.value = page.coerceIn(0, (chapterPage.value?.pageCount ?: 1) - 1)
+    }
+
+    fun nextChapterPage() = goToChapterPage((chapterPage.value?.page ?: 0) + 1)
+
+    fun previousChapterPage() = goToChapterPage((chapterPage.value?.page ?: 0) - 1)
+
+    /** Saves the page size and keeps the chapter being looked at on screen. */
+    fun setChaptersPerPage(size: Int) {
+        val normalized = ChapterPaging.normalizeSize(size)
+        val current = chapterPage.value
+        chaptersPerPage = normalized
+        pageIndex.value = if (current == null) 0 else ChapterPaging.pageAfterResize(current, normalized)
+        pageSize.value = normalized
+    }
 
     val reviews: MutableLiveData<Resource<ArrayList<UserReview>>> by lazy {
         MutableLiveData<Resource<ArrayList<UserReview>>>()
@@ -335,6 +413,7 @@ class ResultViewModel : ViewModel() {
                     setKey(
                         EPUB_CURRENT_POSITION_SCROLL_CHAR, streamResponse.name, 0,
                     )
+                    refreshLastChapter()
                 }
             }
 
@@ -571,6 +650,74 @@ class ResultViewModel : ViewModel() {
         readState.postValue(ReadType.fromSpinner(state))
     }
 
+    val isFavorite: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    /** Index (0 based, in the full chapter list) of the chapter the user stopped at, if any. */
+    val lastChapterIndex: MutableLiveData<Int?> = MutableLiveData(null)
+
+    private fun refreshFavorite() {
+        isFavorite.postValue(getKey<Boolean>(RESULT_FAVORITE, loadId.toString()) == true)
+    }
+
+    fun refreshLastChapter() {
+        if (!::load.isInitialized) return
+        val name = (load as? StreamResponse)?.name
+        lastChapterIndex.postValue(name?.let { getKey<Int>(EPUB_CURRENT_POSITION, it) })
+    }
+
+    fun toggleFavorite() = viewModelScope.launch {
+        loadMutex.withLock {
+            if (!hasLoaded) return@launch
+            val key = loadId.toString()
+            if (getKey<Boolean>(RESULT_FAVORITE, key) == true) {
+                removeKey(RESULT_FAVORITE, key)
+            } else {
+                setKey(RESULT_FAVORITE, key, true)
+                updateBookmarkData()
+            }
+            refreshFavorite()
+            BookDownloader2.bookmarkChanged(loadId)
+        }
+    }
+
+    /** The chapter the user stopped at, or null when none was chosen or read yet. */
+    fun lastChapter(): ChapterData? {
+        val index = lastChapterIndex.value ?: return null
+        return (load as? StreamResponse)?.data?.getOrNull(index)
+    }
+
+    fun isLastChapter(chapter: ChapterData): Boolean {
+        val index = lastChapterIndex.value ?: return false
+        return chapterIndex(chapter) == index
+    }
+
+    /** Marks [chapter] as the place where the user stopped, without opening it. */
+    fun markLastChapter(chapter: ChapterData) {
+        val streamResponse = (load as? StreamResponse) ?: return
+        val index = chapterIndex(chapter) ?: return
+        setKey(EPUB_CURRENT_POSITION, streamResponse.name, index)
+        setKey(EPUB_CURRENT_POSITION_CHAPTER, streamResponse.name, streamResponse.data[index].name)
+        setKey(EPUB_CURRENT_POSITION_SCROLL_CHAR, streamResponse.name, 0)
+        refreshLastChapter()
+    }
+
+    fun clearLastChapter() {
+        val streamResponse = (load as? StreamResponse) ?: return
+        removeKey(EPUB_CURRENT_POSITION, streamResponse.name)
+        removeKey(EPUB_CURRENT_POSITION_CHAPTER, streamResponse.name)
+        removeKey(EPUB_CURRENT_POSITION_SCROLL_CHAR, streamResponse.name)
+        refreshLastChapter()
+    }
+
+    /** Moves the chapter list to the page that holds the chapter the user stopped at. */
+    fun goToLastChapterPage() {
+        val chapter = lastChapter() ?: return
+        val list = chapters.value ?: return
+        val position = list.indexOf(chapter) + 1
+        val size = pageSize.value ?: ChapterPaging.DEFAULT_SIZE
+        ChapterPaging.pageOfPosition(position, list.size, size)?.let { pageIndex.value = it }
+    }
+
     fun share() = viewModelScope.launch {
         loadMutex.withLock {
             if (!hasLoaded) return@launch
@@ -720,6 +867,8 @@ class ResultViewModel : ViewModel() {
         )
         reCacheChapters()
         updateBookmarkData()
+        refreshFavorite()
+        refreshLastChapter()
         BookDownloader2.openChanged(tid)
         hasLoaded = true
 
@@ -808,4 +957,418 @@ class ResultViewModel : ViewModel() {
             loadResponse.postValue(data)
         }
     }
+
+    val selectionMode: MutableLiveData<Boolean> = MutableLiveData(false)
+    val selectedChapters: MutableLiveData<Set<Int>> = MutableLiveData(emptySet())
+    val selectionTask: MutableLiveData<SelectionTaskState?> = MutableLiveData(null)
+
+    private var selectionJob: Job? = null
+    private var selectionWorker = WaitOrCancel()
+
+    val totalChapters: Int
+        get() = if (hasLoaded) (load as? StreamResponse)?.data?.size ?: 0 else 0
+
+    /** Enters or leaves the multi selection mode, leaving it also clears the selection. */
+    fun setSelectionMode(enabled: Boolean) {
+        selectionMode.value = enabled
+        if (!enabled) {
+            selectedChapters.value = emptySet()
+        }
+    }
+
+    fun isChapterSelected(chapter: ChapterData): Boolean {
+        val index = chapterIndex(chapter) ?: return false
+        return selectedChapters.value?.contains(index) == true
+    }
+
+    fun toggleChapterSelected(chapter: ChapterData) {
+        val index = chapterIndex(chapter) ?: return
+        val current = selectedChapters.value ?: emptySet()
+        selectedChapters.value = if (current.contains(index)) current - index else current + index
+    }
+
+    /** Selects every chapter that is currently visible after filtering. */
+    fun selectAllChapters() {
+        val visible = chapters.value ?: return
+        selectedChapters.value = visible.mapNotNull { chapter -> chapterIndex(chapter) }.toSet()
+    }
+
+    fun clearChapterSelection() {
+        selectedChapters.value = emptySet()
+    }
+
+    /** Adds the chapters between [from] and [to] (1 based, inclusive) to the selection. */
+    fun selectChapterRange(from: Int, to: Int) {
+        val total = totalChapters
+        if (total <= 0) return
+        val start = minOf(from, to).coerceIn(1, total) - 1
+        val end = maxOf(from, to).coerceIn(1, total) - 1
+        selectedChapters.value = (selectedChapters.value ?: emptySet()) + (start..end)
+    }
+
+    private fun selectedChapterList(): List<Pair<Int, ChapterData>> {
+        val stream = (load as? StreamResponse)?.takeIf { hasLoaded } ?: return emptyList()
+        return (selectedChapters.value ?: emptySet()).sorted().mapNotNull { index ->
+            stream.data.getOrNull(index)?.let { chapter -> index to chapter }
+        }
+    }
+
+    /** Opens the reader containing only the selected chapters, in book order. */
+    fun streamReadSelected() = ioSafe {
+        val stream = (load as? StreamResponse)?.takeIf { hasLoaded } ?: return@ioSafe
+        val selected = selectedChapterList()
+        if (selected.isEmpty()) {
+            showToast(R.string.no_chapters_selected)
+            return@ioSafe
+        }
+        val appContext = context ?: return@ioSafe
+        val selectionName = "${stream.name} [${appContext.getString(R.string.select_chapters)}]"
+        val meta = QuickStreamMetaData(stream.author, selectionName, apiName)
+
+        appContext.clearChapterCache(meta)
+        setKey(EPUB_CURRENT_POSITION, selectionName, 0)
+        setKey(EPUB_CURRENT_POSITION_CHAPTER, selectionName, selected.first().second.name)
+        setKey(EPUB_CURRENT_POSITION_SCROLL_CHAR, selectionName, 0)
+
+        val uri = activity?.createQuickStream(
+            QuickStreamData(
+                meta,
+                stream.posterUrl,
+                selected.map { (_, chapter) -> chapter }.toMutableList()
+            )
+        )
+        BookDownloader2.openQuickStream(uri)
+    }
+
+    /** Chapter indexes (book order) whose text is already stored on the device. */
+    private fun downloadedChapterFiles(stream: StreamResponse, appContext: Context): List<Pair<Int, java.io.File>> {
+        val meta = QuickStreamMetaData(stream.author, stream.name, apiName)
+        val directory = java.io.File(appContext.getFilePath(meta, 0)).parentFile
+        return directory?.listFiles()
+            ?.mapNotNull { file ->
+                val index = file.nameWithoutExtension.toIntOrNull() ?: return@mapNotNull null
+                if (file.isFile && file.length() > 0 && index in stream.data.indices) index to file else null
+            }
+            ?.sortedBy { it.first }
+            ?: emptyList()
+    }
+
+    /**
+     * Opens the reader with only the chapters already downloaded. Their text is copied to a
+     * separate offline book, so reading never needs the network.
+     */
+    fun readOffline() = ioSafe {
+        val stream = (load as? StreamResponse)?.takeIf { hasLoaded } ?: return@ioSafe
+        val appContext = context ?: return@ioSafe
+        val downloaded = downloadedChapterFiles(stream, appContext)
+        if (downloaded.isEmpty()) {
+            showToast(R.string.read_offline_empty)
+            return@ioSafe
+        }
+
+        val offlineName = "${stream.name} [offline]"
+        val meta = QuickStreamMetaData(stream.author, offlineName, apiName)
+        appContext.clearChapterCache(meta)
+        downloaded.forEachIndexed { offlineIndex, (_, file) ->
+            val target = java.io.File(appContext.getFilePath(meta, offlineIndex))
+            target.parentFile?.mkdirs()
+            file.copyTo(target, overwrite = true)
+        }
+
+        if (getKey<Int>(EPUB_CURRENT_POSITION, offlineName) == null) {
+            setKey(EPUB_CURRENT_POSITION, offlineName, 0)
+            setKey(EPUB_CURRENT_POSITION_CHAPTER, offlineName, stream.data[downloaded.first().first].name)
+            setKey(EPUB_CURRENT_POSITION_SCROLL_CHAR, offlineName, 0)
+        }
+        addToHistory()
+
+        val uri = activity?.createQuickStream(
+            QuickStreamData(
+                meta,
+                stream.posterUrl,
+                downloaded.map { (index, _) -> stream.data[index] }.toMutableList()
+            )
+        )
+        BookDownloader2.openQuickStream(uri)
+    }
+
+    /** EPUB and PDF files saved for this novel that can still be opened. */
+    fun savedFiles(): List<ExportedFile> {
+        val appContext = context ?: return emptyList()
+        if (!::load.isInitialized) return emptyList()
+        return ExportedFiles.available(appContext, load.name)
+    }
+
+    /** Current selection as a compact text such as "1-10, 15", used to prefill the download dialog. */
+    fun selectionAsText(): String =
+        ChapterSpec.format((selectedChapters.value ?: emptySet()).map { it + 1 })
+
+    /**
+     * Starts the download of the chapter [numbers] (1 based) in the given [kind].
+     * For [SelectionTaskKind.Epub] and [SelectionTaskKind.Pdf] the chapters are split into
+     * files of [perFile] chapters, or a single file when [perFile] is not positive.
+     */
+    fun startDownload(
+        kind: SelectionTaskKind,
+        numbers: Set<Int>,
+        perFile: Int,
+        translate: Boolean = false
+    ) {
+        selectedChapters.value = numbers.map { it - 1 }.toSet()
+        startSelectionTask(kind, perFile, translate)
+    }
+
+    /** Cancels the running selection task and closes its progress. */
+    fun cancelSelectionTask() {
+        selectionWorker.notifyEvent()
+        selectionJob?.cancel()
+        selectionTask.value = null
+    }
+
+    fun dismissSelectionTask() {
+        selectionTask.value = null
+    }
+
+    private fun startSelectionTask(kind: SelectionTaskKind, perFile: Int, translate: Boolean = false) {
+        if (selectionJob?.isActive == true) return
+        val stream = (load as? StreamResponse)?.takeIf { hasLoaded } ?: return
+        val selected = selectedChapterList()
+        if (selected.isEmpty()) {
+            showToast(R.string.no_chapters_selected)
+            return
+        }
+        val api = repo ?: return
+        val appContext = context ?: return
+        val meta = QuickStreamMetaData(stream.author, stream.name, apiName)
+        val worker = WaitOrCancel()
+        selectionWorker = worker
+
+        selectionTask.value = SelectionTaskState(kind = kind, total = selected.size)
+        val errorHandler = CoroutineExceptionHandler { _, throwable ->
+            logError(throwable)
+            selectionTask.postValue(
+                SelectionTaskState(kind = kind, total = selected.size, finished = true, error = true)
+            )
+        }
+        selectionJob = viewModelScope.launch(Dispatchers.IO + errorHandler) {
+            when (kind) {
+                SelectionTaskKind.Download ->
+                    runDownloadTask(appContext, api, meta, selected, worker)
+
+                SelectionTaskKind.Pdf, SelectionTaskKind.Epub ->
+                    runExportTask(kind, appContext, stream, meta, selected, perFile, translate)
+            }
+        }
+    }
+
+    private suspend fun runDownloadTask(
+        appContext: Context,
+        api: APIRepository,
+        meta: QuickStreamMetaData,
+        selected: List<Pair<Int, ChapterData>>,
+        worker: WaitOrCancel
+    ) {
+        var failed = 0
+        selected.forEachIndexed { position, (index, chapter) ->
+            currentCoroutineContext().ensureActive()
+            val result = BookDownloader2Helper.downloadIndividualChapter(
+                appContext.getFilePath(meta, index),
+                api,
+                chapter,
+                worker = worker
+            )
+            if (result != BookDownloader2Helper.DownloadResult.Success) {
+                failed++
+            }
+            selectionTask.postValue(
+                SelectionTaskState(
+                    kind = SelectionTaskKind.Download,
+                    done = position + 1,
+                    total = selected.size,
+                    failed = failed
+                )
+            )
+        }
+        selectionTask.postValue(
+            SelectionTaskState(
+                kind = SelectionTaskKind.Download,
+                done = selected.size,
+                total = selected.size,
+                failed = failed,
+                finished = true
+            )
+        )
+    }
+
+    /**
+     * Translates a chapter, keeping the result next to the downloaded chapter so a retry after
+     * a failure or a cancel does not translate the same chapters again.
+     */
+    private suspend fun translateWithCache(
+        translator: GeminiTranslator,
+        appContext: Context,
+        meta: QuickStreamMetaData,
+        index: Int,
+        chapter: LoadedChapter
+    ): LoadedChapter {
+        val cache = java.io.File(appContext.getFilePath(meta, index) + ".es")
+        if (cache.isFile && cache.length() > 0) {
+            val text = cache.readText()
+            val newline = text.indexOf('\n')
+            if (newline > 0) {
+                return LoadedChapter(text.substring(0, newline), text.substring(newline + 1))
+            }
+        }
+        val translated = translator.translateChapter(chapter)
+        cache.writeText("${translated.title.replace('\n', ' ')}\n${translated.html}")
+        return translated
+    }
+
+    /**
+     * Downloads the selected chapters and packs them into one or several PDF or EPUB files.
+     * Each chapter keeps the number it has in the book, also in the file names.
+     */
+    private suspend fun runExportTask(
+        kind: SelectionTaskKind,
+        appContext: Context,
+        stream: StreamResponse,
+        meta: QuickStreamMetaData,
+        selected: List<Pair<Int, ChapterData>>,
+        perFile: Int,
+        translate: Boolean
+    ) {
+        val stripAuthorNotes = appContext.getStripAuthorNodes()
+        val loadedChapters = LinkedHashMap<Int, LoadedChapter>()
+        var failed = 0
+        selected.forEachIndexed { position, (index, chapter) ->
+            currentCoroutineContext().ensureActive()
+            val loaded = appContext.getQuickChapter(meta, chapter, index, false, stripAuthorNotes)
+            if (loaded == null) {
+                failed++
+            } else {
+                loadedChapters[index + 1] =
+                    loaded.copy(title = loaded.title.ifBlank { chapter.name })
+            }
+            selectionTask.postValue(
+                SelectionTaskState(
+                    kind = kind,
+                    done = position + 1,
+                    total = selected.size,
+                    failed = failed
+                )
+            )
+        }
+
+        val failedState = SelectionTaskState(
+            kind = kind,
+            done = selected.size,
+            total = selected.size,
+            failed = failed,
+            finished = true,
+            error = true
+        )
+        if (loadedChapters.isEmpty()) {
+            selectionTask.postValue(failedState)
+            return
+        }
+
+        if (translate) {
+            val translation = AppSettings(appContext).translation
+            val translator = GeminiTranslator(
+                translation.geminiApiKey.get().trim(),
+                translation.geminiModel.get()
+            )
+            val translatingState =
+                failedState.copy(finished = false, error = false, translating = true, done = 0)
+            selectionTask.postValue(translatingState)
+            try {
+                loadedChapters.entries.forEachIndexed { position, entry ->
+                    currentCoroutineContext().ensureActive()
+                    val index = entry.key - 1
+                    entry.setValue(translateWithCache(translator, appContext, meta, index, entry.value))
+                    selectionTask.postValue(translatingState.copy(done = position + 1))
+                }
+            } catch (e: TranslationException) {
+                selectionTask.postValue(failedState.copy(errorMessage = e.message))
+                return
+            }
+        }
+
+        selectionTask.postValue(
+            failedState.copy(finished = false, error = false, translating = false, writing = true)
+        )
+
+        val storage = if (kind == SelectionTaskKind.Pdf) FileHelper.pdf else FileHelper.epub
+        val extension = if (kind == SelectionTaskKind.Pdf) "pdf" else "epub"
+        val names = ArrayList<String>()
+        val uris = ArrayList<Uri>()
+
+        for (group in ChapterSpec.group(loadedChapters.keys.toList(), perFile)) {
+            currentCoroutineContext().ensureActive()
+            val fileName = "${meta.name} - ${ChapterSpec.format(group, ",")}" +
+                if (translate) " [ES]" else ""
+            val file = storage.createFile(appContext, fileName, novelFolder = meta.name)
+            val output = file?.openOutputStream(append = false)
+            if (file == null || output == null) {
+                selectionTask.postValue(failedState)
+                return
+            }
+
+            withContext(Dispatchers.Default) {
+                if (kind == SelectionTaskKind.Pdf) {
+                    val pdfChapters = group.map { number ->
+                        val chapter = loadedChapters.getValue(number)
+                        PdfChapter(
+                            title = ChapterSpec.numberedTitle(number, chapter.title),
+                            paragraphs = ChapterPdfExporter.htmlToParagraphs(chapter.html)
+                        )
+                    }
+                    output.use { target -> ChapterPdfExporter.write(pdfChapters, target) }
+                } else {
+                    BookDownloader2Helper.writeEpubOfChapters(
+                        appContext,
+                        apiName,
+                        stream.name,
+                        stream.author,
+                        stream.synopsis,
+                        group.map { number -> number to loadedChapters.getValue(number) },
+                        output
+                    )
+                }
+            }
+            names.add("$fileName.$extension")
+            uris.add(file.uri)
+            ExportedFiles.record(meta.name, "$fileName.$extension", file.uri, storage.mimeType)
+        }
+
+        selectionTask.postValue(
+            failedState.copy(
+                error = false,
+                writing = false,
+                resultNames = names,
+                resultUris = uris
+            )
+        )
+    }
 }
+
+enum class SelectionTaskKind {
+    Download,
+    Epub,
+    Pdf
+}
+
+/** Progress and result of a download or PDF export running over the selected chapters. */
+data class SelectionTaskState(
+    val kind: SelectionTaskKind,
+    val done: Int = 0,
+    val total: Int = 0,
+    val failed: Int = 0,
+    val writing: Boolean = false,
+    val translating: Boolean = false,
+    val finished: Boolean = false,
+    val error: Boolean = false,
+    val errorMessage: String? = null,
+    val resultNames: List<String> = emptyList(),
+    val resultUris: List<Uri> = emptyList(),
+)

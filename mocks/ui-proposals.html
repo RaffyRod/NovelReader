@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel Ultimate - Propuestas de UI</title>
+<style>
+  :root { --bg:#130B0C; --surface:#1C1112; --card:#2A1B1D; --text:#F4EBE6; --muted:#A89A98; --red:#E5322D; --orange:#FF7A1A; --gold:#FFC247; --ease:cubic-bezier(.2,.8,.2,1); --w:320px; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0a0506; color:var(--text); font-family:system-ui,"Segoe UI",Roboto,sans-serif; padding:24px 18px 160px; }
+  h1 { font-size:26px; margin:0 0 6px; } h1 span { color:var(--red); }
+  h2 { font-size:19px; margin:54px 0 4px; border-left:4px solid var(--red); padding-left:10px; }
+  p.lead { color:var(--muted); margin:0 0 18px; max-width:820px; font-size:14px; }
+  .toolbar { position:sticky; top:0; z-index:20; background:#0a0506ee; backdrop-filter:blur(6px); padding:10px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid #2a1b1d; }
+  .toolbar b { font-size:13px; color:var(--muted); margin-right:4px; }
+  .seg button { all:unset; cursor:pointer; padding:7px 14px; border:1px solid #3a2326; font-size:13px; color:var(--muted); transition:all .2s var(--ease); }
+  .seg button:first-child { border-radius:18px 0 0 18px; } .seg button:last-child { border-radius:0 18px 18px 0; }
+  .seg button.on { background:var(--red); border-color:var(--red); color:#fff; }
+  .options { display:flex; flex-wrap:wrap; gap:22px; }
+  label.opt { display:flex; flex-direction:column; gap:8px; cursor:pointer; width:var(--w); max-width:100%; }
+  label.opt input { position:absolute; opacity:0; }
+  label.opt .tag { font-size:13.5px; font-weight:700; display:flex; gap:8px; align-items:center; }
+  label.opt .tag::before { content:""; width:16px; height:16px; border-radius:50%; border:2px solid #5a3a3e; flex:none; transition:all .2s; }
+  label.opt .tag small { display:block; color:var(--muted); font-weight:400; font-size:12px; }
+  label.opt input:checked ~ .tag::before { background:var(--red); border-color:var(--red); box-shadow:0 0 0 3px #E5322D44; }
+  label.opt input:checked ~ .frame { border-color:var(--red); box-shadow:0 0 0 2px #E5322D66, 0 10px 30px #000a; }
+  .frame { width:100%; background:var(--bg); border:1px solid #3a2326; border-radius:22px; overflow:hidden; min-height:300px; position:relative; transition:all .25s var(--ease); font-size:12px; }
+  label.opt:hover .frame { transform:translateY(-3px); }
+  .abar { display:flex; align-items:center; gap:8px; padding:10px 12px; }
+  .search { flex:1; height:32px; border-radius:16px; background:var(--surface); display:flex; align-items:center; padding:0 12px; color:var(--muted); }
+  .pad { padding:10px 12px; } .muted { color:var(--muted); } .row { display:flex; gap:10px; align-items:center; }
+  .cover { aspect-ratio:2/3; border-radius:8px; background:linear-gradient(160deg,var(--c1,#7a1f2b),var(--c2,#1b0b10)); position:relative; overflow:hidden; flex:none; }
+  .cover::after { content:""; position:absolute; inset:0; background:radial-gradient(circle at 70% 20%, #ffffff22, transparent 50%); }
+  .cover.none { background:#2A2D3E; display:grid; place-items:center; font-size:9px; color:#ffffffaa; } .cover.none::after { display:none; }
+  .c1 { --c1:#c2312f; --c2:#2b0a12; } .c2 { --c1:#3d5af1; --c2:#0d1030; } .c3 { --c1:#ff9a3c; --c2:#4a1408; } .c4 { --c1:#1fb88a; --c2:#052a22; } .c5 { --c1:#9b4dff; --c2:#1a0838; } .c6 { --c1:#e6c35c; --c2:#3a2a05; }
+  .grid { display:grid; gap:8px; padding:0 12px 12px; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); }
+  .bar { height:4px; border-radius:2px; background:#ffffff18; overflow:hidden; } .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--red),var(--gold)); }
+  .chip { display:inline-flex; padding:4px 10px; border-radius:12px; background:var(--card); font-size:11px; color:var(--text); white-space:nowrap; } .chip.on { background:var(--red); color:#fff; }
+  .chips { display:flex; gap:6px; overflow:hidden; padding:0 12px 10px; flex-wrap:wrap; }
+  .btn { display:inline-flex; justify-content:center; align-items:center; padding:9px 14px; border-radius:12px; background:var(--red); color:#fff; font-weight:600; font-size:12px; } .btn.ghost { background:var(--card); }
+  .nav { position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-around; padding:8px 0; background:var(--surface); color:var(--muted); font-size:10px; }
+  .nav b { color:var(--red); font-weight:600; }
+  .rowitem { display:flex; gap:10px; padding:8px 12px; align-items:center; } .rowitem .cover { width:44px; }
+  .rowitem .t { flex:1; min-width:0; } .rowitem .t b { display:block; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .shimmer { background:linear-gradient(90deg,#2a1b1d 25%,#3a2528 50%,#2a1b1d 75%); background-size:200% 100%; animation:sh 1.4s infinite linear; border-radius:6px; }
+  @keyframes sh { to { background-position:-200% 0; } }
+  .hero { height:170px; background:linear-gradient(180deg,#7a1f2b,#130B0C); position:relative; }
+  .fab { position:absolute; right:12px; bottom:56px; width:42px; height:42px; border-radius:14px; background:var(--red); display:grid; place-items:center; font-size:18px; }
+  .sticky-cta { position:absolute; left:12px; right:12px; bottom:50px; }
+  .pager { display:flex; align-items:center; gap:8px; padding:8px 12px; } .pager .mid { flex:1; text-align:center; font-weight:700; }
+  .range { padding:6px 12px; display:flex; gap:6px; flex-wrap:wrap; }
+  .slider { height:6px; border-radius:3px; background:#ffffff18; position:relative; margin:10px 12px; } .slider i { position:absolute; left:0; top:0; bottom:0; width:38%; background:var(--red); border-radius:3px; } .slider u { position:absolute; left:38%; top:-5px; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:#fff; }
+  .reader { padding:20px 18px; line-height:1.7; font-family:Georgia,serif; color:#d8cfca; background:#1a1112; }
+  .panel { position:absolute; left:0; right:0; bottom:0; background:var(--surface); padding:12px; border-radius:20px 20px 0 0; display:flex; flex-direction:column; gap:10px; }
+  .swatch { display:flex; gap:6px; } .swatch i { width:22px; height:22px; border-radius:50%; border:2px solid #ffffff44; }
+  .empty { display:grid; place-items:center; text-align:center; gap:8px; padding:60px 20px; color:var(--muted); } .empty .big { font-size:46px; }
+  .palette { display:flex; gap:0; height:60px; } .palette i { flex:1; }
+  .summary { position:fixed; left:0; right:0; bottom:0; z-index:30; background:#14090b; border-top:2px solid var(--red); padding:10px 18px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .summary pre { margin:0; font-size:12px; color:var(--muted); flex:1; min-width:240px; white-space:pre-wrap; max-height:64px; overflow:auto; }
+  .summary button { all:unset; cursor:pointer; background:var(--red); color:#fff; padding:9px 16px; border-radius:12px; font-weight:600; font-size:13px; }
+  .note { margin:8px 0 0; font-size:12.5px; color:var(--muted); max-width:820px; }
+  .tabletRow { display:flex; }
+  @media (max-width:640px){ .options { gap:16px; } }
+</style>
+</head>
+<body>
+<h1>QuickNovel <span>Ultimate</span> - Propuestas de UI</h1>
+<p class="lead">Revisé todas las pantallas (Biblioteca, Búsqueda, Resultados, Detalle de novela, Capítulos, Lector, Historial, Estados vacíos, Tema y animaciones). Para cada una hay 3 propuestas. Elige una por pantalla, y abajo se arma un resumen que puedes copiar y pegarme. Usa el selector de ancho para comprobar que cada propuesta sigue siendo responsive.</p>
+
+<div class="toolbar">
+  <b>Ancho de pantalla:</b>
+  <div class="seg" id="widths">
+    <button data-w="300px">Teléfono pequeño</button>
+    <button data-w="340px" class="on">Teléfono</button>
+    <button data-w="520px">Plegable / horizontal</button>
+    <button data-w="760px">Tablet</button>
+  </div>
+</div>
+
+<div id="sections"></div>
+
+<div class="summary">
+  <div><b>Mi selección</b><pre id="sumtext">Aún no has elegido nada.</pre></div>
+  <button id="copy">Copiar resumen</button>
+</div>
+
+<script>
+const cv = (c, extra = '') => `<div class="cover c${c} ${extra}"></div>`;
+const nocover = `<div class="cover none">Sin portada</div>`;
+const appbar = (t = 'Buscar novelas...') => `<div class="abar"><div class="search">🔍 ${t}</div></div>`;
+const nav = (i) => `<div class="nav">${['Biblioteca','Buscar','Historial','Ajustes'].map((n, k) => k === i ? `<b>${n}</b>` : n).join('')}</div>`;
+const covers = (n, ids = [1,2,3,4,5,6,1,3]) => Array.from({ length: n }, (_, i) => `<div>${cv(ids[i % ids.length])}<div style="margin-top:4px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Título ${i + 1}</div></div>`).join('');
+const item = (c, t, s, p) => `<div class="rowitem">${cv(c)}<div class="t"><b>${t}</b><span class="muted">${s}</span>${p != null ? `<div class="bar" style="margin-top:6px"><i style="width:${p}%"></i></div>` : ''}</div></div>`;
+
+const screens = [
+ { id:'biblioteca', title:'1. Biblioteca (Descargas)', lead:'Lo que ves al abrir la app: tus novelas descargadas y en lectura.', options:[
+  { k:'A', n:'Lista con progreso', d:'Parecida a la actual, con barra de progreso y chip de capítulos nuevos', h:() => `${appbar('Buscar mis novelas...')}<div class="chips"><span class="chip on">Descargas</span><span class="chip">Leyendo</span><span class="chip">Pendiente</span></div>${item(1,'Hero of Darkness','49/1312 capítulos',4)}${item(2,'Return of the Back Alley Wizard','1/700 capítulos',1)}${item(3,'The Saint Who Levels Up','140 capítulos nuevos',60)}${nav(0)}` },
+  { k:'B', n:'Grilla de portadas', d:'Más visual; se adapta a 2-6 columnas según el ancho', h:() => `${appbar('Buscar mis novelas...')}<div class="chips"><span class="chip on">Descargas</span><span class="chip">Leyendo</span><span class="chip">Pendiente</span></div><div class="grid">${covers(6)}</div>${nav(0)}` },
+  { k:'C', n:'Continuar leyendo + estantes', d:'Tarjeta destacada con la última novela y estantes horizontales', h:() => `${appbar('Buscar mis novelas...')}<div class="pad"><div style="background:linear-gradient(135deg,#7a1f2b,#2b0a12);border-radius:16px;padding:12px;display:flex;gap:12px">${cv(1,'" style="width:62px')}<div style="flex:1"><div class="muted">Continuar leyendo</div><b style="font-size:14px">Hero of Darkness</b><div class="muted" style="margin:2px 0 8px">Capítulo 49 de 1312</div><div class="bar"><i style="width:4%"></i></div><div class="btn" style="margin-top:10px">Seguir</div></div></div></div><div class="pad"><b>Nuevos capítulos</b></div><div class="grid" style="grid-template-columns:repeat(4,1fr)">${covers(4)}</div>${nav(0)}` },
+ ]},
+ { id:'busqueda', title:'2. Búsqueda (inicio)', lead:'Hoy es una grilla de logos de proveedores.', options:[
+  { k:'A', n:'Grilla de proveedores + chips de idioma', d:'Igual que ahora, con filtros de idioma visibles arriba', h:() => `${appbar()}<div class="chips"><span class="chip on">🇪🇸 Español</span><span class="chip">🇬🇧 Inglés</span><span class="chip">🌐 Todos</span></div><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(64px,1fr))">${['DevilNovels','Nova','SkyNovels','NovelFire','LibRead','Wattpad'].map((p,i)=>`<div style="text-align:center"><div style="aspect-ratio:1;border-radius:14px;background:var(--card);display:grid;place-items:center;font-size:20px">${['😈','📚','🐍','🔥','📖','🧡'][i]}</div><div style="font-size:10px;margin-top:4px">${p}</div></div>`).join('')}</div>${nav(1)}` },
+  { k:'B', n:'Lista de proveedores con estado', d:'Bandera, idioma, cantidad de novelas y estado en línea', h:() => `${appbar()}${[['🇪🇸','DevilNovels','Español · en línea'],['🇪🇸','Nova','Español · en línea'],['🇪🇸','SkyNovels','Español · lento'],['🇬🇧','NovelFire','Inglés · en línea']].map(r=>`<div class="rowitem"><div style="width:38px;height:38px;border-radius:12px;background:var(--card);display:grid;place-items:center;font-size:20px">${r[0]}</div><div class="t"><b>${r[1]}</b><span class="muted">${r[2]}</span></div><span class="muted">›</span></div>`).join('')}${nav(1)}` },
+  { k:'C', n:'Descubrir: recientes + populares', d:'Carruseles de la última búsqueda y tendencias antes de elegir proveedor', h:() => `${appbar()}<div class="pad"><b>Búsquedas recientes</b></div><div class="chips"><span class="chip">dark</span><span class="chip">dragón</span><span class="chip">mago</span></div><div class="pad"><b>Populares en español</b></div><div class="grid" style="grid-template-columns:repeat(4,1fr)">${covers(4)}</div><div class="pad"><b>Proveedores</b></div><div class="chips"><span class="chip">DevilNovels</span><span class="chip">Nova</span><span class="chip">SkyNovels</span></div>${nav(1)}` },
+ ]},
+ { id:'resultados', title:'3. Resultados de búsqueda', lead:'Hoy: una fila horizontal por proveedor. Algunas portadas fallan o tardan.', options:[
+  { k:'A', n:'Filas por proveedor con skeleton', d:'Mantiene el estilo actual; mientras carga muestra esqueletos animados', h:() => `${appbar('dark')}<div class="pad"><b>NovelFire ➜</b></div><div class="grid" style="grid-template-columns:repeat(3,1fr)">${cv(1)+cv(3)+nocover}</div><div class="pad"><b>Nova ➜</b></div><div class="grid" style="grid-template-columns:repeat(3,1fr)"><div class="cover shimmer"></div><div class="cover shimmer"></div><div class="cover shimmer"></div></div>${nav(1)}` },
+  { k:'B', n:'Grilla única con filtros', d:'Todos los resultados mezclados y chips para filtrar por proveedor', h:() => `${appbar('dark')}<div class="chips"><span class="chip on">Todos</span><span class="chip">NovelFire</span><span class="chip">Nova</span><span class="chip">Royal Road</span></div><div class="grid">${covers(6)}</div>${nav(1)}` },
+  { k:'C', n:'Lista con detalles', d:'Portada pequeña, sinopsis corta, capítulos y proveedor', h:() => `${appbar('dark')}${[1,2,3].map(i=>`<div class="rowitem" style="align-items:flex-start">${cv(i)}<div class="t"><b>Dark Magus Returns</b><span class="muted">NovelFire · 820 cap.</span><div class="muted" style="margin-top:4px;white-space:normal;font-size:11px">Un mago olvidado regresa para cobrar venganza de los dioses que lo traicionaron...</div></div></div>`).join('')}${nav(1)}` },
+ ]},
+ { id:'detalle', title:'4. Detalle de la novela', lead:'La pantalla más importante: portada, acciones, descarga y capítulos.', options:[
+  { k:'A', n:'Cabecera compacta + acciones en fila', d:'Como hoy, con botones de ícono y CTA principal más claro', h:() => `<div class="pad row" style="align-items:flex-start">${cv(1,'" style="width:84px')}<div><b style="font-size:15px">Hero of Darkness</b><div style="color:var(--red)">CrimsonWolfAuthor</div><div class="muted">En curso · 1312 capítulos</div><div class="muted">★ 4.30</div></div></div><div class="pad row"><span class="chip">🔖 Marcar</span><span class="chip">🌐 Navegador</span><span class="chip">↗ Compartir</span></div><div class="chips"><span class="chip on">Novela</span><span class="chip">Reseñas</span><span class="chip">Relacionadas</span><span class="chip">Capítulos</span></div><div class="pad muted">Elric tuvo una vida llena de experiencias traumáticas desde la infancia...</div><div class="pad row"><div class="btn" style="flex:1">⬇ Descargar</div><div class="btn ghost" style="flex:1">Leer en línea</div></div>` },
+  { k:'B', n:'Hero a pantalla + botón fijo', d:'Portada difuminada de fondo y barra inferior fija con Descargar / Leer', h:() => `<div class="hero"><div style="position:absolute;left:12px;bottom:12px;display:flex;gap:12px;align-items:flex-end">${cv(1,'" style="width:84px')}<div><b style="font-size:16px">Hero of Darkness</b><div class="muted">CrimsonWolfAuthor · ★ 4.30</div></div></div></div><div class="chips" style="margin-top:10px"><span class="chip">Fantasía</span><span class="chip">Acción</span><span class="chip">Aventura</span></div><div class="pad muted">Elric tuvo una vida llena de experiencias traumáticas...</div><div class="sticky-cta row"><div class="btn" style="flex:2">⬇ Descargar</div><div class="btn ghost" style="flex:1">Leer</div></div>${nav(1)}` },
+  { k:'C', n:'Tabs segmentadas + estadísticas', d:'Tarjetas con vistas, nota y capítulos; tabs más grandes', h:() => `<div class="pad row" style="align-items:flex-start">${cv(1,'" style="width:70px')}<div><b style="font-size:15px">Hero of Darkness</b><div class="muted">CrimsonWolfAuthor</div></div></div><div class="pad row" style="justify-content:space-around;text-align:center"><div><b>761k</b><div class="muted">Vistas</div></div><div><b>4.30★</b><div class="muted">6 votos</div></div><div><b>1312</b><div class="muted">Capítulos</div></div></div><div class="pad"><div class="seg" style="display:flex"><button class="on" style="flex:1;text-align:center">Novela</button><button style="flex:1;text-align:center">Reseñas</button><button style="flex:1;text-align:center">Capítulos</button></div></div><div class="pad row"><div class="btn" style="flex:1">⬇ Descargar</div><div class="btn ghost" style="flex:1">▶ Leer</div></div>` },
+ ]},
+ { id:'capitulos', title:'5. Capítulos y paginación (novelas de 5000 capítulos)', lead:'Ya existe paginación y salto a página o capítulo. Estas propuestas hacen más rápido llegar a un capítulo lejano.', options:[
+  { k:'A', n:'Barra actual + salto', d:'Lo implementado hoy: ◀ Página N / M ▶, tamaño y diálogo de salto', h:() => `<div class="pager"><span>◀</span><div class="mid">Página 34 / 88 (496-510)</div><span>▶</span><span class="chip" style="border:1px solid #fff5">15 / pág.</span></div>${['496','497','498','499','500'].map(n=>`<div class="rowitem"><div class="t"><b>Capítulo ${n}</b></div></div>`).join('')}` },
+  { k:'B', n:'Deslizador de página', d:'Arrastras un control para recorrer miles de capítulos, con vista previa del número', h:() => `<div class="pad row"><b style="flex:1">Capítulos 496-510</b><span class="chip">15 / pág.</span></div><div class="slider"><i></i><u></u></div><div class="pad row muted" style="justify-content:space-between"><span>1</span><span style="color:var(--gold);font-weight:700">Cap. 500</span><span>1312</span></div>${['496','497','498','499','500'].map(n=>`<div class="rowitem"><div class="t"><b>Capítulo ${n}</b></div></div>`).join('')}` },
+  { k:'C', n:'Rangos por chips', d:'Chips 1-100, 101-200... y dentro, paginación corta. Ideal para saltos grandes', h:() => `<div class="range"><span class="chip">1-100</span><span class="chip">101-200</span><span class="chip">201-300</span><span class="chip">301-400</span><span class="chip on">401-500</span><span class="chip">501-600</span><span class="chip">...</span></div><div class="pager"><span>◀</span><div class="mid">Página 4 / 7</div><span>▶</span></div>${['496','497','498','499','500'].map(n=>`<div class="rowitem"><div class="t"><b>Capítulo ${n}</b></div></div>`).join('')}` },
+ ]},
+ { id:'lector', title:'6. Lector', lead:'Lectura dentro de la app.', options:[
+  { k:'A', n:'Minimalista, barra que se oculta', d:'Solo texto; al tocar aparece barra superior con título y progreso', h:() => `<div class="reader" style="min-height:300px"><div class="muted" style="font-family:system-ui;font-size:11px;margin-bottom:10px">Capítulo 500 · 62%</div>Elric abrió los ojos y la luz de la mañana le quemó las pupilas. Durante un momento no supo dónde estaba, pero el olor a ceniza lo trajo de vuelta... El fuego nunca se había apagado del todo.</div>` },
+  { k:'B', n:'Panel inferior de ajustes', d:'Tamaño de letra, tema de página y brillo en una hoja inferior', h:() => `<div class="reader" style="min-height:300px">Elric abrió los ojos y la luz de la mañana le quemó las pupilas. Durante un momento no supo dónde estaba...</div><div class="panel"><div class="row"><span>Aa</span><div class="slider" style="flex:1;margin:0"><i style="width:55%"></i></div><span style="font-size:18px">Aa</span></div><div class="row"><span>Tema</span><div class="swatch"><i style="background:#1a1112"></i><i style="background:#f4ece0"></i><i style="background:#0b0b0b"></i><i style="background:#2b3a2f"></i></div></div><div class="row"><span>☀</span><div class="slider" style="flex:1;margin:0"><i style="width:35%"></i></div></div></div>` },
+  { k:'C', n:'Inmersivo con gestos', d:'Pantalla completa; deslizar a los lados cambia de capítulo, doble toque ajustes', h:() => `<div class="reader" style="min-height:300px;position:relative">Elric abrió los ojos y la luz de la mañana le quemó las pupilas...<div class="muted" style="position:absolute;left:8px;top:50%;font-family:system-ui">‹ anterior</div><div class="muted" style="position:absolute;right:8px;top:50%;font-family:system-ui">siguiente ›</div><div class="chip" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:system-ui">doble toque: ajustes</div></div>` },
+ ]},
+ { id:'historial', title:'7. Historial', lead:'Novelas que has abierto o leído recientemente.', options:[
+  { k:'A', n:'Lista con progreso', d:'Parecida a la actual, con barra y botón continuar', h:() => `${appbar('Buscar en historial...')}${item(1,'Hero of Darkness','49/1312 capítulos',4)}${item(2,'Return of the Back Alley Wizard','1/700 capítulos',1)}${nav(2)}` },
+  { k:'B', n:'Agrupado por fecha', d:'Secciones Hoy, Ayer, Esta semana con deslizar para borrar', h:() => `${appbar('Buscar en historial...')}<div class="pad muted">HOY</div>${item(1,'Hero of Darkness','Cap. 49 · hace 2 h',4)}<div class="pad muted">AYER</div>${item(2,'Return of the Back Alley Wizard','Cap. 1 · ayer',1)}${nav(2)}` },
+  { k:'C', n:'Tarjetas con retomar', d:'Tarjetas anchas con botón "Retomar capítulo N"', h:() => `${appbar('Buscar en historial...')}<div class="pad">${[1,2].map(i=>`<div style="background:var(--surface);border-radius:16px;padding:10px;display:flex;gap:10px;margin-bottom:8px">${cv(i,'" style="width:56px')}<div style="flex:1"><b>Hero of Darkness</b><div class="muted">Cap. 49 de 1312</div><div class="btn" style="margin-top:8px;padding:6px 10px">Retomar cap. 49</div></div></div>`).join('')}</div>${nav(2)}` },
+ ]},
+ { id:'vacios', title:'8. Estados vacíos y de carga', lead:'Hoy las pantallas vacías se ven casi negras, sin guía.', options:[
+  { k:'A', n:'Ilustración con llama', d:'Llama del logo + mensaje + acción', h:() => `<div class="empty"><div class="big">🔥</div><b style="color:var(--text);font-size:15px">Tu biblioteca está vacía</b>Busca una novela y descárgala para leerla sin conexión.<div class="btn">Buscar novelas</div></div>${nav(0)}` },
+  { k:'B', n:'Skeleton animado', d:'Mientras carga muestra esqueletos con la forma del contenido real', h:() => `${appbar()}${[1,2,3].map(()=>`<div class="rowitem"><div class="cover shimmer" style="width:44px"></div><div class="t"><div class="shimmer" style="height:12px;width:70%;margin-bottom:6px"></div><div class="shimmer" style="height:10px;width:40%"></div></div></div>`).join('')}${nav(0)}` },
+  { k:'C', n:'Texto mínimo', d:'Solo un mensaje discreto', h:() => `<div class="empty"><span>Nada por aquí todavía</span></div>${nav(0)}` },
+ ]},
+ { id:'tema', title:'9. Fondo y paleta', lead:'El rojo carmesí/fuego ya es el acento. Opciones de fondos para el tema por defecto.', options:[
+  { k:'A', n:'Brasa (actual)', d:'Negro cálido #130B0C con superficies rojizas', h:() => `<div class="palette"><i style="background:#130B0C"></i><i style="background:#1C1112"></i><i style="background:#2A1B1D"></i><i style="background:#E5322D"></i><i style="background:#FF7A1A"></i><i style="background:#FFC247"></i></div><div class="pad">${item(1,'Hero of Darkness','49/1312',4)}</div>` },
+  { k:'B', n:'Carbón + dorado', d:'Gris carbón neutro y acento dorado para menos rojo en pantalla', h:() => `<div class="palette"><i style="background:#101010"></i><i style="background:#1A1A1A"></i><i style="background:#262626"></i><i style="background:#E5322D"></i><i style="background:#FFC247"></i><i style="background:#FFE08A"></i></div><div class="pad">${item(2,'Hero of Darkness','49/1312',4)}</div>` },
+  { k:'C', n:'Medianoche carmesí', d:'Fondo azul noche con acento rojo, más contraste frío/cálido', h:() => `<div class="palette"><i style="background:#0b0d1a"></i><i style="background:#12152a"></i><i style="background:#1d2140"></i><i style="background:#E5322D"></i><i style="background:#FF7A1A"></i><i style="background:#8aa0ff"></i></div><div class="pad">${item(2,'Hero of Darkness','49/1312',4)}</div>` },
+ ]},
+ { id:'animaciones', title:'10. Movimiento y animaciones', lead:'Intensidad general de las transiciones (sin afectar el rendimiento).', options:[
+  { k:'A', n:'Sutil', d:'Fundidos y desplazamientos cortos, rebote leve al tocar', h:() => `<div class="empty"><div class="big">〰</div>Transiciones de 200 ms.<br>Portadas se encogen 4 % al tocarlas.</div>` },
+  { k:'B', n:'Fluido (recomendado)', d:'Portada que viaja a la pantalla de detalle, listas que entran escalonadas, resortes suaves', h:() => `<div class="empty"><div class="big">🌊</div>Portada → detalle con transición compartida.<br>Items de lista entran en cascada.</div>` },
+  { k:'C', n:'Dinámico', d:'Más rebote y efectos (brasas al descargar, llama que crece en el progreso)', h:() => `<div class="empty"><div class="big">🔥</div>Chispas al completar descarga.<br>Barras de progreso con llama.</div>` },
+ ]},
+];
+
+const root = document.getElementById('sections');
+for (const s of screens) {
+  const sec = document.createElement('section');
+  sec.innerHTML = `<h2>${s.title}</h2><p class="lead">${s.lead}</p><div class="options">` + s.options.map(o => `
+    <label class="opt"><input type="radio" name="${s.id}" value="${o.k}" data-title="${s.title}" data-name="${o.n}">
+      <div class="tag"><span>${s.id === 'tema' || s.id === 'animaciones' ? '' : ''}Opción ${o.k} - ${o.n}<small>${o.d}</small></span></div>
+      <div class="frame">${o.h()}</div></label>`).join('') + `</div>`;
+  root.appendChild(sec);
+}
+
+document.getElementById('widths').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#widths button').forEach(x => x.classList.toggle('on', x === b));
+  document.documentElement.style.setProperty('--w', b.dataset.w);
+});
+
+const sum = document.getElementById('sumtext');
+const refresh = () => {
+  const lines = [...document.querySelectorAll('input[type=radio]:checked')].map(i => `${i.dataset.title}: Opción ${i.value} - ${i.dataset.name}`);
+  sum.textContent = lines.length ? lines.join('\n') : 'Aún no has elegido nada.';
+};
+document.addEventListener('change', refresh);
+document.getElementById('copy').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(sum.textContent);
+  const b = document.getElementById('copy'); b.textContent = 'Copiado'; setTimeout(() => b.textContent = 'Copiar resumen', 1500);
+});
+</script>
+</body>
+</html>

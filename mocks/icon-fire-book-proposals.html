@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel Ultimate - Iconos: libro en llamas</title>
+<style>
+  :root { --text:#F4EBE6; --muted:#A89A98; --red:#E5322D; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0a0506; color:var(--text); font-family:system-ui,"Segoe UI",Roboto,sans-serif; padding:24px 18px 140px; }
+  h1 { font-size:26px; margin:0 0 6px; } h1 span { color:var(--red); }
+  p.lead { color:var(--muted); margin:0 0 18px; max-width:860px; font-size:14px; }
+  .toolbar { position:sticky; top:0; z-index:20; background:#0a0506ee; backdrop-filter:blur(6px); padding:10px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid #2a1b1d; margin-bottom:22px; }
+  .toolbar b { font-size:13px; color:var(--muted); }
+  .seg button { all:unset; cursor:pointer; padding:7px 14px; border:1px solid #3a2326; font-size:13px; color:var(--muted); }
+  .seg button:first-child { border-radius:18px 0 0 18px; } .seg button:last-child { border-radius:0 18px 18px 0; }
+  .seg button.on { background:var(--red); border-color:var(--red); color:#fff; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:22px; }
+  label.card { display:flex; flex-direction:column; gap:12px; background:#140a0c; border:1px solid #3a2326; border-radius:20px; padding:18px; cursor:pointer; transition:all .2s; }
+  label.card:hover { transform:translateY(-3px); }
+  label.card input { position:absolute; opacity:0; }
+  label.card:has(input:checked) { border-color:var(--red); box-shadow:0 0 0 2px #E5322D66, 0 10px 30px #000a; }
+  .name { font-weight:700; font-size:14px; display:flex; gap:8px; align-items:flex-start; }
+  .name::before { content:""; width:16px; height:16px; margin-top:2px; border-radius:50%; border:2px solid #5a3a3e; flex:none; }
+  label.card:has(input:checked) .name::before { background:var(--red); border-color:var(--red); box-shadow:0 0 0 3px #E5322D44; }
+  .name small { display:block; color:var(--muted); font-weight:400; font-size:12px; margin-top:2px; }
+  .big { display:grid; place-items:center; padding:6px 0; }
+  .big svg { width:150px; height:150px; border-radius:var(--r,34px); box-shadow:0 8px 24px #000a; }
+  .sizes { display:flex; gap:14px; align-items:flex-end; justify-content:center; }
+  .sizes svg { border-radius:var(--r,34px); }
+  .row2 { display:flex; gap:12px; justify-content:center; align-items:center; font-size:11px; color:var(--muted); }
+  .home { display:flex; gap:12px; justify-content:center; background:linear-gradient(160deg,#2b3550,#10131f); padding:12px; border-radius:14px; }
+  .home div { text-align:center; font-size:10px; color:#fff; } .home svg { width:48px; height:48px; border-radius:var(--r,34px); display:block; margin:0 auto 4px; }
+  .home .ph { width:48px; height:48px; border-radius:14px; background:#ffffff22; margin:0 auto 4px; }
+  .summary { position:fixed; left:0; right:0; bottom:0; z-index:30; background:#14090b; border-top:2px solid var(--red); padding:10px 18px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .summary pre { margin:0; font-size:12px; color:var(--muted); flex:1; min-width:240px; white-space:pre-wrap; }
+  .summary button { all:unset; cursor:pointer; background:var(--red); color:#fff; padding:9px 16px; border-radius:12px; font-weight:600; font-size:13px; }
+</style>
+</head>
+<body>
+<h1>QuickNovel <span>Ultimate</span> - Iconos: libro en llamas</h1>
+<p class="lead">Ocho propuestas de icono con la idea del libro ardiendo, en la paleta brasa de la app. Cada tarjeta muestra el icono grande, en tamaños pequeños y en una pantalla de inicio. Cambia la forma de la máscara para ver cómo queda en distintos teléfonos. Elige uno y copia el resumen.</p>
+
+<div class="toolbar">
+  <b>Forma de máscara:</b>
+  <div class="seg" id="shapes">
+    <button data-r="50%">Círculo</button>
+    <button data-r="34px" class="on">Squircle</button>
+    <button data-r="14px">Cuadrado redondeado</button>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="bgEmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a0d10"/><stop offset="1" stop-color="#0d0506"/></linearGradient>
+    <linearGradient id="bgRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a2a"/><stop offset="1" stop-color="#9c1620"/></linearGradient>
+    <linearGradient id="bgNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b0b14"/><stop offset="1" stop-color="#05030a"/></linearGradient>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#E5322D"/><stop offset=".55" stop-color="#FF7A1A"/><stop offset="1" stop-color="#FFC247"/></linearGradient>
+    <linearGradient id="flameIn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF7A1A"/><stop offset="1" stop-color="#FFF1B0"/></linearGradient>
+    <linearGradient id="cover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b1d26"/><stop offset="1" stop-color="#3d0c14"/></linearGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4E0"/><stop offset="1" stop-color="#E8C9A0"/></linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#FF7A1A" stop-opacity=".55"/><stop offset="1" stop-color="#FF7A1A" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowRed" cx=".5" cy=".6" r=".55"><stop offset="0" stop-color="#FFC247" stop-opacity=".5"/><stop offset="1" stop-color="#FFC247" stop-opacity="0"/></radialGradient>
+
+    <path id="fl" d="M50 2 C57 22 80 34 80 60 C80 80 67 94 50 94 C33 94 20 80 20 60 C20 46 29 40 33 28 C38 38 43 40 45 37 C44 24 46 12 50 2 Z"/>
+    <path id="fl2" d="M50 28 C54 42 66 50 66 66 C66 80 59 90 50 90 C41 90 34 80 34 66 C34 58 39 54 41 47 C44 52 47 52 48 50 C47 42 48 34 50 28 Z"/>
+    <path id="bookL" d="M4 36 Q26 26 50 38 L50 86 Q26 74 4 84 Z"/>
+    <path id="bookR" d="M96 36 Q74 26 50 38 L50 86 Q74 74 96 84 Z"/>
+  </defs>
+</svg>
+
+<div class="grid" id="grid"></div>
+
+<div class="summary">
+  <div><b>Mi selección</b><pre id="sumtext">Aún no has elegido nada.</pre></div>
+  <button id="copy">Copiar resumen</button>
+</div>
+
+<script>
+/* Each icon is a 108x108 SVG built from the shared symbols declared above. */
+const ICONS = [
+ { id:'1', name:'1. Libro abierto con llama', desc:'Libro abierto y una llama grande naciendo del centro. Es la lectura más directa de "libro en llamas".',
+   svg:`<rect width="108" height="108" fill="url(#bgEmber)"/><ellipse cx="54" cy="46" rx="46" ry="42" fill="url(#glow)"/>
+   <g transform="translate(14 22) scale(.8)"><use href="#bookL" fill="url(#page)"/><use href="#bookR" fill="#f0d6b0"/><path d="M50 38 L50 86" stroke="#b58a5c" stroke-width="2"/></g>
+   <g transform="translate(29 6) scale(.5)"><use href="#fl" fill="url(#flame)"/><use href="#fl2" fill="url(#flameIn)"/></g>` },
+ { id:'2', name:'2. Libro cerrado ardiendo', desc:'Un libro de tapa roja, de pie y en diagonal, con llamas saliendo del lomo superior. Se parece a un objeto real.',
+   svg:`<rect width="108" height="108" fill="url(#bgNight)"/><ellipse cx="54" cy="52" rx="44" ry="40" fill="url(#glow)"/>
+   <g transform="rotate(-8 54 70)"><rect x="30" y="44" width="48" height="52" rx="5" fill="url(#cover)"/><rect x="30" y="44" width="9" height="52" rx="3" fill="#5a1019"/><rect x="44" y="56" width="26" height="4" rx="2" fill="#FFC247"/><rect x="44" y="65" width="18" height="3" rx="1.5" fill="#FFC247" opacity=".7"/></g>
+   <g transform="translate(26 4) scale(.6)"><use href="#fl" fill="url(#flame)"/><use href="#fl2" fill="url(#flameIn)"/></g>
+   <g transform="translate(46 10) scale(.3) rotate(15 50 50)"><use href="#fl" fill="url(#flame)" opacity=".9"/></g>` },
+ { id:'3', name:'3. Páginas que se vuelven chispas', desc:'Libro abierto cuyas páginas se deshacen en brasas y chispas que suben. Más artístico, sin una llama grande.',
+   svg:`<rect width="108" height="108" fill="url(#bgNight)"/><ellipse cx="54" cy="70" rx="46" ry="30" fill="url(#glow)"/>
+   <g transform="translate(14 38) scale(.8)"><use href="#bookL" fill="url(#page)"/><use href="#bookR" fill="#f0d6b0"/></g>
+   <g fill="#FFC247"><circle cx="38" cy="30" r="3"/><circle cx="52" cy="20" r="2.4"/><circle cx="66" cy="28" r="3.2"/><circle cx="46" cy="40" r="2"/><circle cx="74" cy="16" r="1.8"/><circle cx="30" cy="18" r="1.8"/></g>
+   <g fill="#FF7A1A"><circle cx="58" cy="34" r="2.2"/><circle cx="42" cy="12" r="1.6"/><circle cx="70" cy="40" r="1.8"/></g>
+   <path d="M18 52 Q34 46 54 56 Q74 46 90 52" stroke="#FF7A1A" stroke-width="3" fill="none" stroke-linecap="round"/>` },
+ { id:'4', name:'4. Llama con libro en el interior', desc:'Silueta de llama grande y, dentro, un libro abierto en negativo. Lectura de "el fuego de leer"; muy limpio en tamaños pequeños.',
+   svg:`<rect width="108" height="108" fill="url(#bgEmber)"/>
+   <g transform="translate(10 6) scale(.88)"><use href="#fl" fill="url(#flame)"/></g>
+   <g transform="translate(27 50) scale(.54)"><use href="#bookL" fill="#2a0d10"/><use href="#bookR" fill="#3a1015"/></g>` },
+ { id:'5', name:'5. Glifo minimalista sobre rojo', desc:'Fondo rojo-naranja liso con un libro abierto blanco que remata en una llama dorada. Plano, muy legible, estilo moderno.',
+   svg:`<rect width="108" height="108" fill="url(#bgRed)"/>
+   <g transform="translate(14 40) scale(.8)"><use href="#bookL" fill="#fff"/><use href="#bookR" fill="#ffe9d6"/></g>
+   <g transform="translate(34 8) scale(.4)"><use href="#fl" fill="#FFC247"/><use href="#fl2" fill="#fff"/></g>` },
+ { id:'6', name:'6. Letra Q hecha de fuego sobre libro', desc:'Un libro abierto abajo y una Q formada por una llama circular, que une el nombre de la app con el fuego.',
+   svg:`<rect width="108" height="108" fill="url(#bgNight)"/><circle cx="54" cy="46" r="44" fill="url(#glowRed)"/>
+   <g transform="translate(18 68) scale(.72) "><use href="#bookL" fill="url(#page)" transform="translate(0 -40)"/><use href="#bookR" fill="#f0d6b0" transform="translate(0 -40)"/></g>
+   <circle cx="54" cy="40" r="22" fill="none" stroke="url(#flame)" stroke-width="10"/>
+   <path d="M62 52 L78 70" stroke="url(#flame)" stroke-width="10" stroke-linecap="round"/>
+   <g transform="translate(46 4) scale(.16)"><use href="#fl" fill="url(#flameIn)"/></g>` },
+ { id:'7', name:'7. Libro con lomo en llamas (vista 3/4)', desc:'Libro grueso visto en perspectiva, con páginas visibles y tres lenguas de fuego pequeñas en la esquina. Más detalle, estilo ilustración.',
+   svg:`<rect width="108" height="108" fill="url(#bgEmber)"/><ellipse cx="54" cy="56" rx="46" ry="38" fill="url(#glow)"/>
+   <path d="M20 54 L54 40 L90 54 L90 84 L54 98 L20 84 Z" fill="url(#cover)"/>
+   <path d="M54 40 L90 54 L90 84 L54 98 Z" fill="#6d1620" opacity=".85"/>
+   <path d="M26 58 L54 47 L84 58 L84 62 L54 52 L26 63 Z" fill="url(#page)"/>
+   <path d="M54 47 L54 98" stroke="#2a0d10" stroke-width="2"/>
+   <g transform="translate(22 4) scale(.38)"><use href="#fl" fill="url(#flame)"/><use href="#fl2" fill="url(#flameIn)"/></g>
+   <g transform="translate(50 -2) scale(.5)"><use href="#fl" fill="url(#flame)"/><use href="#fl2" fill="url(#flameIn)"/></g>
+   <g transform="translate(66 12) scale(.32)"><use href="#fl" fill="url(#flame)"/></g>` },
+ { id:'8', name:'8. Ave fénix / alas de libro', desc:'Las dos páginas del libro se abren como alas y una llama dorada sube al centro. Evoca renacer y leer una y otra vez.',
+   svg:`<rect width="108" height="108" fill="url(#bgNight)"/><ellipse cx="54" cy="50" rx="46" ry="40" fill="url(#glow)"/>
+   <g transform="translate(54 62) scale(-.9 .9) translate(-50 -50)"><path d="M50 60 Q14 66 2 30 Q24 38 50 48 Z" fill="url(#flame)"/><path d="M50 60 Q24 60 14 40 Q30 46 50 54 Z" fill="url(#flameIn)"/></g>
+   <g transform="translate(54 62) scale(.9 .9) translate(-50 -50)"><path d="M50 60 Q14 66 2 30 Q24 38 50 48 Z" fill="url(#flame)"/><path d="M50 60 Q24 60 14 40 Q30 46 50 54 Z" fill="url(#flameIn)"/></g>
+   <g transform="translate(35 52) scale(.38)"><use href="#bookL" fill="url(#page)"/><use href="#bookR" fill="#f0d6b0"/></g>
+   <g transform="translate(40 8) scale(.28)"><use href="#fl" fill="url(#flame)"/><use href="#fl2" fill="url(#flameIn)"/></g>` },
+];
+
+const grid = document.getElementById('grid');
+const svgOf = (i, s) => `<svg viewBox="0 0 108 108" width="${s}" height="${s}">${i.svg}</svg>`;
+ICONS.forEach(i => {
+  const el = document.createElement('label');
+  el.className = 'card';
+  el.innerHTML = `<input type="radio" name="icon" value="${i.id}">
+    <div class="name"><div>${i.name}<small>${i.desc}</small></div></div>
+    <div class="big">${svgOf(i, 150)}</div>
+    <div class="sizes">${[72, 48, 32, 24].map(s => svgOf(i, s)).join('')}</div>
+    <div class="home"><div>${svgOf(i, 48)}QuickNovel</div><div><span class="ph"></span>Mensajes</div><div><span class="ph"></span>Cámara</div></div>`;
+  el.querySelector('input').addEventListener('change', () => {
+    document.getElementById('sumtext').textContent = `Icono de la app: ${i.name}` + (` (máscara: ${document.querySelector('#shapes .on').textContent})`);
+  });
+  grid.appendChild(el);
+});
+
+document.querySelectorAll('#shapes button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#shapes button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  document.documentElement.style.setProperty('--r', b.dataset.r);
+});
+document.documentElement.style.setProperty('--r', '34px');
+document.getElementById('copy').onclick = () => navigator.clipboard.writeText(document.getElementById('sumtext').textContent);
+</script>
+</body>
+</html>

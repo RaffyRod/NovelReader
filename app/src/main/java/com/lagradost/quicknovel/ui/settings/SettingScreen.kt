@@ -4,6 +4,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import androidx.core.net.toUri
+import com.lagradost.quicknovel.GeminiProtocol
+import com.lagradost.quicknovel.GeminiTranslator
+import com.mihon.presentation.settings.collectAsState
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -60,11 +64,14 @@ import com.lagradost.quicknovel.CommonActivity.showToast
 import com.lagradost.quicknovel.ErrorLoadingException
 import com.lagradost.quicknovel.FileHelper
 import com.lagradost.quicknovel.FileStorage
+import com.lagradost.quicknovel.NewChaptersWorker
 import com.lagradost.quicknovel.update.MainActivityScreen
 import com.lagradost.quicknovel.R
+import com.lagradost.quicknovel.util.ProviderLanguages
 import com.lagradost.quicknovel.mvvm.logError
 import com.lagradost.quicknovel.ui.txt
 import com.lagradost.quicknovel.util.Apis.Companion.apis
+import com.lagradost.quicknovel.util.CustomProviders
 import com.lagradost.quicknovel.util.AppUtils.openInBrowser
 import com.lagradost.quicknovel.util.BackupUtils
 import com.lagradost.quicknovel.util.SubtitleHelper
@@ -148,6 +155,8 @@ object SettingScreen : SearchableSettings {
         val store = AndroidPreferenceStore(context)
         val scope = rememberCoroutineScope()
         val settings = rememberAppSettings()
+        val geminiKey by settings.translation.geminiApiKey.collectAsState()
+        var customProviderCount by remember { mutableStateOf(CustomProviders.load().size) }
         val githubViewModel = MainActivityScreen.githubViewModel()
         val logcat =
             getFilePreference(FileHelper.logcat, store, stringResource(R.string.log_cat_location))
@@ -199,7 +208,7 @@ object SettingScreen : SearchableSettings {
                         icon = painterResource(R.drawable.plugin_lang),
                         title = stringResource(R.string.provider_lang_settings),
                         preference = settings.provider.searchLangList,
-                        entries = apis.map { api ->
+                        entries = apis.filter { it.lang != ProviderLanguages.ENGLISH }.map { api ->
                             val lang = api.lang
                             val langName = SubtitleHelper.fromTwoLettersToLanguage(lang)!!
                             lang to langName
@@ -207,6 +216,12 @@ object SettingScreen : SearchableSettings {
                             val flag = SubtitleHelper.getFlagFromIso(code) ?: "🌐"
                             code to "$flag $name"
                         }.associate { it }.toPersistentMap(),
+                    ),
+                    Preference.PreferenceItem.SwitchPreference(
+                        icon = painterResource(R.drawable.plugin_lang),
+                        title = stringResource(R.string.show_english_providers),
+                        subtitle = stringResource(R.string.show_english_providers_desc),
+                        preference = settings.provider.showEnglishProviders,
                     ),
                     Preference.PreferenceItem.MultiSelectListPreference(
                         icon = painterResource(R.drawable.extension_24px),
@@ -239,6 +254,27 @@ object SettingScreen : SearchableSettings {
                             val theme = modeToTheme(perfToMode(k), CloudStreamPrimaryColor.NORMAL)
                             RoundColor(theme.background)
                         }
+                    ),
+                    Preference.PreferenceItem.ListPreference(
+                        icon = painterResource(R.drawable.ic_baseline_collections_bookmark_24),
+                        title = stringResource(R.string.nav_style_title),
+                        preference = settings.ui.navStyle,
+                        entries = persistentMapOf(
+                            "A" to stringResource(R.string.nav_style_a),
+                            "B" to stringResource(R.string.nav_style_b),
+                            "C" to stringResource(R.string.nav_style_c),
+                            "D" to stringResource(R.string.nav_style_d),
+                        ),
+                    ),
+                    Preference.PreferenceItem.ListPreference(
+                        icon = painterResource(R.drawable.ic_baseline_checklist_24),
+                        title = stringResource(R.string.settings_style_title),
+                        preference = settings.ui.settingsStyle,
+                        entries = persistentMapOf(
+                            "1" to stringResource(R.string.settings_style_1),
+                            "2" to stringResource(R.string.settings_style_2),
+                            "3" to stringResource(R.string.settings_style_3),
+                        ),
                     ),
                     Preference.PreferenceItem.ListPreference(
                         icon = painterResource(R.drawable.colors_24px),
@@ -348,6 +384,135 @@ object SettingScreen : SearchableSettings {
                             } catch (t: Throwable) {
                                 logError(t)
                                 showToast(t.message)
+                            }
+                        }
+                    ),
+                )
+            ),
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.new_chapters_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.SwitchPreference(
+                        icon = painterResource(R.drawable.notifications_active_24px),
+                        title = stringResource(R.string.new_chapters_notify),
+                        subtitle = stringResource(R.string.new_chapters_notify_desc),
+                        preference = settings.updates.notifyNewChapters,
+                        onValueChanged = { enabled ->
+                            NewChaptersWorker.schedule(
+                                context,
+                                enabled,
+                                settings.updates.chapterCheckHours.get()
+                            )
+                            true
+                        }
+                    ),
+                    Preference.PreferenceItem.ListPreference(
+                        icon = painterResource(R.drawable.ic_baseline_autorenew_24),
+                        title = stringResource(R.string.new_chapters_frequency),
+                        preference = settings.updates.chapterCheckHours,
+                        entries = listOf(3, 6, 12, 24).associateWith { hours ->
+                            stringResource(R.string.new_chapters_every_hours, hours)
+                        }.toPersistentMap(),
+                        enabled = true,
+                        onValueChanged = { hours ->
+                            NewChaptersWorker.schedule(
+                                context,
+                                settings.updates.notifyNewChapters.get(),
+                                hours
+                            )
+                            true
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.mobile_arrow_down_24px),
+                        title = stringResource(R.string.new_chapters_check_now),
+                        subtitle = stringResource(R.string.new_chapters_check_now_desc),
+                        onClick = {
+                            showToast(R.string.new_chapters_checking)
+                            NewChaptersWorker.checkNow(context)
+                        }
+                    ),
+                )
+            ),
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.translation_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.language_korean_latin_24px),
+                        title = stringResource(R.string.translation_get_key),
+                        subtitle = stringResource(R.string.translation_get_key_desc),
+                        onClick = {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, GeminiProtocol.KEYS_URL.toUri())
+                            )
+                        }
+                    ),
+                    Preference.PreferenceItem.EditTextPreference(
+                        preference = settings.translation.geminiApiKey,
+                        title = stringResource(R.string.translation_api_key),
+                        subtitle = if (geminiKey.isBlank()) {
+                            stringResource(R.string.translation_key_not_set)
+                        } else {
+                            "••••" + geminiKey.takeLast(4)
+                        },
+                        onValueChanged = { value -> value.length < 200 }
+                    ),
+                    Preference.PreferenceItem.ListPreference(
+                        icon = painterResource(R.drawable.ic_baseline_autorenew_24),
+                        title = stringResource(R.string.translation_model),
+                        preference = settings.translation.geminiModel,
+                        entries = GeminiProtocol.MODELS.associateWith { it }.toPersistentMap(),
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.notifications_active_24px),
+                        title = stringResource(R.string.translation_test),
+                        subtitle = stringResource(R.string.translation_test_desc),
+                        onClick = {
+                            val key = settings.translation.geminiApiKey.get().trim()
+                            if (key.isEmpty()) {
+                                showToast(R.string.translation_key_missing)
+                            } else {
+                                showToast(R.string.translation_testing)
+                                scope.launch(Dispatchers.IO) {
+                                    val error = GeminiTranslator(
+                                        key,
+                                        settings.translation.geminiModel.get(),
+                                        maxRetries = 1
+                                    ).check()
+                                    showToast(
+                                        error ?: context.getString(R.string.translation_test_ok),
+                                        Toast.LENGTH_LONG
+                                    )
+                                }
+                            }
+                        }
+                    ),
+                )
+            ),
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.cp_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.extension_24px),
+                        title = stringResource(R.string.cp_add),
+                        subtitle = stringResource(R.string.cp_add_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                CustomProviderDialogs.showSimpleAdd(act) {
+                                    customProviderCount = CustomProviders.load().size
+                                }
+                            }
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.plugin_lang),
+                        title = stringResource(R.string.cp_manage),
+                        subtitle = stringResource(R.string.cp_count, customProviderCount),
+                        onClick = {
+                            activity?.let { act ->
+                                CustomProviderDialogs.showManager(act) {
+                                    customProviderCount = CustomProviders.load().size
+                                }
                             }
                         }
                     ),

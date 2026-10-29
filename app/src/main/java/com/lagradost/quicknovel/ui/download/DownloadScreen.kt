@@ -1,5 +1,10 @@
 package com.lagradost.quicknovel.ui.download
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -64,7 +69,7 @@ import com.lagradost.quicknovel.MainActivity
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.compose.BaseSearchBar
 import com.lagradost.quicknovel.compose.IsScrolling
-import com.lagradost.quicknovel.ui.common.HorizontalTab
+import com.lagradost.quicknovel.ui.common.SkeletonList
 import com.lagradost.quicknovel.ui.common.ImmutableSearchList
 import com.lagradost.quicknovel.ui.common.SearchList
 import com.lagradost.quicknovel.ui.common.SearchResponseAction
@@ -110,6 +115,7 @@ fun DownloadScreen(
         R.string.type_plan_to_read,
         R.string.type_completed,
         R.string.type_dropped,
+        R.string.favorites,
     )
 
     val context = LocalContext.current
@@ -119,6 +125,7 @@ fun DownloadScreen(
     val downloadIsRowState by downloadIsRow.collectAsState()
 
     var fabExpanded by remember { mutableStateOf(false) }
+    val railOpen = LibraryRailState.open
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(snapAnimationSpec = null)
     Scaffold(
         floatingActionButton = {
@@ -227,7 +234,10 @@ fun DownloadScreen(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { innerPadding ->
-        if (state.pages.isEmpty()) return@Scaffold
+        if (state.pages.isEmpty()) {
+            SkeletonList(Modifier.padding(top = innerPadding.calculateTopPadding()))
+            return@Scaffold
+        }
 
         val pagerState = rememberPagerState(
             initialPage = state.activePage.coerceIn(0, pagesNames.size - 1),
@@ -239,17 +249,48 @@ fun DownloadScreen(
             onAction(DownloadPageAction.SelectPage(currentPage))
         }
 
-        Column {
+        val railItems = pagesNames.mapIndexed { index, name ->
+            LibraryRailItem(
+                nameRes = name,
+                iconRes = libraryRailIcons[index],
+                count = state.pages.getOrNull(index)?.data?.size ?: 0
+            )
+        }
+        val scope = rememberCoroutineScope()
+
+        Row(
+            Modifier
+                .fillMaxSize()
+                // This fixes the double padding from the bottom nav bar
+                .padding(
+                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                    top = innerPadding.calculateTopPadding()
+                )
+        ) {
+            AnimatedVisibility(
+                visible = railOpen,
+                enter = expandHorizontally() + fadeIn(),
+                exit = shrinkHorizontally() + fadeOut()
+            ) {
+                LibraryRail(
+                    items = railItems,
+                    selected = currentPage,
+                    onSelect = { page -> scope.launch { pagerState.animateScrollToPage(page) } }
+                )
+            }
+            Column(Modifier.weight(1.0f)) {
+                AnimatedVisibility(visible = railOpen) {
+                    Text(
+                        text = stringResource(pagesNames[currentPage]),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // This fixes the double padding from the bottom nav bar
-                    .padding(
-                        start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                        end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                        top = innerPadding.calculateTopPadding()
-                    )
                     .weight(1.0f)
             ) { page ->
                 DownloadRow(
@@ -261,12 +302,7 @@ fun DownloadScreen(
                         fabExpanded = isScrollingUp
                     })
             }
-
-            HorizontalTab(
-                pagerState,
-                pagesNames,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            }
         }
     }
 }
@@ -449,6 +485,11 @@ fun DownloadRow(
             searchAction = searchAction,
             modifier = Modifier,
             lazyGridState = lazyGridState,
+            header = if (index == 0 && row.query.isBlank() && row.data.isNotEmpty()) {
+                { LibraryHeader(row.data.values, searchAction) }
+            } else {
+                null
+            },
             footer = if (index == 0) {
                 if (isRow) {
                     ::RowFooter

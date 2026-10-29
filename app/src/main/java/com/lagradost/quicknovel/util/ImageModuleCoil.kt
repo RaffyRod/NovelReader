@@ -21,6 +21,10 @@ import coil3.request.CachePolicy
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
+import coil3.request.error
+import coil3.request.fallback
+import coil3.request.placeholder
+import com.lagradost.quicknovel.R
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.lagradost.nicehttp.ignoreAllSSLErrors
@@ -135,7 +139,10 @@ object ImageLoader {
         // clear image to avoid loading & flickering issue at fast scrolling (e.g, an image recycler)
         this.dispose()
 
-        if(imageData == null) return // Just in case
+        if (imageData == null) {
+            this.setImageResource(R.drawable.cover_placeholder)
+            return
+        }
 
         // setImageResource is better than coil3 on resources due to attr
         if(imageData is Int) {
@@ -151,6 +158,9 @@ object ImageLoader {
                     headerBuilder[key] = value
                 }
             }.build())
+            placeholder(R.drawable.cover_placeholder)
+            error(R.drawable.cover_placeholder)
+            fallback(R.drawable.cover_placeholder)
             builder() // if passed
         }
     }

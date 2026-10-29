@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <size
+                android:width="136dp"
+                android:height="200dp" />
+            <solid android:color="#FF2A2D3E" />
+        </shape>
+    </item>
+    <item
+        android:width="40dp"
+        android:height="40dp"
+        android:drawable="@drawable/cover_placeholder_icon"
+        android:gravity="center" />
+</layer-list>

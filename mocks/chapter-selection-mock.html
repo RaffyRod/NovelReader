@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel - Mock: selección y descarga de capítulos</title>
+<style>
+  :root {
+    --bg: #000;
+    --surface: #121214;
+    --bar: #1c1c1f;
+    --field: #232327;
+    --text: #fff;
+    --gray: #a0a0a8;
+    --blue: #4455ff;
+    --link: #4f6bff;
+    --white-btn: #e9e9ec;
+    --danger: #ff5d5d;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; min-height: 100dvh; background: #1b1b22; color: var(--text);
+    font-family: Roboto, "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px;
+  }
+  .devices { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 1100px; }
+  .devices button { background: #2b2b34; color: #ddd; border: 1px solid #3a3a46; border-radius: 16px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .devices button.on { background: #fff; color: #000; font-weight: 700; border-color: #fff; }
+  .layout { display: flex; gap: 40px; align-items: flex-start; justify-content: center; flex-wrap: wrap; width: 100%; }
+  .stage { flex: none; display: flex; justify-content: center; }
+  .phone {
+    --w: 390px; --h: 800px; --barh: 0px;
+    width: var(--w); height: var(--h); border-radius: 38px; background: #000; container-type: inline-size;
+    border: 10px solid #2c2c33; box-shadow: 0 20px 60px rgba(0,0,0,.6); position: relative; overflow: hidden; flex: none;
+  }
+  .phone.fullscreen { position: fixed; inset: 0; width: 100vw; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; z-index: 40; }
+  .infobtn { position: fixed; right: 10px; top: 10px; z-index: 60; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(255,255,255,.9); color: #000; font-weight: 800; cursor: pointer; display: none; }
+  body.has-fs .infobtn { display: block; }
+  body.has-fs .panel { position: fixed; inset: 0; z-index: 55; background: #1b1b22; padding: 130px 18px 18px; overflow-y: auto; display: none; flex-direction: column; align-items: center; gap: 14px; }
+  body.has-fs.panel-open .panel { display: flex; }
+  body.has-fs .devices { display: none; }
+  body.has-fs.panel-open .devices { display: flex; position: fixed; top: 52px; left: 0; right: 0; z-index: 56; padding: 0 12px; }
+  .panel { display: contents; }
+  .status { height: 28px; display: flex; justify-content: space-between; align-items: center; padding: 0 22px; font-size: 12px; position: absolute; top: 0; left: 0; right: 0; z-index: 9; background: linear-gradient(#000 70%, transparent); }
+  .page { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; }
+  .page::-webkit-scrollbar { display: none; }
+  .hero { height: 190px; position: relative; padding: 38px 14px 0; display: flex; gap: 12px;
+    background: radial-gradient(circle at 25% 30%, #2d5d9a 0%, #12254a 45%, #060b18 100%); }
+  .hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: linear-gradient(transparent, #000); }
+  .poster { width: 96px; height: 140px; border-radius: 6px; flex: none; z-index: 1;
+    background: linear-gradient(160deg, #2a6fd0, #14234e 55%, #7a4aa8); display: flex; align-items: flex-end; padding: 8px;
+    font-size: 11px; font-weight: 700; line-height: 1.1; text-transform: uppercase; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+  .hero .meta { z-index: 1; padding-top: 6px; }
+  .hero h1 { font-size: 19px; margin: 0 0 8px; font-weight: 500; color: #e6e6ea; }
+  .hero .author { color: var(--link); font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .hero .small { font-size: 13px; margin-bottom: 8px; }
+  .hero .close { position: absolute; top: 34px; right: 14px; z-index: 2; font-size: 22px; opacity: .85; }
+  .actions { margin: 10px; background: var(--surface); border-radius: 14px; padding: 12px 6px; display: flex; text-align: center; font-size: 14px; }
+  .actions div { flex: 1; } .actions .ic { display: block; margin-top: 6px; font-size: 18px; }
+  .tabs { display: flex; gap: 6px; padding: 8px 12px; font-size: 14px; position: sticky; top: 0; background: #000; z-index: 3; }
+  .tab { padding: 7px 14px; border-radius: 16px; color: #e2e2e6; }
+  .tab.active { background: #fff; color: #000; font-weight: 600; }
+  .chapters { padding: 4px 0 calc(var(--barh) + 90px); }
+  .chapter { display: flex; align-items: center; gap: 8px; padding: 9px 14px; min-height: 56px; cursor: pointer; user-select: none; }
+  .chapter:active { background: #111; }
+  .chapter .txt { flex: 1; min-width: 0; }
+  .chapter .name { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chapter .date { font-size: 13px; color: #d0d0d6; }
+  .chapter.read .txt { opacity: .5; }
+  .chapter .chk { display: none; width: 22px; height: 22px; border: 2px solid #c8c8cf; border-radius: 4px; flex: none; position: relative; }
+  .selecting .chapter .chk { display: block; }
+  .chapter.sel .chk { background: var(--blue); border-color: var(--blue); }
+  .chapter.sel .chk::after { content: ""; position: absolute; left: 5px; top: 1px; width: 6px; height: 12px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .fab { position: absolute; right: 16px; width: 56px; height: 56px; border-radius: 16px; background: #1c1c1f; display: flex; align-items: center; justify-content: center; font-size: 22px; z-index: 6; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.6); }
+  #fabSelect { bottom: 88px; } #fabFilter { bottom: 16px; }
+  .selecting .fab { display: none; }
+  .selbar { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bar); z-index: 7; padding: 8px 8px 10px; transform: translateY(110%); transition: transform .18s ease; box-shadow: 0 -4px 14px rgba(0,0,0,.6); }
+  .selecting .selbar { transform: none; }
+  .selrow { display: flex; align-items: center; padding: 0 4px 8px; }
+  .selrow .x, .selrow .more { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; border-radius: 50%; cursor: pointer; }
+  .selrow .x:hover, .selrow .more:hover { background: #2b2b30; }
+  .selrow .count { flex: 1; font-weight: 700; font-size: 16px; margin-left: 6px; }
+  .btns { display: flex; gap: 8px; }
+  .btn { flex: 1; min-width: 0; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: clamp(11px, 3.6cqw, 14px); white-space: nowrap; overflow: hidden; padding: 0 6px; cursor: pointer; border: 1px solid #55555c; background: var(--bar); color: #fff; }
+  @container (min-width: 480px) {
+    .selbar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; }
+    .selrow { display: contents; }
+    .selrow .x { order: 0; }
+    .selrow .count { order: 1; flex: 1; padding: 0 0 0 6px; }
+    .btns { order: 2; flex: none; }
+    .btn { flex: none; width: 150px; }
+    .selrow .more { order: 3; }
+    .dialog { max-width: 460px; }
+    .reader .rbody { padding-left: max(20px, calc((100% - 640px) / 2)); padding-right: max(20px, calc((100% - 640px) / 2)); }
+    .pdfview .pages > * { max-width: 520px; margin-left: auto; margin-right: auto; }
+  }
+  .btn.white { background: var(--white-btn); color: #111; border-color: var(--white-btn); }
+  .btn:active { filter: brightness(.85); }
+  .overlay { position: absolute; inset: 0; background: rgba(0,0,0,.6); z-index: 20; display: none; align-items: center; justify-content: center; padding: 14px; }
+  .overlay.show { display: flex; }
+  .dialog { background: #1d1d21; border-radius: 14px; padding: 18px; width: 100%; max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
+  .dialog h3 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+  .dialog p { margin: 0 0 16px; font-size: 15px; line-height: 1.4; }
+  .dialog .row { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 14px; }
+  .dialog .row button { background: none; border: 0; color: var(--link); font-size: 15px; font-weight: 600; cursor: pointer; padding: 8px 6px; }
+  .dialog .row button.primary { background: #fff; color: #111; border-radius: 8px; padding: 10px 16px; font-size: 14px; }
+  .dialog .row button:disabled { opacity: .35; cursor: default; }
+  .dialog .row.sticky { position: sticky; bottom: -18px; margin: 14px -18px -18px; padding: 10px 18px; background: #1d1d21; border-top: 1px solid #2c2c32; z-index: 2; }
+  .fields { display: flex; gap: 10px; }
+  .fields input, .dialog input.num { flex: 1; width: 100%; background: var(--field); border: 0; border-radius: 10px; color: #fff; font-size: 16px; text-align: center; padding: 13px 8px; outline: none; }
+
+  .dialog .lbl { font-size: 12px; color: var(--gray); margin: 16px 0 6px; display: flex; justify-content: space-between; gap: 8px; }
+  .dialog .lbl .hint { color: #7d7d86; }
+  .seg { display: flex; background: var(--field); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; border: 0; background: none; color: #ddd; padding: 10px 4px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .seg button.on { background: #fff; color: #111; }
+  .dialog input.txt { width: 100%; background: var(--field); border: 1px solid transparent; border-radius: 10px; color: #fff; font-size: 16px; padding: 12px; outline: none; }
+  .dialog input.txt:focus { border-color: var(--link); }
+  .dialog input.txt.bad { border-color: var(--danger); }
+  .err { color: var(--danger); font-size: 12px; min-height: 16px; margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { border: 1px solid #4a4a52; background: none; color: #e8e8ec; border-radius: 16px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  .chip.on { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
+  .chip:disabled { opacity: .3; cursor: default; }
+  .stepper { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .stepper button { width: 44px; height: 44px; flex: none; border-radius: 10px; border: 0; background: var(--field); color: #fff; font-size: 22px; cursor: pointer; }
+  .stepper button:active { filter: brightness(1.4); }
+  .stepper input { width: 88px; flex: none; background: var(--field); border: 1px solid transparent; border-radius: 10px; color: #fff; font-size: 17px; font-weight: 700; text-align: center; padding: 11px 4px; outline: none; }
+  .stepper input:focus { border-color: var(--link); }
+  .stepper span { font-size: 13px; color: var(--gray); }
+  .sumbox { margin-top: 16px; background: #151518; border: 1px solid #2c2c32; border-radius: 10px; padding: 12px; font-size: 13px; line-height: 1.5; color: #d6d6dc; }
+  .sumbox b { color: #fff; }
+  .sumbox .big { font-size: 15px; }
+  .strip { display: flex; gap: 2px; height: 10px; margin: 10px 0 8px; }
+  .strip i { display: block; background: var(--blue); border-radius: 2px; min-width: 2px; }
+  .strip i.partial { background: #8f99ff; }
+  .warn { color: #ffd166; font-size: 12px; margin-top: 8px; }
+  .sumbox details { margin-top: 6px; }
+  .sumbox summary { cursor: pointer; color: var(--link); font-weight: 600; }
+  .sumbox .flist { margin-top: 6px; max-height: 110px; overflow-y: auto; color: var(--gray); font-size: 12px; line-height: 1.7; }
+
+  .preview { position: absolute; inset: 0; background: #0d0d0f; z-index: 27; display: none; flex-direction: column; }
+  .preview.show { display: flex; }
+  .pv-top { padding: 34px 14px 8px; display: flex; align-items: center; gap: 12px; }
+  .pv-top .back { font-size: 20px; cursor: pointer; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+  .pv-top .back:hover { background: #26262b; }
+  .pv-top .ttl { min-width: 0; }
+  .pv-top .ttl b { display: block; font-size: 16px; }
+  .pv-top .ttl span { display: block; font-size: 12px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pv-files { display: flex; gap: 6px; padding: 4px 14px 8px; overflow-x: auto; scrollbar-width: none; flex: none; }
+  .pv-files .chip { flex: none; }
+  .pv-pagewrap { flex: none; height: 36%; min-height: 150px; overflow-y: auto; background: #d9d9de; padding: 10px; position: relative; }
+  .pv-pagewrap .pdfpage { width: min(100%, 230px); margin: 0 auto; font-size: 8px; color: #111; }
+  .pv-pagewrap .pdfpage h4 { font-size: 12px; }
+  .pv-excl { position: absolute; inset: 0; background: rgba(217,217,222,.8); display: flex; align-items: center; justify-content: center; color: #333; font-weight: 700; font-size: 14px; }
+  .pv-editor { flex: none; height: 36%; min-height: 150px; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; background: #17171a; }
+  .pv-editor textarea { flex: 1; width: 100%; resize: none; background: var(--field); border: 1px solid var(--link); border-radius: 10px; color: #fff; font-size: 14px; line-height: 1.45; padding: 10px; outline: none; font-family: inherit; }
+  .pv-editor .eh { font-size: 12px; color: var(--gray); }
+  .pv-editor .eb { display: flex; gap: 8px; justify-content: flex-end; }
+  .pv-editor .eb button, .pv-linkbtn { background: none; border: 0; color: var(--link); font-weight: 600; font-size: 13px; cursor: pointer; padding: 6px 8px; }
+  .pv-editor .eb button.primary { background: #fff; color: #111; border-radius: 8px; }
+  .pv-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+  .pv-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 14px; min-height: 50px; cursor: pointer; border-left: 3px solid transparent; }
+  .pv-row.focus { background: #16161a; border-left-color: var(--blue); }
+  .pv-row input[type=checkbox] { width: 20px; height: 20px; accent-color: #4455ff; flex: none; }
+  .pv-row .num { color: var(--gray); font-size: 14px; flex: none; min-width: 1.6em; text-align: right; }
+  .pv-row .t { flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pv-row .t i { font-style: normal; font-size: 10px; color: #ffd166; margin-left: 6px; }
+  .pv-row input.tt { flex: 1; min-width: 0; background: var(--field); border: 1px solid var(--link); border-radius: 8px; color: #fff; font-size: 14px; padding: 8px; outline: none; }
+  .pv-row button { background: #26262b; border: 0; color: #ddd; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 14px; flex: none; }
+  .pv-row.ex .t, .pv-row.ex .num { text-decoration: line-through; opacity: .45; }
+  .pv-foot { flex: none; background: var(--bar); padding: 10px 12px 12px; box-shadow: 0 -4px 14px rgba(0,0,0,.6); }
+  .pv-sum { font-size: 12px; color: var(--gray); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; }
+  .pv-sum b { color: #ffd166; }
+  .pv-btns { display: flex; gap: 8px; }
+  .pv-btns button { height: 44px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; border: 1px solid #55555c; background: var(--bar); color: #fff; padding: 0 12px; }
+  .pv-btns button.primary { flex: 1; background: #e9e9ec; color: #111; border-color: #e9e9ec; }
+  .pv-btns button:disabled { opacity: .35; cursor: default; }
+  .progress { height: 6px; border-radius: 3px; background: #3a3a40; overflow: hidden; margin: 14px 0 8px; }
+  .progress i { display: block; height: 100%; width: 0; background: #fff; transition: width .15s; }
+  .progress.indet i { width: 40%; animation: slide 1s infinite ease-in-out; }
+  @keyframes slide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+  .counter { text-align: right; color: var(--gray); font-size: 13px; }
+  .menu { position: absolute; right: 12px; bottom: calc(var(--barh) + 8px); max-height: 70%; overflow-y: auto; background: #26262b; border-radius: 12px; padding: 6px 0; z-index: 15; display: none; min-width: 230px; box-shadow: 0 6px 20px rgba(0,0,0,.7); }
+  .menu.show { display: block; }
+  .menu div { padding: 12px 18px; font-size: 15px; cursor: pointer; }
+  .menu div:hover { background: #33333a; }
+  .toast { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); background: #e9e9ec; color: #111; padding: 10px 16px; border-radius: 20px; font-size: 14px; z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .reader { position: absolute; inset: 0; background: #26262e; z-index: 25; display: none; flex-direction: column; font-family: Georgia, serif; }
+  .reader.show { display: flex; }
+  .reader .rtop { padding: 40px 20px 6px; text-align: center; font-size: 18px; font-weight: 700; color: #ddd; }
+  .reader .rbody { flex: 1; overflow-y: auto; padding: 14px 20px; font-size: 16px; line-height: 1.55; color: #e3e3e6; scrollbar-width: none; }
+  .reader .rbody p { margin: 0 0 14px; }
+  .reader .rnav { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 16px; font-family: Roboto, sans-serif; font-size: 13px; color: var(--gray); }
+  .reader .rnav button { background: #38383f; border: 0; color: #fff; border-radius: 8px; padding: 9px 14px; font-size: 13px; cursor: pointer; }
+  .reader .rnav button:disabled { opacity: .35; cursor: default; }
+  .reader .rtag { text-align: center; font-family: Roboto, sans-serif; font-size: 12px; color: #ffd166; padding-bottom: 4px; }
+  .pdfview { position: absolute; inset: 0; background: #d9d9de; z-index: 26; display: none; flex-direction: column; color: #111; }
+  .pdfview.show { display: flex; }
+  .pdfview .ptop { background: #fff; padding: 36px 14px 12px; display: flex; align-items: center; gap: 14px; font-size: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .pdfview .pages { flex: 1; overflow-y: auto; padding: 12px; scrollbar-width: none; }
+  .pdfpage { background: #fff; aspect-ratio: 595/842; margin-bottom: 12px; padding: 7% 8%; font-size: 7px; line-height: 1.45; position: relative; box-shadow: 0 1px 4px rgba(0,0,0,.3); overflow: hidden; }
+  .pdfpage h4 { font-size: 11px; margin: 0 0 8px; }
+  .pdfpage p { margin: 0 0 6px; }
+  .pdfpage .pn { position: absolute; bottom: 4%; left: 0; right: 0; text-align: center; color: #888; font-size: 6px; }
+  .files { margin: 4px 0 0; font-size: 13px; color: var(--gray); line-height: 1.6; max-height: 140px; overflow-y: auto; }
+  .files b { color: #fff; font-weight: 600; }
+  aside { max-width: 330px; font-size: 14px; line-height: 1.55; color: #cfcfd6; }
+  aside h2 { margin: 0 0 10px; font-size: 20px; color: #fff; }
+  aside ol { padding-left: 20px; } aside li { margin-bottom: 6px; }
+  aside .note { background: #26262e; border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 13px; }
+  aside .note b { color: #ffd166; }
+  aside .totals { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  aside .totals button { margin: 0; background: #2b2b34; border: 1px solid #3a3a46; border-radius: 16px; }
+  aside .totals button.on { background: #fff; color: #000; font-weight: 700; }
+  aside button { background: #3a3a46; color: #fff; border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; margin-top: 12px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="devices" id="devices"></div>
+<div class="layout">
+<div class="stage">
+<div class="phone" id="phone">
+  <div class="status"><span>5:24</span><span>▾ ◢ ▮</span></div>
+
+  <div class="page" id="page">
+    <div class="hero">
+      <div class="poster">Mother of Learning</div>
+      <div class="meta">
+        <h1>Mother of Learning</h1>
+        <div class="author">nobody103</div>
+        <div class="small"><b>Completado</b></div>
+        <div class="small">Último: New story is out - Zenith of Sorcery</div>
+      </div>
+      <div class="close">✕</div>
+    </div>
+    <div class="actions">
+      <div>Marcador<span class="ic">🔖</span></div>
+      <div>Abrir en navegador<span class="ic">🌐</span></div>
+      <div>Compartir<span class="ic">⤴</span></div>
+    </div>
+    <div class="tabs">
+      <div class="tab">Novela</div><div class="tab">Reseñas</div><div class="tab">Relacionados</div><div class="tab active">Capítulos</div>
+    </div>
+    <div class="chapters" id="chapters"></div>
+  </div>
+
+  <div class="fab" id="fabSelect" title="Seleccionar capítulos">☑</div>
+  <div class="fab" id="fabFilter" title="Filtrar">⚙</div>
+
+  <div class="selbar" id="selbar">
+    <div class="selrow">
+      <div class="x" id="btnExit" title="Salir de la selección">✕</div>
+      <div class="count" id="count">0 seleccionados</div>
+      <div class="more" id="btnMore" title="Más">⋮</div>
+    </div>
+    <div class="btns">
+      <div class="btn white" id="btnRead">📖 Leer</div>
+      <div class="btn" id="btnDownload">⬇ Descargar</div>
+    </div>
+  </div>
+
+  <div class="menu" id="menu">
+    <div data-a="all">Seleccionar todo</div>
+    <div data-a="range">Seleccionar rango</div>
+    <div data-a="clear">Limpiar selección</div>
+    <div data-a="filter">Filtrar y ordenar</div>
+  </div>
+
+  <div class="overlay" id="overlay"><div class="dialog" id="dialog"></div></div>
+  <div class="reader" id="reader"></div>
+  <div class="pdfview" id="pdfview"></div>
+  <div class="preview" id="preview"></div>
+  <div class="toast" id="toast"></div>
+</div>
+</div>
+
+<div class="panel">
+<aside>
+  <h2>Mock: selección y descarga</h2>
+  <ol>
+    <li>Toca <b>☑</b> (abajo a la derecha) para entrar al modo selección y marca capítulos. Prueba <b>⋮ → Seleccionar rango</b>.</li>
+    <li><b>Leer</b> abre el lector solo con lo seleccionado.</li>
+    <li><b>Descargar</b> abre el diálogo nuevo: formato (EPUB, PDF o solo capítulos), qué capítulos y <b>cuántos por archivo (lotes)</b>.</li>
+    <li>Con EPUB o PDF, el botón <b>REVISAR</b> abre una <b>vista previa editable</b> antes de crear nada: ves cómo queda cada archivo, puedes <b>desmarcar</b> capítulos incorrectos, corregir el <b>título</b> (✎) o el <b>texto</b> (¶), y recién ahí <b>CONFIRMAR Y DESCARGAR</b>. "Solo capítulos" no pasa por la vista previa.</li>
+    <li>Los capítulos se escriben como <b>1-10</b>, <b>1, 9</b> o <b>1-100, 250, 300-320</b>. Cada archivo lleva los números reales del libro.</li>
+    <li>Para probar lotes grandes cambia el tamaño de la novela aquí abajo y elige "Todos" + lotes de 20, 50, 100…</li>
+    <li>Usa los botones de arriba para ver otros tamaños de pantalla. Con "Mi pantalla" ocupa todo tu viewport.</li>
+  </ol>
+  <div><b>Capítulos de la novela:</b></div>
+  <div class="totals" id="totals"></div>
+  <div class="note"><b>Cambio frente a la app actual:</b> el diálogo de descarga de la app todavía tiene campos de texto simples. Si este diseño te gusta, lo paso a la app (chips de lotes, stepper, resumen de archivos y la vista previa editable).</div>
+  <button id="reset">Reiniciar mock</button>
+</aside>
+</div>
+</div>
+<button class="infobtn" id="infobtn" title="Info">?</button>
+
+<script>
+  const BOOK = "Mother of Learning";
+  let TOTAL = 109;
+  const realNames = [
+    ["Good Morning Brother", "2018-10-28T21:34:43Z"], ["Life's Little Problems", "2018-10-28T21:45:44Z"],
+    ["The Bitter Truth", "2018-10-28T21:53:10Z"], ["Stars Fell", "2018-10-28T21:59:44Z"],
+    ["Start Over", "2018-10-28T22:07:23Z"], ["Concentrate and Try Again", "2018-10-28T22:19:31Z"],
+    ["Of Gaps And Pretending", "2018-10-28T22:30:38Z"], ["Perspective", "2018-10-28T22:36:24Z"],
+    ["Cheaters", "2018-10-29T15:35:35Z"], ["Overlooked Details", "2018-10-30T15:51:55Z"],
+    ["Limiters", "2018-10-31T15:30:06Z"], ["Soul Web", "2018-11-02T15:30:00Z"]
+  ];
+  let chapters = [];
+  function buildChapters() {
+    chapters = Array.from({ length: TOTAL }, (_, i) => {
+      const n = i + 1, real = realNames[i];
+      return { n, title: real ? real[0] : "Chapter " + n, name: `${n}. ${real ? real[0] : "Chapter " + n}`, date: real ? real[1] : `2019-0${1 + (i % 9)}-1${i % 9}T15:30:00Z` };
+    });
+  }
+  buildChapters();
+
+  let selecting = false;
+  let selected = new Set();
+  let read = new Set();
+  let busy = null;
+
+  const $ = (id) => document.getElementById(id);
+  const phone = $("phone");
+
+  /** Parses "1-10, 15, 20-22" into sorted chapter numbers, or null when invalid. */
+  function parseSpec(text) {
+    const tokens = text.trim().replace(/\s*[-–—]\s*/g, "-").split(/[,;\s]+/).filter(Boolean);
+    if (!tokens.length) return null;
+    const set = new Set();
+    for (const tok of tokens) {
+      const parts = tok.split("-");
+      if (parts.length > 2 || parts.some((p) => !/^\d+$/.test(p))) return null;
+      const a = +parts[0], b = +parts[parts.length - 1];
+      const s = Math.min(a, b), e = Math.max(a, b);
+      if (s < 1 || e > TOTAL) return null;
+      for (let i = s; i <= e; i++) set.add(i);
+    }
+    return [...set].sort((x, y) => x - y);
+  }
+  /** Compact text of chapter numbers: [1,2,3,9] -> "1-3, 9". */
+  function fmtSpec(nums, sep = ", ") {
+    const out = []; let start = null, prev = null;
+    for (const n of [...nums, null]) {
+      if (n !== null && prev !== null && n === prev + 1) { prev = n; continue; }
+      if (start !== null) out.push(start === prev ? `${start}` : `${start}-${prev}`);
+      start = n; prev = n;
+    }
+    return out.join(sep);
+  }
+  function groupBy(nums, per) {
+    if (!nums.length) return [];
+    if (per <= 0) return [nums];
+    const g = []; for (let i = 0; i < nums.length; i += per) g.push(nums.slice(i, i + per)); return g;
+  }
+  const fileName = (g, ext) => `${BOOK} - ${fmtSpec(g, ",")}.${ext}`;
+  const sameList = (a, b) => a && b && a.length === b.length && a.every((v, i) => v === b[i]);
+
+  function render() {
+    $("chapters").innerHTML = chapters.map((c) => `
+      <div class="chapter ${selected.has(c.n) ? "sel" : ""} ${read.has(c.n) ? "read" : ""}" data-n="${c.n}">
+        <div class="chk"></div>
+        <div class="txt"><div class="name">${c.name}</div><div class="date">${c.date}</div></div>
+      </div>`).join("");
+    phone.classList.toggle("selecting", selecting);
+    $("count").textContent = `${selected.size} seleccionados`;
+    if (typeof updateBarHeight === "function") updateBarHeight();
+  }
+
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast.id); toast.id = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+
+  function setSelecting(on) { selecting = on; if (!on) selected.clear(); closeMenu(); render(); }
+  function closeMenu() { $("menu").classList.remove("show"); }
+
+  function showDialog(html, bind) {
+    $("dialog").innerHTML = html; $("overlay").classList.add("show"); $("dialog").scrollTop = 0; if (bind) bind();
+  }
+  function hideDialog() { $("overlay").classList.remove("show"); }
+
+  let pressTimer = null, longPressed = false;
+  $("chapters").addEventListener("pointerdown", (e) => {
+    const row = e.target.closest(".chapter"); if (!row) return;
+    longPressed = false;
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      const n = +row.dataset.n;
+      if (selecting) toggle(n); else { read.has(n) ? read.delete(n) : read.add(n); render(); }
+    }, 500);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => $("chapters").addEventListener(ev, () => clearTimeout(pressTimer)));
+  $("chapters").addEventListener("click", (e) => {
+    const row = e.target.closest(".chapter"); if (!row || longPressed) return;
+    const n = +row.dataset.n;
+    if (selecting) toggle(n); else openReader([n]);
+  });
+  function toggle(n) { selected.has(n) ? selected.delete(n) : selected.add(n); render(); }
+  const sortedSel = () => [...selected].sort((a, b) => a - b);
+
+  $("fabSelect").onclick = () => setSelecting(true);
+  $("fabFilter").onclick = () => toast("Filtrar y ordenar (sin cambios)");
+  $("btnExit").onclick = () => setSelecting(false);
+  $("btnMore").onclick = (e) => { e.stopPropagation(); $("menu").classList.toggle("show"); };
+  document.addEventListener("click", (e) => { if (!e.target.closest("#menu")) closeMenu(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (selecting) setSelecting(false); } });
+
+  $("menu").addEventListener("click", (e) => {
+    const a = e.target.closest("[data-a]")?.dataset.a; closeMenu();
+    if (a === "all") { selected = new Set(chapters.map((c) => c.n)); render(); }
+    if (a === "clear") { selected.clear(); render(); }
+    if (a === "filter") toast("Filtrar y ordenar (sin cambios)");
+    if (a === "range") rangeDialog();
+  });
+
+  function rangeDialog() {
+    showDialog(`<h3>Seleccionar rango (1-${TOTAL})</h3>
+      <div class="fields" style="margin-top:14px"><input id="rFrom" type="number" placeholder="Desde"><input id="rTo" type="number" placeholder="Hasta"></div>
+      <div class="row"><button id="rCancel">CANCELAR</button><button id="rOk">OK</button></div>`, () => {
+      $("rCancel").onclick = hideDialog;
+      $("rOk").onclick = () => {
+        const f = parseInt($("rFrom").value, 10), t = parseInt($("rTo").value, 10);
+        if (!(f >= 1 && f <= TOTAL && t >= 1 && t <= TOTAL)) { hideDialog(); toast(`Ingresa un rango válido entre 1 y ${TOTAL}`); return; }
+        for (let i = Math.min(f, t); i <= Math.max(f, t); i++) selected.add(i);
+        hideDialog(); render();
+      };
+    });
+  }
+
+  function empty() { if (!selected.size) { toast("No hay capítulos seleccionados"); return true; } return false; }
+  const lorem = [
+    "Zorian's eyes abruptly shot open as a sharp pain erupted from his stomach. His whole body convulsed, buckling against the object that fell on him, and suddenly he was wide awake, not a trace of drowsiness in his mind.",
+    "“Good morning, brother!” an annoyingly cheerful voice sounded right on top of him. “Morning, morning, MORNING!!!”",
+    "Zorian glared at his little sister, but she just smiled back at him cheekily, still sprawled across his stomach. She was humming to herself in obvious satisfaction, kicking her feet playfully in the air as she studied the giant world map Zorian had tacked to the wall next to his bed.",
+    "This was what he got for not arcane-locking the door and setting up a basic alarm perimeter around his bed."
+  ];
+
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  /** Manual corrections made in the preview step, kept by chapter number. */
+  const edits = { titles: new Map(), texts: new Map() };
+  const titleOf = (n) => `${n}. ${edits.titles.get(n) ?? chapters[n - 1].title}`;
+  const defaultText = () => lorem.concat(lorem).join("\n\n");
+  const paragraphsOf = (n) => (edits.texts.get(n) ?? defaultText()).split(/\n\n+/).filter(Boolean);
+
+  function openReader(list) {
+    let idx = 0;
+    const r = $("reader");
+    const draw = () => {
+      const n = list[idx];
+      r.innerHTML = `<div class="rtop">${esc(titleOf(n))}</div>
+        ${list.length > 1 ? `<div class="rtag">Solo tu selección · ${idx + 1} de ${list.length}</div>` : ""}
+        <div class="rbody"><p><b>Chapter ${String(n).padStart(3, "0")}</b></p>${paragraphsOf(n).map((p) => `<p>${esc(p)}</p>`).join("")}</div>
+        <div class="rnav"><button id="rPrev" ${idx === 0 ? "disabled" : ""}>◀ Anterior</button><span>${idx + 1}/${list.length}</span><button id="rNext" ${idx === list.length - 1 ? "disabled" : ""}>Siguiente ▶</button></div>
+        <div class="rnav" style="padding-top:0"><button id="rClose" style="width:100%">Cerrar lector</button></div>`;
+      $("rPrev").onclick = () => { idx--; draw(); };
+      $("rNext").onclick = () => { idx++; draw(); };
+      $("rClose").onclick = () => r.classList.remove("show");
+    };
+    draw(); r.classList.add("show");
+  }
+  $("btnRead").onclick = () => { if (!empty()) openReader(sortedSel()); };
+
+  let lastDlg = null;
+  /** Exclusions made in the preview; kept while going back to the dialog without changing the options. */
+  let review = null;
+
+  /** Download dialog: format, which chapters and how many chapters per file (batches). */
+  function downloadDialog() {
+    if (busy) return;
+    const sel = sortedSel();
+    const st = { fmt: lastDlg?.fmt ?? "epub", per: lastDlg?.per ?? (TOTAL > 150 ? 100 : 0) };
+    const perPresets = [0, 20, 50, 100, 250, 500];
+    const initial = lastDlg?.spec ?? (sel.length ? fmtSpec(sel) : `1-${TOTAL}`);
+
+    showDialog(`<h3>Descargar</h3>
+      <div class="lbl"><span>Formato</span></div>
+      <div class="seg" id="fmt">
+        ${[["epub", "EPUB"], ["pdf", "PDF"], ["dl", "Solo capítulos"]].map(([f, l]) => `<button data-f="${f}" class="${st.fmt === f ? "on" : ""}">${l}</button>`).join("")}
+      </div>
+
+      <div class="lbl"><span>Capítulos</span><span class="hint">de 1 a ${TOTAL}</span></div>
+      <input class="txt" id="spec" type="text" inputmode="text" autocomplete="off" placeholder="Ej: 1-100, 250, 300-320" value="${initial}">
+      <div class="err" id="specErr"></div>
+      <div class="chips" id="specChips"></div>
+
+      <div id="batch">
+        <div class="lbl"><span>Dividir en archivos</span><span class="hint">capítulos por archivo</span></div>
+        <div class="chips" id="perChips"></div>
+        <div class="stepper">
+          <button id="perMinus" aria-label="Menos">−</button>
+          <input id="per" type="number" inputmode="numeric" min="0" placeholder="Todo">
+          <button id="perPlus" aria-label="Más">+</button>
+          <span>caps. por archivo</span>
+        </div>
+      </div>
+
+      <div class="sumbox" id="sum"></div>
+      <div class="row sticky"><button id="dCancel">CANCELAR</button><button class="primary" id="dGo">DESCARGAR</button></div>`, () => {
+
+      const spec = $("spec"), per = $("per");
+      const chips = (id, items) => { $(id).innerHTML = items.map((c) => `<button class="chip ${c.on ? "on" : ""}" data-v="${c.v}" ${c.off ? "disabled" : ""}>${c.label}</button>`).join(""); };
+
+      function update() {
+        const nums = parseSpec(spec.value);
+        const text = spec.value.trim();
+        spec.classList.toggle("bad", !nums && !!text);
+        $("specErr").textContent = nums ? "" : text ? `Usa números entre 1 y ${TOTAL}, por ejemplo 1-100, 250` : "Escribe qué capítulos quieres descargar";
+
+        const specItems = [];
+        if (sel.length) specItems.push({ v: "sel", label: `Selección (${sel.length})`, on: sameList(nums, sel) });
+        specItems.push({ v: "all", label: `Todos (${TOTAL})`, on: !!nums && nums.length === TOTAL });
+        chips("specChips", specItems);
+
+        const isFile = st.fmt !== "dl";
+        $("batch").style.display = isFile ? "" : "none";
+        per.value = st.per > 0 ? st.per : "";
+        chips("perChips", perPresets.map((v) => ({
+          v, label: v === 0 ? "Todo en 1" : v, on: st.per === v,
+          off: v > 0 && !!nums && v >= nums.length
+        })));
+
+        const groups = nums && isFile ? groupBy(nums, st.per) : [];
+        const wasOpen = $("sum").querySelector("details")?.open;
+        if (!nums) {
+          $("sum").innerHTML = `<span style="color:var(--gray)">Elige los capítulos para ver el resumen.</span>`;
+        } else if (!isFile) {
+          $("sum").innerHTML = `<div class="big"><b>${nums.length} capítulos</b></div>Se guardan en la app para leerlos sin conexión.`;
+        } else {
+          const ext = st.fmt === "pdf" ? "pdf" : "epub";
+          const last = groups[groups.length - 1];
+          const partial = groups.length > 1 && last.length !== groups[0].length;
+          const strip = groups.length <= 80
+            ? `<div class="strip">${groups.map((g, i) => `<i class="${partial && i === groups.length - 1 ? "partial" : ""}" style="flex:${g.length}" title="${fileName(g, ext)}"></i>`).join("")}</div>` : "";
+          const detail = groups.length === 1 ? "" :
+            `<details ${wasOpen ? "open" : ""}><summary>Ver ${groups.length} archivos</summary><div class="flist">${groups.map((g) => `${fileName(g, ext)} <span style="opacity:.6">(${g.length})</span>`).join("<br>")}</div></details>`;
+          $("sum").innerHTML = `<div class="big"><b>${nums.length} capítulos → ${groups.length} ${groups.length === 1 ? "archivo" : "archivos"}</b>${groups.length > 1 ? ` de ${groups[0].length}` : ""}</div>
+            ${groups.length > 1 && partial ? `<div style="color:var(--gray)">El último tiene ${last.length}.</div>` : ""}
+            ${strip}
+            <div style="color:var(--gray)">${groups.length === 1 ? `<b style="color:#fff">${fileName(groups[0], ext)}</b>` : `Ej: <b style="color:#fff">${fileName(groups[0], ext)}</b>`}</div>
+            ${detail}
+            ${nums.length > 200 ? `<div class="warn">⚠ Son muchos capítulos: se descargan de a uno y puedes cancelar cuando quieras. Lo ya descargado se conserva.</div>` : ""}`;
+        }
+
+        const go = $("dGo");
+        go.disabled = !nums;
+        go.textContent = !nums ? "DESCARGAR" : !isFile ? `DESCARGAR ${nums.length}` : `REVISAR ${groups.length} ${groups.length === 1 ? "ARCHIVO" : "ARCHIVOS"}`;
+      }
+
+      $("fmt").onclick = (e) => {
+        const f = e.target.closest("button")?.dataset.f; if (!f) return;
+        st.fmt = f; [...$("fmt").children].forEach((b) => b.classList.toggle("on", b.dataset.f === f)); update();
+      };
+      spec.oninput = update;
+      $("specChips").onclick = (e) => {
+        const v = e.target.closest("button")?.dataset.v; if (!v) return;
+        spec.value = v === "sel" ? fmtSpec(sel) : `1-${TOTAL}`; update();
+      };
+      $("perChips").onclick = (e) => {
+        const b = e.target.closest("button"); if (!b || b.disabled) return;
+        st.per = +b.dataset.v; update();
+      };
+      per.oninput = () => { st.per = Math.max(0, parseInt(per.value, 10) || 0); const keep = per.value; update(); per.value = keep; };
+      const step = () => (st.per >= 100 ? 50 : st.per >= 20 ? 10 : 5);
+      $("perMinus").onclick = () => { st.per = st.per <= 5 ? 0 : Math.max(5, st.per - step()); update(); };
+      $("perPlus").onclick = () => { st.per = st.per === 0 ? 10 : st.per + step(); update(); };
+      $("dCancel").onclick = () => { lastDlg = null; review = null; hideDialog(); };
+      $("dGo").onclick = () => {
+        const nums = parseSpec(spec.value); if (!nums) return;
+        selected = new Set(nums); render();
+        hideDialog();
+        if (st.fmt === "dl") { lastDlg = null; runExport("dl", [nums]); return; }
+        lastDlg = { fmt: st.fmt, per: st.per, spec: spec.value };
+        const key = `${st.fmt}|${st.per}|${fmtSpec(nums)}`;
+        if (review?.key !== key) { edits.titles.clear(); edits.texts.clear(); review = { key, excluded: new Set() }; }
+        openPreview(st.fmt, groupBy(nums, st.per), review.excluded);
+      };
+      update();
+    });
+  }
+  $("btnDownload").onclick = downloadDialog;
+
+  /** Simulates downloading the chapters and writing one file per batch. */
+  function runExport(kind, groups) {
+    if (busy) return;
+    busy = true;
+    const ext = kind === "pdf" ? "pdf" : "epub";
+    const nums = groups.flat();
+    const total = nums.length;
+    let done = 0;
+    const filesDone = () => { let acc = 0, f = 0; for (const g of groups) { acc += g.length; if (done >= acc) f++; } return f; };
+    const label = kind === "pdf" ? "Creando PDF…" : kind === "epub" ? "Creando EPUB…" : "Descargando capítulos seleccionados…";
+    const chunk = Math.max(1, Math.ceil(total / 70));
+
+    showDialog(`<p id="tMsg">${label}</p><div class="progress" id="tBar"><i id="tFill"></i></div>
+      <div class="counter" id="tCnt"></div>
+      <div class="row"><button id="tCancel">CANCELAR</button></div>`, () => {
+      const timer = setInterval(step, total <= 10 ? 280 : 70);
+      const paint = () => {
+        $("tFill").style.width = (done / total * 100) + "%";
+        $("tCnt").textContent = kind === "dl" ? `${done} / ${total}` : `${done} / ${total} · archivo ${Math.min(filesDone() + 1, groups.length)} de ${groups.length}`;
+      };
+      $("tCancel").onclick = () => { clearInterval(timer); busy = false; hideDialog(); toast(kind === "dl" ? "Cancelado" : `Cancelado · ${filesDone()} archivo(s) ya guardado(s)`); };
+      function step() {
+        done = Math.min(total, done + chunk); paint();
+        if (done < total) return;
+        clearInterval(timer);
+        if (kind !== "dl") { $("tMsg").textContent = "Escribiendo archivo…"; $("tBar").classList.add("indet"); setTimeout(finish, 700); } else finish();
+      }
+      paint();
+    });
+
+    function finish() {
+      busy = false; hideDialog();
+      if (kind === "dl") {
+        showDialog(`<p>${total} capítulos descargados, 0 con error</p><div class="row"><button id="dClose">CERRAR</button></div>`, () => { $("dClose").onclick = hideDialog; });
+        return;
+      }
+      const names = groups.map((g) => fileName(g, ext));
+      const list = names.length > 6 ? names.slice(0, 5).concat([`… y ${names.length - 5} más`]) : names;
+      showDialog(`<p>${names.length === 1 ? "1 archivo guardado" : names.length + " archivos guardados"}:</p>
+        <div class="files" style="margin-top:-8px;color:#e8e8ec">${list.join("<br>")}</div>
+        <div class="row"><button id="dClose">CERRAR</button>${names.length === 1 ? `<button id="dOpen">ABRIR</button>` : ""}</div>`, () => {
+        $("dClose").onclick = hideDialog;
+        if (names.length === 1) $("dOpen").onclick = () => { hideDialog(); kind === "pdf" ? openPdf(names[0], nums) : openReader(nums); };
+      });
+    }
+  }
+
+  /**
+   * Review step shown before writing any file. Chapters can be excluded, and their title
+   * or text corrected, so a wrong chapter never ends up inside the final PDF or EPUB.
+   */
+  function openPreview(kind, groups, excluded) {
+    const ext = kind === "pdf" ? "pdf" : "epub";
+    const pv = { file: 0, focus: groups[0][0], excluded, editing: null };
+    const el = $("preview");
+    const kept = (g) => g.filter((n) => !pv.excluded.has(n));
+    const finalGroups = () => groups.map(kept).filter((g) => g.length);
+
+    function draw() {
+      const listTop = el.querySelector(".pv-list")?.scrollTop ?? 0;
+      const filesLeft = el.querySelector(".pv-files")?.scrollLeft ?? 0;
+      const g = groups[pv.file];
+      const keptHere = kept(g);
+      const all = groups.flat(), keptAll = all.filter((n) => !pv.excluded.has(n));
+      const excludedCount = all.length - keptAll.length;
+      const editedCount = new Set([...edits.titles.keys(), ...edits.texts.keys()]).size;
+      const focusEx = pv.excluded.has(pv.focus);
+
+      const top = `<div class="pv-top"><div class="back" id="pvBackTop">←</div>
+        <div class="ttl"><b>Vista previa ${kind === "pdf" ? "del PDF" : "del EPUB"}</b>
+        <span>${keptHere.length ? esc(fileName(keptHere, ext)) : "Archivo vacío: se omite"}</span></div></div>`;
+
+      const files = groups.length > 1
+        ? `<div class="pv-files">${groups.map((fg, i) => { const k = kept(fg); return `<button class="chip ${i === pv.file ? "on" : ""}" data-file="${i}">${k.length ? fmtSpec(k, ",") : "—"}</button>`; }).join("")}</div>` : "";
+
+      const page = pv.editing?.type === "text"
+        ? `<div class="pv-editor"><div class="eh">Editando el texto del capítulo ${pv.editing.n}</div>
+            <textarea id="pvTa">${esc(edits.texts.get(pv.editing.n) ?? defaultText())}</textarea>
+            <div class="eb"><button id="pvReset">RESTABLECER</button><button id="pvTaCancel">CANCELAR</button><button class="primary" id="pvTaSave">GUARDAR</button></div></div>`
+        : `<div class="pv-pagewrap"><div class="pdfpage"><h4>${esc(titleOf(pv.focus))}</h4>${paragraphsOf(pv.focus).map((p) => `<p>${esc(p)}</p>`).join("")}<div class="pn">1</div></div>${focusEx ? `<div class="pv-excl">Capítulo excluido</div>` : ""}</div>`;
+
+      const rows = g.map((n) => {
+        const ex = pv.excluded.has(n);
+        const edited = edits.titles.has(n) || edits.texts.has(n);
+        const base = edits.titles.get(n) ?? chapters[n - 1].title;
+        const editingTitle = pv.editing?.type === "title" && pv.editing.n === n;
+        return `<div class="pv-row ${ex ? "ex" : ""} ${n === pv.focus ? "focus" : ""}" data-n="${n}">
+          <input type="checkbox" data-act="inc" ${ex ? "" : "checked"} aria-label="Incluir capítulo ${n}">
+          <div class="num">${n}.</div>
+          ${editingTitle ? `<input class="tt" id="pvTt" value="${esc(base)}">` : `<div class="t">${esc(base)}${edited ? "<i>editado</i>" : ""}</div>`}
+          <button data-act="title" title="Editar título">✎</button><button data-act="text" title="Editar texto">¶</button></div>`;
+      }).join("");
+
+      const foot = `<div class="pv-foot"><div class="pv-sum"><span>${keptAll.length} de ${all.length} capítulos · ${finalGroups().length} ${finalGroups().length === 1 ? "archivo" : "archivos"}${editedCount ? ` · ${editedCount} editado(s)` : ""}</span>
+          ${excludedCount ? `<span><b>${excludedCount} excluido(s)</b> <button class="pv-linkbtn" id="pvRestore">Restaurar</button></span>` : ""}</div>
+        <div class="pv-btns"><button id="pvBack">← VOLVER</button><button class="primary" id="pvGo" ${keptAll.length ? "" : "disabled"}>CONFIRMAR Y DESCARGAR</button></div></div>`;
+
+      el.innerHTML = top + files + page + `<div class="pv-list">${rows}</div>` + foot;
+      el.querySelector(".pv-list").scrollTop = listTop;
+      const f = el.querySelector(".pv-files"); if (f) f.scrollLeft = filesLeft;
+      bind();
+    }
+
+    function commitTitle() {
+      const inp = $("pvTt"); if (!inp || pv.editing?.type !== "title") return;
+      const n = pv.editing.n, v = inp.value.trim();
+      if (!v || v === chapters[n - 1].title) edits.titles.delete(n); else edits.titles.set(n, v);
+      pv.editing = null; draw();
+    }
+
+    function bind() {
+      $("pvBackTop").onclick = $("pvBack").onclick = () => { el.classList.remove("show"); downloadDialog(); };
+      $("pvGo").onclick = () => {
+        const fin = finalGroups(); if (!fin.length) return;
+        lastDlg = null; review = null; el.classList.remove("show");
+        selected = new Set(fin.flat()); render();
+        runExport(kind, fin);
+      };
+      const restore = $("pvRestore"); if (restore) restore.onclick = () => { pv.excluded.clear(); draw(); };
+      el.querySelectorAll("[data-file]").forEach((b) => b.onclick = () => { pv.file = +b.dataset.file; pv.focus = groups[pv.file][0]; pv.editing = null; draw(); });
+      el.querySelectorAll(".pv-row").forEach((row) => {
+        const n = +row.dataset.n;
+        row.onclick = (e) => {
+          const act = e.target.closest("[data-act]")?.dataset.act;
+          if (e.target.id === "pvTt") return;
+          if (act === "inc") { pv.excluded.has(n) ? pv.excluded.delete(n) : pv.excluded.add(n); pv.focus = n; draw(); return; }
+          if (act === "title") { pv.editing = { type: "title", n }; pv.focus = n; draw(); $("pvTt").focus(); $("pvTt").select(); return; }
+          if (act === "text") { pv.editing = { type: "text", n }; pv.focus = n; draw(); return; }
+          pv.focus = n; if (pv.editing?.type === "text") pv.editing = null; draw();
+        };
+      });
+      const tt = $("pvTt");
+      if (tt) {
+        tt.onkeydown = (e) => { if (e.key === "Enter") commitTitle(); if (e.key === "Escape") { pv.editing = null; draw(); } };
+        tt.onblur = () => setTimeout(commitTitle, 0);
+      }
+      if ($("pvTa")) {
+        $("pvTaSave").onclick = () => {
+          const n = pv.editing.n, v = $("pvTa").value.trim();
+          if (!v || v === defaultText()) edits.texts.delete(n); else edits.texts.set(n, v);
+          pv.editing = null; draw();
+        };
+        $("pvTaCancel").onclick = () => { pv.editing = null; draw(); };
+        $("pvReset").onclick = () => { edits.texts.delete(pv.editing.n); pv.editing = null; draw(); };
+      }
+    }
+
+    el.classList.add("show"); draw();
+  }
+
+  function openPdf(name, list) {
+    const pages = list.slice(0, 4).map((n, i) => `<div class="pdfpage"><h4>${esc(titleOf(n))}</h4>${paragraphsOf(n).map((p) => `<p>${esc(p)}</p>`).join("")}<div class="pn">${i + 1}</div></div>`).join("");
+    $("pdfview").innerHTML = `<div class="ptop"><span id="pBack" style="cursor:pointer">←</span><span>${name}</span></div><div class="pages">${pages}${list.length > 4 ? `<div style="text-align:center;font-size:12px;color:#555;padding:6px">… ${list.length - 4} capítulos más</div>` : ""}</div>`;
+    $("pdfview").classList.add("show"); $("pBack").onclick = () => $("pdfview").classList.remove("show");
+  }
+
+  function setTotal(n) {
+    TOTAL = n; selected = new Set(); read = new Set(); buildChapters(); hideDialog(); busy = null; lastDlg = null; review = null;
+    edits.titles.clear(); edits.texts.clear(); $("preview").classList.remove("show"); render();
+    document.querySelectorAll("#totals button").forEach((b) => b.classList.toggle("on", +b.dataset.n === n));
+  }
+  $("totals").innerHTML = [109, 1000, 2500].map((n) => `<button data-n="${n}" class="${n === TOTAL ? "on" : ""}">${n}</button>`).join("");
+  $("totals").onclick = (e) => { const n = +e.target.closest("button")?.dataset.n; if (n) setTotal(n); };
+
+  $("reset").onclick = () => {
+    selecting = false; selected = new Set(); read = new Set(); busy = null; lastDlg = null; review = null; hideDialog();
+    edits.titles.clear(); edits.texts.clear();
+    $("reader").classList.remove("show"); $("pdfview").classList.remove("show"); $("preview").classList.remove("show"); closeMenu(); render();
+  };
+
+  const presets = [
+    { id: "auto", label: "Mi pantalla" },
+    { id: "p360", label: "Teléfono pequeño 360×640", w: 360, h: 640 },
+    { id: "p390", label: "Teléfono 390×800", w: 390, h: 800 },
+    { id: "p430", label: "Teléfono grande 430×932", w: 430, h: 932 },
+    { id: "land", label: "Horizontal 844×390", w: 844, h: 390 },
+    { id: "fold", label: "Plegable 673×841", w: 673, h: 841 },
+    { id: "tabp", label: "Tablet vertical 820×1180", w: 820, h: 1180 },
+    { id: "tabl", label: "Tablet horizontal 1180×820", w: 1180, h: 820 }
+  ];
+  let current = innerWidth <= 520 ? "auto" : "p390";
+
+  $("devices").innerHTML = presets.map((p) => `<button data-id="${p.id}">${p.label}</button>`).join("");
+  $("devices").addEventListener("click", (e) => {
+    const id = e.target.closest("button")?.dataset.id; if (!id) return;
+    current = id; applyDevice();
+  });
+  $("infobtn").onclick = () => document.body.classList.toggle("panel-open");
+
+  function updateBarHeight() {
+    phone.style.setProperty("--barh", selecting ? $("selbar").offsetHeight + "px" : "0px");
+  }
+
+  function applyDevice() {
+    const p = presets.find((x) => x.id === current);
+    const fullscreen = p.id === "auto";
+    phone.classList.toggle("fullscreen", fullscreen);
+    document.body.classList.toggle("has-fs", fullscreen);
+    if (fullscreen) {
+      phone.style.zoom = 1;
+      phone.style.removeProperty("--w"); phone.style.removeProperty("--h");
+    } else {
+      document.body.classList.remove("panel-open");
+      phone.style.setProperty("--w", p.w + 20 + "px");
+      phone.style.setProperty("--h", p.h + 20 + "px");
+      phone.style.zoom = Math.min(1, (innerWidth - 32) / (p.w + 20), (innerHeight - 90) / (p.h + 20));
+    }
+    document.querySelectorAll("#devices button").forEach((b) => b.classList.toggle("on", b.dataset.id === current));
+    updateBarHeight();
+  }
+
+  new ResizeObserver(updateBarHeight).observe($("selbar"));
+  addEventListener("resize", applyDevice);
+
+  render();
+  applyDevice();
+</script>
+</body>
+</html>

@@ -3,6 +3,10 @@ package com.lagradost.quicknovel
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import com.lagradost.quicknovel.ui.NavStyle
+import com.lagradost.quicknovel.ui.NavStyler
+import com.lagradost.quicknovel.ui.download.LibraryRailState
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.net.Uri
@@ -479,6 +483,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         activity = this
         mainActivity = this
+        // Style changes or activity restores can rebuild the menu and drop the button.
+        syncSectionsButton(
+            (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment)
+                ?.navController?.currentDestination
+        )
     }
 
     /*override fun onBackPressed() {
@@ -534,12 +543,28 @@ class MainActivity : AppCompatActivity() {
         binding?.apply {
             navView.isVisible = isNavVisible
         }
+        syncSectionsButton(destination)
+    }
+
+    /** The sections button only makes sense while the library is on screen. */
+    private fun syncSectionsButton(destination: NavDestination?) {
+        val item = binding?.navView?.menu?.findItem(R.id.navigation_sections) ?: return
+        val shouldShow = destination?.id == R.id.navigation_download
+        if (item.isVisible != shouldShow) item.isVisible = shouldShow
+    }
+
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(CommonActivity.withAppLocale(newBase))
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         updateLocale() // android fucks me by chaining lang when rotating the phone
     }
+
+    /** Kept in a field because shared preferences only hold a weak reference to listeners. */
+    private var navStylePrefListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     var binding: ActivityMainBinding? = null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -587,7 +612,31 @@ class MainActivity : AppCompatActivity() {
             overlayCutout = false
         )
 
+        val applyNavStyle = {
+            NavStyler.apply(
+                navView,
+                NavStyle.fromKey(settingsManager.getString("nav_style", NavStyle.DEFAULT_KEY)),
+                primary = getResourceColor(R.attr.colorPrimary),
+                accent = getResourceColor(androidx.appcompat.R.attr.colorAccent),
+                gray = getResourceColor(R.attr.grayTextColor),
+            )
+        }
+        applyNavStyle()
+        navStylePrefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "nav_style") {
+                applyNavStyle()
+                syncSectionsButton(navController.currentDestination)
+            }
+        }
+        settingsManager.registerOnSharedPreferenceChangeListener(navStylePrefListener)
+
         navView.setOnItemSelectedListener { item ->
+            NavStyler.pop(navView, item.itemId)
+            if (item.itemId == R.id.navigation_sections) {
+                // An action, not a destination: it must not change the selected tab.
+                LibraryRailState.toggle()
+                return@setOnItemSelectedListener false
+            }
             onNavDestinationSelected(
                 item,
                 navController = navController
@@ -771,9 +820,14 @@ class MainActivity : AppCompatActivity() {
 
         val apiNames = getApiSettings()
         providersActive = apiNames
-        val edit = settingsManager.edit()
-        edit.putStringSet(getString(R.string.search_providers_list_key), providersActive)
-        edit.apply()
+        // The language filter must not be saved as the provider list, otherwise providers of a
+        // language enabled later (e.g. English) would stay hidden. Older versions saved it, so reset once.
+        if (!settingsManager.getBoolean("provider_list_reset_v1", false)) {
+            settingsManager.edit()
+                .remove(getString(R.string.search_providers_list_key))
+                .putBoolean("provider_list_reset_v1", true)
+                .apply()
+        }
         /*
         val apiName = settingsManager.getString(getString(R.string.provider_list_key), apis[0].name)
         activeAPI = getApiFromName(apiName ?: apis[0].name)
@@ -796,6 +850,7 @@ class MainActivity : AppCompatActivity() {
         // Note that android can normally not request 2 permissions at once
         // But storage permissions are not required for android 13, but notifications are
         requestNotifications()
+        NewChaptersWorker.scheduleFromSettings(this)
 
         printProviders()
 

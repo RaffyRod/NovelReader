@@ -14,6 +14,7 @@ import com.lagradost.quicknovel.providers.AnnasArchive
 import com.lagradost.quicknovel.providers.ArNoProvider
 import com.lagradost.quicknovel.providers.AsianNovelProvider
 import com.lagradost.quicknovel.providers.BrightNovelProvider
+import com.lagradost.quicknovel.providers.CustomProvider
 import com.lagradost.quicknovel.providers.ChikariProvider
 import com.lagradost.quicknovel.providers.DevilNovelsProvider
 import com.lagradost.quicknovel.providers.ChrysanthemumGardenProvider
@@ -73,7 +74,21 @@ import com.lagradost.quicknovel.util.Coroutines.ioSafe
 
 class Apis {
     companion object {
-        val apis: List<MainAPI> = arrayOf(
+        /** Every provider: the ones shipped with the app plus the ones the user added. */
+        val apis: List<MainAPI>
+            get() = allApis ?: (builtInApis + CustomProviders.load().map { CustomProvider(it) })
+                .sortedBy { it.name }
+                .also { allApis = it }
+
+        @Volatile
+        private var allApis: List<MainAPI>? = null
+
+        /** Forgets the cached list so custom providers added or removed show up. */
+        fun refreshApis() {
+            allApis = null
+        }
+
+        val builtInApis: List<MainAPI> = arrayOf(
             //AllProvider(),
             AllNovelProvider(),
             AnnasArchive(),
@@ -273,14 +288,14 @@ class Apis {
         fun Context.getApiProviderLangSettings(): HashSet<String> {
             val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
             val hashSet = HashSet<String>()
-            hashSet.add("en") // def is only en
+            hashSet.add(ProviderLanguages.DEFAULT)
             val list = settingsManager.getStringSet(
                 this.getString(R.string.provider_lang_key),
                 hashSet.toMutableSet()
             )
+            val showEnglish = settingsManager.getBoolean(ProviderLanguages.SHOW_ENGLISH_KEY, false)
 
-            if (list.isNullOrEmpty()) return hashSet
-            return list.toHashSet()
+            return ProviderLanguages.effective(list ?: hashSet, showEnglish).toHashSet()
         }
     }
 }

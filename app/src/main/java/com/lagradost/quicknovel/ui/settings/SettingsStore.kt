@@ -6,7 +6,7 @@ import androidx.compose.ui.res.stringResource
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.util.Apis.Companion.apis
 import com.mihon.common.preference.AndroidPreferenceStore
-import kotlinx.collections.immutable.toPersistentHashSet
+import kotlinx.collections.immutable.persistentSetOf
 
 @Composable
 fun AndroidPreferenceStore.searchProvidersList() = getStringSet(
@@ -17,5 +17,5 @@ fun AndroidPreferenceStore.searchProvidersList() = getStringSet(
 @Composable
 fun AndroidPreferenceStore.searchLangList() = getStringSet(
     stringResource(R.string.provider_lang_key),
-    remember { apis.map { it.lang }.toPersistentHashSet() }
+    remember { persistentSetOf("es") }
 )

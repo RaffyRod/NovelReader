@@ -1,6 +1,7 @@
 package com.lagradost.quicknovel
 
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Typeface
 import android.media.AudioAttributes
@@ -20,6 +21,8 @@ import com.lagradost.quicknovel.mvvm.debugAssert
 import com.lagradost.quicknovel.receivers.BecomingNoisyReceiver
 import com.lagradost.quicknovel.ui.UiText
 import com.lagradost.quicknovel.ui.txt
+import com.lagradost.quicknovel.util.TtsVoicePicker
+import com.lagradost.quicknovel.util.VoiceCandidate
 import com.lagradost.quicknovel.util.UIHelper.requestAudioFocus
 import com.lagradost.quicknovel.util.UIHelper.unRequestAudioFocus
 import io.noties.markwon.Markwon
@@ -151,6 +154,31 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
         }
     }
 
+    /** The most natural installed voice of [locale]'s language, or null when none is installed. */
+    private fun bestVoice(tts: TextToSpeech, locale: Locale): Voice? {
+        val voices = tts.voices.orEmpty()
+        val candidates = voices.map {
+            VoiceCandidate(
+                name = it.name,
+                language = it.locale.language,
+                quality = it.quality,
+                needsNetwork = it.isNetworkConnectionRequired,
+                installed = !it.features.orEmpty().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)
+            )
+        }
+        val name = TtsVoicePicker.best(candidates, locale.language) ?: return null
+        return voices.firstOrNull { it.name == name }
+    }
+
+    /** Opens the system screen that downloads the voice data, when the phone has one. */
+    private fun offerVoiceInstall() {
+        val intent = Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        }
+    }
+
     private val mutex: Mutex = Mutex() // no duplicate tts
 
     suspend fun requireTTS(action: () -> Boolean = { false }): TextToSpeech? = with(mutex) {
@@ -197,15 +225,17 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
             val voiceName = BaseApplication.getKey<String>(EPUB_VOICE)
             val langName = BaseApplication.getKey<String>(EPUB_LANG)
 
-            val canSetLanguage = pendingTTS.setLanguage(
-                pendingTTS.availableLanguages.firstOrNull { it.displayName == langName }
-                    ?: Locale.US)
-            pendingTTS.voice =
-                pendingTTS.voices.firstOrNull { it.name == voiceName }
-                    ?: pendingTTS.defaultVoice
+            val available = pendingTTS.availableLanguages.orEmpty()
+            // Without a saved choice, read in the language of the app instead of always in English.
+            val locale = available.firstOrNull { it.displayName == langName }
+                ?: TtsVoicePicker.preferredLocale(Locale.getDefault(), available)
+            val canSetLanguage = pendingTTS.setLanguage(locale)
+            val savedVoice = pendingTTS.voices.orEmpty().firstOrNull { it.name == voiceName }
+            pendingTTS.voice = savedVoice ?: bestVoice(pendingTTS, locale) ?: pendingTTS.defaultVoice
 
             if (canSetLanguage == TextToSpeech.LANG_MISSING_DATA || canSetLanguage == TextToSpeech.LANG_NOT_SUPPORTED) {
                 CommonActivity.showToast(R.string.tts_language_error)
+                offerVoiceInstall()
                 pendingTTS.shutdown()
                 return@coroutineScope null
             }

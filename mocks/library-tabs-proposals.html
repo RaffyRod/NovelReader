@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel Ultimate - Sub-opciones de la Biblioteca</title>
+<style>
+  :root { --bg:#130B0C; --surface:#1C1112; --card:#2A1B1D; --text:#F4EBE6; --muted:#A89A98; --red:#E5322D; --orange:#FF7A1A; --gold:#FFC247; --ease:cubic-bezier(.2,.8,.2,1); --w:340px; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0a0506; color:var(--text); font-family:system-ui,"Segoe UI",Roboto,sans-serif; padding:24px 18px 160px; }
+  h1 { font-size:26px; margin:0 0 6px; } h1 span { color:var(--red); }
+  p.lead { color:var(--muted); margin:0 0 18px; max-width:860px; font-size:14px; }
+  .toolbar { position:sticky; top:0; z-index:20; background:#0a0506ee; backdrop-filter:blur(6px); padding:10px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid #2a1b1d; margin-bottom:22px; }
+  .toolbar b { font-size:13px; color:var(--muted); margin-right:4px; }
+  .seg button { all:unset; cursor:pointer; padding:7px 14px; border:1px solid #3a2326; font-size:13px; color:var(--muted); transition:all .2s var(--ease); }
+  .seg button:first-child { border-radius:18px 0 0 18px; } .seg button:last-child { border-radius:0 18px 18px 0; }
+  .seg button.on { background:var(--red); border-color:var(--red); color:#fff; }
+  .options { display:flex; flex-wrap:wrap; gap:26px; }
+  label.opt { display:flex; flex-direction:column; gap:8px; cursor:pointer; width:var(--w); max-width:100%; }
+  label.opt input { position:absolute; opacity:0; }
+  label.opt .tag { font-size:13.5px; font-weight:700; display:flex; gap:8px; align-items:flex-start; }
+  label.opt .tag::before { content:""; width:16px; height:16px; margin-top:2px; border-radius:50%; border:2px solid #5a3a3e; flex:none; transition:all .2s; }
+  label.opt .tag small { display:block; color:var(--muted); font-weight:400; font-size:12px; }
+  label.opt input:checked ~ .tag::before { background:var(--red); border-color:var(--red); box-shadow:0 0 0 3px #E5322D44; }
+  label.opt input:checked ~ .frame { border-color:var(--red); box-shadow:0 0 0 2px #E5322D66, 0 10px 30px #000a; }
+  .frame { width:100%; height:520px; background:var(--bg); border:1px solid #3a2326; border-radius:22px; overflow:hidden; position:relative; font-size:12px; transition:all .25s var(--ease); }
+  .abar { display:flex; align-items:center; gap:8px; padding:10px 12px; }
+  .search { flex:1; height:32px; border-radius:16px; background:var(--surface); display:flex; align-items:center; padding:0 12px; color:var(--muted); }
+  .ico { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; background:var(--surface); font-size:14px; flex:none; cursor:pointer; }
+  .ico.on { background:var(--red); }
+  .muted { color:var(--muted); }
+  .cover { aspect-ratio:2/3; border-radius:8px; background:linear-gradient(160deg,var(--c1,#7a1f2b),var(--c2,#1b0b10)); flex:none; }
+  .c1 { --c1:#c2312f; --c2:#2b0a12; } .c2 { --c1:#3d5af1; --c2:#0d1030; } .c3 { --c1:#ff9a3c; --c2:#4a1408; } .c4 { --c1:#1fb88a; --c2:#052a22; } .c5 { --c1:#9b4dff; --c2:#1a0838; } .c6 { --c1:#e6c35c; --c2:#3a2a05; }
+  .rowitem { display:flex; gap:10px; padding:8px 12px; align-items:center; } .rowitem .cover { width:44px; }
+  .rowitem .t { flex:1; min-width:0; } .rowitem .t b { display:block; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar { height:4px; border-radius:2px; background:#ffffff18; overflow:hidden; margin-top:6px; } .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--red),var(--gold)); }
+  .chip { display:inline-flex; gap:5px; align-items:center; padding:6px 12px; border-radius:16px; background:var(--card); font-size:11.5px; color:var(--text); white-space:nowrap; cursor:pointer; transition:all .2s var(--ease); flex:none; }
+  .chip.on { background:var(--red); color:#fff; }
+  .chip em { font-style:normal; font-size:10px; opacity:.7; }
+  .scroller { display:flex; gap:6px; overflow-x:auto; padding:2px 12px 10px; scrollbar-width:none; }
+  .scroller::-webkit-scrollbar { display:none; }
+  .fade { position:relative; } .fade::after { content:""; position:absolute; right:0; top:0; bottom:0; width:34px; background:linear-gradient(90deg,transparent,var(--bg)); pointer-events:none; }
+  .list { overflow:auto; height:calc(100% - 150px); }
+  .nav { position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-around; padding:8px 0; background:var(--surface); color:var(--muted); font-size:10px; }
+  .nav b { color:var(--red); font-weight:600; }
+  .pagerhead { display:flex; align-items:center; gap:10px; padding:4px 14px 8px; }
+  .pagerhead .title { flex:1; text-align:center; font-size:16px; font-weight:700; }
+  .arrow { width:30px; height:30px; border-radius:50%; background:var(--card); display:grid; place-items:center; cursor:pointer; }
+  .dots { display:flex; gap:5px; justify-content:center; padding-bottom:8px; } .dots i { width:6px; height:6px; border-radius:3px; background:#ffffff30; transition:all .25s var(--ease); } .dots i.on { width:18px; background:var(--red); }
+  .sheet { position:absolute; left:0; right:0; bottom:0; background:var(--surface); border-radius:22px 22px 0 0; padding:14px; transform:translateY(100%); transition:transform .3s var(--ease); z-index:5; }
+  .sheet.open { transform:none; }
+  .sheetgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .tile { background:var(--card); border-radius:14px; padding:10px 6px; text-align:center; cursor:pointer; font-size:11px; transition:all .2s var(--ease); }
+  .tile .e { font-size:20px; display:block; } .tile em { display:block; font-style:normal; color:var(--muted); font-size:10px; } .tile.on { background:var(--red); } .tile.on em { color:#fff; }
+  .scrim { position:absolute; inset:0; background:#0009; opacity:0; pointer-events:none; transition:opacity .3s; z-index:4; } .scrim.open { opacity:1; pointer-events:auto; }
+  .dropdown { margin:0 12px 8px; background:var(--surface); border-radius:14px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:13px; font-weight:600; }
+  .menu { position:absolute; left:12px; right:12px; top:100px; background:var(--card); border-radius:14px; padding:6px; z-index:5; display:none; box-shadow:0 14px 30px #000b; }
+  .menu.open { display:block; } .menu div { padding:10px 12px; border-radius:10px; display:flex; justify-content:space-between; cursor:pointer; } .menu div.on { background:var(--red); } .menu div:hover:not(.on) { background:#ffffff12; }
+  .underline { display:flex; overflow-x:auto; border-bottom:1px solid #ffffff14; scrollbar-width:none; padding:0 8px; }
+  .underline::-webkit-scrollbar { display:none; }
+  .underline span { padding:10px 12px; font-size:12px; color:var(--muted); white-space:nowrap; cursor:pointer; border-bottom:2px solid transparent; flex:none; } .underline span.on { color:var(--text); border-color:var(--red); font-weight:700; }
+  .railwrap { display:flex; height:calc(100% - 90px); } .rail { width:46px; background:var(--surface); display:flex; flex-direction:column; gap:6px; padding:8px 4px; align-items:center; } .rail .ri { width:38px; height:44px; border-radius:12px; display:grid; place-items:center; font-size:15px; cursor:pointer; position:relative; } .rail .ri.on { background:var(--red); } .rail .ri small { position:absolute; bottom:1px; right:3px; font-size:8px; opacity:.8; }
+  .summary { position:fixed; left:0; right:0; bottom:0; z-index:30; background:#14090b; border-top:2px solid var(--red); padding:10px 18px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .summary pre { margin:0; font-size:12px; color:var(--muted); flex:1; min-width:240px; white-space:pre-wrap; max-height:64px; overflow:auto; }
+  .summary button { all:unset; cursor:pointer; background:var(--red); color:#fff; padding:9px 16px; border-radius:12px; font-weight:600; font-size:13px; }
+  .hint { font-size:11px; color:var(--muted); text-align:center; padding:4px; }
+</style>
+</head>
+<body>
+<h1>QuickNovel <span>Ultimate</span> - Sub-opciones de la Biblioteca</h1>
+<p class="lead">Hoy las pestañas (Descargas, Leyendo, Postergado, Planeo leer, Completado, Abandonado, Favoritos) están abajo y ya no caben. Estas son 7 formas de presentarlas, todas interactivas: toca las sub-opciones dentro de cada teléfono. Elige una y abajo se arma el resumen para copiarlo.</p>
+
+<div class="toolbar">
+  <b>Ancho de pantalla:</b>
+  <div class="seg" id="widths">
+    <button data-w="300px">Teléfono pequeño</button>
+    <button data-w="340px" class="on">Teléfono</button>
+    <button data-w="520px">Plegable / horizontal</button>
+    <button data-w="760px">Tablet</button>
+  </div>
+</div>
+
+<div class="options" id="options"></div>
+
+<div class="summary">
+  <div><b>Mi selección</b><pre id="sumtext">Aún no has elegido nada.</pre></div>
+  <button id="copy">Copiar resumen</button>
+</div>
+
+<script>
+const SECTIONS = [
+  { k:'Descargas', e:'⬇', n:12 }, { k:'Leyendo', e:'📖', n:5 }, { k:'Postergado', e:'⏸', n:2 },
+  { k:'Planeo leer', e:'🔖', n:8 }, { k:'Completado', e:'✔', n:21 }, { k:'Abandonado', e:'🗑', n:3 }, { k:'Favoritos', e:'♥', n:6 },
+];
+const cv = c => `<div class="cover c${c}"></div>`;
+const search = (extra = '') => `<div class="abar"><div class="search">🔍 Buscar mis novelas...</div>${extra}</div>`;
+const nav = () => `<div class="nav"><b>Biblioteca</b><span>Buscar</span><span>Historial</span><span>Ajustes</span></div>`;
+const titles = ['Hero of Darkness','Return of the Wizard','The Saint Who Levels Up','El Señor de los Misterios','Shadow Slave','Last Born of Desdemona'];
+const items = (key) => titles.slice(0, 4).map((t, i) => `<div class="rowitem">${cv(1 + (i + key.length) % 6)}<div class="t"><b>${t}</b><span class="muted">${key} · ${10 + i * 7}/${300 + i * 90}</span><div class="bar"><i style="width:${8 + i * 22}%"></i></div></div></div>`).join('');
+
+/* Each option gets a root element and wires its own behaviour after being inserted. */
+const OPTIONS = [
+ { id:'A', name:'A. Chips deslizables arriba', desc:'Fila horizontal que se desliza con el dedo, con contador y borde que indica que hay más. Es lo que hay hoy pero arriba y con scroll visible.',
+   html:() => `${search()}<div class="fade"><div class="scroller" data-role="chips">${SECTIONS.map((s,i)=>`<span class="chip ${i===0?'on':''}" data-i="${i}">${s.e} ${s.k} <em>${s.n}</em></span>`).join('')}</div></div><div class="list" data-role="list">${items('Descargas')}</div>${nav()}`,
+   wire(el){ chipsWire(el,'[data-role=chips] .chip'); } },
+ { id:'B', name:'B. Menú desplegable', desc:'Un selector "Mostrando: Leyendo ▾" bajo el buscador. Ocupa una sola línea sin importar cuántas categorías haya.',
+   html:() => `${search()}<div class="dropdown" data-role="dd"><span>Mostrando: <b data-role="cur">Descargas</b></span><span class="muted">▾</span></div><div class="menu" data-role="menu">${SECTIONS.map((s,i)=>`<div class="${i===0?'on':''}" data-i="${i}"><span>${s.e} ${s.k}</span><span>${s.n}</span></div>`).join('')}</div><div class="list" data-role="list">${items('Descargas')}</div>${nav()}`,
+   wire(el){ const menu=el.querySelector('[data-role=menu]'); el.querySelector('[data-role=dd]').onclick=()=>menu.classList.toggle('open');
+     menu.querySelectorAll('div').forEach(d=>d.onclick=()=>{ menu.querySelectorAll('div').forEach(x=>x.classList.remove('on')); d.classList.add('on'); const s=SECTIONS[d.dataset.i]; el.querySelector('[data-role=cur]').textContent=s.k; el.querySelector('[data-role=list]').innerHTML=items(s.k); menu.classList.remove('open'); }); } },
+ { id:'C', name:'C. Carrusel con flechas y puntos', desc:'Un título grande con ◀ ▶ y puntos de página. Se desliza la lista completa a izquierda/derecha como un carrusel.',
+   html:() => `${search()}<div class="pagerhead"><div class="arrow" data-role="prev">◀</div><div class="title" data-role="title">⬇ Descargas</div><div class="arrow" data-role="next">▶</div></div><div class="dots" data-role="dots">${SECTIONS.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div><div class="list" data-role="list" style="height:calc(100% - 190px)">${items('Descargas')}</div><div class="hint">Desliza la lista a los lados para cambiar</div>${nav()}`,
+   wire(el){ let i=0; const go=n=>{ i=(n+SECTIONS.length)%SECTIONS.length; const s=SECTIONS[i]; el.querySelector('[data-role=title]').textContent=`${s.e} ${s.k}`; el.querySelectorAll('[data-role=dots] i').forEach((d,k)=>d.classList.toggle('on',k===i)); el.querySelector('[data-role=list]').innerHTML=items(s.k); };
+     el.querySelector('[data-role=prev]').onclick=()=>go(i-1); el.querySelector('[data-role=next]').onclick=()=>go(i+1); } },
+ { id:'D', name:'D. Pestañas subrayadas (estilo Play Store)', desc:'Texto con subrayado rojo bajo el buscador, scrolleable. Más limpio que los chips y deja más lugar abajo.',
+   html:() => `${search()}<div class="underline" data-role="chips">${SECTIONS.map((s,i)=>`<span class="${i===0?'on':''}" data-i="${i}">${s.k}</span>`).join('')}</div><div class="list" data-role="list" style="height:calc(100% - 140px)">${items('Descargas')}</div>${nav()}`,
+   wire(el){ chipsWire(el,'[data-role=chips] span'); } },
+ { id:'E', name:'E. Hoja inferior con cuadrícula', desc:'Un botón "Categorías" abre una hoja con iconos y contadores. Ideal si luego se agregan más estados o etiquetas propias.',
+   html:() => `${search(`<div class="ico" data-role="open">☰</div>`)}<div class="abar" style="padding-top:0"><span class="chip on" data-role="cur">⬇ Descargas</span><span class="muted" style="font-size:11px">toca ☰ para cambiar</span></div><div class="list" data-role="list" style="height:calc(100% - 150px)">${items('Descargas')}</div><div class="scrim" data-role="scrim"></div><div class="sheet" data-role="sheet"><div class="sheetgrid">${SECTIONS.map((s,i)=>`<div class="tile ${i===0?'on':''}" data-i="${i}"><span class="e">${s.e}</span>${s.k}<em>${s.n}</em></div>`).join('')}</div></div>${nav()}`,
+   wire(el){ const sheet=el.querySelector('[data-role=sheet]'), scrim=el.querySelector('[data-role=scrim]'); const toggle=o=>{ sheet.classList.toggle('open',o); scrim.classList.toggle('open',o); };
+     el.querySelector('[data-role=open]').onclick=()=>toggle(true); scrim.onclick=()=>toggle(false);
+     sheet.querySelectorAll('.tile').forEach(t=>t.onclick=()=>{ sheet.querySelectorAll('.tile').forEach(x=>x.classList.remove('on')); t.classList.add('on'); const s=SECTIONS[t.dataset.i]; el.querySelector('[data-role=cur]').textContent=`${s.e} ${s.k}`; el.querySelector('[data-role=list]').innerHTML=items(s.k); toggle(false); }); } },
+ { id:'F', name:'F. Dos niveles: grupos + sub-chips', desc:'Tres grupos arriba (Descargas · Mi lista · Favoritos). Dentro de "Mi lista" aparecen los estados (Leyendo, Postergado...). Menos opciones a la vista a la vez.',
+   html:() => `${search()}<div class="abar" style="padding-top:0;gap:6px" data-role="groups"><span class="chip on" data-g="0">⬇ Descargas</span><span class="chip" data-g="1">📚 Mi lista</span><span class="chip" data-g="2">♥ Favoritos</span></div><div class="scroller" data-role="subs" style="display:none">${SECTIONS.slice(1,6).map((s,i)=>`<span class="chip ${i===0?'on':''}" data-i="${i+1}">${s.k} <em>${s.n}</em></span>`).join('')}</div><div class="list" data-role="list" style="height:calc(100% - 170px)">${items('Descargas')}</div>${nav()}`,
+   wire(el){ const subs=el.querySelector('[data-role=subs]'); const list=el.querySelector('[data-role=list]'); const groups=[...el.querySelectorAll('[data-g]')];
+     groups.forEach(g=>g.onclick=()=>{ groups.forEach(x=>x.classList.remove('on')); g.classList.add('on'); const k=+g.dataset.g; subs.style.display=k===1?'flex':'none'; list.innerHTML=items(k===0?'Descargas':k===1?'Leyendo':'Favoritos'); });
+     subs.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ subs.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); list.innerHTML=items(SECTIONS[c.dataset.i].k); }); } },
+ { id:'G', name:'G. Favoritos como corazón + estados en chips', desc:'El corazón de la barra superior filtra favoritos sobre cualquier categoría (por ejemplo, favoritos que estoy leyendo). Los estados quedan en chips deslizables.',
+   html:() => `${search(`<div class="ico" data-role="fav">♥</div>`)}<div class="fade"><div class="scroller" data-role="chips">${SECTIONS.slice(0,6).map((s,i)=>`<span class="chip ${i===0?'on':''}" data-i="${i}">${s.k} <em>${s.n}</em></span>`).join('')}</div></div><div class="hint" data-role="note">Todas las novelas</div><div class="list" data-role="list" style="height:calc(100% - 170px)">${items('Descargas')}</div>${nav()}`,
+   wire(el){ let cur='Descargas', fav=false; const draw=()=>{ el.querySelector('[data-role=list]').innerHTML=items(fav?cur+' ♥':cur); el.querySelector('[data-role=note]').textContent=fav?`Solo favoritos · ${cur}`:'Todas las novelas'; };
+     el.querySelector('[data-role=fav]').onclick=e=>{ fav=!fav; e.currentTarget.classList.toggle('on',fav); draw(); };
+     el.querySelectorAll('[data-role=chips] .chip').forEach(c=>c.onclick=()=>{ el.querySelectorAll('[data-role=chips] .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); cur=SECTIONS[c.dataset.i].k; draw(); }); } },
+ { id:'H', name:'H. Barra lateral de iconos', desc:'Una columna fina de iconos a la izquierda con contador. Muy rápido con el pulgar y no ocupa alto, pero le quita un poco de ancho a la lista.',
+   html:() => `${search()}<div class="railwrap"><div class="rail" data-role="rail">${SECTIONS.map((s,i)=>`<div class="ri ${i===0?'on':''}" data-i="${i}" title="${s.k}">${s.e}<small>${s.n}</small></div>`).join('')}</div><div style="flex:1;min-width:0"><div class="hint" data-role="note" style="text-align:left;padding:6px 12px;font-weight:700;color:var(--text)">Descargas</div><div class="list" data-role="list" style="height:calc(100% - 28px)">${items('Descargas')}</div></div></div>${nav()}`,
+   wire(el){ el.querySelectorAll('.ri').forEach(r=>r.onclick=()=>{ el.querySelectorAll('.ri').forEach(x=>x.classList.remove('on')); r.classList.add('on'); const s=SECTIONS[r.dataset.i]; el.querySelector('[data-role=note]').textContent=s.k; el.querySelector('[data-role=list]').innerHTML=items(s.k); }); } },
+];
+
+function chipsWire(el, selector) {
+  const nodes = el.querySelectorAll(selector);
+  nodes.forEach(c => c.onclick = () => { nodes.forEach(x => x.classList.remove('on')); c.classList.add('on'); el.querySelector('[data-role=list]').innerHTML = items(SECTIONS[c.dataset.i].k); });
+}
+
+const holder = document.getElementById('options');
+OPTIONS.forEach(o => {
+  const label = document.createElement('label');
+  label.className = 'opt';
+  label.innerHTML = `<input type="radio" name="lib" value="${o.id}"><div class="tag"><div>${o.name}<small>${o.desc}</small></div></div><div class="frame">${o.html()}</div>`;
+  holder.appendChild(label);
+  o.wire(label.querySelector('.frame'));
+  label.querySelector('input').addEventListener('change', render);
+});
+
+function render() {
+  const picked = document.querySelector('input[name=lib]:checked');
+  const o = OPTIONS.find(x => x.id === picked?.value);
+  document.getElementById('sumtext').textContent = o ? `Sub-opciones de la Biblioteca: ${o.name}` : 'Aún no has elegido nada.';
+}
+document.getElementById('copy').onclick = () => navigator.clipboard.writeText(document.getElementById('sumtext').textContent);
+document.querySelectorAll('#widths button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#widths button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  document.documentElement.style.setProperty('--w', b.dataset.w);
+});
+</script>
+</body>
+</html>

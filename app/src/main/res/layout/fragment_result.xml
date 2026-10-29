@@ -213,12 +213,18 @@
     <ImageView
         android:id="@+id/result_poster_blur"
         android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:alpha="0.3"
+        android:layout_height="380dp"
+        android:alpha="0.6"
         android:background="?attr/primaryBlackBackground"
         android:contentDescription="@string/background_image_descript"
         android:scaleType="centerCrop"
         tools:visibility="gone"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/result_hero_fade"
+        android:layout_width="match_parent"
+        android:layout_height="380dp"
         android:visibility="gone" />
 
     <FrameLayout
@@ -236,8 +242,8 @@
             android:orientation="horizontal">
 
             <androidx.cardview.widget.CardView
-                android:layout_width="100dp"
-                android:layout_height="150dp"
+                android:layout_width="124dp"
+                android:layout_height="186dp"
                 android:elevation="10dp"
                 app:cardCornerRadius="@dimen/roundedImageRadius">
 
@@ -305,7 +311,9 @@
         <androidx.core.widget.NestedScrollView
             android:id="@+id/result_mainscroll"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="72dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -315,7 +323,7 @@
                 <View
                     android:id="@+id/result_empty_view"
                     android:layout_width="match_parent"
-                    android:layout_height="170dp"
+                    android:layout_height="206dp"
                     android:clickable="false"
                     android:focusable="false" />
 
@@ -355,6 +363,13 @@
                                     android:contentDescription="@string/bookmark"
                                     android:text="@string/bookmark"
                                     app:drawableBottomCompat="@drawable/ic_baseline_add_24" />
+
+                                <TextView
+                                    android:id="@+id/result_favorite"
+                                    style="@style/TextButton"
+                                    android:contentDescription="@string/favorite"
+                                    android:text="@string/favorite"
+                                    app:drawableBottomCompat="@drawable/ic_baseline_favorite_border_24" />
 
 
                                 <TextView
@@ -671,6 +686,7 @@ Translator: Rainbow Turtle" />
                                           android:textColor="?attr/textColor"-->
                                     <com.google.android.material.button.MaterialButton
                                         android:id="@+id/result_download_btt"
+                                        android:visibility="gone"
                                         style="@style/BlackButton"
                                         android:layout_width="50dp"
 
@@ -684,7 +700,34 @@ Translator: Rainbow Turtle" />
                                 </LinearLayout>
 
                                 <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/result_read_offline"
+                                    style="@style/WhiteButton"
+                                    android:layout_width="match_parent"
+                                    android:layout_marginStart="0dp"
+                                    android:layout_marginTop="10dp"
+                                    android:layout_marginEnd="0dp"
+                                    android:gravity="center"
+                                    android:text="@string/read_offline"
+                                    android:visibility="gone"
+                                    app:icon="@drawable/ic_baseline_menu_book_24"
+                                    app:iconSize="20dp" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/result_saved_files"
+                                    style="@style/WhiteButton"
+                                    android:layout_width="match_parent"
+                                    android:layout_marginStart="0dp"
+                                    android:layout_marginTop="10dp"
+                                    android:layout_marginEnd="0dp"
+                                    android:gravity="center"
+                                    android:text="@string/saved_files"
+                                    android:visibility="gone"
+                                    app:icon="@drawable/ic_baseline_picture_as_pdf_24"
+                                    app:iconSize="20dp" />
+
+                                <com.google.android.material.button.MaterialButton
                                     android:id="@+id/result_quickstream"
+                                    android:visibility="gone"
                                     style="@style/WhiteButton"
                                     android:layout_width="match_parent"
                                     android:layout_marginStart="0dp"
@@ -780,16 +823,34 @@ Translator: Rainbow Turtle" />
                             android:visibility="gone"
                             tools:visibility="gone">
 
-                            <androidx.recyclerview.widget.RecyclerView
-                                android:id="@+id/chapter_list"
-
+                            <LinearLayout
                                 android:layout_width="match_parent"
-                                android:layout_height="500dp"
-                                android:clipToPadding="false"
-                                android:orientation="vertical"
-                                android:paddingTop="5dp"
-                                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                                app:spanCount="1" />
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+
+                                <include
+                                    android:id="@+id/chapter_resume"
+                                    layout="@layout/chapter_resume_bar"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:visibility="gone" />
+
+                                <include
+                                    android:id="@+id/chapter_pager"
+                                    layout="@layout/chapter_pager_bar"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="@dimen/chapter_pager_height" />
+
+                                <androidx.recyclerview.widget.RecyclerView
+                                    android:id="@+id/chapter_list"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="500dp"
+                                    android:clipToPadding="false"
+                                    android:orientation="vertical"
+                                    android:paddingTop="5dp"
+                                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                                    app:spanCount="1" />
+                            </LinearLayout>
                         </FrameLayout>
 
                     </LinearLayout>
@@ -798,6 +859,45 @@ Translator: Rainbow Turtle" />
         </androidx.core.widget.NestedScrollView>
     </FrameLayout>
 
+    <LinearLayout
+        android:id="@+id/sticky_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="?attr/primaryBlackBackground"
+        android:elevation="8dp"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="10dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sticky_download"
+            style="@style/NiceButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="2"
+            android:backgroundTint="?attr/colorPrimary"
+            android:text="@string/detail_download"
+            android:textColor="@color/white"
+            app:icon="@drawable/netflix_download"
+            app:iconTint="@color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sticky_read"
+            style="@style/BlackButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="0dp"
+            android:layout_weight="1"
+            android:text="@string/detail_read" />
+    </LinearLayout>
     <ImageView
         android:id="@+id/result_back"
         android:layout_width="30dp"
@@ -815,7 +915,10 @@ Translator: Rainbow Turtle" />
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
-        android:layout_margin="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="88dp"
         android:alpha="0"
         android:contentDescription="@string/reviews_to_top"
         android:textColor="?attr/textColor"
@@ -834,7 +937,10 @@ Translator: Rainbow Turtle" />
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
-        android:layout_margin="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="88dp"
         android:contentDescription="@string/mainpage_filter"
         android:textColor="?attr/textColor"
         android:textStyle="bold"
@@ -846,5 +952,34 @@ Translator: Rainbow Turtle" />
         app:iconTint="?attr/textColor"
 
         app:tint="?attr/textColor"
+        tools:visibility="visible" />
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/chapters_select_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="152dp"
+        android:contentDescription="@string/select_chapters"
+        android:textColor="?attr/textColor"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:backgroundTint="?attr/primaryBlackBackground"
+        app:elevation="0dp"
+        app:icon="@drawable/ic_baseline_checklist_24"
+        app:iconTint="?attr/textColor"
+        app:tint="?attr/textColor"
+        tools:visibility="visible" />
+
+    <include
+        android:id="@+id/chapter_selection_bar"
+        layout="@layout/chapter_selection_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:visibility="gone"
         tools:visibility="visible" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

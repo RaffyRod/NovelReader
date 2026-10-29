@@ -861,7 +861,14 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
         }
 
         observe(viewModel.chapterTile) { title ->
-            binding.readToolbar.subtitle = title.asString(binding.readToolbar.context)
+            val chapter = title.asString(binding.readToolbar.context)
+            val index = viewModel.desiredIndex?.index
+            val total = viewModel.chaptersTitles.value?.size
+            binding.readToolbar.subtitle = if (index != null && index >= 0 && total != null && total > 0) {
+                "$chapter · ${index + 1}/$total"
+            } else {
+                chapter
+            }
         }
 
         observe(viewModel.chaptersTitles) { titles ->
@@ -1496,9 +1503,10 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
                             mutableListOf<Pair<String, Voice?>>(ctx.getString(R.string.default_text) to null).apply {
                                 val voices =
                                     tts.voices.filter { it != null && it.locale == matchAgainst }
+                                        // The most natural voices first
+                                        .sortedByDescending { it.quality }
                                         .map {
-                                            // ${"★".repeat(it.quality / 100) }
-                                            ("${it.name} ${
+                                            ("${"★".repeat((it.quality / 100).coerceIn(1, 5))} ${it.name} ${
                                                 if (it.isNetworkConnectionRequired) {
                                                     "(☁)"
                                                 } else {
@@ -1507,7 +1515,7 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
                                             }") to it
                                         }
 
-                                addAll(voices.sortedBy { (name, _) -> name })
+                                addAll(voices)
                             }
 
                         ctx.showDialog(

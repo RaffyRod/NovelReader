@@ -34,6 +34,7 @@ data class FileStorage(
     val mimeType: String,
     val defaultSubFolder: String,
     val key: Int,
+    val legacySubFolder: String? = null,
 ) {
     val defaultLocation = "${Environment.DIRECTORY_DOWNLOADS}/$defaultSubFolder/"
 
@@ -57,28 +58,56 @@ data class FileStorage(
         }
     }
 
-    fun openFile(context: Context, name: String, requiresWriteAccess: Boolean): StorageFile? {
+    /**
+     * Opens `<root>/<novelFolder>/<name>`. When [novelFolder] is null the file is looked up
+     * directly in the root. Files saved by older versions in [legacySubFolder] are still found.
+     */
+    fun openFile(
+        context: Context,
+        name: String,
+        requiresWriteAccess: Boolean,
+        novelFolder: String? = null
+    ): StorageFile? {
         FileHelper.requestStorage(context)
+        val location = getLocation(context)
+        val safeName = sanitizeFilename(name)
+        val found = FileHelper.openFile(
+            context,
+            location,
+            subFolder(novelFolder),
+            safeName,
+            mimeType,
+            requiresWriteAccess,
+            novelFolder?.let { sanitizeFilename(it) }
+        )
+        if (found != null || legacySubFolder == null || location != null) {
+            return found
+        }
         return FileHelper.openFile(
             context,
-            getLocation(context),
-            defaultSubFolder,
-            sanitizeFilename(name),
+            null,
+            legacySubFolder,
+            safeName,
             mimeType,
             requiresWriteAccess
         )
     }
 
-    fun createFile(context: Context, name: String): StorageFile? {
+    /** Creates `<root>/<novelFolder>/<name>`, or `<root>/<name>` when [novelFolder] is null. */
+    fun createFile(context: Context, name: String, novelFolder: String? = null): StorageFile? {
         FileHelper.requestStorage(context)
         return FileHelper.createFile(
             context,
             getLocation(context),
-            defaultSubFolder,
+            subFolder(novelFolder),
             sanitizeFilename(name),
-            mimeType
+            mimeType,
+            novelFolder?.let { sanitizeFilename(it) }
         )
     }
+
+    private fun subFolder(novelFolder: String?): String =
+        if (novelFolder == null) defaultSubFolder else "$defaultSubFolder/${sanitizeFilename(novelFolder)}"
 
     fun toPreference(context: Context, store: AndroidPreferenceStore): PreferenceData<String> {
         return store.getString(
@@ -92,7 +121,10 @@ data class FileStorage(
 object FileHelper {
     const val EPUB_MIME = "application/epub+zip"
     const val TEXT_MIME = "text/plain"
-    val epub = FileStorage(EPUB_MIME, "Epub", R.string.epub_path_key)
+    const val PDF_MIME = "application/pdf"
+    const val NOVELS_FOLDER = "My Novels"
+    val epub = FileStorage(EPUB_MIME, NOVELS_FOLDER, R.string.epub_path_key, legacySubFolder = "Epub")
+    val pdf = FileStorage(PDF_MIME, NOVELS_FOLDER, R.string.pdf_path_key)
     val backup = FileStorage(TEXT_MIME, "Backup", R.string.backup_path_key)
     val logcat = FileStorage(TEXT_MIME, "Logcat", R.string.logcat_path_key)
 
@@ -144,11 +176,17 @@ object FileHelper {
         defaultSubFolder: String,
         name: String,
         mimeType: String,
+        novelFolder: String? = null,
     ): StorageFile? {
         // Use uri directly if set, always works
         if (storageLocation != null) {
-            return StorageFile.from(context, storageLocation)
-                ?.createFile(name = name, mimeType = mimeType, CreateMode.REPLACE)
+            val root = StorageFile.from(context, storageLocation)
+            val target = if (novelFolder == null) {
+                root
+            } else {
+                root?.createFolder(novelFolder, CreateMode.REUSE)
+            }
+            return target?.createFile(name = name, mimeType = mimeType, CreateMode.REPLACE)
         }
 
         // Try DocumentFileCompat first, as the user might have granted perms that MediaStoreCompat cant find
@@ -196,15 +234,17 @@ object FileHelper {
         defaultSubFolder: String,
         name: String,
         mimeType: String,
-        requiresWriteAccess: Boolean
+        requiresWriteAccess: Boolean,
+        novelFolder: String? = null,
     ): StorageFile? {
         val mimeExt = MimeType.getExtensionFromMimeType(mimeType)
         val path = "$name.$mimeExt"
 
         // Use uri directly if set, always works
         if (storageLocation != null) {
+            val childPath = if (novelFolder == null) path else "$novelFolder/$path"
             return StorageFile.from(context, storageLocation)
-                ?.child(path = path, requiresWriteAccess = requiresWriteAccess)
+                ?.child(path = childPath, requiresWriteAccess = requiresWriteAccess)
         }
 
         // Try DocumentFileCompat first, as the user might have granted perms that MediaStoreCompat cant find

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/iconGrayBackground"
+    android:baselineAligned="false"
+    android:elevation="8dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="6dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="6dp">
+
+    <ImageView
+        android:id="@+id/chapter_selection_close"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/exit_selection"
+        android:padding="8dp"
+        android:src="@drawable/ic_sharp_clear_24"
+        app:tint="?attr/textColor" />
+
+    <TextView
+        android:id="@+id/chapter_selection_count"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="?attr/textColor"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        tools:text="3 selected" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/chapter_selection_read"
+        style="@style/WhiteButton"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="6dp"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:text="@string/read_selected"
+        app:autoSizeMaxTextSize="14sp"
+        app:autoSizeMinTextSize="9sp"
+        app:autoSizeStepGranularity="1sp"
+        app:autoSizeTextType="uniform"
+        app:icon="@drawable/ic_baseline_menu_book_24"
+        app:iconPadding="4dp"
+        app:iconSize="18dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/chapter_selection_download"
+        style="@style/BlackButton"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:text="@string/download_selected"
+        app:autoSizeMaxTextSize="14sp"
+        app:autoSizeMinTextSize="9sp"
+        app:autoSizeStepGranularity="1sp"
+        app:autoSizeTextType="uniform"
+        app:icon="@drawable/netflix_download"
+        app:iconPadding="4dp"
+        app:iconSize="18dp" />
+
+    <ImageView
+        android:id="@+id/chapter_selection_more"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/more_options"
+        android:padding="8dp"
+        android:src="@drawable/ic_baseline_more_vert_24"
+        app:tint="?attr/textColor" />
+</LinearLayout>

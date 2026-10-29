@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/chapter_pager_height"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
+
+    <ImageView
+        android:id="@+id/chapter_page_previous"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/previous_page"
+        android:padding="8dp"
+        android:src="@drawable/arrow_back_24px"
+        app:tint="?attr/textColor" />
+
+    <TextView
+        android:id="@+id/chapter_page_label"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="?attr/textColor"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="Page 2 / 7" />
+
+    <ImageView
+        android:id="@+id/chapter_page_next"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/next_page"
+        android:padding="8dp"
+        android:src="@drawable/arrow_forward_24px"
+        app:tint="?attr/textColor" />
+
+    <TextView
+        android:id="@+id/chapter_page_size"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_marginStart="4dp"
+        android:background="@drawable/outline"
+        android:gravity="center"
+        android:minWidth="72dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:textColor="?attr/textColor"
+        android:textSize="13sp"
+        tools:text="20 / page" />
+</LinearLayout>

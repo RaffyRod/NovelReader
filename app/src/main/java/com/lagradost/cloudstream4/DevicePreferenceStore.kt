@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.lagradost.quicknovel.GeminiProtocol
 import com.lagradost.quicknovel.util.Apis.Companion.apis
 import com.mihon.common.preference.AndroidPreferenceStore
 import com.mihon.common.preference.PreferenceStore
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentHashSet
 
 @Composable
@@ -34,6 +37,12 @@ class AppSettings internal constructor(
     val provider = ProviderPreferences(preferences)
     val updates = UpdatePreferences(preferences)
     val reader = ReaderPreferences(preferences)
+    val translation = TranslationPreferences(preferences)
+}
+
+class TranslationPreferences(preferences: PreferenceStore) {
+    val geminiApiKey = preferences.getString("gemini_api_key", "")
+    val geminiModel = preferences.getString("gemini_model", GeminiProtocol.DEFAULT_MODEL)
 }
 
 class ReaderPreferences(preferences: PreferenceStore) {
@@ -48,7 +57,8 @@ class ProviderPreferences(preferences: PreferenceStore) {
     val searchProvidersList =
         preferences.getStringSet("search_providers_list", apis.map { it.name }.toSet())
     val searchLangList =
-        preferences.getStringSet("provider_lang_key", apis.map { it.lang }.toPersistentHashSet())
+        preferences.getStringSet("provider_lang_key", persistentSetOf("es"))
+    val showEnglishProviders = preferences.getBoolean("show_english_providers", false)
 }
 
 class UpdatePreferences(preferences: PreferenceStore) {
@@ -58,6 +68,8 @@ class UpdatePreferences(preferences: PreferenceStore) {
     )
     val skipUpdate = preferences.getString("skip_update_key", "")
     val apkInstaller = preferences.getInt("apk_installer_key",1)
+    val notifyNewChapters = preferences.getBoolean("notify_new_chapters", true)
+    val chapterCheckHours = preferences.getInt("chapter_check_hours", 12)
 }
 
 class UIPreferences(preferences: PreferenceStore) {
@@ -71,8 +83,10 @@ class UIPreferences(preferences: PreferenceStore) {
         "rating_format",
         "star",
     )
+    val navStyle = preferences.getString("nav_style", "A")
+    val settingsStyle = preferences.getString("settings_style", "1")
     val locale = preferences.getString(
         "locale_key",
-        "en",
+        "es",
     )
 }

@@ -636,7 +636,7 @@ object BookDownloader2Helper {
         }
     }
 
-    private fun Context.getFilePath(meta: QuickStreamMetaData, index: Int): String {
+    fun Context.getFilePath(meta: QuickStreamMetaData, index: Int): String {
         return filesDir.toString() + getFilename(
             sanitizeFilename(meta.apiName),
             if (meta.author == null) "" else sanitizeFilename(meta.author),
@@ -645,18 +645,27 @@ object BookDownloader2Helper {
         )
     }
 
+    /**
+     * Deletes every cached chapter file of the given quick stream book, so that a
+     * temporary selection never reads files written by a previous selection.
+     */
+    fun Context.clearChapterCache(meta: QuickStreamMetaData) {
+        File(getFilePath(meta, 0)).parentFile?.deleteRecursively()
+    }
+
     suspend fun Context.getQuickChapter(
         meta: QuickStreamMetaData,
         chapter: ChapterData,
         index: Int,
-        forceReload: Boolean
+        forceReload: Boolean,
+        stripAuthorNotes: Boolean = false
     ): LoadedChapter? {
         val path = getFilePath(meta, index)
         downloadIndividualChapter(
             path, getApiFromName(meta.apiName), chapter, forceReload,
             worker = WaitOrCancel()
         )
-        return getChapter(path, index, getStripHtml(), false)
+        return getChapter(path, index, getStripHtml(), stripAuthorNotes)
     }
 
     @WorkerThread
@@ -689,7 +698,7 @@ object BookDownloader2Helper {
     }
 
     // External readers cant remove the authors notes easily
-    private fun Context.getStripAuthorNodes(): Boolean {
+    fun Context.getStripAuthorNodes(): Boolean {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
 
         val externalReader = settingsManager.getBoolean(
@@ -907,12 +916,16 @@ object BookDownloader2Helper {
                     Triple(
                         Resource(
                             "id$threadIndex",
-                            packageAsXHtml(chap.title, chap.html).toByteArray(),
+                            packageAsXHtml(
+                                chap.title,
+                                chap.html,
+                                ChapterSpec.numberedTitle(threadIndex + 1, chap.title)
+                            ).toByteArray(),
                             "chapter${threadIndex}.html",
                             MediaTypes.XHTML
                         ),
                         threadIndex,
-                        chap.title
+                        ChapterSpec.numberedTitle(threadIndex + 1, chap.title)
                     )
                 }?.sortedBy {
                     it?.second
@@ -938,6 +951,65 @@ object BookDownloader2Helper {
             throw e
         } finally {
             fileStream.close()
+        }
+    }
+
+    /**
+     * Writes an EPUB containing only [chapters], a list of (1 based chapter number, loaded chapter).
+     * Every section is labeled with the number the chapter has in the book.
+     */
+    @WorkerThread
+    @Throws
+    fun writeEpubOfChapters(
+        context: Context,
+        apiName: String,
+        name: String,
+        author: String?,
+        synopsis: String?,
+        chapters: List<Pair<Int, LoadedChapter>>,
+        fileStream: OutputStream,
+    ) {
+        fileStream.use { output ->
+            if (chapters.isEmpty()) {
+                throw ErrorLoadingException("Unable to create an empty book")
+            }
+            val book = EpubBook()
+            val metadata = book.metadata
+            if (author != null) {
+                metadata.addAuthor(Author(author))
+            }
+            if (synopsis != null) {
+                metadata.addDescription(synopsis)
+            }
+            val numbers = ChapterSpec.format(chapters.map { it.first })
+            metadata.addTitle("$name [$numbers]")
+
+            val posterFile = File(
+                context.filesDir.toString() + getFilenameIMG(
+                    sanitizeFilename(apiName),
+                    if (author == null) "" else sanitizeFilename(author),
+                    sanitizeFilename(name)
+                )
+            )
+            if (posterFile.exists()) {
+                book.coverImage =
+                    Resource(getSafeByteArray(posterFile.readBytes()), posterFile.name)
+            }
+
+            book.resources.add(getGeneralCSStyleForEPUBs())
+            for ((number, chapter) in chapters.sortedBy { it.first }) {
+                val title = ChapterSpec.numberedTitle(number, chapter.title)
+                book.addSection(
+                    title,
+                    Resource(
+                        "id$number",
+                        packageAsXHtml(title, chapter.html, title).toByteArray(),
+                        "chapter$number.html",
+                        MediaTypes.XHTML
+                    )
+                )
+            }
+            EpubWriter().write(book, output)
         }
     }
 }
@@ -1312,7 +1384,7 @@ object BookDownloader2 {
                 return
             }
 
-            val file = FileHelper.epub.openFile(context, name, false)
+            val file = FileHelper.epub.openFile(context, name, false, novelFolder = name)
             val uri = file?.uri
             if (uri != null) {
                 openEpub(activity, uri)
@@ -1345,7 +1417,7 @@ object BookDownloader2 {
         apiName: String,
         synopsis: String?,
     ) {
-        val file = FileHelper.epub.createFile(activity, name)
+        val file = FileHelper.epub.createFile(activity, name, novelFolder = name)
             ?: throw ErrorLoadingException("Unable to create file")
         val fileStream = file.openOutputStream(append = false)
             ?: throw ErrorLoadingException("Unable to open inputstream")
@@ -1357,6 +1429,7 @@ object BookDownloader2 {
             activity,
             fileStream
         )
+        ExportedFiles.record(name, "$name.epub", file.uri, FileHelper.EPUB_MIME)
         openEpub(activity, file.uri)
     }
 
@@ -1371,27 +1444,12 @@ object BookDownloader2 {
             true
         )
 
-        if (!externalReader) {
-            val myIntent = Intent(activity, ReadActivity2::class.java)
-            myIntent.setDataAndType(uri, "application/epub+zip")
-            activity.startActivity(myIntent)
-            return
-        }
-
-        val exportedUri = FileHelper.exportUri(activity, uri)
-
-        val intent = Intent().apply {
-            action = Intent.ACTION_VIEW
-            addFlags(
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                        or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
-                        or Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-        }
-
-        intent.setDataAndType(exportedUri, FileHelper.EPUB_MIME)
-        activity.startActivity(intent)
+        FileOpener.open(
+            activity,
+            uri,
+            FileHelper.EPUB_MIME,
+            if (externalReader) OpenMode.OtherApp else OpenMode.InApp
+        )
     }
 
     private val readEpubMutex = Mutex()

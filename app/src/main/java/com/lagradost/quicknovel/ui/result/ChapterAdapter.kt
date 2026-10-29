@@ -2,8 +2,11 @@ package com.lagradost.quicknovel.ui.result
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
 import com.lagradost.quicknovel.ChapterData
+import com.lagradost.quicknovel.CommonActivity
+import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.databinding.SimpleChapterBinding
 import com.lagradost.quicknovel.ui.BaseDiffCallback
 import com.lagradost.quicknovel.ui.NoStateAdapter
@@ -43,6 +46,50 @@ class ChapterAdapter(val viewModel: ResultViewModel) :
 
         binding.name.alpha = alpha
         binding.releaseDate.alpha = alpha
+        binding.lastMarker.isGone = !viewModel.isLastChapter(card)
+    }
+
+    private fun showChapterMenu(
+        binding: SimpleChapterBinding,
+        card: ChapterData,
+    ) {
+        val context = binding.root.context
+        val isLast = viewModel.isLastChapter(card)
+        val read = viewModel.hasReadChapter(card)
+        val labels = arrayOf(
+            context.getString(if (isLast) R.string.clear_last_chapter else R.string.mark_last_chapter),
+            context.getString(if (read) R.string.mark_unread else R.string.mark_read),
+        )
+        AlertDialog.Builder(context)
+            .setTitle(card.name)
+            .setItems(labels) { _, which ->
+                when (which) {
+                    0 -> {
+                        if (isLast) {
+                            viewModel.clearLastChapter()
+                        } else {
+                            viewModel.markLastChapter(card)
+                            CommonActivity.showToast(
+                                context.getString(R.string.last_chapter_saved, card.name)
+                            )
+                        }
+                        notifyDataSetChanged()
+                    }
+
+                    else -> {
+                        viewModel.setReadChapter(chapter = card, !read)
+                        refresh(binding, card, viewModel)
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun refreshSelection(binding: SimpleChapterBinding, card: ChapterData) {
+        val selecting = viewModel.selectionMode.value == true
+        val selected = selecting && viewModel.isChapterSelected(card)
+        binding.selectCheck.isGone = !selecting
+        binding.selectCheck.isChecked = selected
     }
 
     override fun onBindContent(holder: ViewHolderState<Any>, item: ChapterData, position: Int) {
@@ -52,15 +99,25 @@ class ChapterAdapter(val viewModel: ResultViewModel) :
             releaseDate.text = item.dateOfRelease
             releaseDate.isGone = item.dateOfRelease.isNullOrBlank()
             root.setOnClickListener {
+                if (viewModel.selectionMode.value == true) {
+                    viewModel.toggleChapterSelected(item)
+                    refreshSelection(binding, item)
+                    return@setOnClickListener
+                }
                 viewModel.streamRead(item)
                 viewModel.isResume = true//to update read status
             }
             root.setOnLongClickListener {
-                viewModel.setReadChapter(chapter = item, !viewModel.hasReadChapter(item))
-                refresh(binding, item, viewModel)
+                if (viewModel.selectionMode.value == true) {
+                    viewModel.toggleChapterSelected(item)
+                    refreshSelection(binding, item)
+                    return@setOnLongClickListener true
+                }
+                showChapterMenu(binding, item)
                 return@setOnLongClickListener true
             }
             refresh(binding, item, viewModel)
+            refreshSelection(binding, item)
         }
     }
 }
