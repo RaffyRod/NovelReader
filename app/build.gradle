@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.lagradost.quicknovel"
+        applicationId "com.lagradost.quicknovel.ultimate"
         minSdkVersion 23
         targetSdkVersion 37
         versionCode 56
@@ -56,8 +56,8 @@ android {
         abi {
             enable gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
             reset()
-            include "arm64-v8a", "armeabi-v7a"
-            universalApk false
+            include "arm64-v8a", "armeabi-v7a", "x86_64"
+            universalApk true
         }
     }
 

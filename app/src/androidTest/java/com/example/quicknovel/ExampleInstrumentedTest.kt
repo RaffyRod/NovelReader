@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.lagradost.quicknovel", appContext.packageName)
+        assertEquals("com.lagradost.quicknovel.ultimate", appContext.packageName)
     }
 }
