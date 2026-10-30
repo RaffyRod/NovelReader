@@ -89,19 +89,15 @@ jobs:
       matrix:
         include:
           - suite: smoke
-            npm_script: test:smoke
             timeout: 60
             soft: false
           - suite: features
-            npm_script: test:features
             timeout: 60
             soft: false
           - suite: reader
-            npm_script: test:reader
             timeout: 60
             soft: false
           - suite: providers
-            npm_script: test:providers
             timeout: 75
             soft: true
     steps:
@@ -146,7 +142,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # emulator-runner runs EACH script line in a fresh /bin/sh — use one bash file
-          script: bash e2e/scripts/ci-run-suite.sh ${{ matrix.npm_script }}
+          script: bash e2e/scripts/ci-run-suite.sh ${{ matrix.suite }}
       - name: Upload Allure results (${{ matrix.suite }})
         if: always()
         uses: actions/upload-artifact@v4
@@ -162,6 +158,7 @@ jobs:
           name: wdio-logs-${{ matrix.suite }}
           path: |
             e2e/*.log
+            e2e/appium-ci.log
             e2e/allure-results
           if-no-files-found: ignore
 

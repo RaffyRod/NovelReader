@@ -22,12 +22,38 @@ function resolveAppPath() {
 }
 
 const appPath = resolveAppPath();
+const appiumHost = process.env.APPIUM_HOST || '127.0.0.1';
+const appiumPort = Number(process.env.APPIUM_PORT || 4723);
+const useExternalAppium = process.env.APPIUM_EXTERNAL === '1';
 
 exports.config = {
   runner: 'local',
+  // Nested arrays = one worker runs the group sequentially (avoids CI IPC storms)
   specs: ['./test/specs/**/*.e2e.js'],
+  suites: {
+    smoke: [
+      [
+        './test/specs/01-library.e2e.js',
+        './test/specs/02-navigation.e2e.js',
+        './test/specs/03-search.e2e.js',
+        './test/specs/04-history.e2e.js',
+      ],
+    ],
+    features: [
+      [
+        './test/specs/05-settings.e2e.js',
+        './test/specs/06-import.e2e.js',
+        './test/specs/09-search-special-chars.e2e.js',
+      ],
+    ],
+    reader: [['./test/specs/07-reader-tts.e2e.js']],
+    providers: [['./test/specs/08-providers.e2e.js']],
+  },
   exclude: [],
   maxInstances: 1,
+  hostname: appiumHost,
+  port: appiumPort,
+  path: '/',
   capabilities: [
     {
       platformName: 'Android',
@@ -54,18 +80,23 @@ exports.config = {
   waitforTimeout: 15000,
   connectionRetryTimeout: 180000,
   connectionRetryCount: 2,
-  services: [
-    [
-      'appium',
-      {
-        args: {
-          relaxedSecurity: true,
-          allowInsecure: ['adb_shell'],
-        },
-        command: 'appium',
-      },
-    ],
-  ],
+  specFileRetries: 0,
+  services: useExternalAppium
+    ? []
+    : [
+        [
+          'appium',
+          {
+            args: {
+              relaxedSecurity: true,
+              allowInsecure: ['adb_shell'],
+              address: appiumHost,
+              port: appiumPort,
+            },
+            command: 'appium',
+          },
+        ],
+      ],
   framework: 'mocha',
   reporters: [
     'spec',
