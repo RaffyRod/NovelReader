@@ -222,6 +222,12 @@ object SettingScreen : SearchableSettings {
                         subtitle = stringResource(R.string.show_english_providers_desc),
                         preference = settings.provider.showEnglishProviders,
                     ),
+                    Preference.PreferenceItem.SwitchPreference(
+                        icon = painterResource(R.drawable.search_icon),
+                        title = stringResource(R.string.allow_special_search_chars),
+                        subtitle = stringResource(R.string.allow_special_search_chars_desc),
+                        preference = settings.provider.allowSpecialSearchChars,
+                    ),
                     Preference.PreferenceItem.MultiSelectListPreference(
                         icon = painterResource(R.drawable.extension_24px),
                         title = stringResource(R.string.search_providers),

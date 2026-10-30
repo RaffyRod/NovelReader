@@ -8,7 +8,7 @@ Ad-free FOSS Android app for downloading novels. It also functions as an Epub re
 
 **Repo:** https://github.com/RaffyRod/NovelReader  
 **Upstream:** https://github.com/LagradOst/QuickNovel  
-**Current version:** 1.1.1
+**Current version:** 1.1.4
 
 **Download:** https://github.com/RaffyRod/NovelReader/releases
 

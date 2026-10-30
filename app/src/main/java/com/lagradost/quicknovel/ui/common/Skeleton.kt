@@ -131,7 +131,7 @@ fun SkeletonGrid(modifier: Modifier = Modifier, count: Int = 12) {
     ) {
         items((0 until count).toList()) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                SkeletonCover(Modifier.width(99.dp))
+                SkeletonCover(Modifier.width(102.dp))
             }
         }
     }

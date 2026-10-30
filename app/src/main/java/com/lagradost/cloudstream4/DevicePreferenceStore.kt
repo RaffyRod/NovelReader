@@ -59,12 +59,14 @@ class ProviderPreferences(preferences: PreferenceStore) {
     val searchLangList =
         preferences.getStringSet("provider_lang_key", persistentSetOf("es"))
     val showEnglishProviders = preferences.getBoolean("show_english_providers", false)
+    /** When false (default), search fields strip symbols like @ # $ %. */
+    val allowSpecialSearchChars = preferences.getBoolean("allow_special_search_chars", false)
 }
 
 class UpdatePreferences(preferences: PreferenceStore) {
     val showAppUpdates = preferences.getBoolean(
         "auto_update",
-        true,
+        false,
     )
     val skipUpdate = preferences.getString("skip_update_key", "")
     val apkInstaller = preferences.getInt("apk_installer_key",1)

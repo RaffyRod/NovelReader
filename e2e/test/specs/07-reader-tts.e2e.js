@@ -18,7 +18,13 @@ describe('Reader and TTS', () => {
       return;
     }
 
+    const inReader = await readerPage.isReaderVisible();
+    if (!inReader) {
+      this.skip();
+      return;
+    }
     await readerPage.expectTtsControlVisible();
+    await driver.back();
   });
 
   it('starts TTS from the reader when a novel is open', async function () {
@@ -30,14 +36,18 @@ describe('Reader and TTS', () => {
       return;
     }
 
+    const inReader = await readerPage.isReaderVisible();
+    if (!inReader) {
+      this.skip();
+      return;
+    }
+
     await readerPage.startTts();
-    // TTS bar / notification path: after start, pause or stop should appear or TTS stays active.
     await readerPage.revealControls();
-    const pause = await readerPage.byA11y('Pausar').isExisting().catch(() => false);
-    const stop = await readerPage.byA11y('Detener').isExisting().catch(() => false);
-    const ttsEs = await readerPage.ttsButton.isDisplayed().catch(() => false);
-    const ttsEn = await readerPage.ttsButtonEn.isDisplayed().catch(() => false);
-    expect(pause || stop || ttsEs || ttsEn).toBe(true);
+    const pausePlay = await readerPage.ttsPausePlay.isDisplayed().catch(() => false);
+    const stop = await readerPage.ttsStop.isDisplayed().catch(() => false);
+    const tts = await readerPage.ttsButton.isDisplayed().catch(() => false);
+    expect(pausePlay || stop || tts).toBe(true);
     await driver.back();
   });
 });

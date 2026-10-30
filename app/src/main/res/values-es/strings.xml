@@ -342,6 +342,8 @@
     <string name="go_to_page_invalid">Esa página no existe</string>
     <string name="show_english_providers">Mostrar proveedores en inglés</string>
     <string name="show_english_providers_desc">Por defecto se muestran los proveedores en español. Actívalo para ver también los de inglés.</string>
+    <string name="allow_special_search_chars">Permitir caracteres especiales en búsqueda</string>
+    <string name="allow_special_search_chars_desc">Desactivado por defecto. Si lo activas, los campos de búsqueda aceptan símbolos como @ # $ % y puntuación.</string>
     <string name="no_cover">Sin portada</string>
     <string name="nav_style_title">Estilo del menú inferior</string>
     <string name="nav_style_a">Contorno + píldora</string>

@@ -381,6 +381,8 @@
     <string name="go_to_page_invalid">That page does not exist</string>
     <string name="show_english_providers">Show English providers</string>
     <string name="show_english_providers_desc">Spanish providers are shown by default. Enable to also list the ones in English.</string>
+    <string name="allow_special_search_chars">Allow special characters in search</string>
+    <string name="allow_special_search_chars_desc">Off by default. When enabled, search boxes accept symbols like @ # $ % and punctuation.</string>
     <string name="no_cover">No cover</string>
     <string name="nav_style_title">Bottom menu style</string>
     <string name="nav_style_a">Outline + pill</string>

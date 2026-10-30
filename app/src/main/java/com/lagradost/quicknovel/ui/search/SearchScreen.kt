@@ -288,7 +288,7 @@ private fun RecentSearchesSection(recent: ImmutableList<String>, action: (HomeAc
     }
 }
 
-private val SearchCoverWidth = 99.dp
+private val SearchCoverWidth = 102.dp
 
 @Composable
 private fun PopularSection(state: HomeViewModelState, searchAction: (SearchResponseAction) -> Unit) {

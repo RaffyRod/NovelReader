@@ -13,14 +13,8 @@ describe('Settings', () => {
     await settingsPage.open();
     await settingsPage.expectLoaded();
 
-    await driver.execute('mobile: scrollGesture', {
-      left: 100,
-      top: 600,
-      width: 500,
-      height: 1200,
-      direction: 'down',
-      percent: 0.8,
-    }).catch(() => {});
+    const found = await settingsPage.scrollToTutorials();
+    expect(found).toBe(true);
 
     const tutorial = await settingsPage.tutorialGroup.isDisplayed().catch(() => false);
     const download = await settingsPage.tutorialDownload.isDisplayed().catch(() => false);
@@ -31,15 +25,6 @@ describe('Settings', () => {
   it('opens TTS tutorial dialog when available', async () => {
     allure.addSeverity('normal');
     await settingsPage.open();
-    await driver.execute('mobile: scrollGesture', {
-      left: 100,
-      top: 600,
-      width: 500,
-      height: 1200,
-      direction: 'down',
-      percent: 0.9,
-    }).catch(() => {});
-
     const opened = await settingsPage.openTutorialTts();
     if (opened) {
       const close = await settingsPage.byText('Cerrar');
@@ -49,6 +34,6 @@ describe('Settings', () => {
         await driver.back();
       }
     }
-    expect(true).toBe(true);
+    expect(opened).toBe(true);
   });
 });

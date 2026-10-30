@@ -37,8 +37,11 @@ exports.config = {
       'appium:app': appPath,
       'appium:appPackage': APP_ID,
       'appium:appActivity': APP_ACTIVITY,
+      'appium:appWaitActivity': '*',
       'appium:noReset': false,
       'appium:fullReset': false,
+      'appium:forceAppLaunch': true,
+      'appium:shouldTerminateApp': true,
       'appium:autoGrantPermissions': true,
       'appium:newCommandTimeout': 240,
       'appium:adbExecTimeout': 120000,
@@ -83,6 +86,10 @@ exports.config = {
   },
   before: async () => {
     await driver.updateSettings({ waitForIdleTimeout: 100 });
+    await driver.execute('mobile: startActivity', {
+      component: `${APP_ID}/${APP_ACTIVITY}`,
+    });
+    await driver.pause(2000);
   },
   afterTest: async function (test, context, { error }) {
     if (error) {

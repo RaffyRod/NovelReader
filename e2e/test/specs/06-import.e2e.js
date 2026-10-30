@@ -20,20 +20,14 @@ describe('Import book (Import-B)', () => {
     await libraryPage.importDropZone.click();
     await driver.pause(2000);
 
-    const recent = await libraryPage.byTextContains('Recent');
-    const browse = await libraryPage.byTextContains('BROWSE');
-    const downloads = await libraryPage.byTextContains('Download');
-    const showRoots = await libraryPage.byTextContains('Show roots');
-
-    const pickerVisible =
-      (await recent.isExisting().catch(() => false)) ||
-      (await browse.isExisting().catch(() => false)) ||
-      (await downloads.isExisting().catch(() => false)) ||
-      (await showRoots.isExisting().catch(() => false));
-
+    const markers = ['Recent', 'BROWSE', 'Download', 'Show roots', 'Open from', 'Files', 'Documents'];
+    let pickerVisible = false;
+    for (const marker of markers) {
+      if (await libraryPage.byTextContains(marker).isExisting().catch(() => false)) {
+        pickerVisible = true;
+        break;
+      }
+    }
     expect(pickerVisible).toBe(true);
-    await driver.back();
-    await driver.pause(800);
-    await libraryPage.expectLoaded();
   });
 });

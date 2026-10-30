@@ -54,40 +54,62 @@ class LibraryPage extends BasePage {
       height: 1000,
       direction: 'down',
       percent: 0.7,
-    }).catch(async () => {
-      await driver.touchAction([
-        { action: 'press', x: 500, y: 1600 },
-        { action: 'wait', ms: 200 },
-        { action: 'moveTo', x: 500, y: 700 },
-        { action: 'release' },
-      ]);
     });
     await driver.pause(500);
     await expect(this.searchField).toBeDisplayed();
   }
 
+  /**
+   * @param {string} label
+   */
+  isChromeNoise(label) {
+    const noise = [
+      'Importar',
+      'Buscar',
+      'Biblioteca',
+      'Ordenar',
+      'Secciones',
+      'Todas',
+      'Continuar',
+      'EPUB',
+      'PDF',
+      'Ajustes',
+      'Historial',
+      'Grid',
+      'Lista',
+      'Filtrar',
+    ];
+    return !label || label.length < 3 || noise.some((n) => label.includes(n));
+  }
+
+  /**
+   * Opens a downloaded novel into the reader when possible.
+   * @returns {Promise<boolean>}
+   */
   async openFirstNovelIfPresent() {
-    const novel = this.byTextContains('Capítulo');
-    if (await novel.isExisting().catch(() => false)) {
-      await novel.click();
-      await driver.pause(1500);
+    if (await this.continueReading.isDisplayed().catch(() => false)) {
+      await this.continueReading.click();
+      await driver.pause(2500);
       return true;
     }
-    const anyTitle = await $$('android.widget.TextView');
-    for (const el of anyTitle) {
-      const t = await el.getText().catch(() => '');
-      if (
-        t &&
-        t.length > 8 &&
-        !t.includes('Importar') &&
-        !t.includes('Buscar') &&
-        !t.includes('Biblioteca') &&
-        !t.includes('Todas')
-      ) {
-        await el.click();
-        await driver.pause(1500);
-        return true;
-      }
+
+    const chapterProgress = this.byTextContains('Capítulo');
+    if (await chapterProgress.isDisplayed().catch(() => false)) {
+      await chapterProgress.click();
+      await driver.pause(2500);
+      return true;
+    }
+
+    const titles = await $$('android.widget.TextView');
+    for (const el of titles) {
+      const t = (await el.getText().catch(() => '')) || '';
+      if (this.isChromeNoise(t)) continue;
+      if (t.length < 5 || t.length > 120) continue;
+      await el.click();
+      await driver.pause(2500);
+      // Must leave library: TTS button or at least leave search field
+      const stillLibrary = await this.searchField.isDisplayed().catch(() => false);
+      if (!stillLibrary) return true;
     }
     return false;
   }

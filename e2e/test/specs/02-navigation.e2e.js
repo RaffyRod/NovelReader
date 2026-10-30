@@ -18,6 +18,10 @@ describe('Bottom navigation', () => {
     await libraryPage.open();
     await libraryPage.expectLoaded();
 
+    // Secciones only appears while Biblioteca is selected.
+    await sectionsPage.expectLoaded();
+    await sectionsPage.open();
+
     await searchPage.open();
     await searchPage.expectLoaded();
 
@@ -27,10 +31,8 @@ describe('Bottom navigation', () => {
     await settingsPage.open();
     await settingsPage.expectLoaded();
 
-    await sectionsPage.open();
-    await sectionsPage.expectLoaded();
-
     await libraryPage.open();
     await libraryPage.expectLoaded();
+    await sectionsPage.expectLoaded();
   });
 });

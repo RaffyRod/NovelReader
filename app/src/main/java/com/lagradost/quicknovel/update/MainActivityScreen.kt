@@ -29,7 +29,6 @@ import com.lagradost.cloudstream4.compose.Screen
 import com.lagradost.cloudstream4.compose.WhiteButton
 import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.cloudstream4.viewmodels.GithubAction
-import com.lagradost.cloudstream4.viewmodels.GithubAction.AutoSearchForUpdate
 import com.lagradost.cloudstream4.viewmodels.GithubAction.Dismiss
 import com.lagradost.cloudstream4.viewmodels.GithubAction.SearchForUpdate
 import com.lagradost.cloudstream4.viewmodels.GithubAction.SkipUpdate
@@ -91,11 +90,9 @@ object MainActivityScreen : Screen {
                 updater = ApkUpdater,
                 repository = GithubReleases,
             ).apply {
-                /** Only search once per session when not in safe mode */
-                if (!hasSearchedForUpdate) {
-                    hasSearchedForUpdate = true
-                    onAction(AutoSearchForUpdate)
-                }
+                // Ultimate builds must not auto-check LagradOst releases: that APK is a
+                // different package (com.lagradost.quicknovel) and reinstalls the stock app.
+                hasSearchedForUpdate = true
             }
         }
     }

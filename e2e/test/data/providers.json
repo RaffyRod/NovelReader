@@ -1,0 +1,359 @@
+{
+  "generatedFrom": "Apis.kt builtInApis",
+  "queries": [
+    "amor",
+    "el",
+    "my",
+    "the"
+  ],
+  "providers": [
+    {
+      "name": "AllNovel",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "AllNovelProvider"
+    },
+    {
+      "name": "Annas Archive",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "AnnasArchive"
+    },
+    {
+      "name": "Ar-No",
+      "lang": "ar",
+      "hasMainPage": false,
+      "className": "ArNoProvider"
+    },
+    {
+      "name": "Asian Novel",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "AsianNovelProvider"
+    },
+    {
+      "name": "Bright Novel",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "BrightNovelProvider"
+    },
+    {
+      "name": "Chikari",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "ChikariProvider"
+    },
+    {
+      "name": "Chrysanthemum Garden",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "ChrysanthemumGardenProvider"
+    },
+    {
+      "name": "DevilNovels",
+      "lang": "es",
+      "hasMainPage": true,
+      "className": "DevilNovelsProvider"
+    },
+    {
+      "name": "FanMTL",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "FanMtlnProvider"
+    },
+    {
+      "name": "FaqWiki",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "FaqWikiProvider"
+    },
+    {
+      "name": "FenrirRealm",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "FenrirRealProvider"
+    },
+    {
+      "name": "FreeWebNovel",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "FreewebnovelProvider"
+    },
+    {
+      "name": "Galaxy Novels",
+      "lang": "ar",
+      "hasMainPage": true,
+      "className": "GalaxyNovelsProvider"
+    },
+    {
+      "name": "GraycityProvider",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "GraycityProvider"
+    },
+    {
+      "name": "HiraethTranslation",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "HiraethTranslationProvider"
+    },
+    {
+      "name": "IndoWebNovel",
+      "lang": "id",
+      "hasMainPage": true,
+      "className": "IndoWebNovelProvider"
+    },
+    {
+      "name": "Inori",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "LnoriProvider"
+    },
+    {
+      "name": "KolNovel",
+      "lang": "ar",
+      "hasMainPage": true,
+      "className": "KolNovelProvider"
+    },
+    {
+      "name": "LibRead",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "LibReadProvider"
+    },
+    {
+      "name": "Light Novel Translations",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "LightNovelTranslationsProvider"
+    },
+    {
+      "name": "LnMTL",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "LnMTLProvider"
+    },
+    {
+      "name": "Luxon Scan",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "LuxonScansProvider"
+    },
+    {
+      "name": "MeioNovel",
+      "lang": "id",
+      "hasMainPage": true,
+      "className": "MeioNovelProvider"
+    },
+    {
+      "name": "MtlNovel",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "MtlNovelProvider"
+    },
+    {
+      "name": "NoBadNovel",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "NoBadNovelProvider"
+    },
+    {
+      "name": "Nova",
+      "lang": "es",
+      "hasMainPage": true,
+      "className": "NovelasLigerasProvider"
+    },
+    {
+      "name": "Novel Buddy",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "NovelBuddyProvider"
+    },
+    {
+      "name": "Novel France",
+      "lang": "fr",
+      "hasMainPage": true,
+      "className": "NovelFranceProvider"
+    },
+    {
+      "name": "Novel Light",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "NovelLightProvider"
+    },
+    {
+      "name": "Novel Phoenix",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "NovelPhoenixProvider"
+    },
+    {
+      "name": "NovelBin",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "NovelBinProvider"
+    },
+    {
+      "name": "NovelFire",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "NovelFireProvider"
+    },
+    {
+      "name": "NovelFull",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "NovelFullProvider"
+    },
+    {
+      "name": "NovelFull-Net",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "NovelFullNETProvider"
+    },
+    {
+      "name": "Novelmania",
+      "lang": "pt-pt",
+      "hasMainPage": true,
+      "className": "NovelManiaProvider"
+    },
+    {
+      "name": "NovLove",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "NovLoveProvider"
+    },
+    {
+      "name": "PawRead",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "PawReadProver"
+    },
+    {
+      "name": "Quanben",
+      "lang": "zh",
+      "hasMainPage": true,
+      "className": "QuanbenProvider"
+    },
+    {
+      "name": "RanobeHub",
+      "lang": "ru",
+      "hasMainPage": true,
+      "className": "RanobeHubProvider"
+    },
+    {
+      "name": "Ranobes",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "RanobesProvider"
+    },
+    {
+      "name": "Ranovel",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "RanovelProvider"
+    },
+    {
+      "name": "ReadFrom.Net",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "ReadfromnetProvider"
+    },
+    {
+      "name": "ReadHive",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "ReadhiveProvider"
+    },
+    {
+      "name": "ReadNovelFreeBook",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "ReadOnlineFreeBookProvider"
+    },
+    {
+      "name": "ReadNovelFull",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "ReadNovelFullProvider"
+    },
+    {
+      "name": "Rewayat",
+      "lang": "ar",
+      "hasMainPage": true,
+      "className": "RewayatProvider"
+    },
+    {
+      "name": "Royal Road",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "RoyalRoadProvider"
+    },
+    {
+      "name": "SakuraNovel",
+      "lang": "en",
+      "hasMainPage": false,
+      "className": "SakuraNovelProvider"
+    },
+    {
+      "name": "Scribblehub",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "ScribblehubProvider"
+    },
+    {
+      "name": "ScrollersPub",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "ScrollersPubProvider"
+    },
+    {
+      "name": "SkyNovels",
+      "lang": "es",
+      "hasMainPage": true,
+      "className": "SkyNovelsProvider"
+    },
+    {
+      "name": "SonicMTL",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "SonicMTLProvider"
+    },
+    {
+      "name": "Syosetu",
+      "lang": "ja",
+      "hasMainPage": true,
+      "className": "SyosetuProvider"
+    },
+    {
+      "name": "Wattpad",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "WattpadProvider"
+    },
+    {
+      "name": "WTR-LAB",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "WtrLabProvider"
+    },
+    {
+      "name": "WuxiaBox",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "WuxiaBoxProvider"
+    },
+    {
+      "name": "WuxiaClick",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "WuxiaClickProvider"
+    },
+    {
+      "name": "WuxiaWorld",
+      "lang": "en",
+      "hasMainPage": true,
+      "className": "WuxiaWorldProvider"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and
 | `05-settings` | Settings + Tutorial TTS |
 | `06-import` | Import-B UI + system document picker |
 | `07-reader-tts` | Open novel (if present) + TTS control |
+| `08-providers` | HTTP probe + search multi-select (varios proveedores) + search scoped results |
 
 ## Local setup
 
@@ -33,7 +34,9 @@ Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and
 cd e2e
 npm install
 npx appium driver install uiautomator2
+npm run providers:generate   # refresh list from Apis.kt
 npm test
+npm run test:providers       # providers-only (long)
 npm run allure:report
 ```
 

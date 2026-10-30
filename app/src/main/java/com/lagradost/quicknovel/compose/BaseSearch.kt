@@ -45,7 +45,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.quicknovel.R
+import com.lagradost.quicknovel.util.SearchQuerySanitizer
+import com.mihon.presentation.settings.collectAsState
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -63,6 +66,8 @@ fun BaseSearchBar(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
+    val settings = rememberAppSettings()
+    val allowSpecialChars by settings.provider.allowSpecialSearchChars.collectAsState()
 
     CustomFlexibleTopAppBar(scrollBehavior = scrollBehavior) {
         Column(
@@ -85,12 +90,20 @@ fun BaseSearchBar(
                 inputField = {
                     SearchBarDefaults.InputField(
                         query = textFieldState.text.toString(),
-                        onQueryChange = {
-                            textFieldState.edit { replace(0, length, it) }
-                            onQueryChange(textFieldState.text.toString())
+                        onQueryChange = { raw ->
+                            val next = SearchQuerySanitizer.filter(raw, allowSpecialChars)
+                            textFieldState.edit { replace(0, length, next) }
+                            onQueryChange(next)
                         },
                         onSearch = {
-                            onSearch(textFieldState.text.toString())
+                            val next = SearchQuerySanitizer.filter(
+                                textFieldState.text.toString(),
+                                allowSpecialChars,
+                            )
+                            if (next != textFieldState.text.toString()) {
+                                textFieldState.edit { replace(0, length, next) }
+                            }
+                            onSearch(next)
                             expanded = false
                         },
                         expanded = false,

@@ -10,21 +10,35 @@ async function dismissBlockingDialogs() {
     'Close',
     'OK',
     'Entendido',
+    'Don’t allow',
+    "Don't allow",
+    'Allow',
   ];
 
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     let dismissed = false;
     for (const label of labels) {
       const btn = await $(`android=new UiSelector().textContains("${label}")`);
       if (await btn.isExisting().catch(() => false)) {
+        // Prefer Skip update over Cancel when both exist
+        if (label === 'Allow') {
+          const skip = await $(`android=new UiSelector().textContains("Skip update")`);
+          if (await skip.isExisting().catch(() => false)) continue;
+        }
         await btn.click().catch(() => {});
         dismissed = true;
         await driver.pause(600);
       }
     }
-    if (!dismissed) {
-      break;
+    const hasNav = await $(
+      'android=new UiSelector().description("Biblioteca")',
+    ).isExisting().catch(() => false);
+    if (hasNav && !dismissed) break;
+    if (!dismissed && !hasNav) {
+      await driver.back().catch(() => {});
+      await driver.pause(400);
     }
+    if (!dismissed) break;
   }
 }
 
