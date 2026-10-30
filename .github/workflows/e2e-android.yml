@@ -145,18 +145,8 @@ jobs:
           force-avd-creation: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: |
-            set -e
-            adb wait-for-device
-            adb shell settings put global window_animation_scale 0
-            adb shell settings put global transition_animation_scale 0
-            adb shell settings put global animator_duration_scale 0
-            export APP_PATH="$GITHUB_WORKSPACE/e2e/apps/QuickNovel-Ultimate.apk"
-            export CI=true
-            export WDIO_LOG_LEVEL=warn
-            test -f "$APP_PATH"
-            test -f "$GITHUB_WORKSPACE/e2e/package.json"
-            npm --prefix "$GITHUB_WORKSPACE/e2e" run ${{ matrix.npm_script }}
+          # emulator-runner runs EACH script line in a fresh /bin/sh — use one bash file
+          script: bash e2e/scripts/ci-run-suite.sh ${{ matrix.npm_script }}
       - name: Upload Allure results (${{ matrix.suite }})
         if: always()
         uses: actions/upload-artifact@v4
