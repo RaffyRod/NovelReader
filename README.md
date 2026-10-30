@@ -21,6 +21,7 @@ Ad-free FOSS Android app for downloading novels. It also functions as an Epub re
 - Chapter list no longer shows release timestamps under each chapter.
 - **Import-B** Fire drop-zone in Biblioteca; library search stays pinned.
 - **TTS:** prefers Piper/Sherpa neural voices (Dave ES / Lessac EN), language from text, slower neural rate.
+- **Search inputs** block special characters by default; enable them in Settings → *Permitir caracteres especiales en búsqueda*.
 - App id: `com.lagradost.quicknovel.ultimate` (universal APK: arm64-v8a / armeabi-v7a / x86_64).
 
 ### Build
@@ -29,11 +30,13 @@ Ad-free FOSS Android app for downloading novels. It also functions as an Epub re
 ./gradlew :app:assembleRelease
 ```
 
-Signed universal APKs for testing are produced under `app/build/outputs/apk/release/` (use `app-universal-release-unsigned.apk` + your keystore).
+Signed universal APKs for testing are produced under `app/build/outputs/apk/release/` (use `app-universal-release-unsigned.apk` + your keystore). Prefer the latest Desktop APK (`QuickNovel-Ultimate-1.1.4-universal.apk`) and uninstall older packages on the emulator before testing.
 
 ### E2E automation (WebdriverIO + Appium)
 
 See [`e2e/README.md`](e2e/README.md). CI runs on **every push** via [`.github/workflows/e2e-android.yml`](.github/workflows/e2e-android.yml) and uploads **Allure** results.
+
+Coverage includes library, navigation, search (incl. special-char toggle), history, settings, Import-B, **reader + TTS** (seeded novel — no skips), and providers (HTTP probe + multi-select).
 
 ```bash
 cd e2e

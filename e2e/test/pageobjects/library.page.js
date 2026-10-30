@@ -83,6 +83,21 @@ class LibraryPage extends BasePage {
   }
 
   /**
+   * True when Biblioteca shows at least one novel card (not just chrome).
+   */
+  async hasNovelCard() {
+    if (await this.continueReading.isDisplayed().catch(() => false)) return true;
+    if (await this.byTextContains('Capítulo').isDisplayed().catch(() => false)) return true;
+    const titles = await $$('android.widget.TextView');
+    for (const el of titles) {
+      const t = (await el.getText().catch(() => '')) || '';
+      if (this.isChromeNoise(t)) continue;
+      if (t.length >= 5 && t.length <= 120) return true;
+    }
+    return false;
+  }
+
+  /**
    * Opens a downloaded novel into the reader when possible.
    * @returns {Promise<boolean>}
    */

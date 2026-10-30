@@ -12,8 +12,17 @@ Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and
 | `04-history` | Empty state or Leyendo / Visitadas |
 | `05-settings` | Settings + Tutorial TTS |
 | `06-import` | Import-B UI + system document picker |
-| `07-reader-tts` | Open novel (if present) + TTS control |
+| `07-reader-tts` | Seeds a novel (import fixture / search stream), opens reader, shows TTS, starts TTS — **no skips** |
 | `08-providers` | HTTP probe + search multi-select (varios proveedores) + search scoped results |
+| `09-search-special-chars` | Blocks special chars by default; accepts them when Settings toggle is on |
+
+### Reader seed
+
+`07-reader-tts` uses `test/helpers/seedNovel.js` with `fixtures/sample-novel.epub`:
+
+1. Open an existing library card if present  
+2. Else import the fixture via Import-B + DocumentsUI  
+3. Else open a search hit and tap **Leer en línea**
 
 ## Local setup
 

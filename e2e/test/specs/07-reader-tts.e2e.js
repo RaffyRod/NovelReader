@@ -1,46 +1,29 @@
 const allure = require('@wdio/allure-reporter').default;
 const libraryPage = require('../pageobjects/library.page');
 const readerPage = require('../pageobjects/reader.page');
+const { ensureReaderOpen } = require('../helpers/seedNovel');
 
-describe('Reader and TTS', () => {
+describe('Reader and TTS', function () {
+  this.timeout(300000);
+
   before(async () => {
     allure.addFeature('Reader / TTS');
     allure.addEpic('QuickNovel Ultimate');
     await libraryPage.waitReady();
   });
 
-  it('opens a novel from library when one exists and shows TTS control', async function () {
+  it('opens a novel and shows TTS control', async () => {
     allure.addSeverity('critical');
-    await libraryPage.open();
-    const opened = await libraryPage.openFirstNovelIfPresent();
-    if (!opened) {
-      this.skip();
-      return;
-    }
-
-    const inReader = await readerPage.isReaderVisible();
-    if (!inReader) {
-      this.skip();
-      return;
-    }
+    const opened = await ensureReaderOpen();
+    expect(opened).toBe(true);
     await readerPage.expectTtsControlVisible();
     await driver.back();
   });
 
-  it('starts TTS from the reader when a novel is open', async function () {
+  it('starts TTS from the reader when a novel is open', async () => {
     allure.addSeverity('critical');
-    await libraryPage.open();
-    const opened = await libraryPage.openFirstNovelIfPresent();
-    if (!opened) {
-      this.skip();
-      return;
-    }
-
-    const inReader = await readerPage.isReaderVisible();
-    if (!inReader) {
-      this.skip();
-      return;
-    }
+    const opened = await ensureReaderOpen();
+    expect(opened).toBe(true);
 
     await readerPage.startTts();
     await readerPage.revealControls();
