@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import com.lagradost.quicknovel.ChapterPage
+import com.lagradost.quicknovel.cleanSynopsis
 import com.lagradost.quicknovel.ChapterPaging
 import com.lagradost.quicknovel.RESULT_CHAPTERS_PER_PAGE
 import androidx.lifecycle.ViewModel
@@ -553,8 +554,7 @@ class ResultViewModel : ViewModel() {
 
 
     private fun addToHistory() = viewModelScope.launchSafe {
-        // we wont add it to history from cache
-        if (!isGetLoaded) return@launchSafe
+        // Record visits and reads (library opens, online loads, and chapter reads).
         loadMutex.withLock {
             if (!hasLoaded) return@launchSafe
             setKey(
@@ -874,6 +874,8 @@ class ResultViewModel : ViewModel() {
 
         // insert a download progress if not found
         insertZeroData()
+        // Visiting the novel page adds it to History (not only when reading).
+        addToHistory()
     }
 
     fun initState(card: DownloadFragment.DownloadDataLoaded) = viewModelScope.launch {
@@ -944,6 +946,7 @@ class ResultViewModel : ViewModel() {
             when (data) {
                 is Resource.Success -> {
                     val res = data.value
+                    res.synopsis = res.synopsis?.cleanSynopsis()
 
                     load = res
                     loadUrl = res.url

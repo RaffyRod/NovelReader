@@ -72,7 +72,6 @@ import com.lagradost.quicknovel.mvvm.logError
 import com.lagradost.quicknovel.ui.txt
 import com.lagradost.quicknovel.util.Apis.Companion.apis
 import com.lagradost.quicknovel.util.CustomProviders
-import com.lagradost.quicknovel.util.AppUtils.openInBrowser
 import com.lagradost.quicknovel.util.BackupUtils
 import com.lagradost.quicknovel.util.SubtitleHelper
 import com.lagradost.quicknovel.util.UIHelper.clipboardHelper
@@ -251,9 +250,38 @@ object SettingScreen : SearchableSettings {
                             }
                         },
                         iconProvider = { k, _ ->
-                            val theme = modeToTheme(perfToMode(k), CloudStreamPrimaryColor.NORMAL)
+                            val theme = modeToTheme(perfToMode(k), CloudStreamPrimaryColor.ULTIMATE_BLUE)
                             RoundColor(theme.background)
                         }
+                    ),
+                    Preference.PreferenceItem.ListPreference(
+                        icon = painterResource(R.drawable.colors_24px),
+                        title = stringResource(R.string.ui_icon_theme_settings),
+                        preference = settings.ui.uiIconTheme,
+                        entries = stringArrayResource(R.array.ui_icon_themes_values).zip(
+                            stringArrayResource(R.array.ui_icon_themes_names)
+                        ).associate { it }.toPersistentMap(),
+                        onValueChanged = { value ->
+                            // One Fire theme drives settings icons, nav, sections and launcher.
+                            activity?.let { act ->
+                                com.lagradost.quicknovel.ui.FireThemes.apply(act, value)
+                            }
+                            true
+                        },
+                    ),
+                    Preference.PreferenceItem.ListPreference(
+                        icon = painterResource(R.drawable.extension_24px),
+                        title = stringResource(R.string.app_icon_theme_settings),
+                        preference = settings.ui.appIconTheme,
+                        entries = stringArrayResource(R.array.app_icon_themes_values).zip(
+                            stringArrayResource(R.array.app_icon_themes_names)
+                        ).associate { it }.toPersistentMap(),
+                        onValueChanged = { value ->
+                            activity?.let { act ->
+                                com.lagradost.quicknovel.ui.FireThemes.apply(act, value)
+                            }
+                            true
+                        },
                     ),
                     Preference.PreferenceItem.ListPreference(
                         icon = painterResource(R.drawable.ic_baseline_collections_bookmark_24),
@@ -490,6 +518,39 @@ object SettingScreen : SearchableSettings {
                 )
             ),
             Preference.PreferenceGroup(
+                title = stringResource(R.string.tutorial_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.info_24px),
+                        title = stringResource(R.string.tutorial_providers),
+                        subtitle = stringResource(R.string.tutorial_providers_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
+                                    .setTitle(R.string.tutorial_providers)
+                                    .setMessage(R.string.tutorial_providers_body)
+                                    .setPositiveButton(R.string.close, null)
+                                    .show()
+                            }
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.ic_baseline_menu_book_24),
+                        title = stringResource(R.string.tutorial_download),
+                        subtitle = stringResource(R.string.tutorial_download_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
+                                    .setTitle(R.string.tutorial_download)
+                                    .setMessage(R.string.tutorial_download_body)
+                                    .setPositiveButton(R.string.close, null)
+                                    .show()
+                            }
+                        }
+                    ),
+                )
+            ),
+            Preference.PreferenceGroup(
                 title = stringResource(R.string.cp_group),
                 preferenceItems = persistentListOf(
                     Preference.PreferenceItem.TextPreference(
@@ -564,31 +625,6 @@ object SettingScreen : SearchableSettings {
                         }
                     ),
                     logcat,
-
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.ic_github_logo),
-                        title = "Github",
-                        subtitle = "https://github.com/LagradOst/QuickNovel",
-                        onClick = {
-                            openInBrowser("https://github.com/LagradOst/QuickNovel")
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.cs3_cloud),
-                        title = "Anime and Movie app by the same devs",
-                        subtitle = "https://github.com/recloudstream/cloudstream",
-                        onClick = {
-                            openInBrowser("https://github.com/recloudstream/cloudstream")
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.ic_baseline_discord_24),
-                        title = "Join Discord",
-                        subtitle = "https://discord.gg/5Hus6fM",
-                        onClick = {
-                            openInBrowser("https://discord.gg/5Hus6fM")
-                        }
-                    ),
                 )
             ))
     }

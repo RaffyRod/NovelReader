@@ -96,8 +96,7 @@ class ChapterAdapter(val viewModel: ResultViewModel) :
         val binding = holder.view as? SimpleChapterBinding ?: return
         binding.apply {
             name.text = item.name
-            releaseDate.text = item.dateOfRelease
-            releaseDate.isGone = item.dateOfRelease.isNullOrBlank()
+            releaseDate.isGone = true
             root.setOnClickListener {
                 if (viewModel.selectionMode.value == true) {
                     viewModel.toggleChapterSelected(item)

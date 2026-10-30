@@ -35,6 +35,9 @@ enum class CloudStreamThemeMode {
     /** "SilentBlue" */
     SilentBlue,
 
+    /** "UltimateBlue" black + bright blue brand */
+    UltimateBlue,
+
     /** "System" resolved on each platform via [isSystemInDarkTheme] */
     FollowSystem,
 
@@ -60,6 +63,7 @@ fun modeToTheme(mode : CloudStreamThemeMode, primaryColor: CloudStreamPrimaryCol
             CloudStreamThemeMode.Dracula -> draculaScheme()
             CloudStreamThemeMode.Lavender -> lavenderScheme()
             CloudStreamThemeMode.SilentBlue -> silentBlueScheme()
+            CloudStreamThemeMode.UltimateBlue -> ultimateBlueScheme()
             CloudStreamThemeMode.FollowSystem -> if (systemDark) darkScheme() else lightScheme()
             CloudStreamThemeMode.Dynamic -> dynamicTheme
         }
@@ -117,7 +121,7 @@ fun CloudStreamPreviewTheme(content: @Composable () -> Unit) {
 @Composable
 fun CloudStreamTheme(
     mode: CloudStreamThemeMode = CloudStreamThemeMode.FollowSystem,
-    primaryColor: CloudStreamPrimaryColor = CloudStreamPrimaryColor.NORMAL,
+    primaryColor: CloudStreamPrimaryColor = CloudStreamPrimaryColor.ULTIMATE_BLUE,
     content: @Composable () -> Unit,
 ) {
     val csColors = modeToTheme(mode, primaryColor)

@@ -209,4 +209,18 @@
     <string name="download_path_key">download_path_key</string>
     <string name="download_path_pref">İndirme yolu</string>
     <string name="bionic_reading">Biyonik Okuma</string>
+
+    <string name="tutorial_group">Eğitim</string>
+    <string name="tutorial_providers">Özel sağlayıcılar</string>
+    <string name="tutorial_providers_desc">Blog veya roman sitesi nasıl eklenir</string>
+    <string name="tutorial_providers_body">1. Ayarlar → Özel sağlayıcılar → Sağlayıcı ekle.\n\n2. Türü seçin:\n• Blog — Blogger/Blogspot için (örn. blogum.blogspot.com). Blogda bir roman listesi varsa, her roman ayrı ayrı ve tüm bölümleriyle listelenir.\n• Web sitesi — Madara / WordPress roman siteleri için. Yalnızca ad ve URL gerekir.\n\n3. Doğrulamayı bekleyin. Başarılı olursa sağlayıcı Arama ve Sağlayıcılar’da görünür.\n\n4. Düzenlemek veya silmek için Sağlayıcıları yönet’i kullanın. Otomatik kurulum başarısız olursa Gelişmiş ile CSS seçicileri elle ayarlayabilirsiniz.\n\nİpucu: İspanyolca bloglar için Blog türünü seçin. “the” kelimesi genelde sonuç bulmaz; uygulama boş / İspanyolca sözcüklerle dener.</string>
+    <string name="tutorial_download">İndirmeler</string>
+    <string name="tutorial_download_desc">Romanlar nasıl indirilir ve biçim nasıl seçilir</string>
+    <string name="tutorial_download_body">1. Bir roman açın → İndir.\n\n2. Tüm bölümleri veya bir aralığı indirebilirsiniz (örn. 1-10, 15).\n\n3. Dosya başına bölüm: hepsi tek EPUB için boş bırakın veya bölmek için bir sayı girin (örn. 50).\n\n4. Biçim ve klasör: Ayarlar → okuyucu / indirme yolu.\n\n5. Bitince Kitaplık / İndirmeler’den açın. Güncelle yeni bölümleri indirir; Sil yerel dosyaları kaldırır, okuma geçmişinizi silmez.\n\nİpucu: Yavaş kaynaklarda çevrimiçi okumak daha iyidir. Çeviri seçenekleri (açıksa) indirmeyi uzatabilir.</string>
+    <string name="cp_validate">Doğrula</string>
+    <string name="cp_validating_blog">Blogun çalıştığı kontrol ediliyor…</string>
+    <string name="cp_blog_ok">Blog tamam: %1$d roman (%2$s), örnek “%3$s”, %4$d bölüm</string>
+    <string name="cp_blog_fail">Bu blog geçerli değil veya çalışmıyor: %1$s</string>
+    <string name="cp_blog_mode_index">liste</string>
+    <string name="cp_blog_mode_feed">besleme</string>
 </resources>

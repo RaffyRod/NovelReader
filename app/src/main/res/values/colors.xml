@@ -24,21 +24,30 @@
     <color name="whiteRipple">#33FFFFFF</color>
     <color name="blackRipple">#33000000</color>
 
-    <color name="colorPrimary">#E5322D</color>
+    <!-- Ultimate Blue brand (icon G): bright dark blue + black -->
+    <color name="colorPrimary">#1A6CFF</color>
     <color name="colorPrimarySecond">@color/colorPrimary</color>
-    <color name="colorSearch">#2E1D20</color> <!--#3444D1 @color/itemBackground-->
-    <color name="colorOngoing">#F53B66</color> <!--FF8181-->
-    <color name="colorPrimaryDark">#8E0F1A</color>
-    <color name="colorAccent">#FF5A3C</color> <!-- 818fff-->
+    <color name="colorSearch">#0F1A30</color>
+    <color name="colorOngoing">#5AA2FF</color>
+    <color name="colorPrimaryDark">#0A2A6E</color>
+    <color name="colorAccent">#5AA2FF</color>
+    <color name="colorPrimaryUltimateBlue">#1A6CFF</color>
 
-    <color name="primaryGrayBackground">#2A1B1D</color> <!--0f0f10 0E0E10 303135 2B2C30-->
-    <color name="primaryBlackBackground">#130B0C</color> <!--1C1C20 191a1f 19181E 202125 1C1C20-->
-    <color name="iconGrayBackground">#1C1112</color> <!--141419 202125-->
-    <color name="boxItemBackground">#180F10</color> <!-- 17171B 1B1B20-->
+    <color name="primaryGrayBackground">#121A2C</color>
+    <color name="primaryBlackBackground">#050B18</color>
+    <color name="iconGrayBackground">#0A1224</color>
+    <color name="boxItemBackground">#0D1528</color>
 
-    <color name="textColor">#F4EBE6</color> <!--FFF-->
-    <color name="semiWhite">#1AFFFFFF</color> <!--FFF-->
-    <color name="grayTextColor">#A89A98</color> <!-- 5e5f62-->
+    <color name="ultimateBluePrimaryGray">#162038</color>
+    <color name="ultimateBlueBlack">#000000</color>
+    <color name="ultimateBlueIconGray">#0A1224</color>
+    <color name="ultimateBlueBox">#101A30</color>
+    <color name="ultimateBlueText">#E8F1FF</color>
+    <color name="ultimateBlueGrayText">#8B97AB</color>
+
+    <color name="textColor">#E8F1FF</color>
+    <color name="semiWhite">#1AFFFFFF</color>
+    <color name="grayTextColor">#8B97AB</color>
     <color name="grayShimmer">#DCDCDC</color> <!-- 5e5f62-->
 
     <color name="searchColorTransparent">#1AFFFFFF</color> <!--DADADA-->

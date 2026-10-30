@@ -60,6 +60,23 @@ fun String.synopsis(): String {
         .replace(Regex("[ ]{2,}"), " ")
 }
 
+private val synopsisBlocks = Regex(
+    "(?:<|&lt;)(style|script)\\b.*?(?:<|&lt;)/\\1(?:>|&gt;)|/\\*.*?\\*/",
+    setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+)
+private val synopsisCssRule = Regex("[^\\n{}<>]{0,200}\\{[^{}]*\\}")
+private val synopsisLeftovers = Regex("^(?:\\s|<br\\s*/?>|>)+", RegexOption.IGNORE_CASE)
+
+/** Removes style and script code that some sites leave inside the description (Elementor, for example). */
+fun String.cleanSynopsis(): String {
+    if (!contains('{') && !contains("<style", true) && !contains("<script", true) && !contains("/*")) return this
+    return this
+        .replace(synopsisBlocks, "")
+        .replace(synopsisCssRule) { if (it.value.substringAfter('{').contains(':')) "" else it.value }
+        .replace(synopsisLeftovers, "")
+        .trim()
+}
+
 fun String.toUrl(): Uri? = runCatching { Uri.parse(this) }.getOrNull()
 fun String.toUrlBuilder(): Uri.Builder? = toUrl()?.buildUpon()
 fun String.toUrlBuilderSafe(): Uri.Builder = toUrl()?.buildUpon()!!

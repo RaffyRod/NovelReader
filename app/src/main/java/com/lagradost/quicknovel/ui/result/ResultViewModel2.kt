@@ -183,8 +183,9 @@ class ResultViewModel2(
                     )
                 }
 
-                // Mark as opened
+                // Mark as opened / visited so History shows this novel even before reading.
                 ImmutableSearchResponse.setTimeOfPageOpened(id, System.currentTimeMillis())
+                ImmutableSearchResponse.addToHistory(value)
                 BookDownloader2.openChanged(id)
 
                 // When we open this we can update the cached data in downloads

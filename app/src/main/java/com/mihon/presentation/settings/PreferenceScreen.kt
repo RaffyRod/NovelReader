@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.CompositionLocalProvider
 import com.lagradost.cloudstream4.rememberAppSettings
+import com.lagradost.quicknovel.ui.LocalUiIconTheme
+import com.lagradost.quicknovel.ui.UiIconTheme
 import com.mihon.presentation.settings.widget.LocalItemPosition
 import com.mihon.presentation.settings.widget.LocalSettingsStyle
 import androidx.compose.foundation.layout.Column
@@ -40,7 +42,9 @@ fun PreferenceScreen(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val state = rememberLazyListState()
-    val style = rememberAppSettings().ui.settingsStyle.collectAsState().value.toIntOrNull() ?: 1
+    val settings = rememberAppSettings()
+    val style = settings.ui.settingsStyle.collectAsState().value.toIntOrNull() ?: 1
+    val uiIcon = UiIconTheme.fromKey(settings.ui.uiIconTheme.collectAsState().value)
     val highlightKey = SearchableSettings.highlightKey
     if (highlightKey != null) {
         LaunchedEffect(Unit) {
@@ -53,7 +57,10 @@ fun PreferenceScreen(
         }
     }
 
-    CompositionLocalProvider(LocalSettingsStyle provides style) {
+    CompositionLocalProvider(
+        LocalSettingsStyle provides style,
+        LocalUiIconTheme provides uiIcon,
+    ) {
     LazyColumn(
         modifier = modifier,
         state = state,

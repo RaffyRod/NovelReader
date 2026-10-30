@@ -7,6 +7,7 @@ import android.os.Build
 fun perfToMode(perf: String?) =
     when (perf) {
         "System" -> CloudStreamThemeMode.FollowSystem
+        "UltimateBlue" -> CloudStreamThemeMode.UltimateBlue
         "Black" -> CloudStreamThemeMode.Dark
         "Light" -> CloudStreamThemeMode.Light
         "Amoled" -> CloudStreamThemeMode.Amoled
@@ -17,13 +18,14 @@ fun perfToMode(perf: String?) =
         "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             CloudStreamThemeMode.Dynamic
         } else {
-            CloudStreamThemeMode.Dark
+            CloudStreamThemeMode.UltimateBlue
         }
 
-        else -> CloudStreamThemeMode.Dark
+        else -> CloudStreamThemeMode.UltimateBlue
     }
 
 fun perfToColor(perf : String?) = when (perf) {
+    "UltimateBlue" -> CloudStreamPrimaryColor.ULTIMATE_BLUE
     "Normal" -> CloudStreamPrimaryColor.NORMAL
     "Blue" -> CloudStreamPrimaryColor.BLUE
     "Purple" -> CloudStreamPrimaryColor.PURPLE
@@ -47,14 +49,14 @@ fun perfToColor(perf : String?) = when (perf) {
     "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         CloudStreamPrimaryColor.DYNAMIC
     } else {
-        CloudStreamPrimaryColor.NORMAL
+        CloudStreamPrimaryColor.ULTIMATE_BLUE
     }
 
     "Monet2" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         CloudStreamPrimaryColor.DYNAMIC_TWO
     } else {
-        CloudStreamPrimaryColor.NORMAL
+        CloudStreamPrimaryColor.ULTIMATE_BLUE
     }
 
-    else -> CloudStreamPrimaryColor.NORMAL
+    else -> CloudStreamPrimaryColor.ULTIMATE_BLUE
 }

@@ -163,7 +163,7 @@ class HistoryViewModel2 : ViewModel(),
 
 
     init {
-        //  updateHistory()
+        updateHistory()
         viewModelScope.launch {
             searchPipe.launch { query ->
                 updateState {

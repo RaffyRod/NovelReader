@@ -33,7 +33,30 @@
         <item>list</item>
     </string-array>
 
+        <string-array name="app_icon_themes_names">
+        <item>Ultimate Blue Fire</item>
+        <item>Ultimate Black Fire</item>
+        <item>Ultimate Lava Fire</item>
+    </string-array>
+    <string-array name="app_icon_themes_values">
+        <item>BlueFire</item>
+        <item>BlackFire</item>
+        <item>LavaFire</item>
+    </string-array>
+
+    <string-array name="ui_icon_themes_names">
+        <item>Ultimate Blue Fire</item>
+        <item>Ultimate Black Fire</item>
+        <item>Ultimate Lava Fire</item>
+    </string-array>
+    <string-array name="ui_icon_themes_values">
+        <item>BlueFire</item>
+        <item>BlackFire</item>
+        <item>LavaFire</item>
+    </string-array>
+
     <string-array name="themes_names">
+        <item>Ultimate Blue</item>
         <item>Тёмная</item>
         <item>Серая</item>
         <item>Amoled</item>
@@ -41,6 +64,7 @@
         <item>Material You</item>
     </string-array>
     <string-array name="themes_names_values">
+        <item>UltimateBlue</item>
         <item>AmoledLight</item>
         <item>Black</item>
         <item>Amoled</item>
@@ -49,6 +73,7 @@
     </string-array>
 
     <string-array name="themes_overlay_names">
+        <item>Ultimate Blue</item>
         <item>Обычный</item>
         <item>Гвоздично-розовый</item>
         <item>Тёмно-зелёный</item>
@@ -69,6 +94,7 @@
         <item>Material You (вторичный)</item>
     </string-array>
     <string-array name="themes_overlay_names_values">
+        <item>UltimateBlue</item>
         <item>Normal</item>
         <item>CarnationPink</item>
         <item>DarkGreen</item>
@@ -139,3 +165,4 @@
         <item>GreenApple</item>
     </string-array>
 </resources>
+

@@ -570,14 +570,6 @@ fun ChapterItem(
             .padding(10.dp)
     ) {
         Text(chapter.name, fontSize = 14.sp, lineHeight = 13.sp)
-        if (chapter.dateOfRelease != null) {
-            Text(
-                chapter.dateOfRelease,
-                fontSize = 12.sp,
-                lineHeight = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
     }
 }
 

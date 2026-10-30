@@ -14,6 +14,8 @@ import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.cloudstream4.theme.CloudStreamTheme
 import com.lagradost.cloudstream4.theme.perfToColor
 import com.lagradost.cloudstream4.theme.perfToMode
+import com.lagradost.quicknovel.ui.LocalUiIconTheme
+import com.lagradost.quicknovel.ui.UiIconTheme
 import com.mihon.presentation.LocalBackPress
 import com.mihon.presentation.settings.collectAsState
 
@@ -34,6 +36,9 @@ fun CloudStreamThemeAppSettings(content: @Composable () -> Unit) {
     val settings = rememberAppSettings()
     val mode by settings.ui.theme.collectAsState()
     val primaryColor by settings.ui.primaryColor.collectAsState()
+    val uiIconKey by settings.ui.uiIconTheme.collectAsState()
+    val appIconKey by settings.ui.appIconTheme.collectAsState()
+    val fireTheme = UiIconTheme.fromKey(uiIconKey.ifBlank { appIconKey })
 
     CloudStreamTheme(
         mode = perfToMode(mode),
@@ -45,6 +50,7 @@ fun CloudStreamThemeAppSettings(content: @Composable () -> Unit) {
 
         CompositionLocalProvider(
             LocalBackPress provides backDispatcher::onBackPressed,
+            LocalUiIconTheme provides fireTheme,
         ) {
             content()
         }

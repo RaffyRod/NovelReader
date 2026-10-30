@@ -160,3 +160,16 @@ internal fun silentBlueScheme() = CloudStreamColorScheme(
     ongoing = CloudStreamPalette.Ongoing,
     isLight = false,
 )
+
+internal fun ultimateBlueScheme() = CloudStreamColorScheme(
+    background = CloudStreamPalette.UltimateBlueBlackBg,
+    surfaceVariant = CloudStreamPalette.UltimateBluePrimaryGrayBg,
+    surface = CloudStreamPalette.UltimateBlueIconGrayBg,
+    surfaceContainer = CloudStreamPalette.UltimateBlueBoxItemBg,
+    onBackground = CloudStreamPalette.UltimateBlueText,
+    onSurfaceVariant = CloudStreamPalette.UltimateBlueGrayText,
+    icon = CloudStreamPalette.UltimateBlueIcon,
+    primary = CloudStreamPalette.Primary,
+    ongoing = CloudStreamPalette.Ongoing,
+    isLight = false,
+)

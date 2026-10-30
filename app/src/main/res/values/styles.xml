@@ -125,6 +125,23 @@
         <item name="primaryGrayBackground">@color/amoledModeLight</item>
     </style>
 
+    <!-- Ultimate Blue: pure black + bright blue brand (matches launcher icon G) -->
+    <style name="UltimateBlueMode">
+        <item name="primaryGrayBackground">@color/ultimateBluePrimaryGray</item>
+        <item name="primaryBlackBackground">@color/ultimateBlueBlack</item>
+        <item name="iconGrayBackground">@color/ultimateBlueIconGray</item>
+        <item name="boxItemBackground">@color/ultimateBlueBox</item>
+        <item name="textColor">@color/ultimateBlueText</item>
+        <item name="grayTextColor">@color/ultimateBlueGrayText</item>
+        <item name="white">@color/white</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="colorPrimary">@color/colorPrimaryUltimateBlue</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateBlue</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+    </style>
+
     <style name="ChipReviewAlt" parent="ChipFilled">
         <item name="chipBackgroundColor">?attr/textColor</item>
         <item name="textColor">?attr/primaryGrayBackground</item>
@@ -466,6 +483,15 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorOnPrimary">@color/colorAccent</item>
         <!-- Needed for leanback fuckery -->
+        <item name="android:colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateBlue">
+        <item name="colorPrimary">@color/colorPrimaryUltimateBlue</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateBlue</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
         <item name="android:colorAccent">@color/colorAccent</item>
     </style>
 

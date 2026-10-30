@@ -143,18 +143,20 @@ object CommonActivity {
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(act)
 
         val currentTheme =
-            when (settingsManager.getString(act.getString(R.string.theme_key), "AmoledLight")) {
+            when (settingsManager.getString(act.getString(R.string.theme_key), "UltimateBlue")) {
+                "UltimateBlue" -> R.style.UltimateBlueMode
                 "Black" -> R.style.AppTheme
                 "Light" -> R.style.LightMode
                 "Amoled" -> R.style.AmoledMode
                 "AmoledLight" -> R.style.AmoledModeLight
                 "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
                     R.style.MonetMode else R.style.AppTheme
-                else -> R.style.AppTheme
+                else -> R.style.UltimateBlueMode
             }
 
         val currentOverlayTheme =
-            when (settingsManager.getString(act.getString(R.string.primary_color_key), "Normal")) {
+            when (settingsManager.getString(act.getString(R.string.primary_color_key), "UltimateBlue")) {
+                "UltimateBlue" -> R.style.OverlayPrimaryColorUltimateBlue
                 "Normal" -> R.style.OverlayPrimaryColorNormal
                 "CarnationPink" -> R.style.OverlayPrimaryColorCarnationPink
                 "DarkGreen" -> R.style.OverlayPrimaryColorDarkGreen
@@ -163,6 +165,7 @@ object CommonActivity {
                 "Grey" -> R.style.OverlayPrimaryColorGrey
                 "White" -> R.style.OverlayPrimaryColorWhite
                 "Brown" -> R.style.OverlayPrimaryColorBrown
+                "Blue" -> R.style.OverlayPrimaryColorBlue
                 "Purple" -> R.style.OverlayPrimaryColorPurple
                 "Green" -> R.style.OverlayPrimaryColorGreen
                 "GreenApple" -> R.style.OverlayPrimaryColorGreenApple
@@ -171,10 +174,10 @@ object CommonActivity {
                 "Party" -> R.style.OverlayPrimaryColorParty
                 "Pink" -> R.style.OverlayPrimaryColorPink
                 "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    R.style.OverlayPrimaryColorMonet else R.style.OverlayPrimaryColorNormal
+                    R.style.OverlayPrimaryColorMonet else R.style.OverlayPrimaryColorUltimateBlue
                 "Monet2" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    R.style.OverlayPrimaryColorMonetTwo else R.style.OverlayPrimaryColorNormal
-                else -> R.style.OverlayPrimaryColorNormal
+                    R.style.OverlayPrimaryColorMonetTwo else R.style.OverlayPrimaryColorUltimateBlue
+                else -> R.style.OverlayPrimaryColorUltimateBlue
             }
         act.theme.applyStyle(currentTheme, true)
         act.theme.applyStyle(currentOverlayTheme, true)

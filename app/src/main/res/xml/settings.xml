@@ -115,36 +115,4 @@
                 android:title="@string/show_log_cat" />
     </PreferenceCategory>
 
-    <PreferenceCategory
-            android:key="extra"
-            android:title="@string/info"
-            app:isPreferenceVisible="true">
-
-        <Preference
-                android:title="Github"
-                android:icon="@drawable/ic_github_logo"
-                app:summary="https://github.com/LagradOst/QuickNovel">
-            <intent
-                    android:action="android.intent.action.VIEW"
-                    android:data="https://github.com/LagradOst/QuickNovel" />
-        </Preference>
-
-        <Preference
-                android:title="Anime and Movie app by the same devs"
-                android:icon="@drawable/ic_github_logo"
-                app:summary="https://github.com/recloudstream/cloudstream">
-            <intent
-                    android:action="android.intent.action.VIEW"
-                    android:data="https://github.com/recloudstream/cloudstream" />
-        </Preference>
-
-        <Preference
-                android:title="Join Discord"
-                android:icon="@drawable/ic_baseline_discord_24"
-                app:summary="https://discord.gg/5Hus6fM">
-            <intent
-                    android:action="android.intent.action.VIEW"
-                    android:data="https://discord.gg/5Hus6fM" />
-        </Preference>
-    </PreferenceCategory>
 </PreferenceScreen>

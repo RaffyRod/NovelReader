@@ -3,16 +3,14 @@
     android:height="108dp"
     android:viewportWidth="1000"
     android:viewportHeight="1000">
-    <group
-        android:translateX="350" android:translateY="170" android:scaleX="3.0" android:scaleY="3.0">
-        <path
-            android:fillColor="#FF000000"
-            android:pathData="M50,0C57,18 76,28 76,52C76,72 64,86 50,86C36,86 24,72 24,52C24,40 32,34 35,24C39,31 43,33 45,30C44,20 46,10 50,0Z" />
-    </group>
+    <!-- Themed icon (Android 13+): black glyph, system tints with wallpaper palette -->
     <path
-        android:pathData="M350,482L650,482M500,482L500,745M494,545Q440,640 320,705M506,545Q560,640 680,705M455,655L545,655"
-        android:strokeColor="#FF000000"
-        android:strokeWidth="40"
+        android:fillColor="#FF000000"
+        android:pathData="M210,500a290,290 0 1,0 580,0a290,290 0 1,0 -580,0" />
+    <path
+        android:pathData="M350,400L650,400M500,400L500,663M494,463Q440,558 320,623M506,463Q560,558 680,623M455,573L545,573"
+        android:strokeWidth="48"
+        android:strokeColor="#FFFFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 </vector>

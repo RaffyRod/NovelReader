@@ -74,10 +74,17 @@ class UpdatePreferences(preferences: PreferenceStore) {
 
 class UIPreferences(preferences: PreferenceStore) {
     val primaryColor = preferences.getString(
-        "primary_color_key", "Normal"
+        "primary_color_key", "UltimateBlue"
     )
     val theme = preferences.getString(
-        "theme_key", "AmoledLight"
+        "theme_key", "UltimateBlue"
+    )
+    val appIconTheme = preferences.getString(
+        "app_icon_theme_key", "BlueFire"
+    )
+    /** Fire packs for settings/menu icons: BlueFire | BlackFire | LavaFire. */
+    val uiIconTheme = preferences.getString(
+        "ui_icon_theme_key", "BlueFire"
     )
     val ratingFormat = preferences.getString(
         "rating_format",

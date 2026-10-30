@@ -574,6 +574,7 @@ class MainActivity : AppCompatActivity() {
 
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
         CommonActivity.loadThemes(this)
+        com.lagradost.quicknovel.util.AppIconThemes.applyFromPrefs(this)
         CommonActivity.init(this)
 
         super.onCreate(savedInstanceState)
@@ -619,11 +620,17 @@ class MainActivity : AppCompatActivity() {
                 primary = getResourceColor(R.attr.colorPrimary),
                 accent = getResourceColor(androidx.appcompat.R.attr.colorAccent),
                 gray = getResourceColor(R.attr.grayTextColor),
+                fire = com.lagradost.quicknovel.ui.UiIconTheme.fromKey(
+                    settingsManager.getString(
+                        com.lagradost.quicknovel.ui.UiIconTheme.PREF_KEY,
+                        com.lagradost.quicknovel.ui.UiIconTheme.DEFAULT_KEY,
+                    )
+                ),
             )
         }
         applyNavStyle()
         navStylePrefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == "nav_style") {
+            if (key == "nav_style" || key == com.lagradost.quicknovel.ui.UiIconTheme.PREF_KEY) {
                 applyNavStyle()
                 syncSectionsButton(navController.currentDestination)
             }

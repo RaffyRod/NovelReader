@@ -7,6 +7,8 @@ import android.graphics.ColorFilter
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PixelFormat
+import android.graphics.RadialGradient
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.view.View
@@ -71,8 +73,13 @@ enum class NavIcon(val itemId: Int, val kanji: String, val fillable: List<String
 /**
  * Bottom menu icon drawn from path data so one definition serves every [NavStyle].
  * It follows the tint list of the navigation bar and reacts to the selected state.
+ * Optional [UiIconTheme] draws a soft fire halo behind the glyph.
  */
-class NavIconDrawable(private val icon: NavIcon, private val style: NavStyle) : Drawable() {
+class NavIconDrawable(
+    private val icon: NavIcon,
+    private val style: NavStyle,
+    private val fire: UiIconTheme = UiIconTheme.BLUE_FIRE,
+) : Drawable() {
     private val fillPath = Path().apply {
         fillType = Path.FillType.EVEN_ODD
         icon.fillable.forEach { addPath(PathParser.createPathFromPathData(it)) }
@@ -92,6 +99,26 @@ class NavIconDrawable(private val icon: NavIcon, private val style: NavStyle) : 
         canvas.translate(b.left.toFloat(), b.top.toFloat())
         val scale = minOf(b.width(), b.height()) / GRID
         canvas.scale(scale, scale)
+
+        // Fire aura (stronger when selected)
+        paint.reset()
+        paint.isAntiAlias = true
+        paint.style = Paint.Style.FILL
+        val cx = GRID / 2f
+        val cy = GRID * 0.72f
+        val glowA = if (selected) 0xB8 else 0x55
+        paint.shader = RadialGradient(
+            cx, cy, GRID * 0.7f,
+            intArrayOf(
+                (glowA shl 24) or (fire.glowArgb and 0x00FFFFFF),
+                (0x28 shl 24) or (fire.coreArgb and 0x00FFFFFF),
+                Color.TRANSPARENT,
+            ),
+            floatArrayOf(0f, 0.45f, 1f),
+            Shader.TileMode.CLAMP,
+        )
+        canvas.drawCircle(cx, cy, GRID * 0.7f, paint)
+        paint.shader = null
 
         if (style == NavStyle.KANJI) {
             paint.reset()
@@ -164,8 +191,12 @@ object NavStyler {
         primary: Int,
         accent: Int,
         gray: Int,
+        fire: UiIconTheme = UiIconTheme.BLUE_FIRE,
     ) {
-        val active = if (style == NavStyle.DUOTONE) accent else primary
+        val active = when {
+            style == NavStyle.DUOTONE -> fire.glowArgb
+            else -> fire.coreArgb
+        }
         val tint = ColorStateList(
             arrayOf(intArrayOf(android.R.attr.state_selected), intArrayOf()),
             intArrayOf(active, gray)
@@ -173,12 +204,13 @@ object NavStyler {
         navView.itemIconTintList = tint
         navView.itemTextColor = tint
         navView.labelVisibilityMode = NavigationBarView.LABEL_VISIBILITY_LABELED
+        val pill = fire.coreArgb
         navView.itemActiveIndicatorColor = ColorStateList.valueOf(
-            if (style == NavStyle.OUTLINE) Color.argb(0x33, Color.red(primary), Color.green(primary), Color.blue(primary))
+            if (style == NavStyle.OUTLINE) Color.argb(0x33, Color.red(pill), Color.green(pill), Color.blue(pill))
             else Color.TRANSPARENT
         )
         NavIcon.entries.forEach { icon ->
-            navView.menu.findItem(icon.itemId)?.icon = NavIconDrawable(icon, style)
+            navView.menu.findItem(icon.itemId)?.icon = NavIconDrawable(icon, style, fire)
         }
     }
 

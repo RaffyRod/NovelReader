@@ -21,11 +21,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RadialGradientShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.quicknovel.R
+import com.lagradost.quicknovel.ui.UiIconTheme
+import com.mihon.presentation.settings.collectAsState
 
 /** Whether the section rail is open; the bottom menu toggles it and the library screen reads it. */
 object LibraryRailState {
@@ -50,6 +59,21 @@ val libraryRailIcons = listOf(
     R.drawable.ic_baseline_favorite_24,
 )
 
+/** Soft fire halo for the selected section chip (follows Blue/Black/Lava Fire). */
+private fun sectionFireBrush(theme: UiIconTheme): Brush = object : ShaderBrush() {
+    override fun createShader(size: androidx.compose.ui.geometry.Size) =
+        RadialGradientShader(
+            colors = listOf(
+                theme.glow.copy(alpha = 0.85f),
+                theme.core.copy(alpha = 0.55f),
+                theme.core.copy(alpha = 0.92f),
+            ),
+            center = Offset(size.width * 0.5f, size.height * 0.7f),
+            radius = size.minDimension * 0.95f,
+            tileMode = TileMode.Clamp,
+        )
+}
+
 /** A thin column of icons with counters that jumps between the library sections. */
 @Composable
 fun LibraryRail(
@@ -58,6 +82,17 @@ fun LibraryRail(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val fire = UiIconTheme.fromKey(
+        rememberAppSettings().ui.uiIconTheme.collectAsState().value
+    )
+    // Black Fire uses a light core; glyphs need dark contrast. Blue/Lava use light glyphs.
+    val selectedFg = if (fire == UiIconTheme.BLACK_FIRE) {
+        Color(0xFF0A0C10)
+    } else {
+        Color.White
+    }
+    val idleFg = MaterialTheme.colorScheme.onSurfaceVariant
+
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -71,21 +106,23 @@ fun LibraryRail(
         items.forEachIndexed { index, item ->
             val isSelected = index == selected
             val label = stringResource(item.nameRes)
+            val chipBg = Modifier
+                .size(width = 42.dp, height = 48.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .then(
+                    if (isSelected) Modifier.background(sectionFireBrush(fire))
+                    else Modifier.background(Color.Transparent)
+                )
+                .clickable { onSelect(index) }
             Box(
-                modifier = Modifier
-                    .size(width = 42.dp, height = 48.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent
-                    )
-                    .clickable { onSelect(index) },
+                modifier = chipBg,
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(item.iconRes),
                     contentDescription = label,
                     modifier = Modifier.size(22.dp),
-                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (isSelected) selectedFg else idleFg,
                 )
                 Text(
                     text = item.count.toString(),
@@ -93,7 +130,7 @@ fun LibraryRail(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 3.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isSelected) selectedFg else idleFg,
                 )
             }
         }

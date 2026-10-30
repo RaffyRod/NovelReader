@@ -3,7 +3,8 @@ package com.lagradost.cloudstream4.theme
 import androidx.compose.ui.graphics.Color
 
 enum class CloudStreamPrimaryColor(val color: Color) {
-    NORMAL(Color(0xFFE5322D)),
+    ULTIMATE_BLUE(Color(0xFF1A6CFF)),
+    NORMAL(Color(0xFF1A6CFF)),
     BLUE(Color(0xFF5664B7)),
     PURPLE(Color(0xFF6200EA)),
     GREEN(Color(0xFF00BFA5)),
@@ -29,18 +30,27 @@ enum class CloudStreamPrimaryColor(val color: Color) {
 
 
 internal object CloudStreamPalette {
-    // Default dark (AppTheme / Black)
-    val Primary = Color(0xFFE5322D)
-    val PrimaryDark = Color(0xFF8E0F1A)
-    val Ongoing = Color(0xFFF53B66)
+    // Default dark / Ultimate Blue brand
+    val Primary = Color(0xFF1A6CFF)
+    val PrimaryDark = Color(0xFF0A2A6E)
+    val Ongoing = Color(0xFF5AA2FF)
 
-    val DarkPrimaryGrayBg = Color(0xFF2A1B1D)
-    val DarkBlackBg = Color(0xFF130B0C)
-    val DarkIconGrayBg = Color(0xFF1C1112)
-    val DarkBoxItemBg = Color(0xFF180F10)
-    val DarkText = Color(0xFFF4EBE6)
-    val DarkGrayText = Color(0xFFA89A98)
+    val DarkPrimaryGrayBg = Color(0xFF121A2C)
+    val DarkBlackBg = Color(0xFF050B18)
+    val DarkIconGrayBg = Color(0xFF0A1224)
+    val DarkBoxItemBg = Color(0xFF0D1528)
+    val DarkText = Color(0xFFE8F1FF)
+    val DarkGrayText = Color(0xFF8B97AB)
     val DarkIcon = Color(0xFF9BA0A6)
+
+    // Ultimate Blue (icon G): pure black + bright blue
+    val UltimateBluePrimaryGrayBg = Color(0xFF162038)
+    val UltimateBlueBlackBg = Color(0xFF000000)
+    val UltimateBlueIconGrayBg = Color(0xFF0A1224)
+    val UltimateBlueBoxItemBg = Color(0xFF101A30)
+    val UltimateBlueText = Color(0xFFE8F1FF)
+    val UltimateBlueGrayText = Color(0xFF8B97AB)
+    val UltimateBlueIcon = Color(0xFF9EC5FF)
 
     // Amoled
     val AmoledBlack = Color(0xFF000000)

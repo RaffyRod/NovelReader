@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1000"
+    android:viewportHeight="1000">
+    <!-- Ultimate Black Fire: mono orb + 本 -->
+    <path android:pathData="M0,0h1000v1000h-1000z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="500"
+                android:centerY="420"
+                android:gradientRadius="720"
+                android:type="radial">
+                <item android:color="#FF1A1D24" android:offset="0.0" />
+                <item android:color="#FF000000" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Soft white fire glow under orb -->
+    <path android:pathData="M280,620a220,140 0 1,0 440,0a220,140 0 1,0 -440,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="500"
+                android:centerY="640"
+                android:gradientRadius="240"
+                android:type="radial">
+                <item android:color="#88FFFFFF" android:offset="0.0" />
+                <item android:color="#22FFFFFF" android:offset="0.45" />
+                <item android:color="#00000000" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M210,500a290,290 0 1,0 580,0a290,290 0 1,0 -580,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="420"
+                android:centerY="380"
+                android:gradientRadius="320"
+                android:type="radial">
+                <item android:color="#FFF5F7FA" android:offset="0.0" />
+                <item android:color="#FF9AA3B2" android:offset="0.4" />
+                <item android:color="#FF0A0C10" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M210,500a290,290 0 1,0 580,0a290,290 0 1,0 -580,0"
+        android:fillColor="#00000000"
+        android:strokeWidth="14"
+        android:strokeColor="#B3C5CCD8" />
+    <path
+        android:pathData="M350,400L650,400M500,400L500,663M494,463Q440,558 320,623M506,463Q560,558 680,623M455,573L545,573"
+        android:strokeWidth="40"
+        android:strokeColor="#FF05070A"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M350,400L650,400M500,400L500,663M494,463Q440,558 320,623M506,463Q560,558 680,623M455,573L545,573"
+        android:strokeWidth="28"
+        android:strokeColor="#FFF2F5FA"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

@@ -6,6 +6,11 @@
     <string name="title_search">Buscar</string>
     <string name="title_download">Biblioteca</string>
     <string name="title_history">Historial</string>
+    <string name="history_empty">Aún no hay novelas recientes. Abre o lee una para verla aquí.</string>
+    <string name="history_reading">Leyendo</string>
+    <string name="history_visited">Visitadas</string>
+    <string name="history_reading_pill">Leyendo</string>
+    <string name="history_visited_pill">Visitada</string>
     <string name="title_settings">Ajustes</string>
 
     <!-- Información de la Novela / Detalles -->
@@ -179,6 +184,12 @@
     <string name="general_settings">Ajustes generales</string>
     <string name="locale_settings">Idioma de la aplicación</string>
     <string name="provider_lang_settings">Idiomas del proveedor</string>
+    <string name="app_icon_theme_settings">Icono del launcher</string>
+    <string name="app_icon_theme_settings_desc">Estilo del icono en el launcher</string>
+    <string name="app_icon_theme_key">app_icon_theme_key</string>
+    <string name="ui_icon_theme_settings">Tema Fire</string>
+    <string name="ui_icon_theme_settings_desc">Iconos de ajustes, menú, secciones y launcher</string>
+    <string name="ui_icon_theme_key">ui_icon_theme_key</string>
     <string name="theme_key">theme_key</string>
     <string name="theme">Tema</string>
     <string name="primary_color_key">primary_color_key</string>
@@ -454,9 +465,27 @@
     <string name="last_chapter_saved">Guardado: te quedaste en %1$s</string>
     <string name="cp_site_address">Dirección del sitio (ej. misitio.com)</string>
     <string name="cp_simple_hint">Escribe un nombre y la dirección de la página. La app intentará configurarla sola.</string>
+    <string name="cp_type_label">¿Qué vas a agregar?</string>
+    <string name="cp_type_blog">Blog (Blogger / Blogspot)</string>
+    <string name="cp_type_site">Sitio web (Madara / otro de novelas)</string>
+    <string name="cp_hint_blog">Usa la dirección del blog (ej. miblog.blogspot.com). Si el blog tiene lista de novelas, cada una aparece por separado en Buscar y en Proveedores, con todos sus capítulos.</string>
+    <string name="cp_hint_site">Usa la dirección del sitio. Funciona mejor con temas Madara / WordPress de novelas. La app probará las plantillas habituales.</string>
     <string name="cp_advanced">Avanzado</string>
     <string name="cp_detecting">Revisando el sitio, puede tardar unos segundos…</string>
-    <string name="cp_not_detected">No se pudo configurar este sitio automáticamente. Revisa que la dirección sea correcta.</string>
+    <string name="cp_validating_blog">Comprobando que el blog funciona…</string>
+    <string name="cp_validate">Validar</string>
+    <string name="cp_blog_ok">Blog OK: %1$d novelas (%2$s), ejemplo “%3$s” con %4$d capítulos</string>
+    <string name="cp_blog_fail">Este blog no es válido o no está funcionando: %1$s</string>
+    <string name="cp_blog_mode_index">lista</string>
+    <string name="cp_blog_mode_feed">feed</string>
+    <string name="cp_not_detected">No se pudo configurar este sitio automáticamente. Revisa que la dirección sea correcta y que elegiste el tipo correcto (Blog o Sitio web).</string>
+    <string name="tutorial_group">Tutorial</string>
+    <string name="tutorial_providers">Proveedores propios</string>
+    <string name="tutorial_providers_desc">Cómo agregar un Blog o un sitio de novelas</string>
+    <string name="tutorial_providers_body">1. Abre Configuración → Proveedores propios → Agregar proveedor.\n\n2. Elige el tipo:\n• Blog — para Blogger/Blogspot (ej. miblog.blogspot.com). Si el blog tiene “Lista de Novelas”, cada novela se muestra una a una con su lista completa de capítulos.\n• Sitio web — para sitios Madara / WordPress de novelas. Solo hace falta nombre y URL.\n\n3. Espera la verificación. Si funciona, el proveedor aparece en Buscar y en Proveedores.\n\n4. Usa Administrar proveedores para editar o borrar. Avanzado permite poner selectores CSS a mano si falla lo automático.\n\nConsejo: en blogs en español elige tipo Blog. La palabra “the” casi no encuentra nada; la app prueba con búsqueda vacía / palabras en español.</string>
+    <string name="tutorial_download">Descargas</string>
+    <string name="tutorial_download_desc">Cómo descargar novelas y elegir el formato</string>
+    <string name="tutorial_download_body">1. Abre una novela → Descargar.\n\n2. Puedes bajar todos los capítulos o un rango (ej. 1-10, 15).\n\n3. Capítulos por archivo: déjalo vacío para un solo EPUB con todo, o pon un número (ej. 50) para partirlo en varios archivos.\n\n4. Formato y carpeta: en Configuración → lector / ruta de descarga eliges dónde se guardan.\n\n5. Cuando termina, ábrela desde Biblioteca / Descargas. Actualizar vuelve a bajar capítulos nuevos; Borrar quita los archivos locales, no tu historial de lectura.\n\nConsejo: en fuentes lentas conviene leer en línea. Las opciones de traducción (si están activas) pueden alargar mucho la descarga.</string>
     <string name="library_continue">Continuar leyendo</string>
     <string name="library_follow">Seguir</string>
     <string name="library_chapter_of">Capítulo %1$d de %2$d</string>

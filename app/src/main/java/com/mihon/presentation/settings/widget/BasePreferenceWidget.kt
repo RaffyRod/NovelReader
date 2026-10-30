@@ -41,7 +41,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.RadialGradientShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
 import com.lagradost.cloudstream4.compose.focusOutline
+import com.lagradost.quicknovel.ui.LocalUiIconTheme
+import com.lagradost.quicknovel.ui.UiIconTheme
 import com.mihon.presentation.settings.LocalPreferenceHighlighted
 import com.mihon.presentation.settings.LocalPreferenceMinHeight
 import kotlinx.coroutines.delay
@@ -53,14 +59,24 @@ val LocalSettingsStyle = compositionLocalOf { 1 }
 /** Index and size of the item inside its group, used to round the corners of grouped cards. */
 val LocalItemPosition = compositionLocalOf { 0 to 1 }
 
-private val TilePalette = listOf(
-    listOf(Color(0xFFE5322D), Color(0xFFB3001B)),
-    listOf(Color(0xFFFF7A1A), Color(0xFFE5322D)),
-    listOf(Color(0xFFFFC247), Color(0xFFFF7A1A)),
-    listOf(Color(0xFF7A3CFF), Color(0xFF4B1FB8)),
-    listOf(Color(0xFF1FB88A), Color(0xFF0A7D5C)),
-    listOf(Color(0xFF2F7BFF), Color(0xFF1B4FC2)),
-)
+/** Soft fire halo behind a settings icon (matches Blue/Black/Lava Fire mocks). */
+private fun fireAuraBrush(theme: UiIconTheme): Brush {
+    val glow = theme.glow
+    val core = theme.core
+    return object : ShaderBrush() {
+        override fun createShader(size: androidx.compose.ui.geometry.Size) =
+            RadialGradientShader(
+                colors = listOf(
+                    glow.copy(alpha = 0.72f),
+                    core.copy(alpha = 0.28f),
+                    Color.Transparent,
+                ),
+                center = Offset(size.width * 0.5f, size.height * 0.72f),
+                radius = size.minDimension * 0.72f,
+                tileMode = TileMode.Clamp,
+            )
+    }
+}
 
 /** Paints every visible pixel of the content with [color], so any icon can be recolored. */
 private fun Modifier.recolor(color: Color): Modifier = this
@@ -83,7 +99,8 @@ internal fun BasePreferenceWidget(
     val minHeight = LocalPreferenceMinHeight.current
     val style = LocalSettingsStyle.current
     val (position, count) = LocalItemPosition.current
-    val primary = MaterialTheme.colorScheme.primary
+    val uiIcon = LocalUiIconTheme.current
+    val primary = uiIcon.core
     val surface = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)
 
     if (style == 2) {
@@ -101,9 +118,17 @@ internal fun BasePreferenceWidget(
                 Box(
                     modifier = Modifier
                         .padding(start = PrefsHorizontalPadding)
-                        .recolor(primary),
-                    content = { icon() },
-                )
+                        .size(36.dp)
+                        .background(fireAuraBrush(uiIcon), shape = RoundedCornerShape(50)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier.recolor(
+                            if (uiIcon == UiIconTheme.BLACK_FIRE) Color(0xFFF5F7FA) else Color.White
+                        ),
+                        content = { icon() },
+                    )
+                }
             }
             if (!title.isNullOrBlank()) {
                 Text(
@@ -147,20 +172,29 @@ internal fun BasePreferenceWidget(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
+            // Solid Fire badge so Blue / Black / Lava is obvious on every settings row.
+            val badgeFill = when (uiIcon) {
+                UiIconTheme.BLACK_FIRE -> Brush.linearGradient(
+                    listOf(Color(0xFF3A4050), Color(0xFF1A1D24))
+                )
+                else -> Brush.linearGradient(listOf(uiIcon.glow, uiIcon.core))
+            }
+            val glyph = when (uiIcon) {
+                UiIconTheme.BLACK_FIRE -> Color(0xFFF5F7FA)
+                else -> Color.White
+            }
             val badge = when (style) {
                 1 -> Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        Brush.linearGradient(
-                            TilePalette[(title.orEmpty().hashCode() and Int.MAX_VALUE) % TilePalette.size]
-                        )
-                    )
+                    .background(badgeFill)
+                    .background(fireAuraBrush(uiIcon))
                 else -> Modifier
                     .size(38.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(primary.copy(alpha = 0.13f))
-                    .border(1.dp, primary.copy(alpha = 0.33f), RoundedCornerShape(10.dp))
+                    .background(fireAuraBrush(uiIcon))
+                    .background(primary.copy(alpha = 0.18f))
+                    .border(1.dp, primary.copy(alpha = 0.55f), RoundedCornerShape(10.dp))
             }
             Box(
                 modifier = Modifier.padding(start = PrefsHorizontalPadding, end = 8.dp),
@@ -170,7 +204,7 @@ internal fun BasePreferenceWidget(
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(
-                        modifier = Modifier.recolor(if (style == 1) Color.White else Color(0xFFFFC247)),
+                        modifier = Modifier.recolor(glyph),
                         content = { icon() },
                     )
                 }

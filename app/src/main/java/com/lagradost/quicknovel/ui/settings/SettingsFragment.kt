@@ -36,11 +36,11 @@ class SettingsFragment : BaseComposeFragment(), SearchableSettings by SettingScr
         ).collectAsState()
         val theme by store.getString(
             stringResource(R.string.theme_key),
-            "AmoledLight",
+            "UltimateBlue",
         ).collectAsState()
         val color by store.getString(
             stringResource(R.string.primary_color_key),
-            "Normal",
+            "UltimateBlue",
         ).collectAsState()
 
         //val context = LocalContext.current
