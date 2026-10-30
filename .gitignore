@@ -10,3 +10,11 @@
 .kotlin/
 __pycache__/
 *.pyc
+
+# E2E (WebdriverIO / Appium / Allure)
+e2e/node_modules/
+e2e/allure-results/
+e2e/allure-report/
+e2e/apps/*.apk
+e2e/*.log
+

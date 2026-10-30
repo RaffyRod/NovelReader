@@ -8,7 +8,7 @@ Ad-free FOSS Android app for downloading novels. It also functions as an Epub re
 
 **Repo:** https://github.com/RaffyRod/NovelReader  
 **Upstream:** https://github.com/LagradOst/QuickNovel  
-**Current version:** 1.0.6
+**Current version:** 1.1.0
 
 **Download:** https://github.com/RaffyRod/NovelReader/releases
 
@@ -19,6 +19,8 @@ Ad-free FOSS Android app for downloading novels. It also functions as an Epub re
 - **Custom providers:** add Blog (Blogger index) or Website sources, with validation and localized tutorials.
 - **History:** separates **Reading** vs **Visited** novels (sections + pills), themed with Fire accents.
 - Chapter list no longer shows release timestamps under each chapter.
+- **Import-B** Fire drop-zone in Biblioteca; library search stays pinned.
+- **TTS:** prefers Piper/Sherpa neural voices (Dave ES / Lessac EN), language from text, slower neural rate.
 - App id: `com.lagradost.quicknovel.ultimate` (universal APK: arm64-v8a / armeabi-v7a / x86_64).
 
 ### Build
@@ -28,6 +30,17 @@ Ad-free FOSS Android app for downloading novels. It also functions as an Epub re
 ```
 
 Signed universal APKs for testing are produced under `app/build/outputs/apk/release/` (use `app-universal-release-unsigned.apk` + your keystore).
+
+### E2E automation (WebdriverIO + Appium)
+
+See [`e2e/README.md`](e2e/README.md). CI runs on **every push** via [`.github/workflows/e2e-android.yml`](.github/workflows/e2e-android.yml) and uploads **Allure** results.
+
+```bash
+cd e2e
+npm install
+npm test
+npm run allure:report
+```
 
 **Providers used:**
 
