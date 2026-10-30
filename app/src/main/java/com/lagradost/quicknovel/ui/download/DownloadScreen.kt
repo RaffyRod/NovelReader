@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,6 +26,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -48,11 +48,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.RadialGradientShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -69,6 +81,8 @@ import com.lagradost.quicknovel.MainActivity
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.compose.BaseSearchBar
 import com.lagradost.quicknovel.compose.IsScrolling
+import com.lagradost.quicknovel.ui.LocalUiIconTheme
+import com.lagradost.quicknovel.ui.UiIconTheme
 import com.lagradost.quicknovel.ui.common.SkeletonList
 import com.lagradost.quicknovel.ui.common.ImmutableSearchList
 import com.lagradost.quicknovel.ui.common.SearchList
@@ -126,7 +140,8 @@ fun DownloadScreen(
 
     var fabExpanded by remember { mutableStateOf(false) }
     val railOpen = LibraryRailState.open
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(snapAnimationSpec = null)
+    // Keep the library search bar pinned; it must not collapse while scrolling.
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -158,7 +173,12 @@ fun DownloadScreen(
         topBar = {
             BaseSearchBar(
                 content = {
-                    Spacer(modifier = Modifier.height(5.dp))
+                    // Import-B drop-zone stays visible under the pinned search.
+                    ImportFireDropZone(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
                 },
                 onQueryChange = { query ->
                     onAction(DownloadPageAction.Search(query))
@@ -490,12 +510,9 @@ fun DownloadRow(
             } else {
                 null
             },
-            footer = if (index == 0) {
-                if (isRow) {
-                    ::RowFooter
-                } else {
-                    ::BoxFooter
-                }
+            // List mode: Import-B lives under the pinned search. Grid keeps a drop-slot footer.
+            footer = if (index == 0 && !isRow) {
+                ::BoxFooter
             } else {
                 null
             }
@@ -503,68 +520,127 @@ fun DownloadRow(
     }
 }
 
+/** Import-B: dashed Fire drop-zone (list footer). */
 @Composable
 fun RowFooter() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .rounded()
+    ImportFireDropZone(modifier = Modifier.fillMaxWidth())
+}
+
+/**
+ * Import-B drop-zone: dashed Fire border, book icon, title + EPUB/PDF hint.
+ * Tap imports one book; long-press imports several.
+ */
+@Composable
+fun ImportFireDropZone(modifier: Modifier = Modifier) {
+    val fire = LocalUiIconTheme.current
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .height(96.dp)
+            .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(
-                onClick = {
-                    MainActivity.importEpub()
-                },
+            .background(importFireGlowBrush(fire))
+            .drawBehind {
+                drawRoundRect(
+                    color = fire.core.copy(alpha = 0.55f),
+                    cornerRadius = CornerRadius(12.dp.toPx()),
+                    style = Stroke(
+                        width = 1.5.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f), 0f),
+                    ),
+                )
+            }
+            .combinedClickable(
+                onClick = { MainActivity.importEpub() },
+                onLongClick = { MainActivity.importEpubs() },
             )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Icon(
-            modifier = Modifier.size(30.dp),
-            painter = painterResource(R.drawable.ic_baseline_add_24),
+            modifier = Modifier.size(26.dp),
+            painter = painterResource(R.drawable.ic_baseline_menu_book_24),
             contentDescription = stringResource(R.string.import_epub),
-            tint = MaterialTheme.colorScheme.onBackground
+            tint = fire.glow,
         )
-
         Text(
-            modifier = Modifier.padding(start = 15.dp),
             text = stringResource(R.string.import_epub),
             color = MaterialTheme.colorScheme.onBackground,
             fontSize = 13.sp,
-            lineHeight = 14.sp,
-            maxLines = 2,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
             textAlign = TextAlign.Center,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = stringResource(R.string.import_epub_hint),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
 
+/** Import-B: dashed Fire drop-slot (grid footer). */
 @Composable
 fun BoxFooter() {
+    val fire = LocalUiIconTheme.current
     val interactionSource = remember { MutableInteractionSource() }
+    val shape = RoundedCornerShape(10.dp)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .combinedClickable(interactionSource = interactionSource, indication = null, onClick = {
-                MainActivity.importEpub()
-            })
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { MainActivity.importEpub() },
+                onLongClick = { MainActivity.importEpubs() },
+            )
             .rounded()
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(0.68f)
-                .rounded()
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .background(importFireGlowBrush(fire))
+                .drawBehind {
+                    drawRoundRect(
+                        color = fire.core.copy(alpha = 0.50f),
+                        cornerRadius = CornerRadius(10.dp.toPx()),
+                        style = Stroke(
+                            width = 1.5.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 9f), 0f),
+                        ),
+                    )
+                }
                 .indication(interactionSource = interactionSource, indication = ripple()),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                modifier = Modifier.size(40.dp),
-                painter = painterResource(R.drawable.ic_baseline_add_24),
-                contentDescription = stringResource(R.string.import_epub),
-                tint = MaterialTheme.colorScheme.onBackground
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    painter = painterResource(R.drawable.ic_baseline_menu_book_24),
+                    contentDescription = stringResource(R.string.import_epub),
+                    tint = fire.glow,
+                )
+                Text(
+                    text = stringResource(R.string.import_epub),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 6.dp, start = 6.dp, end = 6.dp),
+                )
+            }
         }
 
         Box(
@@ -572,20 +648,36 @@ fun BoxFooter() {
                 .fillMaxWidth()
                 .height(40.dp)
                 .padding(horizontal = 5.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(R.string.import_epub),
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 13.sp,
-                lineHeight = 14.sp,
+                text = stringResource(R.string.import_epub_hint),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp,
+                lineHeight = 13.sp,
                 maxLines = 2,
                 textAlign = TextAlign.Center,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
+
+/** Soft Fire halo at the bottom of the import drop-zone (Blue / Black / Lava). */
+private fun importFireGlowBrush(theme: UiIconTheme): Brush =
+    object : ShaderBrush() {
+        override fun createShader(size: androidx.compose.ui.geometry.Size) =
+            RadialGradientShader(
+                colors = listOf(
+                    theme.glow.copy(alpha = 0.28f),
+                    theme.core.copy(alpha = 0.06f),
+                    Color.Transparent,
+                ),
+                center = Offset(size.width * 0.5f, size.height * 0.85f),
+                radius = size.minDimension * 0.95f,
+                tileMode = TileMode.Clamp,
+            )
+    }
 
 @Composable
 @PreviewLightDark

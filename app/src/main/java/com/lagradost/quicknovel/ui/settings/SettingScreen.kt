@@ -548,6 +548,20 @@ object SettingScreen : SearchableSettings {
                             }
                         }
                     ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.ic_baseline_volume_up_24),
+                        title = stringResource(R.string.tutorial_tts),
+                        subtitle = stringResource(R.string.tutorial_tts_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
+                                    .setTitle(R.string.tutorial_tts)
+                                    .setMessage(R.string.tutorial_tts_body)
+                                    .setPositiveButton(R.string.close, null)
+                                    .show()
+                            }
+                        }
+                    ),
                 )
             ),
             Preference.PreferenceGroup(

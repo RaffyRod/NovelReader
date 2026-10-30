@@ -18,6 +18,25 @@ class TtsVoicePickerTest {
     }
 
     @Test
+    fun best_prefersPiperDaveForSpanish() {
+        val voices = listOf(
+            voice("es-ES-neural", quality = 500),
+            voice("es_ES-davefx-medium", quality = 400),
+            voice("online", quality = 500, network = true),
+        )
+        assertEquals("es_ES-davefx-medium", TtsVoicePicker.best(voices, "es"))
+    }
+
+    @Test
+    fun best_prefersLessacForEnglish() {
+        val voices = listOf(
+            voice("en-us-x-sfg-local", language = "en", quality = 500),
+            voice("en_US-lessac-medium", language = "en", quality = 400),
+        )
+        assertEquals("en_US-lessac-medium", TtsVoicePicker.best(voices, "en"))
+    }
+
+    @Test
     fun best_prefersOfflineOnQualityTie() {
         val voices = listOf(voice("online", network = true), voice("offline"))
         assertEquals("offline", TtsVoicePicker.best(voices, "es"))
@@ -51,7 +70,44 @@ class TtsVoicePickerTest {
     }
 
     @Test
-    fun preferredLocale_fallsBackWhenLanguageIsMissing() {
-        assertEquals(Locale.US, TtsVoicePicker.preferredLocale(Locale("es"), listOf(Locale.FRANCE)))
+    fun preferredLocale_usesAvailableLanguageWhenWantedMissing() {
+        // Prefer Spanish if present, otherwise the first installed locale (never invent one).
+        assertEquals(Locale.US, TtsVoicePicker.preferredLocale(Locale("fr"), listOf(Locale.US)))
+        assertEquals(Locale("es", "ES"), TtsVoicePicker.preferredLocale(Locale("fr"), listOf(Locale.US, Locale("es", "ES"))))
+    }
+
+    @Test
+    fun detectLanguage_spanishText() {
+        assertEquals(
+            "es",
+            TtsVoicePicker.detectLanguage("Soy una don nadie, sin tiempo para fijarme en el brillo del sol.")
+        )
+    }
+
+    @Test
+    fun detectLanguage_englishText() {
+        assertEquals(
+            "en",
+            TtsVoicePicker.detectLanguage("I was a nobody with no time to look at the sun and the sky.")
+        )
+    }
+
+    @Test
+    fun readingLocale_ignoresSavedEnglishWhenTextIsSpanish() {
+        val available = listOf(Locale("es", "ES"), Locale.US)
+        val locale = TtsVoicePicker.readingLocale(
+            available = available,
+            appLocale = Locale.US,
+            sampleText = "Finalmente encontré trabajo en la morgue del hospital.",
+            savedDisplayName = Locale.US.displayName,
+        )
+        assertEquals("es", locale.language)
+    }
+
+    @Test
+    fun effectiveSpeechRate_slowsNeuralEnglish() {
+        val sherpa = "com.k2fsa.sherpa.onnx.tts.engine"
+        assertEquals(0.62f, TtsVoicePicker.effectiveSpeechRate(1.0f, sherpa, "en"), 0.001f)
+        assertEquals(1.0f, TtsVoicePicker.effectiveSpeechRate(1.0f, "com.google.android.tts", "en"), 0.001f)
     }
 }

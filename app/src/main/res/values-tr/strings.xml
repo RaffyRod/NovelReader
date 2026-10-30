@@ -217,6 +217,9 @@
     <string name="tutorial_download">İndirmeler</string>
     <string name="tutorial_download_desc">Romanlar nasıl indirilir ve biçim nasıl seçilir</string>
     <string name="tutorial_download_body">1. Bir roman açın → İndir.\n\n2. Tüm bölümleri veya bir aralığı indirebilirsiniz (örn. 1-10, 15).\n\n3. Dosya başına bölüm: hepsi tek EPUB için boş bırakın veya bölmek için bir sayı girin (örn. 50).\n\n4. Biçim ve klasör: Ayarlar → okuyucu / indirme yolu.\n\n5. Bitince Kitaplık / İndirmeler’den açın. Güncelle yeni bölümleri indirir; Sil yerel dosyaları kaldırır, okuma geçmişinizi silmez.\n\nİpucu: Yavaş kaynaklarda çevrimiçi okumak daha iyidir. Çeviri seçenekleri (açıksa) indirmeyi uzatabilir.</string>
+    <string name="tutorial_tts">Sesli okuma (TTS)</string>
+    <string name="tutorial_tts_desc">Bölümleri sesli okuyucuyla dinleme</string>
+    <string name="tutorial_tts_body">1. Okuyucuda bir bölüm açın.\n\n2. Sesli okumayı başlatmak için (alt çubuk) hoparlör simgesine dokunun; görünür ilk cümleden başlar.\n\n3. TTS açıkken TTS çubuğu görünür:\n• Oynat / Duraklat\n• Durdur\n• Geri / İleri (önceki veya sonraki cümle)\n\n4. Okuyucu Ayarları (dişli) → Ses sekmesi:\n• Dil\n• Ses\n• Hız ve perde\n• Uyku zamanlayıcısı (otomatik durdurma)\n• TTS kaydırma kilidi (okunan satırı görünür tutar)\n\n5. Ekran kapalıyken bildirimden de Oynat / Duraklat / Durdur yapabilirsiniz.\n\nİpuçları:\n• TTS başarısız olursa Android TTS (veya Google Text-to-Speech) dil verilerini kurun ve uygun sesi seçin.\n• Daha doğal ses için çevrimdışı sinirsel TTS (Sherpa-ONNX / HayaiTTS / Piper) kurup sistem TTS motoru yapın — QuickNovel seçtiğiniz Android sesini kullanır.\n• Temiz bir paragraftan başlayın; TTS ekrandaki ilk tam cümleden başlar.</string>
     <string name="cp_validate">Doğrula</string>
     <string name="cp_validating_blog">Blogun çalıştığı kontrol ediliyor…</string>
     <string name="cp_blog_ok">Blog tamam: %1$d roman (%2$s), örnek “%3$s”, %4$d bölüm</string>

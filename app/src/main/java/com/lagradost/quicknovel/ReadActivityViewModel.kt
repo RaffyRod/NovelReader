@@ -1743,7 +1743,8 @@ class ReadActivityViewModel : ViewModel() {
     var ttsLock by PreferenceDelegate(EPUB_TTS_LOCK, true, Boolean::class)
     //var ttsOSSpeed by PreferenceDelegate(EPUB_TTS_OS_SPEED, true, Boolean::class)
 
-    private var ttsSpeedKey by PreferenceDelegate(EPUB_TTS_SET_SPEED, 1.0f, Float::class)
+    // Default under 1.0: Piper neural voices sound rushed at Android rate 1.0.
+    private var ttsSpeedKey by PreferenceDelegate(EPUB_TTS_SET_SPEED, 0.85f, Float::class)
     private var ttsPitchKey by PreferenceDelegate(EPUB_TTS_SET_PITCH, 1.0f, Float::class)
 
     var ttsSpeed: Float

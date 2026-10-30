@@ -66,6 +66,10 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
 
     private var speed: Float = 1.0f
     private var pitch: Float = 1.0f
+    /** Active TTS engine package (Sherpa/Google/…); used to scale speech rate. */
+    private var enginePackage: String? = null
+    /** Language of the active voice (es/en/…). */
+    private var voiceLanguage: String? = null
 
     fun isValidTTS(): Boolean {
         return tts != null
@@ -76,9 +80,14 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
         TTSQueue = null
     }
 
+    private fun applySpeechRate(target: TextToSpeech? = tts) {
+        val rate = TtsVoicePicker.effectiveSpeechRate(speed, enginePackage, voiceLanguage)
+        target?.setSpeechRate(rate)
+    }
+
     fun setSpeed(speed: Float) {
         this.speed = speed
-        tts?.setSpeechRate(speed)
+        applySpeechRate()
     }
 
     fun setPitch(pitch: Float) {
@@ -121,7 +130,8 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
         next: TTSHelper.TTSLine?,
         action: () -> Boolean
     ): Int? {
-        val tts = requireTTS(action) ?: return null
+        val sample = listOfNotNull(line.speakOutMsg, next?.speakOutMsg).joinToString(" ")
+        val tts = requireTTS(action, sampleText = sample) ?: return null
 
         val queue = TTSQueue
         val ret = if (queue?.first == line) {
@@ -133,6 +143,15 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
         }
 
         if (next != null) {
+            // Piper rushes sentence boundaries; a short silence keeps English intelligible.
+            // Non-numeric utterance id so it does not advance TTSEndSpeakId.
+            if (TtsVoicePicker.isNeuralPackage(enginePackage)) {
+                tts.playSilentUtterance(
+                    TtsVoicePicker.neuralSentencePauseMs(voiceLanguage),
+                    TextToSpeech.QUEUE_ADD,
+                    "neural-pause",
+                )
+            }
             TTSQueueId++
             TTSQueue = next to TTSQueueId
             tts.speak(next.speakOutMsg, TextToSpeech.QUEUE_ADD, null, TTSQueueId.toString())
@@ -181,36 +200,64 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
 
     private val mutex: Mutex = Mutex() // no duplicate tts
 
-    suspend fun requireTTS(action: () -> Boolean = { false }): TextToSpeech? = with(mutex) {
+    /**
+     * Initializes TTS for the language of [sampleText] (or the app language, Spanish by default).
+     * Recreates the engine when the cached instance speaks the wrong language.
+     */
+    suspend fun requireTTS(
+        action: () -> Boolean = { false },
+        sampleText: String? = null,
+    ): TextToSpeech? = with(mutex) {
         coroutineScope {
+            val appLocale = TtsVoicePicker.appLocale(context)
+            val neededLang = TtsVoicePicker.detectLanguage(sampleText.orEmpty())
+                ?: appLocale.language
+                ?: "es"
+
             val currentTTS = tts
             if (currentTTS != null) {
-                return@coroutineScope currentTTS
+                val currentLang = currentTTS.voice?.locale?.language
+                    ?: currentTTS.language?.language
+                if (currentLang == null || currentLang == neededLang) {
+                    return@coroutineScope currentTTS
+                }
+                // Was speaking another language (e.g. English Lessac on Spanish text).
+                currentTTS.stop()
+                currentTTS.shutdown()
+                tts = null
             }
 
             var waiting = true
             var success = false
-            // Fucking retarded leak, we have to use applicationContext
-            val pendingTTS = TextToSpeech(context.applicationContext) { status ->
+            val voiceName = BaseApplication.getKey<String>(EPUB_VOICE)
+            val langName = BaseApplication.getKey<String>(EPUB_LANG)
+            // Prefer Piper/Sherpa neural engine (Dave ES / Lessac EN) when installed.
+            val preferredEngine = TtsVoicePicker.preferredEnginePackage(context, neededLang)
+            var activeEngine = preferredEngine
+            val appCtx = context.applicationContext
+            val onInit = TextToSpeech.OnInitListener { status ->
                 success = status == TextToSpeech.SUCCESS
                 waiting = false
-                if (status == TextToSpeech.SUCCESS) {
-                    return@TextToSpeech
+                if (status != TextToSpeech.SUCCESS) {
+                    val errorMSG = when (status) {
+                        TextToSpeech.ERROR -> "ERROR"
+                        TextToSpeech.ERROR_INVALID_REQUEST -> "ERROR_INVALID_REQUEST"
+                        TextToSpeech.ERROR_NETWORK -> "ERROR_NETWORK"
+                        TextToSpeech.ERROR_NETWORK_TIMEOUT -> "ERROR_NETWORK_TIMEOUT"
+                        TextToSpeech.ERROR_NOT_INSTALLED_YET -> "ERROR_NOT_INSTALLED_YET"
+                        TextToSpeech.ERROR_OUTPUT -> "ERROR_OUTPUT"
+                        TextToSpeech.ERROR_SYNTHESIS -> "ERROR_SYNTHESIS"
+                        TextToSpeech.ERROR_SERVICE -> "ERROR_SERVICE"
+                        else -> status.toString()
+                    }
+                    CommonActivity.showToast("Initialization Failed! Error $errorMSG")
                 }
-                val errorMSG = when (status) {
-                    TextToSpeech.ERROR -> "ERROR"
-                    TextToSpeech.ERROR_INVALID_REQUEST -> "ERROR_INVALID_REQUEST"
-                    TextToSpeech.ERROR_NETWORK -> "ERROR_NETWORK"
-                    TextToSpeech.ERROR_NETWORK_TIMEOUT -> "ERROR_NETWORK_TIMEOUT"
-                    TextToSpeech.ERROR_NOT_INSTALLED_YET -> "ERROR_NOT_INSTALLED_YET"
-                    TextToSpeech.ERROR_OUTPUT -> "ERROR_OUTPUT"
-                    TextToSpeech.ERROR_SYNTHESIS -> "ERROR_SYNTHESIS"
-                    TextToSpeech.ERROR_SERVICE -> "ERROR_SERVICE"
-                    else -> status.toString()
-                }
-
-                CommonActivity.showToast("Initialization Failed! Error $errorMSG")
-                return@TextToSpeech
+            }
+            // Fucking retarded leak, we have to use applicationContext
+            var pendingTTS = if (preferredEngine != null) {
+                TextToSpeech(appCtx, onInit, preferredEngine)
+            } else {
+                TextToSpeech(appCtx, onInit)
             }
 
             while (waiting && isActive) {
@@ -222,22 +269,88 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
 
             if (!success) return@coroutineScope null
 
-            val voiceName = BaseApplication.getKey<String>(EPUB_VOICE)
-            val langName = BaseApplication.getKey<String>(EPUB_LANG)
-
             val available = pendingTTS.availableLanguages.orEmpty()
-            // Without a saved choice, read in the language of the app instead of always in English.
-            val locale = available.firstOrNull { it.displayName == langName }
-                ?: TtsVoicePicker.preferredLocale(Locale.getDefault(), available)
-            val canSetLanguage = pendingTTS.setLanguage(locale)
-            val savedVoice = pendingTTS.voices.orEmpty().firstOrNull { it.name == voiceName }
-            pendingTTS.voice = savedVoice ?: bestVoice(pendingTTS, locale) ?: pendingTTS.defaultVoice
+            var locale = TtsVoicePicker.readingLocale(
+                available = available,
+                appLocale = appLocale,
+                sampleText = sampleText,
+                savedDisplayName = langName,
+            )
+            var canSetLanguage = pendingTTS.setLanguage(locale)
+            // Neural engine APKs are often one-language (Dave=ES, Lessac=EN).
+            // If language is missing, fall back to Google TTS — not the system default,
+            // which may still point at the same Sherpa package.
+            if (canSetLanguage == TextToSpeech.LANG_MISSING_DATA || canSetLanguage == TextToSpeech.LANG_NOT_SUPPORTED) {
+                val fallbackEngine = TtsVoicePicker.fallbackEnginePackage(context)
+                if (fallbackEngine != null && fallbackEngine != preferredEngine) {
+                    pendingTTS.shutdown()
+                    waiting = true
+                    success = false
+                    activeEngine = fallbackEngine
+                    pendingTTS = TextToSpeech(appCtx, onInit, fallbackEngine)
+                    while (waiting && isActive) {
+                        if (action()) {
+                            return@coroutineScope null
+                        }
+                        delay(100)
+                    }
+                    if (!success) return@coroutineScope null
+                    val retryAvailable = pendingTTS.availableLanguages.orEmpty()
+                    locale = TtsVoicePicker.readingLocale(
+                        available = retryAvailable,
+                        appLocale = appLocale,
+                        sampleText = sampleText,
+                        savedDisplayName = langName,
+                    )
+                    canSetLanguage = pendingTTS.setLanguage(locale)
+                }
+            }
+            // Also reject when the engine claims success but the active voice language differs
+            // (Sherpa ES speaking English text with Spanish phonemes).
+            val activeLang = pendingTTS.voice?.locale?.language ?: pendingTTS.language?.language
+            if (activeLang != null && activeLang != locale.language) {
+                val fallbackEngine = TtsVoicePicker.fallbackEnginePackage(context)
+                if (fallbackEngine != null && fallbackEngine != preferredEngine) {
+                    pendingTTS.shutdown()
+                    waiting = true
+                    success = false
+                    activeEngine = fallbackEngine
+                    pendingTTS = TextToSpeech(appCtx, onInit, fallbackEngine)
+                    while (waiting && isActive) {
+                        if (action()) {
+                            return@coroutineScope null
+                        }
+                        delay(100)
+                    }
+                    if (!success) return@coroutineScope null
+                    val retryAvailable = pendingTTS.availableLanguages.orEmpty()
+                    locale = TtsVoicePicker.readingLocale(
+                        available = retryAvailable,
+                        appLocale = appLocale,
+                        sampleText = sampleText,
+                        savedDisplayName = langName,
+                    )
+                    canSetLanguage = pendingTTS.setLanguage(locale)
+                }
+            }
 
             if (canSetLanguage == TextToSpeech.LANG_MISSING_DATA || canSetLanguage == TextToSpeech.LANG_NOT_SUPPORTED) {
                 CommonActivity.showToast(R.string.tts_language_error)
                 offerVoiceInstall()
                 pendingTTS.shutdown()
                 return@coroutineScope null
+            }
+
+            // Ignore a saved voice from another language (e.g. English Lessac on Spanish text).
+            val savedVoice = pendingTTS.voices.orEmpty().firstOrNull { voice ->
+                voice.name == voiceName && voice.locale.language == locale.language
+            }
+            val chosen = savedVoice ?: bestVoice(pendingTTS, locale) ?: pendingTTS.defaultVoice
+            if (chosen != null) {
+                pendingTTS.voice = chosen
+                // Persist the matching language/voice so the next chapter stays correct.
+                setKey(EPUB_LANG, locale.displayName)
+                setKey(EPUB_VOICE, chosen.name)
             }
 
             pendingTTS.setOnUtteranceProgressListener(object :
@@ -269,8 +382,12 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
                 }
             })
 
+            enginePackage = activeEngine ?: pendingTTS.defaultEngine
+            voiceLanguage = pendingTTS.voice?.locale?.language
+                ?: locale.language
+                ?: neededLang
             pendingTTS.setPitch(pitch)
-            pendingTTS.setSpeechRate(speed)
+            applySpeechRate(pendingTTS)
 
             tts = pendingTTS
             return@coroutineScope pendingTTS

@@ -62,6 +62,7 @@
     <string name="generate_epub">Generar EPUB</string>
     <string name="generating_epub">Generando EPUB</string>
     <string name="import_epub">Importar un libro</string>
+    <string name="import_epub_hint">EPUB o PDF · toca para elegir</string>
     <string name="tab_downloads">Descargas</string>
 
     <!-- Acciones de Usuario -->
@@ -486,6 +487,9 @@
     <string name="tutorial_download">Descargas</string>
     <string name="tutorial_download_desc">Cómo descargar novelas y elegir el formato</string>
     <string name="tutorial_download_body">1. Abre una novela → Descargar.\n\n2. Puedes bajar todos los capítulos o un rango (ej. 1-10, 15).\n\n3. Capítulos por archivo: déjalo vacío para un solo EPUB con todo, o pon un número (ej. 50) para partirlo en varios archivos.\n\n4. Formato y carpeta: en Configuración → lector / ruta de descarga eliges dónde se guardan.\n\n5. Cuando termina, ábrela desde Biblioteca / Descargas. Actualizar vuelve a bajar capítulos nuevos; Borrar quita los archivos locales, no tu historial de lectura.\n\nConsejo: en fuentes lentas conviene leer en línea. Las opciones de traducción (si están activas) pueden alargar mucho la descarga.</string>
+    <string name="tutorial_tts">Lectura en voz alta (TTS)</string>
+    <string name="tutorial_tts_desc">Cómo escuchar capítulos con el lector de voz</string>
+    <string name="tutorial_tts_body">1. Abre un capítulo en el lector.\n\n2. Toca el icono de altavoz (barra inferior) para empezar a leer en voz alta desde la primera frase visible.\n\n3. Mientras el TTS está activo aparece la barra TTS:\n• Reproducir / Pausa\n• Detener\n• Atrás / Adelante (frase anterior o siguiente)\n\n4. Abre Ajustes del lector (engranaje) → pestaña Voz para elegir:\n• Idioma\n• Voz\n• Velocidad y tono\n• Temporizador de sueño (parada automática)\n• Bloquear área de lectura TTS (mantiene visible la frase que se está leyendo)\n\n5. También puedes controlar Reproducir / Pausa / Detener desde la notificación con la pantalla apagada.\n\nVoz por defecto:\n• QuickNovel prioriza la voz neuronal gratuita Piper “Dave” (es_ES-davefx-medium) en español y “Lessac” en inglés cuando hay un motor Sherpa-ONNX / Piper instalado.\n• Instala Sherpa TTS Engine (Piper Dave ES) desde los APKs de sherpa-onnx; al abrir un capítulo la app elige ese motor y esa voz automáticamente si están disponibles.\n\nConsejos:\n• Si falla el TTS, instala los datos de idioma de Android TTS (o Google Text-to-Speech).\n• Empieza en un párrafo limpio; el TTS arranca en la primera frase completa en pantalla.</string>
     <string name="library_continue">Continuar leyendo</string>
     <string name="library_follow">Seguir</string>
     <string name="library_chapter_of">Capítulo %1$d de %2$d</string>
