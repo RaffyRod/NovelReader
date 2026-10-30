@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QuickNovel Ultimate 1.1.4 Full Manual (EN)</title>
+<style>
+:root { --ink:#132238; --muted:#5b6b7c; --accent:#1a66b3; --bg:#eef3f9; --card:#fff; --line:#d5deea; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--ink); background:linear-gradient(#dfeaf6,#eef3f9 180px); line-height:1.55; }
+header { max-width:1000px; margin:0 auto; padding:40px 24px 20px; }
+.badge { display:inline-block; background:var(--accent); color:#fff; border-radius:999px; padding:4px 12px; font-size:.85rem; }
+h1 { margin:10px 0 6px; font-size:2.15rem; }
+header p { margin:4px 0; color:var(--muted); }
+main { max-width:1000px; margin:0 auto 60px; padding:0 24px; }
+nav.toc, section { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 26px; margin-bottom:18px; }
+nav.toc h2, section > h2 { margin-top:0; border-bottom:2px solid var(--line); padding-bottom:8px; }
+h3 { color:#163552; margin-top:1.35em; }
+a { color:var(--accent); text-decoration:none; }
+table { width:100%; border-collapse:collapse; margin:12px 0 16px; font-size:.94rem; }
+th,td { border:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left; }
+th { background:#eaf1f9; }
+code,.mono { font-family:Consolas,monospace; background:#eaf0f6; padding:1px 6px; border-radius:5px; }
+figure { margin:16px 0; text-align:center; }
+figure img { max-width:min(340px,100%); border-radius:18px; border:1px solid var(--line); box-shadow:0 8px 24px rgba(19,34,56,.12); }
+figcaption { color:var(--muted); font-size:.88rem; margin-top:7px; }
+.gallery { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
+.gallery figure img { max-width:100%; }
+.callout { background:#f3f8ff; border-left:4px solid var(--accent); padding:10px 14px; margin:12px 0; border-radius:0 10px 10px 0; }
+ol.steps > li { margin-bottom:7px; }
+footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted); font-size:.9rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="badge">Stable version 1.1.4</div>
+  <h1>QuickNovel Ultimate — Full Manual (English)</h1>
+  <p>Onboarding guide: where everything is, what each module does, custom providers, official tutorials, and how to file bugs.</p>
+  <p>Date: 2026-10-30 · Package: <span class="mono">com.lagradost.quicknovel.ultimate</span> · APK: <span class="mono">QuickNovel-Ultimate-1.1.4-universal.apk</span></p>
+  <p>Spanish edition: <a href="../es/Manual-QuickNovel-Ultimate-1.1.4.html">../es/</a></p>
+</header>
+<main>
+<nav class="toc" id="toc">
+  <h2>Table of contents</h2>
+  <ol>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#install">Install &amp; first launch</a></li>
+    <li><a href="#map">Navigation map</a></li>
+    <li><a href="#library">Library</a></li>
+    <li><a href="#search">Search</a></li>
+    <li><a href="#history">History</a></li>
+    <li><a href="#sections">Sections</a></li>
+    <li><a href="#settings">Settings (all groups)</a></li>
+    <li><a href="#providers">Custom providers (add / manage / advanced)</a></li>
+    <li><a href="#detail">Novel detail, download &amp; export</a></li>
+    <li><a href="#reader">Reader &amp; TTS</a></li>
+    <li><a href="#tutorials">Official in-app tutorials</a></li>
+    <li><a href="#flows">Step-by-step flows for beginners</a></li>
+    <li><a href="#shots">Screenshot gallery</a></li>
+    <li><a href="#bugs">How to write bugs for a Word handoff</a></li>
+    <li><a href="#qa">Automated tests</a></li>
+    <li><a href="#annex">Annex</a></li>
+  </ol>
+</nav>
+
+<section id="intro">
+  <h2>1. Introduction</h2>
+  <p><strong>QuickNovel Ultimate</strong> is an Android app to <strong>search, read, listen (TTS) and download</strong> web novels, and to <strong>import EPUB/PDF</strong> files.</p>
+  <p>It is a fork of QuickNovel with its own branding:</p>
+  <ul>
+    <li><strong>Fire</strong> themes (Blue / Black / Lava).</li>
+    <li>Distinct package: <span class="mono">com.lagradost.quicknovel.ultimate</span> (not stock <span class="mono">com.lagradost.quicknovel</span>).</li>
+    <li>History split into <em>Reading</em> / <em>Visited</em>.</li>
+    <li><strong>Import-B</strong> drop zone in Library.</li>
+    <li><strong>Custom providers</strong> (Blogger blog or Madara-like site) with simple + advanced CSS modes.</li>
+    <li>TTS prefers Piper/Sherpa neural voices.</li>
+    <li>Search <strong>blocks special characters by default</strong> (optional toggle).</li>
+  </ul>
+  <div class="callout">If you see two QuickNovel icons, open <strong>QuickNovel Ultimate</strong> only. Stock lacks Ultimate Sections, Import-B and our search/provider changes.</div>
+</section>
+
+<section id="install">
+  <h2>2. Install &amp; first launch</h2>
+  <ul>
+    <li>Android 6.0+.</li>
+    <li>Network for online providers.</li>
+    <li>Optional: Sherpa TTS / Piper for better ES/EN voices.</li>
+  </ul>
+  <ol class="steps">
+    <li>Uninstall older Ultimate and stock QuickNovel if present.</li>
+    <li>Install <span class="mono">QuickNovel-Ultimate-1.1.4-universal.apk</span>.</li>
+    <li>Allow notifications if prompted.</li>
+    <li>If an update dialog offers upstream 3.x → <strong>Skip update / Cancel</strong>.</li>
+  </ol>
+</section>
+
+<section id="map">
+  <h2>3. Navigation map (bottom bar)</h2>
+  <table>
+    <tr><th>Tab</th><th>Purpose</th><th>What you see first</th></tr>
+    <tr><td><strong>Library</strong></td><td>Local books (downloaded/imported)</td><td>Search, Import-B, list</td></tr>
+    <tr><td><strong>Search</strong></td><td>Online providers</td><td>Query field, provider tune, Popular</td></tr>
+    <tr><td><strong>History</strong></td><td>Opened / reading items</td><td>Reading / Visited pills</td></tr>
+    <tr><td><strong>Settings</strong></td><td>All configuration</td><td>General, theme, app, chapters, translation, tutorial, custom providers, reader, info</td></tr>
+    <tr><td><strong>Sections</strong></td><td>Library shelves</td><td>Custom sections</td></tr>
+  </table>
+  <figure>
+  <img src="imagenes/01-biblioteca.png" alt="Typical start: Library" />
+  <figcaption>Typical start: Library</figcaption>
+</figure>
+</section>
+
+<section id="library">
+  <h2>4. Library module</h2>
+  <p><strong>Where:</strong> Library tab. <strong>Code:</strong> <span class="mono">ui/download/DownloadScreen.kt</span>.</p>
+  <ul>
+    <li><strong>Search my novels…</strong> — filters local library (pinned while scrolling).</li>
+    <li><strong>Import-B</strong> — “Import a book / EPUB or PDF”.</li>
+    <li><strong>+</strong> — import one or many.</li>
+    <li>List/grid toggle, <strong>Continue reading</strong>, <strong>Follow</strong>, progress “Chapter X of Y”.</li>
+    <li>Sort FAB for ordering criteria.</li>
+  </ul>
+</section>
+
+<section id="search">
+  <h2>5. Search module</h2>
+  <p><strong>Where:</strong> Search tab. <strong>Code:</strong> <span class="mono">ui/search/SearchScreen.kt</span>.</p>
+  <ul>
+    <li>Query field; provider tune icon → multi-select dialog.</li>
+    <li>Recent searches, Popular carousel, result chips per provider.</li>
+    <li>Special characters (@#$%…) blocked by default; enable in Settings.</li>
+  </ul>
+  <figure>
+  <img src="imagenes/13-dialogo-proveedores-buscar.png" alt="Provider multi-select" />
+  <figcaption>Provider multi-select</figcaption>
+</figure>
+  <figure>
+  <img src="imagenes/07-buscar-resultados.png" alt="Results with chips" />
+  <figcaption>Results with chips</figcaption>
+</figure>
+</section>
+
+<section id="history">
+  <h2>6. History module</h2>
+  <p><strong>Where:</strong> History tab. Reading vs Visited pills; date groups (Today, Yesterday, This week, Earlier); clear options.</p>
+</section>
+
+<section id="sections">
+  <h2>7. Sections module</h2>
+  <p><strong>Where:</strong> Sections tab (Ultimate-only). Organize library novels into shelves/sections with Fire theming.</p>
+  <figure>
+  <img src="imagenes/06-secciones.png" alt="Sections" />
+  <figcaption>Sections</figcaption>
+</figure>
+</section>
+
+<section id="settings">
+  <h2>8. Settings (all groups)</h2>
+  <p><strong>Code:</strong> <span class="mono">ui/settings/SettingScreen.kt</span>.</p>
+  <h3>8.1 General</h3>
+  <table>
+    <tr><th>Option</th><th>What it does</th></tr>
+    <tr><td>Locale</td><td>UI language (es, en, tr, ru…).</td></tr>
+    <tr><td>Provider languages</td><td>Which non-English source languages appear.</td></tr>
+    <tr><td>Show English providers</td><td>Off by default.</td></tr>
+    <tr><td>Allow special characters in search</td><td>Off by default.</td></tr>
+    <tr><td>Search providers list</td><td>Which built-in providers are active.</td></tr>
+  </table>
+  <h3>8.2 Theme</h3>
+  <ul>
+    <li>App theme (Ultimate Blue, etc.).</li>
+    <li>Fire icon pack + launcher icon (Blue/Black/Lava).</li>
+    <li>Bottom nav style, settings style, primary color, rating format.</li>
+  </ul>
+  <h3>8.3 App</h3>
+  <ul>
+    <li>Check for update (current 1.1.4).</li>
+    <li>APK installer preference.</li>
+    <li>Show app updates (keep off on Ultimate to avoid stock APK).</li>
+    <li>Backup / restore + backup folder.</li>
+  </ul>
+  <h3>8.4 New chapters</h3>
+  <ul><li>Notify new chapters, frequency 3/6/12/24h, check now.</li></ul>
+  <h3>8.5 Translation (Gemini)</h3>
+  <ul><li>Get API key, paste key, pick model, test key.</li></ul>
+  <h3>8.6 Tutorial</h3>
+  <p>Three help dialogs: Custom providers, Downloads, TTS (see §12).</p>
+  <h3>8.7 Custom providers</h3>
+  <p>See §9.</p>
+  <h3>8.8 Reader settings / Info</h3>
+  <ul>
+    <li>External reader toggle; download path (e.g. Download/My Novels/).</li>
+    <li>Logcat viewer (save / copy / clear).</li>
+  </ul>
+  <figure>
+  <img src="imagenes/09-ajustes-tutorial-y-proveedores.png" alt="Tutorial + Custom providers" />
+  <figcaption>Tutorial + Custom providers</figcaption>
+</figure>
+</section>
+
+<section id="providers">
+  <h2>9. Custom providers (add / manage / advanced)</h2>
+  <p><strong>Where:</strong> Settings → <strong>Custom providers</strong>.</p>
+  <p><strong>Code:</strong> <span class="mono">CustomProviderDialogs.kt</span>, <span class="mono">CustomProviders.kt</span>.</p>
+
+  <h3>9.1 Simple add</h3>
+  <ol class="steps">
+    <li>Settings → <strong>Add provider</strong>.</li>
+    <li>Pick type:
+      <ul>
+        <li><strong>Blog (Blogger / Blogspot)</strong> — e.g. myblog.blogspot.com. Novel lists appear one-by-one in Search.</li>
+        <li><strong>Website (Madara / other)</strong> — WordPress/Madara novel sites; auto templates.</li>
+      </ul>
+    </li>
+    <li>Enter <strong>Name</strong>, <strong>site address</strong>, <strong>language</strong> (2 letters, e.g. es).</li>
+    <li>Tap <strong>VALIDATE</strong>, wait, then <strong>Add provider</strong>.</li>
+  </ol>
+  <div class="callout">Tip: for Spanish blogs pick Blog. English filler words like “the” often return nothing; empty/Spanish queries work better.</div>
+  <figure>
+  <img src="imagenes/10-dialogo-agregar-proveedor.png" alt="Simple add form" />
+  <figcaption>Simple add form</figcaption>
+</figure>
+
+  <h3>9.2 If auto-detect fails → Advanced</h3>
+  <ol class="steps">
+    <li>Tap <strong>Advanced</strong>.</li>
+    <li>Fill CSS selectors (or Madara preset).</li>
+    <li><strong>Test</strong> with a sample query.</li>
+    <li>Save when search → novel → chapter all pass.</li>
+  </ol>
+  <table>
+    <tr><th>Advanced field</th><th>Meaning</th></tr>
+    <tr><td>Name / site URL / lang</td><td>Identity</td></tr>
+    <tr><td>Search URL</td><td>Must include <span class="mono">{query}</span></td></tr>
+    <tr><td>Result item / link / image</td><td>Search list CSS</td></tr>
+    <tr><td>Novel title / author / cover / synopsis</td><td>Novel page CSS</td></tr>
+    <tr><td>Chapter links / content</td><td>Chapter list + body</td></tr>
+    <tr><td>Newest first / Madara ajax</td><td>List behaviour flags</td></tr>
+    <tr><td>Test word / Madara fill</td><td>Validation helpers</td></tr>
+  </table>
+
+  <h3>9.3 Manage</h3>
+  <ol class="steps">
+    <li>Settings → <strong>Manage providers</strong>.</li>
+    <li>Empty → message + add button.</li>
+    <li>Pick one → Edit or Delete (downloads are kept).</li>
+  </ol>
+  <figure>
+  <img src="imagenes/11-administrar-proveedores.png" alt="Manage providers" />
+  <figcaption>Manage providers</figcaption>
+</figure>
+
+  <h3>9.4 After adding</h3>
+  <p>The provider appears in Search multi-select and Settings provider lists; you can search it like built-ins.</p>
+</section>
+
+<section id="detail">
+  <h2>10. Novel detail, download &amp; export</h2>
+  <ul>
+    <li>Cover, synopsis, chapter list.</li>
+    <li><strong>Stream / read online</strong> vs <strong>Download</strong>.</li>
+    <li>Download dialog: all chapters or range; chapters-per-file batches; EPUB/PDF flows; preview where available.</li>
+    <li>Then open from Library; Update fetches new chapters; Delete removes local files.</li>
+  </ul>
+  <div class="callout">Slow sources: prefer online reading. Gemini translation can make downloads much slower.</div>
+</section>
+
+<section id="reader">
+  <h2>11. Reader &amp; TTS</h2>
+  <ul>
+    <li>Tap center to show/hide bars; chapters, TTS, reader settings.</li>
+    <li>External reader setting may open EPUB/PDF in another app.</li>
+  </ul>
+  <ol class="steps">
+    <li>Open a chapter → speaker icon.</li>
+    <li>TTS bar: play/pause, stop, prev/next sentence.</li>
+    <li>Reader settings → Voice: language, voice, rate, pitch, sleep timer, lock TTS area.</li>
+    <li>Also controllable from the notification.</li>
+  </ol>
+  <p>Recommended voices: Piper Dave (ES) / Lessac (EN) via Sherpa-ONNX.</p>
+</section>
+
+<section id="tutorials">
+  <h2>12. Official in-app tutorials</h2>
+  <p>Under <strong>Settings → Tutorial</strong>:</p>
+  <h3>Custom providers</h3>
+  <ol class="steps">
+    <li>Settings → Custom providers → Add provider.</li>
+    <li>Blog or Website + name/URL → validate.</li>
+    <li>Manage to edit/delete; Advanced for manual CSS.</li>
+  </ol>
+  <h3>Downloads</h3>
+  <ol class="steps">
+    <li>Novel → Download → all or range.</li>
+    <li>Optional chapters-per-file.</li>
+    <li>Path in Settings → reader / download path → open from Library.</li>
+  </ol>
+  <h3>TTS</h3>
+  <ol class="steps">
+    <li>Chapter → speaker → TTS bar / notification.</li>
+    <li>Voice tab for language/rate/sleep.</li>
+    <li>Install Sherpa/Piper for best quality.</li>
+  </ol>
+</section>
+
+<section id="flows">
+  <h2>13. Beginner flows</h2>
+  <h3>A) First search &amp; read</h3>
+  <ol class="steps"><li>Search tab → pick providers → query → open cover → read online.</li></ol>
+  <h3>B) Offline download</h3>
+  <ol class="steps"><li>Detail → Download → wait → Library.</li></ol>
+  <h3>C) Import EPUB/PDF</h3>
+  <ol class="steps"><li>Library → Import a book → pick file → open.</li></ol>
+  <h3>D) Add your blog/site</h3>
+  <ol class="steps"><li>Settings → Add provider → Validate → Search with it enabled.</li></ol>
+  <h3>E) Follow updates</h3>
+  <ol class="steps"><li>Follow on library card → Settings → New chapters notify + frequency.</li></ol>
+</section>
+
+<section id="shots">
+  <h2>14. Screenshot gallery</h2>
+  <div class="gallery"><figure>
+  <img src="imagenes/01-biblioteca.png" alt="Library: local search, Import-B and novels" />
+  <figcaption>Library: local search, Import-B and novels</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/02-buscar.png" alt="Search: field, popular and provider access" />
+  <figcaption>Search: field, popular and provider access</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/03-historial.png" alt="History: Reading / Visited" />
+  <figcaption>History: Reading / Visited</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/04-ajustes.png" alt="Settings (top)" />
+  <figcaption>Settings (top)</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/12-ajustes-general.png" alt="Settings: general / translation / tutorial area" />
+  <figcaption>Settings: general / translation / tutorial area</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/09-ajustes-tutorial-y-proveedores.png" alt="Settings: Tutorial + Custom providers" />
+  <figcaption>Settings: Tutorial + Custom providers</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/10-dialogo-agregar-proveedor.png" alt="Add provider dialog (Blog / Website)" />
+  <figcaption>Add provider dialog (Blog / Website)</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/11-administrar-proveedores.png" alt="Manage custom providers" />
+  <figcaption>Manage custom providers</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/13-dialogo-proveedores-buscar.png" alt="Search provider multi-select" />
+  <figcaption>Search provider multi-select</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/06-secciones.png" alt="Library sections" />
+  <figcaption>Library sections</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/07-buscar-resultados.png" alt="Search results with provider chips" />
+  <figcaption>Search results with provider chips</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/08-detalle-novela.png" alt="Novel detail flow" />
+  <figcaption>Novel detail flow</figcaption>
+</figure></div>
+</section>
+
+<section id="bugs">
+  <h2>15. How to write bugs for a Word handoff</h2>
+  <p>Template: <span class="mono">plantillas/Bug-Report-Template.docx</span>.</p>
+  <ol class="steps">
+    <li>Confirm Ultimate APK 1.1.4.</li>
+    <li>Device + Android version.</li>
+    <li>Reproduce ≥ 2 times; attach screenshot.</li>
+    <li>One bug = one problem; numbered steps; expected vs actual.</li>
+    <li>Save as <span class="mono">Bugs-QuickNovel-Ultimate-1.1.4-YYYY-MM-DD.docx</span>.</li>
+  </ol>
+  <table>
+    <tr><th>Field</th><th>Example</th></tr>
+    <tr><td>ID</td><td>BUG-012</td></tr>
+    <tr><td>Title</td><td>Custom providers: VALIDATE never finishes for blogspot X</td></tr>
+    <tr><td>Severity</td><td>High</td></tr>
+    <tr><td>Module</td><td>Custom providers</td></tr>
+    <tr><td>Steps / Expected / Actual</td><td>Numbered, clear</td></tr>
+  </table>
+</section>
+
+<section id="qa">
+  <h2>16. Automated tests</h2>
+  <ul>
+    <li>Unit: <span class="mono">./gradlew :app:testDebugUnitTest</span></li>
+    <li>E2E: <span class="mono">e2e/</span> specs 01–09 (library, nav, search, history, settings, import, reader/TTS seed, providers, special chars)</li>
+    <li>Allure: <span class="mono">e2e/allure-report</span></li>
+  </ul>
+</section>
+
+<section id="annex">
+  <h2>17. Annex</h2>
+  <ul>
+    <li>https://github.com/RaffyRod/NovelReader</li>
+    <li>https://github.com/LagradOst/QuickNovel</li>
+    <li>Package: <span class="mono">com.lagradost.quicknovel.ultimate</span></li>
+    <li>Spanish manual: <span class="mono">docs/manual-1.1.4/es/</span></li>
+  </ul>
+</section>
+</main>
+<footer>Generated for QuickNovel Ultimate 1.1.4 · 2026-10-30 · English onboarding edition</footer>
+</body>
+</html>

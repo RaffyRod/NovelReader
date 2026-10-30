@@ -32,6 +32,14 @@ Ad-free FOSS Android app for downloading novels. It also functions as an Epub re
 
 Signed universal APKs for testing are produced under `app/build/outputs/apk/release/` (use `app-universal-release-unsigned.apk` + your keystore). Prefer the latest Desktop APK (`QuickNovel-Ultimate-1.1.4-universal.apk`) and uninstall older packages on the emulator before testing.
 
+### User manuals (ES / EN)
+
+Full onboarding docs for **1.1.4** (HTML + Word + bug templates + screenshots):
+
+- Español: [`docs/manual-1.1.4/es/`](docs/manual-1.1.4/es/)
+- English: [`docs/manual-1.1.4/en/`](docs/manual-1.1.4/en/)
+- Index: [`docs/manual-1.1.4/README.md`](docs/manual-1.1.4/README.md)
+
 ### E2E automation (WebdriverIO + Appium)
 
 See [`e2e/README.md`](e2e/README.md). CI runs on **every push** via [`.github/workflows/e2e-android.yml`](.github/workflows/e2e-android.yml) and uploads **Allure** results.
