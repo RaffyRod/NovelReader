@@ -1,14 +1,35 @@
-# QuickNovel
+# QuickNovel Ultimate
 
 **English** | [Русский](README_RU.md)
 
-Adfree FOSS Android app for downloading novels. It also functions as an Epub reader.
+Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) focused on a custom brand experience, Fire themes, Blogger/custom providers, and clearer library history.
 
-**Discord:** https://discord.gg/5Hus6fM
+Ad-free FOSS Android app for downloading novels. It also functions as an Epub reader.
 
-**Download:** https://github.com/LagradOst/QuickNovel/releases
+**Repo:** https://github.com/RaffyRod/NovelReader  
+**Upstream:** https://github.com/LagradOst/QuickNovel  
+**Current version:** 1.0.6
 
-**Providers used:** 
+**Download:** https://github.com/RaffyRod/NovelReader/releases
+
+### What’s new in this fork
+
+- **Ultimate Blue** as the default app look, with matching launcher branding (orb + 本).
+- **Fire themes** (Blue / Black / Lava) shared by settings icons, bottom menu, library sections, and launcher icons.
+- **Custom providers:** add Blog (Blogger index) or Website sources, with validation and localized tutorials.
+- **History:** separates **Reading** vs **Visited** novels (sections + pills), themed with Fire accents.
+- Chapter list no longer shows release timestamps under each chapter.
+- App id: `com.lagradost.quicknovel.ultimate` (universal APK: arm64-v8a / armeabi-v7a / x86_64).
+
+### Build
+
+```bash
+./gradlew :app:assembleRelease
+```
+
+Signed universal APKs for testing are produced under `app/build/outputs/apk/release/` (use `app-universal-release-unsigned.apk` + your keystore).
+
+**Providers used:**
 
 - https://allnovel.org
 - https://annas-archive.org
@@ -50,9 +71,15 @@ Adfree FOSS Android app for downloading novels. It also functions as an Epub rea
 - https://wuxia.click
 - https://www.wuxiabox.com
 
-**Screenshoots:**
+Plus **user-defined** Blog / Website providers configured in Settings.
+
+**Screenshots:**
 
 <img src="./.github/home.jpg" height="400"/><img src="./.github/search.jpg" height="400"/><img src="./.github/downloads.jpg" height="400"/><img src="./.github/result.jpg" height="400"/><img src="./.github/reader.jpg" height="400"/>
+
+**Credits:**
+
+Based on QuickNovel by [LagradOst](https://github.com/LagradOst/QuickNovel). Upstream Discord: https://discord.gg/5Hus6fM
 
 **Legal notice:**
 
@@ -65,4 +92,3 @@ The app is purely for educational and personal use.
 QuickNovel does not host any content on the app, and has no control over what media is put up or taken down. QuickNovel functions like any other search engine, such as Google. QuickNovel does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface.
 
 It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use QuickNovel at your own risk.
-
