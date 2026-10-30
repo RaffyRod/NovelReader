@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -128,7 +129,11 @@ fun SkeletonGrid(modifier: Modifier = Modifier, count: Int = 12) {
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        items((0 until count).toList()) { SkeletonCover() }
+        items((0 until count).toList()) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                SkeletonCover(Modifier.width(99.dp))
+            }
+        }
     }
 }
 

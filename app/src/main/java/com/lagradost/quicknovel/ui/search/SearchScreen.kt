@@ -288,6 +288,8 @@ private fun RecentSearchesSection(recent: ImmutableList<String>, action: (HomeAc
     }
 }
 
+private val SearchCoverWidth = 99.dp
+
 @Composable
 private fun PopularSection(state: HomeViewModelState, searchAction: (SearchResponseAction) -> Unit) {
     Column {
@@ -297,7 +299,7 @@ private fun PopularSection(state: HomeViewModelState, searchAction: (SearchRespo
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.padding(horizontal = 6.dp)
             ) {
-                repeat(3) { SkeletonCover(Modifier.width(104.dp)) }
+                repeat(3) { SkeletonCover(Modifier.width(SearchCoverWidth)) }
             }
         } else {
             LazyRow(
@@ -308,7 +310,7 @@ private fun PopularSection(state: HomeViewModelState, searchAction: (SearchRespo
                     SearchResponseItem(
                         response = response,
                         action = searchAction,
-                        modifier = Modifier.width(104.dp)
+                        modifier = Modifier.width(SearchCoverWidth)
                     )
                 }
             }
@@ -361,13 +363,19 @@ private fun SearchResults(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 itemsIndexed(items, key = { _, item -> item.randomUuid }) { index, response ->
-                    SearchResponseItem(
-                        response = response,
-                        action = searchAction,
-                        modifier = Modifier
-                            .animateItem()
-                            .staggeredEnter(index)
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        SearchResponseItem(
+                            response = response,
+                            action = searchAction,
+                            modifier = Modifier
+                                .width(SearchCoverWidth)
+                                .animateItem()
+                                .staggeredEnter(index)
+                        )
+                    }
                 }
             }
 
@@ -510,7 +518,7 @@ private fun SearchRow(
                 SearchResponseItem(
                     response = response,
                     action = searchAction,
-                    modifier = Modifier.width(120.dp)
+                    modifier = Modifier.width(SearchCoverWidth)
                 )
             }
         }

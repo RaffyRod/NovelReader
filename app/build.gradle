@@ -26,8 +26,8 @@ android {
         applicationId "com.lagradost.quicknovel.ultimate"
         minSdkVersion 23
         targetSdkVersion 37
-        versionCode 110
-        versionName "1.1.0"
+        versionCode 111
+        versionName "1.1.1"
         // Only the languages the app is translated to; libraries ship dozens more.
         resConfigs "en", "es", "ru", "tr"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
