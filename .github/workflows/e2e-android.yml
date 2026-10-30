@@ -81,7 +81,8 @@ jobs:
   e2e:
     name: E2E ${{ matrix.suite }}
     needs: build-apk
-    runs-on: ubuntu-latest
+    # ubuntu-latest → 26.04 breaks WDIO worker IPC via xvfb-run (#15685)
+    runs-on: ubuntu-24.04
     timeout-minutes: ${{ matrix.timeout }}
     continue-on-error: ${{ matrix.soft }}
     strategy:

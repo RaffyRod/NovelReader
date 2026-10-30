@@ -56,6 +56,10 @@ export WDIO_LOG_LEVEL="${WDIO_LOG_LEVEL:-warn}"
 export APPIUM_EXTERNAL=1
 export APPIUM_HOST
 export APPIUM_PORT
+# WDIO v9 wraps workers in xvfb-run when DISPLAY is empty; on Ubuntu 26.04
+# that closes the Node IPC fd → write EINVAL (webdriverio/webdriverio#15685).
+# Appium/Android does not need X11 — any non-empty DISPLAY forces plain fork.
+export DISPLAY="${DISPLAY:-:99}"
 
 # One worker for the whole suite (see nested arrays in wdio.conf suites)
 ./node_modules/.bin/wdio run ./wdio.conf.js --suite "$SUITE"
