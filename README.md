@@ -1,50 +1,137 @@
 # QuickNovel Ultimate
 
-**English** | [Русский](README_RU.md)
+**English** · [Español manuals](docs/manual-1.1.4/es/) · [English manuals](docs/manual-1.1.4/en/) · [Русский](README_RU.md)
 
-Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) focused on a custom brand experience, Fire themes, Blogger/custom providers, and clearer library history.
+Ad-free FOSS Android app to **search, read, listen (TTS), download and import** novels.  
+Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate branding, Fire themes, custom providers, Import-B, Sections, and stronger QA.
 
-Ad-free FOSS Android app for downloading novels. It also functions as an Epub reader.
+| | |
+|---|---|
+| **Repo** | https://github.com/RaffyRod/NovelReader |
+| **Upstream** | https://github.com/LagradOst/QuickNovel |
+| **Version** | **1.1.4** (`versionCode` 114) |
+| **App ID** | `com.lagradost.quicknovel.ultimate` |
+| **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK (`arm64-v8a` / `armeabi-v7a` / `x86_64`) |
 
-**Repo:** https://github.com/RaffyRod/NovelReader  
-**Upstream:** https://github.com/LagradOst/QuickNovel  
-**Current version:** 1.1.4
+---
 
-**Download:** https://github.com/RaffyRod/NovelReader/releases
+## Features & improvements (Ultimate)
 
-### What’s new in this fork
+### Brand & UI
+- **Ultimate Blue** default look; launcher branding (orb + 本)
+- **Fire themes** (Blue / Black / Lava) shared by settings icons, bottom nav, Sections, and launcher aliases
+- Nav / settings style variants; rating format options
+- Locales: **Español** (default), English, Türkçe, Русский
 
-- **Ultimate Blue** as the default app look, with matching launcher branding (orb + 本).
-- **Fire themes** (Blue / Black / Lava) shared by settings icons, bottom menu, library sections, and launcher icons.
-- **Custom providers:** add Blog (Blogger index) or Website sources, with validation and localized tutorials.
-- **History:** separates **Reading** vs **Visited** novels (sections + pills), themed with Fire accents.
-- Chapter list no longer shows release timestamps under each chapter.
-- **Import-B** Fire drop-zone in Biblioteca; library search stays pinned.
-- **TTS:** prefers Piper/Sherpa neural voices (Dave ES / Lessac EN), language from text, slower neural rate.
-- **Search inputs** block special characters by default; enable them in Settings → *Permitir caracteres especiales en búsqueda*.
-- App id: `com.lagradost.quicknovel.ultimate` (universal APK: arm64-v8a / armeabi-v7a / x86_64).
+### Library & reading
+- **Biblioteca** with pinned local search, continue reading, follow, sort FAB
+- **Import-B** Fire drop-zone for **EPUB / PDF**
+- **Secciones** tab — library shelves (Ultimate-only)
+- **Historial** split into **Leyendo / Visitadas** with date groups
+- In-app reader + optional external reader; chapter download ranges & chapters-per-file batches
+- Chapter list without noisy release timestamps under each row
 
-### Build
+### Search & providers
+- Online search across built-in providers + **user-defined** sources
+- Provider **multi-select** dialog to search several sources at once
+- Result chips filter by provider; cover size aligned with Popular
+- **Special characters blocked by default** in search fields; enable in Settings
+- **Custom providers**: Blog (Blogger) or Website (Madara) — simple validate flow + **Advanced CSS** mode, manage/edit/delete
+
+### TTS & translation
+- **TTS** prefers Piper/Sherpa neural voices (**Dave ES** / **Lessac EN**), language from text, notification controls
+- Optional **Gemini** API key / model for translation flows
+
+### Updates & safety
+- Auto check against upstream LagradOst releases **disabled by default** (avoids installing stock `com.lagradost.quicknovel` 3.x beside Ultimate)
+- Backup / restore, download path, logcat viewer
+
+### Docs & QA
+- Full manuals **ES + EN** (HTML + Word + bug templates + screenshots): [`docs/manual-1.1.4/`](docs/manual-1.1.4/)
+- Unit tests (Gradle) + **WebdriverIO / Appium / Allure** E2E suite (`e2e/`, specs 01–09)
+- CI on every push: [`.github/workflows/e2e-android.yml`](.github/workflows/e2e-android.yml)
+
+---
+
+## Screenshots (Ultimate 1.1.4)
+
+<p>
+<img src="./.github/ultimate/library.png" height="360" alt="Library"/>
+<img src="./.github/ultimate/search.png" height="360" alt="Search"/>
+<img src="./.github/ultimate/search-results.png" height="360" alt="Search results"/>
+<img src="./.github/ultimate/history.png" height="360" alt="History"/>
+</p>
+<p>
+<img src="./.github/ultimate/sections.png" height="360" alt="Sections"/>
+<img src="./.github/ultimate/settings-providers.png" height="360" alt="Settings tutorials & custom providers"/>
+<img src="./.github/ultimate/add-provider.png" height="360" alt="Add custom provider"/>
+<img src="./.github/ultimate/provider-multiselect.png" height="360" alt="Provider multi-select"/>
+</p>
+
+More shots: [`docs/manual-1.1.4/es/imagenes/`](docs/manual-1.1.4/es/imagenes/)
+
+---
+
+## Tech stack
+
+| Layer | Stack |
+|-------|--------|
+| Language | **Kotlin**, JVM 11 |
+| UI | **Jetpack Compose** (Material 3) + legacy Views/Fragments where still in use |
+| Architecture | ViewModels, coroutines, WorkManager |
+| Networking | NiceHttp / OkHttp, Jsoup scraping |
+| Images | Coil 3 |
+| Storage | PreferenceStore, SafeFile / simple-storage, Room-adjacent download DB flows |
+| Reader | EPUB tooling, PDFBox Android |
+| TTS | Android TTS + Sherpa/Piper preference |
+| Translation | ML Kit Translate + optional Gemini HTTP |
+| Markdown | Markwon |
+| Build | Android Gradle Plugin, Compose compiler, ABI splits + universal APK |
+| Tests | JUnit (unit), AndroidX instrumentation, **WebdriverIO 9 + Appium UiAutomator2 + Mocha + Allure** |
+
+---
+
+## Tools
+
+| Tool | Use |
+|------|-----|
+| Android Studio / SDK + `adb` | Build, install, emulator |
+| `./gradlew :app:assembleRelease` | Release APK |
+| `./gradlew :app:testDebugUnitTest` | Unit tests |
+| Node 18+ / npm (`e2e/`) | E2E automation |
+| Appium + UiAutomator2 | Device driver |
+| Allure | E2E HTML reports |
+| `docs/manual-1.1.4/_generar_docs_es.py` / `_generar_docs_en.py` | Regenerate manuals (HTML/DOCX) |
+| GitHub Actions | Emulator CI + Allure artifacts |
+
+---
+
+## Build
 
 ```bash
 ./gradlew :app:assembleRelease
 ```
 
-Signed universal APKs for testing are produced under `app/build/outputs/apk/release/` (use `app-universal-release-unsigned.apk` + your keystore). Prefer the latest Desktop APK (`QuickNovel-Ultimate-1.1.4-universal.apk`) and uninstall older packages on the emulator before testing.
+Sign the universal APK under `app/build/outputs/apk/release/` (or use your Desktop `QuickNovel-Ultimate-1.1.4-universal.apk`).  
+Uninstall older Ultimate/stock packages on the device before installing so you always run the latest.
 
-### User manuals (ES / EN)
+---
 
-Full onboarding docs for **1.1.4** (HTML + Word + bug templates + screenshots):
+## User manuals (ES / EN)
 
-- Español: [`docs/manual-1.1.4/es/`](docs/manual-1.1.4/es/)
-- English: [`docs/manual-1.1.4/en/`](docs/manual-1.1.4/en/)
-- Index: [`docs/manual-1.1.4/README.md`](docs/manual-1.1.4/README.md)
+| Lang | Folder |
+|------|--------|
+| Español | [`docs/manual-1.1.4/es/`](docs/manual-1.1.4/es/) |
+| English | [`docs/manual-1.1.4/en/`](docs/manual-1.1.4/en/) |
+| Index | [`docs/manual-1.1.4/README.md`](docs/manual-1.1.4/README.md) |
 
-### E2E automation (WebdriverIO + Appium)
+Includes onboarding, every Settings group, **custom providers (simple + advanced)**, TTS/download tutorials, bug Word templates, and screenshots.
 
-See [`e2e/README.md`](e2e/README.md). CI runs on **every push** via [`.github/workflows/e2e-android.yml`](.github/workflows/e2e-android.yml) and uploads **Allure** results.
+---
 
-Coverage includes library, navigation, search (incl. special-char toggle), history, settings, Import-B, **reader + TTS** (seeded novel — no skips), and providers (HTTP probe + multi-select).
+## E2E automation
+
+See [`e2e/README.md`](e2e/README.md).
 
 ```bash
 cd e2e
@@ -53,59 +140,22 @@ npm test
 npm run allure:report
 ```
 
-**Providers used:**
+Coverage: library, navigation, search (+ special chars), history, settings, Import-B, **reader + TTS** (seeded — no skips), providers (HTTP probe + multi-select).
 
-- https://allnovel.org
-- https://annas-archive.org
-- https://bestlightnovel.com
-- https://chrysanthemumgarden.com
-- https://www.fanmtl.com
-- https://fenrirealm.com
-- https://free.kolnovel.com
-- https://freewebnovel.com
-- https://fucknovelpia.com
-- https://graycity.net
-- https://hiraethtranslation.com
-- https://indowebnovel.id
-- https://libread.com
-- https://lightnovelstranslations.com
-- https://lightnovelworld.org
-- https://lnmtl.com
-- https://meionovels.com
-- https://mtlnovel.me
-- https://www.nobadnovel.com
-- https://novelbin.com
-- https://novelbuddy.com
-- https://novelfire.net
-- https://novelfull.com
-- https://novelsonline.org
-- https://novlove.com
-- https://pawread.com
-- https://readfrom.net
-- https://readnovelfull.com
-- https://readonlinefreebook.com
-- https://rewayat.club
-- https://risenovel.com
-- https://www.royalroad.com
-- https://sakuranovel.id
-- https://www.scribblehub.com
-- https://www.skynovels.net
-- https://www.sonicmtl.com
-- https://wtr-lab.com
-- https://wuxia.click
-- https://www.wuxiabox.com
+---
 
-Plus **user-defined** Blog / Website providers configured in Settings.
+## Built-in providers (sample)
 
-**Screenshots:**
+Includes sources such as SkyNovels, Nova, DevilNovels, Royal Road, Scribblehub, NovelFull, and many more (see app / `Apis.kt`).  
+Plus **user-defined** Blog / Website providers from Settings.
 
-<img src="./.github/home.jpg" height="400"/><img src="./.github/search.jpg" height="400"/><img src="./.github/downloads.jpg" height="400"/><img src="./.github/result.jpg" height="400"/><img src="./.github/reader.jpg" height="400"/>
+---
 
-**Credits:**
+## Credits
 
 Based on QuickNovel by [LagradOst](https://github.com/LagradOst/QuickNovel). Upstream Discord: https://discord.gg/5Hus6fM
 
-**Legal notice:**
+## Legal notice
 
 Any legal issues regarding the content on this application should be taken up with the actual file hosts and providers themselves as we are not affiliated with them.
 
@@ -113,6 +163,6 @@ In case of copyright infringement, please directly contact the responsible parti
 
 The app is purely for educational and personal use.
 
-QuickNovel does not host any content on the app, and has no control over what media is put up or taken down. QuickNovel functions like any other search engine, such as Google. QuickNovel does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displayes links in a convenient, user-friendly interface.
+QuickNovel does not host any content on the app, and has no control over what media is put up or taken down. QuickNovel functions like any other search engine, such as Google. QuickNovel does not host, upload or manage any videos, films or content. It simply crawls, aggregates and displays links in a convenient, user-friendly interface.
 
-It merely scrapes 3rd-party websites that are publicly accessable via any regular web browser. It is the responsibility of user to avoid any actions that might violate the laws governing his/her locality. Use QuickNovel at your own risk.
+It merely scrapes 3rd-party websites that are publicly accessible via any regular web browser. It is the responsibility of the user to avoid any actions that might violate the laws governing his/her locality. Use QuickNovel at your own risk.
