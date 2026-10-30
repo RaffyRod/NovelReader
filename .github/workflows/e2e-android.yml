@@ -1,4 +1,4 @@
-name: E2E Android (WebdriverIO)
+name: CI Android
 
 on:
   push:
@@ -6,48 +6,50 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  e2e:
-    name: Build APK + Appium + Allure
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Set up Node 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: e2e/package-lock.json
-
       - name: Grant Gradle execute
         run: chmod +x gradlew
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: app/build/reports/tests/testDebugUnitTest
+          if-no-files-found: warn
+          retention-days: 14
 
-      - name: Build release APK
+  build-apk:
+    name: Build & sign APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - name: Grant Gradle execute
+        run: chmod +x gradlew
+      - name: Assemble release
         run: ./gradlew :app:assembleRelease --no-daemon
-
       - name: Sign APK (debug keystore for CI)
         run: |
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
@@ -62,19 +64,68 @@ jobs:
               -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
               -dname "CN=Android Debug,O=Android,C=US"
           fi
-          OUT=e2e/apps/QuickNovel-Ultimate.apk
           mkdir -p e2e/apps
+          OUT=e2e/apps/QuickNovel-Ultimate.apk
           "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android \
             --key-pass pass:android --ks-key-alias androiddebugkey --out "$OUT" "$UNSIGNED"
           ls -lh "$OUT"
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: quicknovel-ultimate-apk
+          path: e2e/apps/QuickNovel-Ultimate.apk
+          retention-days: 7
 
-      - name: Install E2E dependencies
+  e2e:
+    name: E2E ${{ matrix.suite }}
+    needs: build-apk
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout }}
+    continue-on-error: ${{ matrix.soft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: smoke
+            npm_script: test:smoke
+            timeout: 60
+            soft: false
+          - suite: features
+            npm_script: test:features
+            timeout: 60
+            soft: false
+          - suite: reader
+            npm_script: test:reader
+            timeout: 60
+            soft: false
+          - suite: providers
+            npm_script: test:providers
+            timeout: 75
+            soft: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: android-actions/setup-android@v3
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: quicknovel-ultimate-apk
+          path: e2e/apps
+      - name: Install E2E deps
         working-directory: e2e
         run: |
           npm ci
           npx appium driver install uiautomator2 || npx appium driver update uiautomator2 || true
-
-      - name: Run WebdriverIO on emulator
+      - name: Run ${{ matrix.suite }} suite
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -93,42 +144,56 @@ jobs:
             export APP_PATH="$GITHUB_WORKSPACE/e2e/apps/QuickNovel-Ultimate.apk"
             export CI=true
             export WDIO_LOG_LEVEL=warn
-            npm test
-
-      - name: Generate Allure HTML report
-        if: always()
-        working-directory: e2e
-        run: |
-          if [ -d allure-results ] && [ "$(ls -A allure-results 2>/dev/null)" ]; then
-            npx allure generate ./allure-results --clean -o ./allure-report
-          else
-            echo "No allure-results to generate"
-          fi
-
-      - name: Upload Allure results
+            npm run ${{ matrix.npm_script }}
+      - name: Upload Allure results (${{ matrix.suite }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results
+          name: allure-results-${{ matrix.suite }}
           path: e2e/allure-results
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Upload Allure HTML report
-        if: always()
+  allure-report:
+    name: Merge Allure report
+    needs: [e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Install deps
+        working-directory: e2e
+        run: npm ci --omit=optional
+      - name: Download all Allure result shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-*
+          path: e2e/allure-shards
+          merge-multiple: false
+      - name: Merge results
+        working-directory: e2e
+        run: |
+          mkdir -p allure-results
+          if [ -d allure-shards ]; then
+            find allure-shards -type f -exec cp {} allure-results/ \;
+          fi
+          ls -la allure-results || true
+          if [ -d allure-results ] && [ "$(ls -A allure-results 2>/dev/null)" ]; then
+            npx allure generate ./allure-results --clean -o ./allure-report
+          else
+            echo "No allure results to merge"
+            mkdir -p allure-report
+            echo "<html><body>No Allure results</body></html>" > allure-report/index.html
+          fi
+      - name: Upload merged Allure HTML
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
           path: e2e/allure-report
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Upload WDIO logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wdio-logs
-          path: |
-            e2e/*.log
-            e2e/allure-results
-          if-no-files-found: ignore

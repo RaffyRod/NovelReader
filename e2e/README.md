@@ -44,8 +44,11 @@ cd e2e
 npm install
 npx appium driver install uiautomator2
 npm run providers:generate   # refresh list from Apis.kt
-npm test
-npm run test:providers       # providers-only (long)
+npm test                     # full suite
+npm run test:smoke           # 01–04
+npm run test:features        # 05, 06, 09
+npm run test:reader          # 07
+npm run test:providers       # 08 (long / network)
 npm run allure:report
 ```
 
@@ -60,14 +63,18 @@ npm run allure:report
 
 ## CI
 
-GitHub Actions workflow `.github/workflows/e2e-android.yml` runs on **every push** (and PRs):
+GitHub Actions workflow `.github/workflows/e2e-android.yml` runs on **every push** and PRs with **separate jobs**:
 
-1. Build release APK  
-2. Start Android emulator  
-3. Run WebdriverIO suite  
-4. Upload `allure-results` artifact  
+| Job | What it does |
+|-----|----------------|
+| `unit` | Gradle `:app:testDebugUnitTest` |
+| `build-apk` | Assemble + sign APK → artifact |
+| `e2e` (matrix) | Parallel emulator jobs: **smoke**, **features**, **reader**, **providers** |
+| `allure-report` | Merges Allure shards → HTML artifact |
 
-Generate the HTML report locally from the downloaded artifact:
+`providers` uses `continue-on-error` so Cloudflare / site flakes do not fail the whole gate.
+
+Download **allure-report** from the Actions run, or merge shards locally:
 
 ```bash
 cd e2e

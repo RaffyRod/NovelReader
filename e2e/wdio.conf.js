@@ -15,7 +15,7 @@ function resolveAppPath() {
     path.join(
       process.env.USERPROFILE || process.env.HOME || '',
       'Desktop',
-      'QuickNovel-Ultimate-1.1.0-universal.apk',
+      'QuickNovel-Ultimate-1.1.4-universal.apk',
     ),
   ];
   return candidates.find((p) => p && fs.existsSync(p)) || candidates[0];
