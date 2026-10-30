@@ -17,13 +17,15 @@ describe('Reader and TTS', function () {
     const opened = await ensureReaderOpen();
     expect(opened).toBe(true);
     await readerPage.expectTtsControlVisible();
-    await driver.back();
+    // Stay in the reader so the next case does not fight bottom-nav / back stack.
   });
 
   it('starts TTS from the reader when a novel is open', async () => {
     allure.addSeverity('critical');
-    const opened = await ensureReaderOpen();
-    expect(opened).toBe(true);
+    if (!(await readerPage.isReaderVisible())) {
+      const opened = await ensureReaderOpen();
+      expect(opened).toBe(true);
+    }
 
     await readerPage.startTts();
     await readerPage.revealControls();
@@ -31,6 +33,5 @@ describe('Reader and TTS', function () {
     const stop = await readerPage.ttsStop.isDisplayed().catch(() => false);
     const tts = await readerPage.ttsButton.isDisplayed().catch(() => false);
     expect(pausePlay || stop || tts).toBe(true);
-    await driver.back();
   });
 });

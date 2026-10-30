@@ -1,5 +1,9 @@
 const { dismissBlockingDialogs } = require('../helpers/dialogs');
 
+const APP_ID = 'com.lagradost.quicknovel.ultimate';
+const APP_ACTIVITY = 'com.lagradost.quicknovel.MainActivity';
+const MAIN_TABS = ['Biblioteca', 'Buscar', 'Historial', 'Ajustes'];
+
 class BasePage {
   /**
    * @param {string} accessibilityId
@@ -35,13 +39,62 @@ class BasePage {
   }
 
   /**
-   * Scrolls until a node with the given text is visible (UiScrollable).
+   * True when any main bottom-nav tab is visible.
+   */
+  async isMainChromeVisible() {
+    for (const tab of MAIN_TABS) {
+      const el = $(`android=new UiSelector().description("${tab}")`);
+      if (await el.isDisplayed().catch(() => false)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Leaves reader / pickers / dialogs until bottom navigation is back.
+   * Restarts MainActivity if back presses are not enough.
+   */
+  async ensureMainChrome(timeoutMs = 25000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      await dismissBlockingDialogs();
+      if (await this.isMainChromeVisible()) return;
+      await driver.back().catch(() => {});
+      await driver.pause(450);
+    }
+    await driver.execute('mobile: startActivity', {
+      component: `${APP_ID}/${APP_ACTIVITY}`,
+    });
+    await driver.pause(2000);
+    await dismissBlockingDialogs();
+  }
+
+  /**
+   * Scrolls until a node with the given text is visible (UiScrollable + gestures).
    * @param {string} text
    */
   async scrollToText(text) {
+    const target = this.byTextContains(text);
+    if (await target.isDisplayed().catch(() => false)) return;
+
     await $(
       `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${text}"))`,
-    );
+    ).catch(() => {});
+    if (await target.isDisplayed().catch(() => false)) return;
+
+    for (const direction of ['up', 'down', 'up', 'down']) {
+      for (let i = 0; i < 5; i++) {
+        if (await target.isDisplayed().catch(() => false)) return;
+        await driver.execute('mobile: scrollGesture', {
+          left: 80,
+          top: 400,
+          width: 600,
+          height: 1200,
+          direction,
+          percent: 0.75,
+        }).catch(() => {});
+        await driver.pause(250);
+      }
+    }
   }
 
   /**
@@ -51,6 +104,7 @@ class BasePage {
    * @param {string} tabName accessibility / content-desc of bottom nav
    */
   async openTab(tabName) {
+    await this.ensureMainChrome();
     await dismissBlockingDialogs();
     const selected = $(`android=new UiSelector().description("${tabName}").selected(true)`);
     if (await selected.isExisting().catch(() => false)) {

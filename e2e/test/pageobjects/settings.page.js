@@ -72,7 +72,39 @@ class SettingsPage extends BasePage {
     return false;
   }
 
-  get allowSpecialCharsTitle() {
+  get allowSpecialCharsLabels() {
+    return ['Permitir caracteres especiales', 'Allow special characters'];
+  }
+
+  /**
+   * Finds the special-chars preference row (ES/EN), scrolling from the top of Settings.
+   * Previous suites may leave the settings list scrolled past this item.
+   */
+  async findAllowSpecialSearchCharsTitle() {
+    for (const label of this.allowSpecialCharsLabels) {
+      const el = this.byTextContains(label);
+      if (await el.isDisplayed().catch(() => false)) return el;
+    }
+
+    // Preference sits near the top of General — rewind list first.
+    for (let i = 0; i < 8; i++) {
+      await driver.execute('mobile: scrollGesture', {
+        left: 80,
+        top: 400,
+        width: 600,
+        height: 1200,
+        direction: 'up',
+        percent: 0.9,
+      }).catch(() => {});
+      await driver.pause(200);
+    }
+
+    for (const label of this.allowSpecialCharsLabels) {
+      await this.scrollToText(label);
+      const el = this.byTextContains(label);
+      if (await el.isDisplayed().catch(() => false)) return el;
+    }
+
     return this.byTextContains('Permitir caracteres especiales');
   }
 
@@ -84,13 +116,12 @@ class SettingsPage extends BasePage {
   async setAllowSpecialSearchChars(enabled) {
     await this.open();
     await this.expectLoaded();
-    await this.scrollToText('Permitir caracteres especiales');
-    await driver.pause(500);
-    await this.allowSpecialCharsTitle.waitForDisplayed({ timeout: 15000 });
+    const title = await this.findAllowSpecialSearchCharsTitle();
+    await title.waitForDisplayed({ timeout: 20000 });
 
-    const isOn = await this.isAllowSpecialSearchCharsOn();
+    const isOn = await this.isAllowSpecialSearchCharsOn(title);
     if (isOn !== enabled) {
-      await this.allowSpecialCharsTitle.click();
+      await title.click();
       await driver.pause(500);
     }
   }
@@ -98,9 +129,10 @@ class SettingsPage extends BasePage {
   /**
    * Reads the checked state of the switch associated with the special-chars preference.
    * Falls back to false when the control is not exposed as a native Switch.
+   * @param {WebdriverIO.Element} [titleEl]
    */
-  async isAllowSpecialSearchCharsOn() {
-    const title = this.allowSpecialCharsTitle;
+  async isAllowSpecialSearchCharsOn(titleEl) {
+    const title = titleEl || (await this.findAllowSpecialSearchCharsTitle());
     const titleBounds = await title.getLocation().catch(() => null);
     const switches = await $$('android.widget.Switch');
     let best = null;

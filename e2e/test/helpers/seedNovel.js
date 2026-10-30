@@ -130,6 +130,7 @@ async function openReaderViaSearch() {
  * @returns {Promise<boolean>} true when the reader UI is visible
  */
 async function ensureReaderOpen() {
+  await libraryPage.ensureMainChrome();
   await libraryPage.open();
   if (await libraryPage.openFirstNovelIfPresent()) {
     if (await readerPage.isReaderVisible()) return true;
