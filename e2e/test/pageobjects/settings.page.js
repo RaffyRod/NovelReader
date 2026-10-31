@@ -147,13 +147,12 @@ class SettingsPage extends BasePage {
   }
 
   /**
-   * Reads the checked state of the switch associated with the special-chars preference.
-   * Falls back to false when the control is not exposed as a native Switch.
-   * @param {WebdriverIO.Element} [titleEl]
+   * Finds the Switch nearest to a preference title row.
+   * @param {WebdriverIO.Element} titleEl
+   * @returns {Promise<boolean>}
    */
-  async isAllowSpecialSearchCharsOn(titleEl) {
-    const title = titleEl || (await this.findAllowSpecialSearchCharsTitle());
-    const titleBounds = await title.getLocation().catch(() => null);
+  async isPreferenceSwitchOnNear(titleEl) {
+    const titleBounds = await titleEl.getLocation().catch(() => null);
     const switches = await $$('android.widget.Switch');
     let best = null;
     let bestDist = Number.POSITIVE_INFINITY;
@@ -173,6 +172,16 @@ class SettingsPage extends BasePage {
     }
     if (!best) return false;
     return (await best.getAttribute('checked')) === 'true';
+  }
+
+  /**
+   * Reads the checked state of the switch associated with the special-chars preference.
+   * Falls back to false when the control is not exposed as a native Switch.
+   * @param {WebdriverIO.Element} [titleEl]
+   */
+  async isAllowSpecialSearchCharsOn(titleEl) {
+    const title = titleEl || (await this.findAllowSpecialSearchCharsTitle());
+    return this.isPreferenceSwitchOnNear(title);
   }
 
   /**

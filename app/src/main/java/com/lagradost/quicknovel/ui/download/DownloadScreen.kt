@@ -81,8 +81,12 @@ import com.lagradost.quicknovel.MainActivity
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.compose.BaseSearchBar
 import com.lagradost.quicknovel.compose.IsScrolling
+import androidx.compose.ui.platform.LocalContext
+import com.lagradost.quicknovel.ui.AppearanceMode
 import com.lagradost.quicknovel.ui.LocalUiIconTheme
 import com.lagradost.quicknovel.ui.UiIconTheme
+import com.lagradost.quicknovel.ui.coreFor
+import com.lagradost.quicknovel.ui.glowFor
 import com.lagradost.quicknovel.ui.common.SkeletonList
 import com.lagradost.quicknovel.ui.common.ImmutableSearchList
 import com.lagradost.quicknovel.ui.common.SearchList
@@ -533,6 +537,9 @@ fun RowFooter() {
 @Composable
 fun ImportFireDropZone(modifier: Modifier = Modifier) {
     val fire = LocalUiIconTheme.current
+    val darkSurface = AppearanceMode.isDark(LocalContext.current)
+    val core = fire.coreFor(darkSurface)
+    val glow = fire.glowFor(darkSurface)
     val shape = RoundedCornerShape(12.dp)
     Column(
         verticalArrangement = Arrangement.Center,
@@ -541,10 +548,10 @@ fun ImportFireDropZone(modifier: Modifier = Modifier) {
             .height(96.dp)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .background(importFireGlowBrush(fire))
+            .background(importFireGlowBrush(fire, darkSurface))
             .drawBehind {
                 drawRoundRect(
-                    color = fire.core.copy(alpha = 0.55f),
+                    color = core.copy(alpha = 0.55f),
                     cornerRadius = CornerRadius(12.dp.toPx()),
                     style = Stroke(
                         width = 1.5.dp.toPx(),
@@ -562,7 +569,7 @@ fun ImportFireDropZone(modifier: Modifier = Modifier) {
             modifier = Modifier.size(26.dp),
             painter = painterResource(R.drawable.ic_baseline_menu_book_24),
             contentDescription = stringResource(R.string.import_epub),
-            tint = fire.glow,
+            tint = glow,
         )
         Text(
             text = stringResource(R.string.import_epub),
@@ -589,6 +596,9 @@ fun ImportFireDropZone(modifier: Modifier = Modifier) {
 @Composable
 fun BoxFooter() {
     val fire = LocalUiIconTheme.current
+    val darkSurface = AppearanceMode.isDark(LocalContext.current)
+    val core = fire.coreFor(darkSurface)
+    val glow = fire.glowFor(darkSurface)
     val interactionSource = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(10.dp)
 
@@ -609,10 +619,10 @@ fun BoxFooter() {
                 .aspectRatio(0.68f)
                 .clip(shape)
                 .background(MaterialTheme.colorScheme.surfaceContainer)
-                .background(importFireGlowBrush(fire))
+                .background(importFireGlowBrush(fire, darkSurface))
                 .drawBehind {
                     drawRoundRect(
-                        color = fire.core.copy(alpha = 0.50f),
+                        color = core.copy(alpha = 0.50f),
                         cornerRadius = CornerRadius(10.dp.toPx()),
                         style = Stroke(
                             width = 1.5.dp.toPx(),
@@ -628,7 +638,7 @@ fun BoxFooter() {
                     modifier = Modifier.size(28.dp),
                     painter = painterResource(R.drawable.ic_baseline_menu_book_24),
                     contentDescription = stringResource(R.string.import_epub),
-                    tint = fire.glow,
+                    tint = glow,
                 )
                 Text(
                     text = stringResource(R.string.import_epub),
@@ -663,14 +673,16 @@ fun BoxFooter() {
     }
 }
 
-/** Soft Fire halo at the bottom of the import drop-zone (Blue / Black / Lava). */
-private fun importFireGlowBrush(theme: UiIconTheme): Brush =
-    object : ShaderBrush() {
+/** Soft Fire halo at the bottom of the import drop-zone (surface-aware). */
+private fun importFireGlowBrush(theme: UiIconTheme, darkSurface: Boolean): Brush {
+    val glow = theme.glowFor(darkSurface)
+    val core = theme.coreFor(darkSurface)
+    return object : ShaderBrush() {
         override fun createShader(size: androidx.compose.ui.geometry.Size) =
             RadialGradientShader(
                 colors = listOf(
-                    theme.glow.copy(alpha = 0.28f),
-                    theme.core.copy(alpha = 0.06f),
+                    glow.copy(alpha = 0.28f),
+                    core.copy(alpha = 0.06f),
                     Color.Transparent,
                 ),
                 center = Offset(size.width * 0.5f, size.height * 0.85f),
@@ -678,6 +690,7 @@ private fun importFireGlowBrush(theme: UiIconTheme): Brush =
                 tileMode = TileMode.Clamp,
             )
     }
+}
 
 @Composable
 @PreviewLightDark

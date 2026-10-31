@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Style E — Icon disc: solid primary squircle (tint applied at runtime). -->
+<!-- Circular disc (tint applied at runtime). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
+    android:shape="oval">
     <solid android:color="@android:color/white" />
-    <corners android:radius="14dp" />
     <size
         android:width="48dp"
         android:height="48dp" />

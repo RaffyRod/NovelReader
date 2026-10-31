@@ -27,13 +27,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RadialGradientShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.quicknovel.R
+import com.lagradost.quicknovel.ui.AppearanceMode
 import com.lagradost.quicknovel.ui.UiIconTheme
+import com.lagradost.quicknovel.ui.coreFor
+import com.lagradost.quicknovel.ui.glowFor
 import com.mihon.presentation.settings.collectAsState
 
 /** Whether the section rail is open; the bottom menu toggles it and the library screen reads it. */
@@ -59,19 +63,23 @@ val libraryRailIcons = listOf(
     R.drawable.ic_baseline_favorite_24,
 )
 
-/** Soft fire halo for the selected section chip (follows Blue/Black/Lava Fire). */
-private fun sectionFireBrush(theme: UiIconTheme): Brush = object : ShaderBrush() {
-    override fun createShader(size: androidx.compose.ui.geometry.Size) =
-        RadialGradientShader(
-            colors = listOf(
-                theme.glow.copy(alpha = 0.85f),
-                theme.core.copy(alpha = 0.55f),
-                theme.core.copy(alpha = 0.92f),
-            ),
-            center = Offset(size.width * 0.5f, size.height * 0.7f),
-            radius = size.minDimension * 0.95f,
-            tileMode = TileMode.Clamp,
-        )
+/** Soft fire halo for the selected section chip (surface-aware accents). */
+private fun sectionFireBrush(theme: UiIconTheme, darkSurface: Boolean): Brush {
+    val glow = theme.glowFor(darkSurface)
+    val core = theme.coreFor(darkSurface)
+    return object : ShaderBrush() {
+        override fun createShader(size: androidx.compose.ui.geometry.Size) =
+            RadialGradientShader(
+                colors = listOf(
+                    glow.copy(alpha = 0.85f),
+                    core.copy(alpha = 0.55f),
+                    core.copy(alpha = 0.92f),
+                ),
+                center = Offset(size.width * 0.5f, size.height * 0.7f),
+                radius = size.minDimension * 0.95f,
+                tileMode = TileMode.Clamp,
+            )
+    }
 }
 
 /** A thin column of icons with counters that jumps between the library sections. */
@@ -85,12 +93,10 @@ fun LibraryRail(
     val fire = UiIconTheme.fromKey(
         rememberAppSettings().ui.uiIconTheme.collectAsState().value
     )
-    // Black Fire uses a light core; glyphs need dark contrast. Blue/Lava use light glyphs.
-    val selectedFg = if (fire == UiIconTheme.BLACK_FIRE) {
-        Color(0xFF0A0C10)
-    } else {
-        Color.White
-    }
+    val darkSurface = AppearanceMode.isDark(LocalContext.current)
+    val core = fire.coreFor(darkSurface)
+    val coreLum = 0.2126f * core.red + 0.7152f * core.green + 0.0722f * core.blue
+    val selectedFg = if (coreLum > 0.55f) Color(0xFF0A0C10) else Color.White
     val idleFg = MaterialTheme.colorScheme.onSurfaceVariant
 
     Column(
@@ -110,7 +116,7 @@ fun LibraryRail(
                 .size(width = 42.dp, height = 48.dp)
                 .clip(MaterialTheme.shapes.medium)
                 .then(
-                    if (isSelected) Modifier.background(sectionFireBrush(fire))
+                    if (isSelected) Modifier.background(sectionFireBrush(fire, darkSurface))
                     else Modifier.background(Color.Transparent)
                 )
                 .clickable { onSelect(index) }

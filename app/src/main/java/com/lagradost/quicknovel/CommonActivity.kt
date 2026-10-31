@@ -140,54 +140,18 @@ object CommonActivity {
 
     fun loadThemes(act: Activity?) {
         if (act == null) return
-        val settingsManager = PreferenceManager.getDefaultSharedPreferences(act)
-
-        val currentTheme =
-            when (settingsManager.getString(act.getString(R.string.theme_key), "UltimateBlue")) {
-                "UltimateBlue" -> R.style.UltimateBlueMode
-                "Black" -> R.style.AppTheme
-                "Light" -> R.style.LightMode
-                "Amoled" -> R.style.AmoledMode
-                "AmoledLight" -> R.style.AmoledModeLight
-                "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    R.style.MonetMode else R.style.AppTheme
-                else -> R.style.UltimateBlueMode
-            }
-
-        val currentOverlayTheme =
-            when (settingsManager.getString(act.getString(R.string.primary_color_key), "UltimateBlue")) {
-                "UltimateBlue" -> R.style.OverlayPrimaryColorUltimateBlue
-                "Normal" -> R.style.OverlayPrimaryColorNormal
-                "CarnationPink" -> R.style.OverlayPrimaryColorCarnationPink
-                "DarkGreen" -> R.style.OverlayPrimaryColorDarkGreen
-                "Maroon" -> R.style.OverlayPrimaryColorMaroon
-                "NavyBlue" -> R.style.OverlayPrimaryColorNavyBlue
-                "Grey" -> R.style.OverlayPrimaryColorGrey
-                "White" -> R.style.OverlayPrimaryColorWhite
-                "Brown" -> R.style.OverlayPrimaryColorBrown
-                "Blue" -> R.style.OverlayPrimaryColorBlue
-                "Purple" -> R.style.OverlayPrimaryColorPurple
-                "Green" -> R.style.OverlayPrimaryColorGreen
-                "GreenApple" -> R.style.OverlayPrimaryColorGreenApple
-                "Red" -> R.style.OverlayPrimaryColorRed
-                "Banana" -> R.style.OverlayPrimaryColorBanana
-                "Party" -> R.style.OverlayPrimaryColorParty
-                "Pink" -> R.style.OverlayPrimaryColorPink
-                "Monet" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    R.style.OverlayPrimaryColorMonet else R.style.OverlayPrimaryColorUltimateBlue
-                "Monet2" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    R.style.OverlayPrimaryColorMonetTwo else R.style.OverlayPrimaryColorUltimateBlue
-                else -> R.style.OverlayPrimaryColorUltimateBlue
-            }
-        act.theme.applyStyle(currentTheme, true)
-        act.theme.applyStyle(currentOverlayTheme, true)
-
-
+        // Ultimate surface (dark/light) + accent pack overlay (light remaps pale accents).
+        val fire = com.lagradost.quicknovel.ui.FireThemes.current(act)
+        val dark = com.lagradost.quicknovel.ui.AppearanceMode.isDark(act)
+        act.theme.applyStyle(com.lagradost.quicknovel.ui.AppearanceMode.surfaceStyleRes(act), true)
+        act.theme.applyStyle(
+            com.lagradost.quicknovel.ui.FireThemes.overlayStyleFor(fire.key, darkSurface = dark),
+            true,
+        )
         act.theme.applyStyle(
             R.style.LoadedStyle,
             true
         ) // THEME IS SET BEFORE VIEW IS CREATED TO APPLY THE THEME TO THE MAIN VIEW
-
 
         act.window?.navigationBarColor =
             act.colorFromAttribute(R.attr.primaryGrayBackground)

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="ultimate" data-actions="C" data-info="2" data-cta="Q">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultimate · Detalle — acciones &amp; info — mock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --phone-w: 340px;
+    }
+    [data-theme="ultimate"] {
+      --page: #03060f; --bg: #050b18; --surface: #0a1224; --card: #0d1528;
+      --line: rgba(140,180,255,.12); --text: #e8f1ff; --muted: #8b97ab;
+      --primary: #1a6cff; --on-primary: #fff; --cta-idle: #c8d0dc;
+    }
+    [data-theme="fire"] {
+      --page: #0c0404; --bg: #140808; --surface: #1c0c0c; --card: #241010;
+      --line: rgba(255,120,90,.14); --text: #ffece8; --muted: #b89088;
+      --primary: #e53935; --on-primary: #fff; --cta-idle: #d8c8c4;
+    }
+    [data-theme="green"] {
+      --page: #030a06; --bg: #06140c; --surface: #0a1c12; --card: #0e2418;
+      --line: rgba(80,220,140,.12); --text: #e8fff2; --muted: #88b098;
+      --primary: #2e7d32; --on-primary: #fff; --cta-idle: #c8d4cc;
+    }
+    [data-theme="banana"] {
+      --page: #0c0a02; --bg: #141208; --surface: #1c1a0c; --card: #242210;
+      --line: rgba(240,200,60,.14); --text: #fffce8; --muted: #b0a878;
+      --primary: #f9a825; --on-primary: #1a1400; --cta-idle: #ddd6b8;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: var(--font); color: var(--text);
+      background:
+        radial-gradient(900px 480px at 10% -10%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 55%),
+        var(--page);
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 22px 80px; }
+    h1 {
+      font-family: var(--display); font-weight: 400; letter-spacing: -.02em;
+      font-size: clamp(1.9rem, 3.6vw, 2.55rem); margin: 0 0 8px;
+    }
+    .lead { color: var(--muted); max-width: 58ch; line-height: 1.5; margin: 0 0 24px; font-size: .94rem; }
+    .ctrl-label {
+      font-size: .68rem; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin: 0 0 8px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .chip {
+      border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 85%, transparent);
+      color: var(--text); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: .84rem;
+      font-weight: 500; cursor: pointer;
+    }
+    .chip[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+    .chip .swatch {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+      vertical-align: middle; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+    }
+    .group-title {
+      font-family: var(--display); font-size: 1.3rem; margin: 18px 0 10px; font-weight: 400;
+    }
+    .styles {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px; margin-bottom: 18px;
+    }
+    .style-card {
+      text-align: left; border: 1px solid var(--line); background: var(--surface);
+      border-radius: 14px; padding: 12px 13px; cursor: pointer; color: inherit; font: inherit;
+    }
+    .style-card[aria-pressed="true"] {
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+    }
+    .style-card .letter { font-family: var(--display); font-size: 1.2rem; color: var(--primary); }
+    .style-card strong { display: block; font-size: .88rem; margin: 2px 0 3px; }
+    .style-card span { display: block; font-size: .72rem; color: var(--muted); line-height: 1.35; }
+
+    .stage {
+      display: grid; grid-template-columns: minmax(260px, 1fr) auto; gap: 28px; align-items: start;
+      margin-top: 10px;
+    }
+    @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+    .note {
+      border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 80%, transparent);
+      border-radius: 16px; padding: 18px 18px 16px;
+    }
+    .note h2 { font-family: var(--display); font-weight: 400; font-size: 1.35rem; margin: 0 0 8px; }
+    .note p { margin: 0 0 10px; color: var(--muted); font-size: .9rem; line-height: 1.45; }
+    .note ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: .86rem; line-height: 1.5; }
+    .pick { margin-top: 14px; font-size: .82rem; color: var(--text); }
+    .pick strong { color: var(--primary); }
+
+    .phone {
+      width: var(--phone-w); border-radius: 28px; overflow: hidden;
+      border: 1px solid var(--line); background: var(--bg);
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    }
+    .phone-top {
+      display: grid; grid-template-columns: 78px 1fr 28px; gap: 12px;
+      padding: 16px 14px 10px; align-items: start;
+    }
+    .cover {
+      width: 78px; height: 110px; border-radius: 8px;
+      background:
+        linear-gradient(160deg, color-mix(in srgb, var(--primary) 35%, #1a2030), #0a101c),
+        #122;
+      box-shadow: 0 8px 18px rgba(0,0,0,.35);
+    }
+    .meta h3 { margin: 2px 0 4px; font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
+    .meta .author { color: var(--primary); font-size: .82rem; margin: 0 0 6px; }
+    .meta .last { color: var(--text); font-size: .78rem; margin: 0; opacity: .9; }
+    .close {
+      width: 28px; height: 28px; border: 0; background: transparent; color: var(--text);
+      font-size: 1.2rem; cursor: default; line-height: 1;
+    }
+
+    /* ——— ACTIONS ——— */
+    .actions {
+      margin: 4px 12px 12px; padding: 10px 6px; border-radius: 14px;
+      background: color-mix(in srgb, var(--card) 92%, #000);
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+    }
+    .act {
+      border: 0; background: transparent; color: var(--text); font: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 8px 4px; cursor: pointer; border-radius: 12px;
+    }
+    .act .lab { font-size: .68rem; font-weight: 600; order: -1; }
+    .act .ico {
+      width: 28px; height: 28px; display: grid; place-items: center;
+    }
+    .act svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* A — Current strip */
+    [data-actions="A"] .actions { background: color-mix(in srgb, var(--card) 95%, #000); }
+    [data-actions="A"] .act { color: var(--text); }
+
+    /* B — Icon disc (match FAB E) */
+    [data-actions="B"] .actions { background: transparent; gap: 8px; padding: 4px 0; }
+    [data-actions="B"] .act .lab { color: var(--muted); font-weight: 500; order: 1; }
+    [data-actions="B"] .act .ico {
+      width: 44px; height: 44px; border-radius: 14px; background: var(--primary); color: var(--on-primary);
+      box-shadow:
+        0 8px 18px color-mix(in srgb, var(--primary) 40%, transparent),
+        0 0 0 5px color-mix(in srgb, var(--primary) 16%, transparent);
+      animation: breathGlow 2.6s ease-in-out infinite;
+    }
+    [data-actions="B"] .act svg { stroke: var(--on-primary); }
+
+    /* C — Ghost circles */
+    [data-actions="C"] .actions { background: transparent; gap: 8px; }
+    [data-actions="C"] .act { padding: 6px 4px; }
+    [data-actions="C"] .act .lab { order: 1; color: var(--muted); }
+    [data-actions="C"] .act .ico {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      color: var(--primary);
+      box-shadow:
+        inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 35%, transparent),
+        0 6px 14px rgba(0,0,0,.35);
+    }
+
+    /* D — Soft rail + primary glyphs */
+    [data-actions="D"] .actions {
+      background: color-mix(in srgb, var(--primary) 8%, var(--card));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
+    [data-actions="D"] .act .lab { color: var(--muted); order: 1; }
+    [data-actions="D"] .act .ico { color: var(--primary); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 55%, transparent)); }
+
+    /* E — Underline accent */
+    [data-actions="E"] .actions { background: transparent; border-bottom: 1px solid var(--line); border-radius: 0; padding: 6px 0 10px; }
+    [data-actions="E"] .act { position: relative; }
+    [data-actions="E"] .act .lab { order: 1; color: var(--muted); }
+    [data-actions="E"] .act .ico { color: var(--text); }
+    [data-actions="E"] .act::after {
+      content: ""; position: absolute; left: 28%; right: 28%; bottom: 2px; height: 2px;
+      border-radius: 2px; background: transparent;
+    }
+    [data-actions="E"] .act:hover::after,
+    [data-actions="E"] .act:focus-visible::after { background: var(--primary); box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 70%, transparent); }
+
+    /* F — Halo ring icons */
+    [data-actions="F"] .actions { background: transparent; gap: 6px; }
+    [data-actions="F"] .act .lab { order: 1; color: var(--muted); }
+    [data-actions="F"] .act .ico {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: color-mix(in srgb, var(--bg) 70%, transparent);
+      color: var(--primary);
+      box-shadow:
+        inset 0 0 0 2px color-mix(in srgb, var(--primary) 85%, transparent),
+        0 0 0 6px color-mix(in srgb, var(--primary) 14%, transparent),
+        0 0 18px color-mix(in srgb, var(--primary) 40%, transparent);
+      animation: haloBreath 2.8s ease-in-out infinite;
+    }
+
+    /* ——— TABS (shared) ——— */
+    .tabs {
+      display: flex; gap: 8px; padding: 4px 14px 12px; align-items: center;
+    }
+    .tab {
+      border: 0; background: transparent; color: var(--text); font: inherit;
+      font-size: .88rem; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    }
+    .tab.on { background: #fff; color: #0a0a0a; }
+
+    /* ——— INFO ——— */
+    .info {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      padding: 4px 12px 14px; border-bottom: 1px solid var(--line);
+    }
+    .stat { text-align: center; padding: 6px 4px; }
+    .stat .val { display: block; font-size: .95rem; font-weight: 700; line-height: 1.25; margin-bottom: 3px; }
+    .stat .lbl { display: block; font-size: .72rem; color: var(--muted); }
+    .stat .val.muted-empty { opacity: .55; font-weight: 600; font-size: .78rem; }
+
+    /* 1 — Current bare */
+    [data-info="1"] .info { gap: 0; }
+
+    /* 2 — Soft cards */
+    [data-info="2"] .stat {
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      border-radius: 12px; padding: 10px 6px;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-info="2"] .stat:last-child {
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent),
+        0 0 16px color-mix(in srgb, var(--primary) 18%, transparent);
+    }
+    [data-info="2"] .stat:last-child .val { color: var(--primary); }
+
+    /* 3 — Value underline */
+    [data-info="3"] .stat .val {
+      display: inline-block; padding-bottom: 4px;
+      box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--primary) 55%, transparent);
+    }
+    [data-info="3"] .stat:last-child .val { box-shadow: inset 0 -2px 0 var(--primary); color: var(--primary); }
+
+    /* 4 — Compact pills */
+    [data-info="4"] .info { gap: 6px; }
+    [data-info="4"] .stat {
+      border-radius: 999px; padding: 8px 6px;
+      background: color-mix(in srgb, var(--primary) 10%, var(--card));
+    }
+    [data-info="4"] .stat .val { font-size: .85rem; }
+    [data-info="4"] .stat:last-child {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 45%, transparent);
+      animation: breathGlow 2.8s ease-in-out infinite;
+    }
+    [data-info="4"] .stat:last-child .val,
+    [data-info="4"] .stat:last-child .lbl { color: var(--on-primary); }
+
+    /* 5 — Stacked with icons */
+    [data-info="5"] .stat { display: grid; justify-items: center; gap: 2px; }
+    [data-info="5"] .stat .glyph {
+      width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center;
+      background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--primary);
+      margin-bottom: 4px;
+    }
+    [data-info="5"] .stat .glyph svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* 6 — Single spotlight row */
+    [data-info="6"] .info {
+      grid-template-columns: 1.2fr .9fr .9fr; align-items: stretch;
+      background: color-mix(in srgb, var(--card) 80%, transparent);
+      margin: 0 12px 12px; padding: 12px; border-radius: 14px; border-bottom: 0;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-info="6"] .stat:first-child { text-align: left; padding-left: 4px; }
+    [data-info="6"] .stat:first-child .val { font-size: 1.35rem; color: var(--primary); font-family: var(--display); font-weight: 400; }
+    [data-info="6"] .stat .val.muted-empty { font-size: .72rem; }
+
+    .blurb { padding: 12px 14px 8px; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+    .progress { padding: 0 14px 10px; font-size: .8rem; color: var(--text); opacity: .85; }
+
+    /* ——— CTA ——— */
+    .cta-wrap { padding: 4px 12px 16px; }
+    .cta {
+      width: 100%; border: 0; border-radius: 12px; padding: 14px 16px;
+      font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .cta svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.9; }
+
+    [data-cta="O"] .cta { background: var(--cta-idle); color: #111; } /* current grey */
+    [data-cta="P"] .cta {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow:
+        0 10px 24px color-mix(in srgb, var(--primary) 40%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--primary) 50%, transparent);
+      animation: breathGlow 2.6s ease-in-out infinite;
+    }
+    [data-cta="Q"] .cta {
+      background: color-mix(in srgb, var(--bg) 70%, transparent); color: var(--text);
+      box-shadow:
+        inset 0 0 0 2px var(--primary),
+        0 0 0 6px color-mix(in srgb, var(--primary) 14%, transparent),
+        0 0 22px color-mix(in srgb, var(--primary) 35%, transparent);
+      animation: haloBreath 2.8s ease-in-out infinite;
+    }
+    [data-cta="R"] .cta {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 92%, #fff), var(--primary));
+      color: var(--on-primary);
+      box-shadow: 0 12px 28px color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+
+    @keyframes breathGlow {
+      0%, 100% { filter: brightness(1); box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 35%, transparent), 0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent); }
+      50% { filter: brightness(1.08); box-shadow: 0 10px 26px color-mix(in srgb, var(--primary) 55%, transparent), 0 0 0 7px color-mix(in srgb, var(--primary) 22%, transparent); }
+    }
+    @keyframes haloBreath {
+      0%, 100% {
+        box-shadow:
+          inset 0 0 0 2px color-mix(in srgb, var(--primary) 85%, transparent),
+          0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent),
+          0 0 16px color-mix(in srgb, var(--primary) 32%, transparent);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 0 2px color-mix(in srgb, var(--primary) 95%, transparent),
+          0 0 0 8px color-mix(in srgb, var(--primary) 20%, transparent),
+          0 0 26px color-mix(in srgb, var(--primary) 50%, transparent);
+      }
+    }
+
+    .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 28px; }
+    .mini {
+      border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px;
+    }
+    .mini .lab { font-size: .72rem; color: var(--muted); margin-bottom: 8px; letter-spacing: .04em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Detalle · acciones e informaciones</h1>
+    <p class="lead">
+      Propuestas para la franja <strong>Marcador / Favorito / Navegar / Compartir</strong>,
+      el bloque de stats (Vistas · Rating · Capítulos) y el CTA <strong>Leer libro</strong>
+      (el gris actual marcado para reemplazar). Colores por tema activo.
+    </p>
+
+    <div class="ctrl-label">Tema</div>
+    <div class="chips" id="themes" role="group">
+      <button type="button" class="chip" data-theme="ultimate" aria-pressed="true"><span class="swatch" style="--sw:#1a6cff"></span>Ultimate Blue</button>
+      <button type="button" class="chip" data-theme="fire" aria-pressed="false"><span class="swatch" style="--sw:#e53935"></span>Fire</button>
+      <button type="button" class="chip" data-theme="green" aria-pressed="false"><span class="swatch" style="--sw:#2e7d32"></span>Green</button>
+      <button type="button" class="chip" data-theme="banana" aria-pressed="false"><span class="swatch" style="--sw:#f9a825"></span>Banana</button>
+    </div>
+
+    <div class="group-title">Acciones (4 botones)</div>
+    <div class="styles" id="actions" role="group">
+      <button type="button" class="style-card" data-actions="A" aria-pressed="false">
+        <div class="letter">A</div><strong>Strip actual</strong><span>Fila plana sobre card oscura.</span>
+      </button>
+      <button type="button" class="style-card" data-actions="B" aria-pressed="false">
+        <div class="letter">B</div><strong>Icon disc</strong><span>Como FAB E: disco primary + sombra + respiración.</span>
+      </button>
+      <button type="button" class="style-card" data-actions="C" aria-pressed="true">
+        <div class="letter">C</div><strong>Ghost tiles</strong><span>Baldosas / círculos ghost + glyph primary.</span>
+      </button>
+      <button type="button" class="style-card" data-actions="D" aria-pressed="false">
+        <div class="letter">D</div><strong>Rail tint</strong><span>Carril teñido + glyphs primary.</span>
+      </button>
+      <button type="button" class="style-card" data-actions="E" aria-pressed="false">
+        <div class="letter">E</div><strong>Underline</strong><span>Minimal; acento al foco.</span>
+      </button>
+      <button type="button" class="style-card" data-actions="F" aria-pressed="false">
+        <div class="letter">F</div><strong>Halo ring</strong><span>Anillo luminoso alrededor del icono.</span>
+      </button>
+    </div>
+
+    <div class="group-title">Informaciones (stats)</div>
+    <div class="styles" id="infos" role="group">
+      <button type="button" class="style-card" data-info="1" aria-pressed="false">
+        <div class="letter">1</div><strong>Bare</strong><span>Columnas actuales sin contenedor.</span>
+      </button>
+      <button type="button" class="style-card" data-info="2" aria-pressed="true">
+        <div class="letter">2</div><strong>Soft cards</strong><span>3 tarjetas; Capítulos resaltado.</span>
+      </button>
+      <button type="button" class="style-card" data-info="3" aria-pressed="false">
+        <div class="letter">3</div><strong>Underline</strong><span>Valor con subrayado primary.</span>
+      </button>
+      <button type="button" class="style-card" data-info="4" aria-pressed="false">
+        <div class="letter">4</div><strong>Pills</strong><span>Píldoras; Capítulos full primary + glow.</span>
+      </button>
+      <button type="button" class="style-card" data-info="5" aria-pressed="false">
+        <div class="letter">5</div><strong>Con iconos</strong><span>Glyph + valor + label.</span>
+      </button>
+      <button type="button" class="style-card" data-info="6" aria-pressed="false">
+        <div class="letter">6</div><strong>Spotlight</strong><span>Capítulos grandes a la izquierda.</span>
+      </button>
+    </div>
+
+    <div class="group-title">CTA Leer libro</div>
+    <div class="styles" id="ctas" role="group">
+      <button type="button" class="style-card" data-cta="O" aria-pressed="false">
+        <div class="letter">O</div><strong>Gris actual</strong><span>El que cruzaste en rojo.</span>
+      </button>
+      <button type="button" class="style-card" data-cta="P" aria-pressed="false">
+        <div class="letter">P</div><strong>Primary fill</strong><span>Lleno primary + sombra + breath.</span>
+      </button>
+      <button type="button" class="style-card" data-cta="Q" aria-pressed="true">
+        <div class="letter">Q</div><strong>Halo outline</strong><span>Anillo respirando, fondo oscuro.</span>
+      </button>
+      <button type="button" class="style-card" data-cta="R" aria-pressed="false">
+        <div class="letter">R</div><strong>Gradient fill</strong><span>Primary con ligero highlight.</span>
+      </button>
+    </div>
+
+    <div class="stage">
+      <div class="note">
+        <h2>Vista previa</h2>
+        <p>Combina acciones + info + CTA. Los vacíos (“Sin información”) se ven más discretos; el dato real (669) destaca.</p>
+        <ul>
+          <li><strong>B + 2 + P</strong> — coherente con FAB Icon disc y Ultimate Blue.</li>
+          <li><strong>F + 4 + Q</strong> — más “glow / halo”.</li>
+          <li><strong>C + 3 + R</strong> — más quieto, sin animación fuerte.</li>
+        </ul>
+        <p class="pick">Activo: acciones <strong id="pickA">C</strong> · info <strong id="pickI">2</strong> · CTA <strong id="pickC">Q</strong> · tema <strong id="pickT">Ultimate Blue</strong></p>
+      </div>
+
+      <div class="phone" id="phone">
+        <div class="phone-top">
+          <div class="cover" aria-hidden="true"></div>
+          <div class="meta">
+            <h3>Absolute Regression</h3>
+            <p class="author">Autor desconocido</p>
+            <p class="last">Último: Chapter 669</p>
+          </div>
+          <button type="button" class="close" aria-label="Cerrar">×</button>
+        </div>
+
+        <div class="actions" id="actionRow">
+          <button type="button" class="act"><span class="lab">Marcador</span><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 4h9a2 2 0 0 1 2 2v14l-5.5-3.2L6 20V6a2 2 0 0 1 2-2z"/></svg></span></button>
+          <button type="button" class="act"><span class="lab">Favorito</span><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span></button>
+          <button type="button" class="act"><span class="lab">Navegar</span><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></span></button>
+          <button type="button" class="act"><span class="lab">Compartir</span><span class="ico"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 13.2 15.6 17.3M15.5 6.7 8.5 10.8"/></svg></span></button>
+        </div>
+
+        <div class="tabs">
+          <button type="button" class="tab on">Novela</button>
+          <button type="button" class="tab">Relacionado</button>
+          <button type="button" class="tab">Capítulos</button>
+        </div>
+
+        <div class="info" id="infoRow">
+          <div class="stat">
+            <span class="glyph" hidden><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></svg></span>
+            <span class="val muted-empty">Sin información</span>
+            <span class="lbl">Vistas</span>
+          </div>
+          <div class="stat">
+            <span class="glyph" hidden><svg viewBox="0 0 24 24"><path d="m12 3 2.4 5.7L20 10l-4.5 3.9L16.8 20 12 16.8 7.2 20l1.3-6.1L4 10l5.6-1.3L12 3z"/></svg></span>
+            <span class="val muted-empty">Sin información</span>
+            <span class="lbl">Rating</span>
+          </div>
+          <div class="stat">
+            <span class="glyph" hidden><svg viewBox="0 0 24 24"><path d="M6 5h12M6 12h12M6 19h8"/></svg></span>
+            <span class="val">669</span>
+            <span class="lbl">Capítulos</span>
+          </div>
+        </div>
+
+        <div class="blurb">
+          «Envíame al pasado».<br />
+          Así comenzó el primer paso hacia la venganza.
+        </div>
+        <div class="progress">0/669</div>
+
+        <div class="cta-wrap">
+          <button type="button" class="cta">
+            <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/><path d="M11 5v14M13 5v14"/></svg>
+            Leer libro
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const THEMES = { ultimate: "Ultimate Blue", fire: "Fire", green: "Green", banana: "Banana" };
+    const root = document.documentElement;
+
+    function syncInfoIcons() {
+      const show = root.getAttribute("data-info") === "5";
+      document.querySelectorAll("#infoRow .glyph").forEach((g) => { g.hidden = !show; });
+    }
+
+    function setTheme(t) {
+      root.setAttribute("data-theme", t);
+      document.querySelectorAll("#themes .chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.theme === t)));
+      document.getElementById("pickT").textContent = THEMES[t];
+    }
+    function setActions(a) {
+      root.setAttribute("data-actions", a);
+      document.querySelectorAll("#actions .style-card").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.actions === a)));
+      document.getElementById("pickA").textContent = a;
+    }
+    function setInfo(i) {
+      root.setAttribute("data-info", i);
+      document.querySelectorAll("#infos .style-card").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.info === i)));
+      document.getElementById("pickI").textContent = i;
+      syncInfoIcons();
+    }
+    function setCta(c) {
+      root.setAttribute("data-cta", c);
+      document.querySelectorAll("#ctas .style-card").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.cta === c)));
+      document.getElementById("pickC").textContent = c;
+    }
+
+    document.getElementById("themes").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-theme]"); if (b) setTheme(b.dataset.theme);
+    });
+    document.getElementById("actions").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-actions]"); if (b) setActions(b.dataset.actions);
+    });
+    document.getElementById("infos").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-info]"); if (b) setInfo(b.dataset.info);
+    });
+    document.getElementById("ctas").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-cta]"); if (b) setCta(b.dataset.cta);
+    });
+
+    syncInfoIcons();
+  </script>
+</body>
+</html>

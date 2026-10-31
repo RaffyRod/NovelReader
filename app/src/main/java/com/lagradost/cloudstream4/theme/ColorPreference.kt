@@ -24,8 +24,28 @@ fun perfToMode(perf: String?) =
         else -> CloudStreamThemeMode.UltimateBlue
     }
 
-fun perfToColor(perf : String?) = when (perf) {
-    "UltimateBlue" -> CloudStreamPrimaryColor.ULTIMATE_BLUE
+fun perfToColor(perf: String?, darkSurface: Boolean = true) = when (perf) {
+    "UltimateBlue", "BlueFire" -> CloudStreamPrimaryColor.ULTIMATE_BLUE
+    "UltimateBlack", "BlackFire", "White" ->
+        if (darkSurface) CloudStreamPrimaryColor.ULTIMATE_BLACK
+        else CloudStreamPrimaryColor.ULTIMATE_BLACK_LIGHT
+    "UltimateLava", "LavaFire", "Red" -> CloudStreamPrimaryColor.ULTIMATE_LAVA
+    "UltimateEmerald", "EmeraldFire" ->
+        if (darkSurface) CloudStreamPrimaryColor.ULTIMATE_EMERALD
+        else CloudStreamPrimaryColor.ULTIMATE_EMERALD_LIGHT
+    "UltimateViolet", "VioletFire" -> CloudStreamPrimaryColor.ULTIMATE_VIOLET
+    "UltimateGold", "GoldFire" ->
+        if (darkSurface) CloudStreamPrimaryColor.ULTIMATE_GOLD
+        else CloudStreamPrimaryColor.ULTIMATE_GOLD_LIGHT
+    "UltimateCyan", "CyanFire" ->
+        if (darkSurface) CloudStreamPrimaryColor.ULTIMATE_CYAN
+        else CloudStreamPrimaryColor.ULTIMATE_CYAN_LIGHT
+    "UltimateRose", "RoseFire" -> CloudStreamPrimaryColor.ULTIMATE_ROSE
+    "UltimateMidnight", "MidnightFire" -> CloudStreamPrimaryColor.ULTIMATE_MIDNIGHT
+    "UltimateCrimson", "CrimsonFire" -> CloudStreamPrimaryColor.ULTIMATE_CRIMSON
+    "UltimateSoft", "SoftFire" ->
+        if (darkSurface) CloudStreamPrimaryColor.ULTIMATE_SOFT
+        else CloudStreamPrimaryColor.ULTIMATE_SOFT_LIGHT
     "Normal" -> CloudStreamPrimaryColor.NORMAL
     "Blue" -> CloudStreamPrimaryColor.BLUE
     "Purple" -> CloudStreamPrimaryColor.PURPLE

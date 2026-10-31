@@ -192,6 +192,7 @@
     <string name="resume">Devam Et</string>
     <string name="re_downloaded">Yeniden İndir</string>
     <string name="loading">Yükleniyor…</string>
+    <string name="loading_chapter">Bölüm yükleniyor…</string>
     <string name="loading_format" formatted="true">%s Yükleniyor…</string>
     <string name="chapter_format" formatted="true">Bölüm %s</string>
 

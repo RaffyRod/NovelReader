@@ -79,7 +79,11 @@ class NavIconDrawable(
     private val icon: NavIcon,
     private val style: NavStyle,
     private val fire: UiIconTheme = UiIconTheme.BLUE_FIRE,
+    private val iconStyle: IconStyle = IconStyle.FIRE_AURA,
+    private val darkSurface: Boolean = true,
 ) : Drawable() {
+    private val glowArgb get() = fire.glowArgbFor(darkSurface)
+    private val coreArgb get() = fire.coreArgbFor(darkSurface)
     private val fillPath = Path().apply {
         fillType = Path.FillType.EVEN_ODD
         icon.fillable.forEach { addPath(PathParser.createPathFromPathData(it)) }
@@ -100,25 +104,42 @@ class NavIconDrawable(
         val scale = minOf(b.width(), b.height()) / GRID
         canvas.scale(scale, scale)
 
-        // Fire aura (stronger when selected)
-        paint.reset()
-        paint.isAntiAlias = true
-        paint.style = Paint.Style.FILL
-        val cx = GRID / 2f
-        val cy = GRID * 0.72f
-        val glowA = if (selected) 0xB8 else 0x55
-        paint.shader = RadialGradient(
-            cx, cy, GRID * 0.7f,
-            intArrayOf(
-                (glowA shl 24) or (fire.glowArgb and 0x00FFFFFF),
-                (0x28 shl 24) or (fire.coreArgb and 0x00FFFFFF),
-                Color.TRANSPARENT,
-            ),
-            floatArrayOf(0f, 0.45f, 1f),
-            Shader.TileMode.CLAMP,
-        )
-        canvas.drawCircle(cx, cy, GRID * 0.7f, paint)
-        paint.shader = null
+        // Accent treatment from IconStyle (colors from Ultimate pack).
+        when (iconStyle) {
+            IconStyle.FIRE_AURA, IconStyle.SOFT_HALO, IconStyle.NEON_EDGE, IconStyle.GLASS_CAPSULE -> {
+                paint.reset()
+                paint.isAntiAlias = true
+                paint.style = Paint.Style.FILL
+                val cx = GRID / 2f
+                val cy = GRID * 0.72f
+                val glowA = when (iconStyle) {
+                    IconStyle.NEON_EDGE -> if (selected) 0xE0 else 0x70
+                    IconStyle.SOFT_HALO -> if (selected) 0x90 else 0x40
+                    IconStyle.GLASS_CAPSULE -> if (selected) 0x66 else 0x30
+                    else -> if (selected) 0xB8 else 0x55
+                }
+                paint.shader = RadialGradient(
+                    cx, cy, GRID * 0.7f,
+                    intArrayOf(
+                        (glowA shl 24) or (glowArgb and 0x00FFFFFF),
+                        (0x28 shl 24) or (coreArgb and 0x00FFFFFF),
+                        Color.TRANSPARENT,
+                    ),
+                    floatArrayOf(0f, 0.45f, 1f),
+                    Shader.TileMode.CLAMP,
+                )
+                canvas.drawCircle(cx, cy, GRID * 0.7f, paint)
+                paint.shader = null
+            }
+            IconStyle.ORBIT_DOT -> {
+                paint.reset()
+                paint.isAntiAlias = true
+                paint.style = Paint.Style.FILL
+                paint.color = coreArgb
+                canvas.drawCircle(GRID * 0.78f, GRID * 0.22f, 2.2f, paint)
+            }
+            else -> Unit
+        }
 
         if (style == NavStyle.KANJI) {
             paint.reset()
@@ -192,10 +213,12 @@ object NavStyler {
         accent: Int,
         gray: Int,
         fire: UiIconTheme = UiIconTheme.BLUE_FIRE,
+        iconStyle: IconStyle = IconStyle.FIRE_AURA,
+        darkSurface: Boolean = true,
     ) {
         val active = when {
-            style == NavStyle.DUOTONE -> fire.glowArgb
-            else -> fire.coreArgb
+            style == NavStyle.DUOTONE -> fire.glowArgbFor(darkSurface)
+            else -> fire.coreArgbFor(darkSurface)
         }
         val tint = ColorStateList(
             arrayOf(intArrayOf(android.R.attr.state_selected), intArrayOf()),
@@ -204,13 +227,14 @@ object NavStyler {
         navView.itemIconTintList = tint
         navView.itemTextColor = tint
         navView.labelVisibilityMode = NavigationBarView.LABEL_VISIBILITY_LABELED
-        val pill = fire.coreArgb
+        val pill = fire.coreArgbFor(darkSurface)
         navView.itemActiveIndicatorColor = ColorStateList.valueOf(
             if (style == NavStyle.OUTLINE) Color.argb(0x33, Color.red(pill), Color.green(pill), Color.blue(pill))
             else Color.TRANSPARENT
         )
         NavIcon.entries.forEach { icon ->
-            navView.menu.findItem(icon.itemId)?.icon = NavIconDrawable(icon, style, fire)
+            navView.menu.findItem(icon.itemId)?.icon =
+                NavIconDrawable(icon, style, fire, iconStyle, darkSurface)
         }
     }
 

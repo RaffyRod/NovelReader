@@ -2,7 +2,6 @@ package com.lagradost.quicknovel.ui.settings
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.widget.Toast
 import androidx.core.net.toUri
 import com.lagradost.quicknovel.GeminiProtocol
@@ -53,10 +52,7 @@ import com.lagradost.cloudstream4.compose.circle
 import com.lagradost.cloudstream4.compose.rounded
 import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.cloudstream4.theme.CloudStreamPreviewTheme
-import com.lagradost.cloudstream4.theme.CloudStreamPrimaryColor
-import com.lagradost.cloudstream4.theme.modeToTheme
 import com.lagradost.cloudstream4.theme.perfToColor
-import com.lagradost.cloudstream4.theme.perfToMode
 import com.lagradost.cloudstream4.viewmodels.GithubAction
 import com.lagradost.quicknovel.BuildConfig
 import com.lagradost.quicknovel.CommonActivity.activity
@@ -249,23 +245,17 @@ object SettingScreen : SearchableSettings {
             Preference.PreferenceGroup(
                 title = stringResource(R.string.theme),
                 preferenceItems = persistentListOf(
-                    Preference.PreferenceItem.ListPreference(
+                    Preference.PreferenceItem.SwitchPreference(
                         icon = painterResource(R.drawable.palette_24px),
-                        title = stringResource(R.string.theme),
-                        preference = settings.ui.theme,
-                        entries = stringArrayResource(R.array.themes_names_values).zip(
-                            stringArrayResource(R.array.themes_names)
-                        ).associate { it }.toPersistentMap().let { mapping ->
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) { // remove monet on android 11 and less
-                                mapping.removing("Monet")
-                            } else {
-                                mapping
+                        title = stringResource(R.string.dark_mode_settings),
+                        subtitle = stringResource(R.string.dark_mode_settings_desc),
+                        preference = settings.ui.darkMode,
+                        onValueChanged = { dark ->
+                            activity?.let { act ->
+                                com.lagradost.quicknovel.ui.AppearanceMode.apply(act, dark)
                             }
+                            true
                         },
-                        iconProvider = { k, _ ->
-                            val theme = modeToTheme(perfToMode(k), CloudStreamPrimaryColor.ULTIMATE_BLUE)
-                            RoundColor(theme.background)
-                        }
                     ),
                     Preference.PreferenceItem.ListPreference(
                         icon = painterResource(R.drawable.colors_24px),
@@ -274,8 +264,11 @@ object SettingScreen : SearchableSettings {
                         entries = stringArrayResource(R.array.ui_icon_themes_values).zip(
                             stringArrayResource(R.array.ui_icon_themes_names)
                         ).associate { it }.toPersistentMap(),
+                        iconProvider = { k, _ ->
+                            RoundColor(perfToColor(k).color)
+                        },
                         onValueChanged = { value ->
-                            // One Fire theme drives settings icons, nav, sections and launcher.
+                            // Accent pack only; icon treatment stays on Tema de iconos.
                             activity?.let { act ->
                                 com.lagradost.quicknovel.ui.FireThemes.apply(act, value)
                             }
@@ -284,17 +277,11 @@ object SettingScreen : SearchableSettings {
                     ),
                     Preference.PreferenceItem.ListPreference(
                         icon = painterResource(R.drawable.extension_24px),
-                        title = stringResource(R.string.app_icon_theme_settings),
-                        preference = settings.ui.appIconTheme,
-                        entries = stringArrayResource(R.array.app_icon_themes_values).zip(
-                            stringArrayResource(R.array.app_icon_themes_names)
+                        title = stringResource(R.string.icon_style_settings),
+                        preference = settings.ui.iconStyle,
+                        entries = stringArrayResource(R.array.icon_styles_values).zip(
+                            stringArrayResource(R.array.icon_styles_names)
                         ).associate { it }.toPersistentMap(),
-                        onValueChanged = { value ->
-                            activity?.let { act ->
-                                com.lagradost.quicknovel.ui.FireThemes.apply(act, value)
-                            }
-                            true
-                        },
                     ),
                     Preference.PreferenceItem.ListPreference(
                         icon = painterResource(R.drawable.ic_baseline_collections_bookmark_24),
@@ -316,24 +303,6 @@ object SettingScreen : SearchableSettings {
                             "2" to stringResource(R.string.settings_style_2),
                             "3" to stringResource(R.string.settings_style_3),
                         ),
-                    ),
-                    Preference.PreferenceItem.ListPreference(
-                        icon = painterResource(R.drawable.colors_24px),
-                        title = stringResource(R.string.primary_color_settings),
-                        preference = settings.ui.primaryColor,
-                        entries = stringArrayResource(R.array.themes_overlay_names_values).zip(
-                            stringArrayResource(R.array.themes_overlay_names)
-                        ).associate { it }.toPersistentMap().let { mapping ->
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) { // remove monet on android 11 and less
-                                mapping.removing("Monet").removing("Monet2")
-                            } else {
-                                mapping
-                            }
-                        },
-                        iconProvider = { k, _ ->
-                            val color = perfToColor(k)
-                            RoundColor(color.color)
-                        }
                     ),
                     Preference.PreferenceItem.ListPreference(
                         icon = painterResource(R.drawable.star_24px),

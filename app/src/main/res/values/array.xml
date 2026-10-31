@@ -34,85 +34,116 @@
     </string-array>
 
     <string-array name="app_icon_themes_names">
-        <item>Ultimate Blue Fire</item>
-        <item>Ultimate Black Fire</item>
-        <item>Ultimate Lava Fire</item>
+        <item>Ultimate Blue</item>
+        <item>Ultimate Black</item>
+        <item>Ultimate Lava</item>
+        <item>Ultimate Emerald</item>
+        <item>Ultimate Violet</item>
+        <item>Ultimate Gold</item>
+        <item>Ultimate Cyan</item>
+        <item>Ultimate Rose</item>
+        <item>Ultimate Midnight</item>
+        <item>Ultimate Crimson</item>
+        <item>Ultimate Soft</item>
     </string-array>
     <string-array name="app_icon_themes_values">
         <item>BlueFire</item>
         <item>BlackFire</item>
         <item>LavaFire</item>
+        <item>EmeraldFire</item>
+        <item>VioletFire</item>
+        <item>GoldFire</item>
+        <item>CyanFire</item>
+        <item>RoseFire</item>
+        <item>MidnightFire</item>
+        <item>CrimsonFire</item>
+        <item>SoftFire</item>
     </string-array>
 
     <string-array name="ui_icon_themes_names">
-        <item>Ultimate Blue Fire</item>
-        <item>Ultimate Black Fire</item>
-        <item>Ultimate Lava Fire</item>
+        <item>Ultimate Blue</item>
+        <item>Ultimate Black</item>
+        <item>Ultimate Lava</item>
+        <item>Ultimate Emerald</item>
+        <item>Ultimate Violet</item>
+        <item>Ultimate Gold</item>
+        <item>Ultimate Cyan</item>
+        <item>Ultimate Rose</item>
+        <item>Ultimate Midnight</item>
+        <item>Ultimate Crimson</item>
+        <item>Ultimate Soft</item>
     </string-array>
     <string-array name="ui_icon_themes_values">
         <item>BlueFire</item>
         <item>BlackFire</item>
         <item>LavaFire</item>
+        <item>EmeraldFire</item>
+        <item>VioletFire</item>
+        <item>GoldFire</item>
+        <item>CyanFire</item>
+        <item>RoseFire</item>
+        <item>MidnightFire</item>
+        <item>CrimsonFire</item>
+        <item>SoftFire</item>
+    </string-array>
+
+    <string-array name="icon_styles_names">
+        <item>A — Fire Aura</item>
+        <item>B — Soft Halo</item>
+        <item>C — Flat Tint</item>
+        <item>D — Outline Ring</item>
+        <item>E — Squircle Tile</item>
+        <item>F — Neon Edge</item>
+        <item>G — Glass Capsule</item>
+        <item>H — Duotone Badge</item>
+        <item>I — Minimal Glyph</item>
+        <item>J — Orbit Dot</item>
+    </string-array>
+    <string-array name="icon_styles_values">
+        <item>A</item>
+        <item>B</item>
+        <item>C</item>
+        <item>D</item>
+        <item>E</item>
+        <item>F</item>
+        <item>G</item>
+        <item>H</item>
+        <item>I</item>
+        <item>J</item>
     </string-array>
 
     <string-array name="themes_names">
         <item>Ultimate Blue</item>
-        <item>Dark</item>
-        <item>Gray</item>
-        <item>Amoled</item>
-        <item>Flashbang</item>
-        <item>Material You</item>
     </string-array>
     <string-array name="themes_names_values">
         <item>UltimateBlue</item>
-        <item>AmoledLight</item>
-        <item>Black</item>
-        <item>Amoled</item>
-        <item>Light</item>
-        <item>Monet</item>
     </string-array>
 
     <string-array name="themes_overlay_names">
         <item>Ultimate Blue</item>
-        <item>Normal</item>
-        <item>Carnation Pink</item>
-        <item>Dark Green</item>
-        <item>Maroon</item>
-        <item>Navy Blue</item>
-        <item>Grey</item>
-        <item>White</item>
-        <item>Brown</item>
-        <item>Cool</item>
-        <item>Fire</item>
-        <item>Burple</item>
-        <item>Green</item>
-        <item>Apple</item>
-        <item>Banana</item>
-        <item>Party</item>
-        <item>Pink Pain</item>
-        <item>Material You</item>
-        <item>Material You (Secondary)</item>
+        <item>Ultimate Black</item>
+        <item>Ultimate Lava</item>
+        <item>Ultimate Emerald</item>
+        <item>Ultimate Violet</item>
+        <item>Ultimate Gold</item>
+        <item>Ultimate Cyan</item>
+        <item>Ultimate Rose</item>
+        <item>Ultimate Midnight</item>
+        <item>Ultimate Crimson</item>
+        <item>Ultimate Soft</item>
     </string-array>
     <string-array name="themes_overlay_names_values">
         <item>UltimateBlue</item>
-        <item>Normal</item>
-        <item>CarnationPink</item>
-        <item>DarkGreen</item>
-        <item>Maroon</item>
-        <item>NavyBlue</item>
-        <item>Grey</item>
-        <item>White</item>
-        <item>Brown</item>
-        <item>Blue</item>
-        <item>Red</item>
-        <item>Purple</item>
-        <item>Green</item>
-        <item>GreenApple</item>
-        <item>Banana</item>
-        <item>Party</item>
-        <item>Pink</item>
-        <item>Monet</item>
-        <item>Monet2</item>
+        <item>UltimateBlack</item>
+        <item>UltimateLava</item>
+        <item>UltimateEmerald</item>
+        <item>UltimateViolet</item>
+        <item>UltimateGold</item>
+        <item>UltimateCyan</item>
+        <item>UltimateRose</item>
+        <item>UltimateMidnight</item>
+        <item>UltimateCrimson</item>
+        <item>UltimateSoft</item>
     </string-array>
 
     <array name="readerBgColors">

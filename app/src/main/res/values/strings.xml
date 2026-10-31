@@ -128,7 +128,8 @@
 
 
     <!-- read -->
-    <string name="read_epub">Read epub</string>
+    <string name="read_epub">Open EPUB</string>
+    <string name="read_epub_desc">Open the downloaded EPUB file</string>
     <string name="type_reading">Reading</string>
     <string name="type_on_hold">On-Hold</string>
     <string name="type_completed">Completed</string>
@@ -200,9 +201,15 @@
     <string name="app_icon_theme_settings">Launcher icon</string>
     <string name="app_icon_theme_settings_desc">Launcher icon style</string>
     <string name="app_icon_theme_key">app_icon_theme_key</string>
-    <string name="ui_icon_theme_settings">Fire theme</string>
-    <string name="ui_icon_theme_settings_desc">Settings icons, menu, sections and launcher</string>
+    <string name="ui_icon_theme_settings">Ultimate theme</string>
+    <string name="ui_icon_theme_settings_desc">Accent color for UI, menu and sections; launcher updates on next cold start</string>
     <string name="ui_icon_theme_key">ui_icon_theme_key</string>
+    <string name="icon_style_settings">Icon theme</string>
+    <string name="icon_style_settings_desc">Icon treatment in Settings and nav (combine freely with Ultimate color)</string>
+    <string name="icon_style_key">icon_style_key</string>
+    <string name="dark_mode_settings">Dark mode</string>
+    <string name="dark_mode_settings_desc">Off = light surface; Ultimate accent stays the same</string>
+    <string name="dark_mode_key">dark_mode_key</string>
     <string name="theme_key">theme_key</string>
     <string name="theme">Theme</string>
     <string name="primary_color_key">primary_color_key</string>
@@ -251,6 +258,8 @@
     <string name="resume">Resume</string>
     <string name="re_downloaded">Re-Download</string>
     <string name="loading">Loading…</string>
+    <string name="loading_chapter">Loading chapter…</string>
+    <string name="loading_glyph" translatable="false">本</string>
     <string name="loading_format" formatted="true">Loading %s…</string>
     <string name="chapter_format" formatted="true">Chapter %s</string>
 
@@ -601,5 +610,6 @@
     <string name="search_filter_all">All</string>
     <string name="search_no_results">No results</string>
     <string name="detail_download">Download</string>
-    <string name="detail_read">Read</string>
+    <string name="detail_read">Read online</string>
+    <string name="detail_read_desc">Stream chapters online without opening an EPUB</string>
 </resources>

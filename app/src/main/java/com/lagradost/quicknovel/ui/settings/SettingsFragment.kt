@@ -34,29 +34,11 @@ class SettingsFragment : BaseComposeFragment(), SearchableSettings by SettingScr
             stringResource(R.string.locale_key),
             "en",
         ).collectAsState()
-        val theme by store.getString(
-            stringResource(R.string.theme_key),
-            "UltimateBlue",
-        ).collectAsState()
-        val color by store.getString(
-            stringResource(R.string.primary_color_key),
-            "UltimateBlue",
-        ).collectAsState()
-
-        //val context = LocalContext.current
-        //val scope = currentRecomposeScope
 
         LaunchedEffectSkipFirst(locale) {
-            //setLocale(context, locale)
-            //scope.invalidate()
-            activity?.recreate()
+            activity?.let { com.lagradost.quicknovel.ui.FireThemes.softRecreate(it) }
         }
-        LaunchedEffectSkipFirst(theme) {
-            activity?.recreate()
-        }
-        LaunchedEffectSkipFirst(color) {
-            activity?.recreate()
-        }
+        // Ultimate theme packs are applied by FireThemes.apply (soft recreate).
         super.Content()
     }
 

@@ -32,6 +32,16 @@
     <color name="colorPrimaryDark">#0A2A6E</color>
     <color name="colorAccent">#5AA2FF</color>
     <color name="colorPrimaryUltimateBlue">#1A6CFF</color>
+    <color name="colorPrimaryUltimateBlack">#E8EEF8</color>
+    <color name="colorPrimaryUltimateLava">#FF3B1C</color>
+    <color name="colorPrimaryUltimateEmerald">#00C853</color>
+    <color name="colorPrimaryUltimateViolet">#7C4DFF</color>
+    <color name="colorPrimaryUltimateGold">#FFB300</color>
+    <color name="colorPrimaryUltimateCyan">#00E5FF</color>
+    <color name="colorPrimaryUltimateRose">#FF4081</color>
+    <color name="colorPrimaryUltimateMidnight">#536DFE</color>
+    <color name="colorPrimaryUltimateCrimson">#FF1744</color>
+    <color name="colorPrimaryUltimateSoft">#90CAF9</color>
 
     <color name="primaryGrayBackground">#121A2C</color>
     <color name="primaryBlackBackground">#050B18</color>
@@ -44,6 +54,20 @@
     <color name="ultimateBlueBox">#101A30</color>
     <color name="ultimateBlueText">#E8F1FF</color>
     <color name="ultimateBlueGrayText">#8B97AB</color>
+
+    <color name="ultimateLightPrimaryGray">#E8EDF5</color>
+    <color name="ultimateLightBlack">#FFFFFF</color>
+    <color name="ultimateLightIconGray">#F1F4FA</color>
+    <color name="ultimateLightBox">#FFFFFF</color>
+    <color name="ultimateLightText">#0F1419</color>
+    <color name="ultimateLightGrayText">#4A5568</color>
+
+    <!-- Pale Ultimate packs remapped for light surfaces -->
+    <color name="colorPrimaryUltimateBlackLight">#2A3142</color>
+    <color name="colorPrimaryUltimateSoftLight">#1565C0</color>
+    <color name="colorPrimaryUltimateGoldLight">#C68400</color>
+    <color name="colorPrimaryUltimateCyanLight">#00838F</color>
+    <color name="colorPrimaryUltimateEmeraldLight">#00A843</color>
 
     <color name="textColor">#E8F1FF</color>
     <color name="semiWhite">#1AFFFFFF</color>

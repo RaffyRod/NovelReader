@@ -67,7 +67,8 @@
 
     <!-- Acciones de Usuario -->
     <string name="open_text">Leer</string>
-    <string name="read_epub">Leer libro</string>
+    <string name="read_epub">Abrir EPUB</string>
+    <string name="read_epub_desc">Abrir el archivo EPUB descargado</string>
     <string name="update_text">Actualizar</string>
     <string name="update">Actualizar</string>
     <string name="delete">Borrar</string>
@@ -188,9 +189,15 @@
     <string name="app_icon_theme_settings">Icono del launcher</string>
     <string name="app_icon_theme_settings_desc">Estilo del icono en el launcher</string>
     <string name="app_icon_theme_key">app_icon_theme_key</string>
-    <string name="ui_icon_theme_settings">Tema Fire</string>
-    <string name="ui_icon_theme_settings_desc">Iconos de ajustes, menú, secciones y launcher</string>
+    <string name="ui_icon_theme_settings">Tema Ultimate</string>
+    <string name="ui_icon_theme_settings_desc">Color de acento de la UI, menú y secciones; el launcher se actualiza al reiniciar</string>
     <string name="ui_icon_theme_key">ui_icon_theme_key</string>
+    <string name="icon_style_settings">Tema de iconos</string>
+    <string name="icon_style_settings_desc">Tratamiento de iconos en Ajustes y menú (combinable con el color Ultimate)</string>
+    <string name="icon_style_key">icon_style_key</string>
+    <string name="dark_mode_settings">Modo oscuro</string>
+    <string name="dark_mode_settings_desc">Apagado = superficie clara; el acento Ultimate no cambia</string>
+    <string name="dark_mode_key">dark_mode_key</string>
     <string name="theme_key">theme_key</string>
     <string name="theme">Tema</string>
     <string name="primary_color_key">primary_color_key</string>
@@ -245,6 +252,7 @@
 
     <!-- Errores y Estados -->
     <string name="loading">Cargando…</string>
+    <string name="loading_chapter">Cargando capítulo…</string>
     <string name="loading_format" formatted="true">Cargando %s…</string>
     <string name="reload_error">Error de conexión.</string>
     <string name="error_loading_novel">Error al cargar la novela</string>
@@ -561,5 +569,6 @@
     <string name="search_filter_all">Todos</string>
     <string name="search_no_results">Sin resultados</string>
     <string name="detail_download">Descargar</string>
-    <string name="detail_read">Leer</string>
+    <string name="detail_read">Leer en línea</string>
+    <string name="detail_read_desc">Leer capítulos en línea sin abrir un EPUB</string>
 </resources>

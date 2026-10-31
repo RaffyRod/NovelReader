@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="ultimate" data-tabs="5" data-leer="L4" data-bar="E">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultimate · Tabs · Leer libro · Barra sticky — mocks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --phone-w: 320px;
+    }
+    [data-theme="ultimate"] {
+      --page: #03060f; --bg: #050b18; --surface: #0a1224; --card: #0d1528;
+      --line: rgba(140,180,255,.12); --text: #e8f1ff; --muted: #8b97ab;
+      --primary: #1a6cff; --on-primary: #fff; --bar: #07101f; --grey-btn: #c8d0dc;
+    }
+    [data-theme="fire"] {
+      --page: #0c0404; --bg: #140808; --surface: #1c0c0c; --card: #241010;
+      --line: rgba(255,120,90,.14); --text: #ffece8; --muted: #b89088;
+      --primary: #e53935; --on-primary: #fff; --bar: #1a0a0a; --grey-btn: #d8c8c4;
+    }
+    [data-theme="green"] {
+      --page: #030a06; --bg: #06140c; --surface: #0a1c12; --card: #0e2418;
+      --line: rgba(80,220,140,.12); --text: #e8fff2; --muted: #88b098;
+      --primary: #2e7d32; --on-primary: #fff; --bar: #07140c; --grey-btn: #c8d4cc;
+    }
+    [data-theme="banana"] {
+      --page: #0c0a02; --bg: #141208; --surface: #1c1a0c; --card: #242210;
+      --line: rgba(240,200,60,.14); --text: #fffce8; --muted: #b0a878;
+      --primary: #f9a825; --on-primary: #1a1400; --bar: #161408; --grey-btn: #ddd6b8;
+    }
+    [data-theme="pink"] {
+      --page: #0c0408; --bg: #14060c; --surface: #1e0a14; --card: #281018;
+      --line: rgba(255,80,160,.14); --text: #ffe8f2; --muted: #b888a0;
+      --primary: #ff1493; --on-primary: #fff; --bar: #180610; --grey-btn: #e0c8d4;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: var(--font); color: var(--text);
+      background:
+        radial-gradient(880px 460px at 10% -8%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 55%),
+        var(--page);
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 22px 90px; }
+    h1 {
+      font-family: var(--display); font-weight: 400; letter-spacing: -.02em;
+      font-size: clamp(1.85rem, 3.4vw, 2.5rem); margin: 0 0 8px;
+    }
+    .lead { color: var(--muted); max-width: 68ch; line-height: 1.5; margin: 0 0 20px; font-size: .94rem; }
+    .ctrl-label {
+      font-size: .68rem; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin: 0 0 8px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .chip {
+      border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 85%, transparent);
+      color: var(--text); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: .84rem;
+      font-weight: 500; cursor: pointer;
+    }
+    .chip[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+    .chip .swatch {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+      vertical-align: middle; background: var(--sw);
+    }
+    .group-title { font-family: var(--display); font-size: 1.26rem; margin: 14px 0 10px; font-weight: 400; }
+    .styles {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(152px, 1fr));
+      gap: 9px; margin-bottom: 12px;
+    }
+    .style-card {
+      text-align: left; border: 1px solid var(--line); background: var(--surface);
+      border-radius: 14px; padding: 11px 12px; cursor: pointer; color: inherit; font: inherit;
+    }
+    .style-card[aria-pressed="true"] {
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+    }
+    .style-card .n { font-family: var(--display); font-size: 1.1rem; color: var(--primary); }
+    .style-card strong { display: block; font-size: .84rem; margin: 2px 0 2px; }
+    .style-card span { display: block; font-size: .7rem; color: var(--muted); line-height: 1.35; }
+
+    .stage {
+      display: grid; grid-template-columns: minmax(240px, 1fr) auto; gap: 26px; align-items: start;
+      margin-top: 8px;
+    }
+    @media (max-width: 920px) { .stage { grid-template-columns: 1fr; } }
+    .note {
+      border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 80%, transparent);
+      border-radius: 16px; padding: 18px;
+    }
+    .note h2 { font-family: var(--display); font-weight: 400; font-size: 1.28rem; margin: 0 0 8px; }
+    .note p, .note li { color: var(--muted); font-size: .86rem; line-height: 1.45; }
+    .note ul { margin: 0; padding-left: 1.1rem; }
+    .pick { margin-top: 12px; color: var(--text); font-size: .82rem; line-height: 1.5; }
+    .pick strong { color: var(--primary); }
+
+    .phone {
+      width: var(--phone-w); border-radius: 28px; overflow: hidden;
+      border: 1px solid var(--line); background: var(--bg);
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    }
+    .phone-body { padding: 14px 12px 0; min-height: 300px; }
+    .fake-title { font-size: .9rem; font-weight: 700; margin: 0 0 4px; }
+    .fake-meta { font-size: .75rem; color: var(--primary); margin: 0 0 14px; }
+
+    /* ——— TABS 1–12 ——— */
+    .tabs {
+      display: flex; align-items: center; gap: 8px; padding: 4px 2px 14px;
+      overflow-x: auto;
+    }
+    .tab {
+      border: 0; background: transparent; color: var(--text); font: inherit;
+      font-size: .88rem; font-weight: 600; padding: 7px 14px; cursor: pointer;
+      white-space: nowrap; border-radius: 999px;
+    }
+    [data-tabs="1"] .tab.on { background: #fff; color: #0a0a0a; }
+    [data-tabs="2"] .tab.on {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    [data-tabs="3"] .tabs { gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 0; }
+    [data-tabs="3"] .tab { border-radius: 0; padding: 10px 12px 12px; position: relative; color: var(--muted); }
+    [data-tabs="3"] .tab.on { color: var(--text); background: transparent; }
+    [data-tabs="3"] .tab.on::after {
+      content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px;
+      border-radius: 2px; background: var(--primary);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 70%, transparent);
+    }
+    [data-tabs="4"] .tabs {
+      background: color-mix(in srgb, var(--card) 90%, transparent);
+      border-radius: 14px; padding: 4px; gap: 4px;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-tabs="4"] .tab { flex: 1; text-align: center; padding: 8px 6px; font-size: .76rem; color: var(--muted); }
+    [data-tabs="4"] .tab.on {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+    [data-tabs="5"] .tab { color: var(--muted); }
+    [data-tabs="5"] .tab.on {
+      background: color-mix(in srgb, var(--primary) 18%, var(--card));
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent),
+        0 0 14px color-mix(in srgb, var(--primary) 25%, transparent);
+    }
+    [data-tabs="6"] .tab { color: var(--muted); display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
+    [data-tabs="6"] .tab::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+    [data-tabs="6"] .tab.on { color: var(--text); background: transparent; }
+    [data-tabs="6"] .tab.on::after {
+      background: var(--primary);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 80%, transparent);
+    }
+    [data-tabs="7"] .tabs { gap: 6px; }
+    [data-tabs="7"] .tab {
+      flex: 1; text-align: center; border-radius: 12px; padding: 9px 6px; font-size: .76rem;
+      background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--muted);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-tabs="7"] .tab.on {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    [data-tabs="8"] .tab { color: var(--muted); }
+    [data-tabs="8"] .tab.on {
+      background: transparent; color: var(--primary);
+      box-shadow: inset 0 0 0 2px var(--primary), 0 0 0 4px color-mix(in srgb, var(--primary) 14%, transparent);
+    }
+    [data-tabs="9"] .tabs { gap: 2px; }
+    [data-tabs="9"] .tab { color: var(--muted); padding: 8px 12px; position: relative; }
+    [data-tabs="9"] .tab.on {
+      color: var(--text); background: transparent;
+      text-shadow: 0 0 12px color-mix(in srgb, var(--primary) 55%, transparent);
+    }
+    [data-tabs="9"] .tab.on::before {
+      content: ""; position: absolute; inset: 0; border-radius: 10px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 16%, transparent), transparent);
+      z-index: -1;
+    }
+    [data-tabs="10"] .tabs {
+      gap: 0; border-radius: 999px; overflow: hidden;
+      box-shadow: inset 0 0 0 1px var(--line);
+      background: var(--card);
+    }
+    [data-tabs="10"] .tab {
+      flex: 1; text-align: center; border-radius: 0; font-size: .74rem; padding: 9px 4px; color: var(--muted);
+    }
+    [data-tabs="10"] .tab.on { background: #fff; color: #0a0a0a; }
+    [data-tabs="11"] .tab { color: var(--muted); letter-spacing: .02em; }
+    [data-tabs="11"] .tab.on {
+      color: var(--on-primary); background: var(--primary); border-radius: 10px;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent),
+        0 8px 18px color-mix(in srgb, var(--primary) 35%, transparent);
+      animation: breath 2.8s ease-in-out infinite;
+    }
+    [data-tabs="12"] .tabs { justify-content: space-between; gap: 0; }
+    [data-tabs="12"] .tab {
+      flex: 1; text-align: center; color: var(--muted); padding: 8px 4px 10px;
+      border-bottom: 2px solid transparent; border-radius: 0;
+    }
+    [data-tabs="12"] .tab.on {
+      color: var(--primary); background: transparent;
+      border-bottom-color: var(--primary);
+    }
+
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;
+    }
+    .stat {
+      text-align: center; padding: 10px 4px; border-radius: 12px;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    .stat:last-child { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 45%, transparent); }
+    .stat .v { display: block; font-size: .85rem; font-weight: 700; }
+    .stat:last-child .v { color: var(--primary); }
+    .stat .l { display: block; font-size: .68rem; color: var(--muted); margin-top: 2px; }
+    .blurb { font-size: .8rem; color: var(--muted); line-height: 1.45; margin: 0 0 10px; }
+    .progress { font-size: .78rem; margin: 0 0 12px; opacity: .85; }
+
+    /* ——— LEER LIBRO (inline) L1–L12 ——— */
+    .inline-read {
+      width: 100%; height: 48px; border: 0; border-radius: 12px; margin-bottom: 14px;
+      font: inherit; font-weight: 700; font-size: .92rem; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .inline-read svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9; }
+    [data-leer="L0"] .inline-read { display: none; }
+
+    [data-leer="L1"] .inline-read { background: var(--grey-btn); color: #111; } /* actual */
+    [data-leer="L2"] .inline-read {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    [data-leer="L3"] .inline-read {
+      background: transparent; color: var(--text);
+      box-shadow:
+        inset 0 0 0 2px var(--primary),
+        0 0 0 5px color-mix(in srgb, var(--primary) 14%, transparent),
+        0 0 18px color-mix(in srgb, var(--primary) 30%, transparent);
+      animation: halo 2.8s ease-in-out infinite;
+    }
+    [data-leer="L4"] .inline-read {
+      background: color-mix(in srgb, var(--primary) 18%, var(--card));
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
+    }
+    [data-leer="L5"] .inline-read {
+      border-radius: 999px; background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 40%, transparent);
+      animation: breath 2.6s ease-in-out infinite;
+    }
+    [data-leer="L6"] .inline-read {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 88%, #fff), var(--primary));
+      color: var(--on-primary);
+      box-shadow: 0 12px 26px color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+    [data-leer="L7"] .inline-read {
+      background: color-mix(in srgb, var(--surface) 90%, transparent); color: var(--text);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-leer="L7"] .inline-read svg { stroke: var(--primary); }
+    [data-leer="L8"] .inline-read {
+      height: 52px; border-radius: 16px;
+      background: color-mix(in srgb, var(--primary) 22%, rgba(255,255,255,.06));
+      color: var(--text); backdrop-filter: blur(8px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    [data-leer="L8"] .inline-read svg { stroke: var(--primary); }
+    [data-leer="L9"] .inline-read {
+      justify-content: space-between; padding: 0 16px;
+      background: var(--card); color: var(--text);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-leer="L9"] .inline-read .chev {
+      display: inline-block; opacity: .6; font-size: 1.1rem;
+    }
+    [data-leer="L10"] .inline-read {
+      background: transparent; color: var(--primary); height: auto; padding: 10px 0;
+      box-shadow: none; border-radius: 0; border-bottom: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+    [data-leer="L11"] .inline-read {
+      background: #fff; color: #0a0a0a;
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    [data-leer="L12"] .inline-read {
+      background: var(--primary); color: var(--on-primary); border-radius: 14px;
+      box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent),
+        0 12px 28px color-mix(in srgb, var(--primary) 40%, transparent);
+      animation: breath 2.5s ease-in-out infinite;
+    }
+
+    .inline-read .chev { display: none; }
+    [data-leer="L9"] .inline-read .chev { display: inline-block; }
+
+    /* ——— STICKY BAR A–J ——— */
+    .sticky {
+      background: var(--bar); border-top: 1px solid var(--line);
+      padding: 10px 12px 14px; display: flex; gap: 8px; align-items: center;
+    }
+    .sticky button {
+      height: 46px; border: 0; border-radius: 12px; font: inherit; font-weight: 700;
+      font-size: .88rem; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 6px;
+    }
+    .sticky svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9; }
+    .btn-dl { flex: 1.5; background: var(--primary); color: var(--on-primary); }
+    .btn-rd { flex: 1; background: transparent; color: var(--text); box-shadow: inset 0 0 0 2px var(--primary); }
+
+    [data-bar="A"] .btn-rd { box-shadow: inset 0 0 0 2px var(--primary); }
+    [data-bar="B"] .btn-rd {
+      box-shadow:
+        inset 0 0 0 2px var(--primary),
+        0 0 0 5px color-mix(in srgb, var(--primary) 14%, transparent),
+        0 0 18px color-mix(in srgb, var(--primary) 30%, transparent);
+      animation: halo 2.8s ease-in-out infinite;
+    }
+    [data-bar="C"] .btn-rd {
+      background: color-mix(in srgb, var(--primary) 18%, var(--card));
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
+    }
+    [data-bar="D"] .btn-dl { flex: 0 0 48px; width: 48px; border-radius: 14px; padding: 0; }
+    [data-bar="D"] .btn-dl .lab { display: none; }
+    [data-bar="D"] .btn-rd {
+      flex: 1; background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    [data-bar="E"] .btn-dl, [data-bar="E"] .btn-rd { flex: 1; }
+    [data-bar="E"] .btn-rd {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+    [data-bar="E"] .btn-dl {
+      background: color-mix(in srgb, var(--primary) 16%, var(--card));
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 50%, transparent);
+    }
+    [data-bar="F"] .sticky { flex-direction: column; align-items: stretch; gap: 8px; }
+    [data-bar="F"] .btn-rd {
+      width: 100%; background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    [data-bar="F"] .btn-dl {
+      width: 100%; background: transparent; color: var(--primary);
+      box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 45%, transparent);
+    }
+    [data-bar="G"] .btn-dl, [data-bar="G"] .btn-rd { border-radius: 999px; height: 48px; }
+    [data-bar="G"] .btn-rd {
+      box-shadow: inset 0 0 0 2px var(--primary), 0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent);
+    }
+    [data-bar="H"] .btn-rd { display: none; }
+    [data-bar="H"] .btn-dl { flex: 1; }
+    [data-bar="I"] .btn-rd {
+      background: #fff; color: #0a0a0a; box-shadow: 0 6px 16px rgba(0,0,0,.3);
+    }
+    [data-bar="J"] .sticky { gap: 10px; }
+    [data-bar="J"] .btn-dl, [data-bar="J"] .btn-rd {
+      flex: 1; border-radius: 14px; height: 50px;
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+    [data-bar="J"] .btn-dl {
+      background: color-mix(in srgb, var(--card) 80%, transparent); color: var(--primary);
+      box-shadow: inset 0 0 0 2px var(--primary);
+    }
+
+    @keyframes halo {
+      0%, 100% {
+        box-shadow:
+          inset 0 0 0 2px var(--primary),
+          0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent),
+          0 0 14px color-mix(in srgb, var(--primary) 28%, transparent);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 0 2px var(--primary),
+          0 0 0 7px color-mix(in srgb, var(--primary) 20%, transparent),
+          0 0 22px color-mix(in srgb, var(--primary) 45%, transparent);
+      }
+    }
+    @keyframes breath {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.08); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Tabs · Leer libro · Barra sticky</h1>
+    <p class="lead">
+      Tres controles independientes: <strong>tabs</strong>, el botón grande
+      <strong>Leer libro</strong> (el gris que cruzaste) y la barra
+      <strong>Descargar / Leer</strong>. Acciones C · info 2 · CTA Q de referencia.
+    </p>
+
+    <div class="ctrl-label">Tema</div>
+    <div class="chips" id="themes" role="group">
+      <button type="button" class="chip" data-theme="ultimate" aria-pressed="true"><span class="swatch" style="--sw:#1a6cff"></span>Ultimate Blue</button>
+      <button type="button" class="chip" data-theme="fire" aria-pressed="false"><span class="swatch" style="--sw:#e53935"></span>Fire</button>
+      <button type="button" class="chip" data-theme="green" aria-pressed="false"><span class="swatch" style="--sw:#2e7d32"></span>Green</button>
+      <button type="button" class="chip" data-theme="pink" aria-pressed="false"><span class="swatch" style="--sw:#ff1493"></span>Pink</button>
+      <button type="button" class="chip" data-theme="banana" aria-pressed="false"><span class="swatch" style="--sw:#f9a825"></span>Banana</button>
+    </div>
+
+    <div class="group-title">1 · Tabs (Novela / Relacionado / Capítulos)</div>
+    <div class="styles" id="tabs" role="group">
+      <button type="button" class="style-card" data-tabs="1" aria-pressed="false"><div class="n">1</div><strong>Pill blanca</strong><span>Actual.</span></button>
+      <button type="button" class="style-card" data-tabs="2" aria-pressed="true"><div class="n">2</div><strong>Pill primary</strong><span>Color del tema.</span></button>
+      <button type="button" class="style-card" data-tabs="3" aria-pressed="false"><div class="n">3</div><strong>Underline</strong><span>Línea primary.</span></button>
+      <button type="button" class="style-card" data-tabs="4" aria-pressed="false"><div class="n">4</div><strong>Segmented</strong><span>Control único.</span></button>
+      <button type="button" class="style-card" data-tabs="5" aria-pressed="false"><div class="n">5</div><strong>Chip soft</strong><span>Tint + borde.</span></button>
+      <button type="button" class="style-card" data-tabs="6" aria-pressed="false"><div class="n">6</div><strong>Dot</strong><span>Punto luminoso.</span></button>
+      <button type="button" class="style-card" data-tabs="7" aria-pressed="false"><div class="n">7</div><strong>Equal cards</strong><span>3 tiles.</span></button>
+      <button type="button" class="style-card" data-tabs="8" aria-pressed="false"><div class="n">8</div><strong>Outline Q</strong><span>Anillo primary.</span></button>
+      <button type="button" class="style-card" data-tabs="9" aria-pressed="false"><div class="n">9</div><strong>Glow text</strong><span>Texto + wash.</span></button>
+      <button type="button" class="style-card" data-tabs="10" aria-pressed="false"><div class="n">10</div><strong>Rail blanca</strong><span>Pista + pill blanca.</span></button>
+      <button type="button" class="style-card" data-tabs="11" aria-pressed="false"><div class="n">11</div><strong>Breath pill</strong><span>Primary + pulse.</span></button>
+      <button type="button" class="style-card" data-tabs="12" aria-pressed="false"><div class="n">12</div><strong>Bottom rule</strong><span>Full-width underline.</span></button>
+    </div>
+
+    <div class="group-title">2 · Botón «Leer libro» (inline)</div>
+    <div class="styles" id="leers" role="group">
+      <button type="button" class="style-card" data-leer="L0" aria-pressed="false"><div class="n">L0</div><strong>Ocultar</strong><span>Solo sticky (sin duplicar).</span></button>
+      <button type="button" class="style-card" data-leer="L1" aria-pressed="false"><div class="n">L1</div><strong>Gris actual</strong><span>El que cruzaste.</span></button>
+      <button type="button" class="style-card" data-leer="L2" aria-pressed="false"><div class="n">L2</div><strong>Primary fill</strong><span>Lleno + sombra.</span></button>
+      <button type="button" class="style-card" data-leer="L3" aria-pressed="true"><div class="n">L3</div><strong>Halo outline Q</strong><span>Anillo respirando.</span></button>
+      <button type="button" class="style-card" data-leer="L4" aria-pressed="false"><div class="n">L4</div><strong>Soft tint</strong><span>Ghost primary.</span></button>
+      <button type="button" class="style-card" data-leer="L5" aria-pressed="false"><div class="n">L5</div><strong>Pill primary</strong><span>Cápsula + breath.</span></button>
+      <button type="button" class="style-card" data-leer="L6" aria-pressed="false"><div class="n">L6</div><strong>Gradient</strong><span>Highlight superior.</span></button>
+      <button type="button" class="style-card" data-leer="L7" aria-pressed="false"><div class="n">L7</div><strong>Quiet surface</strong><span>Card + icon primary.</span></button>
+      <button type="button" class="style-card" data-leer="L8" aria-pressed="false"><div class="n">L8</div><strong>Glass</strong><span>Frosted + borde.</span></button>
+      <button type="button" class="style-card" data-leer="L9" aria-pressed="false"><div class="n">L9</div><strong>Row chevron</strong><span>Tipo lista / CTA.</span></button>
+      <button type="button" class="style-card" data-leer="L10" aria-pressed="false"><div class="n">L10</div><strong>Text link</strong><span>Minimal underline.</span></button>
+      <button type="button" class="style-card" data-leer="L11" aria-pressed="false"><div class="n">L11</div><strong>Blanco</strong><span>Alto contraste.</span></button>
+      <button type="button" class="style-card" data-leer="L12" aria-pressed="false"><div class="n">L12</div><strong>Bloom fill</strong><span>Primary + halo exterior.</span></button>
+    </div>
+
+    <div class="group-title">3 · Barra sticky Descargar / Leer</div>
+    <div class="styles" id="bars" role="group">
+      <button type="button" class="style-card" data-bar="A" aria-pressed="false"><div class="n">A</div><strong>Outline simple</strong><span>DL primary · Leer stroke.</span></button>
+      <button type="button" class="style-card" data-bar="B" aria-pressed="true"><div class="n">B</div><strong>CTA Q halo</strong><span>Leer con respiración.</span></button>
+      <button type="button" class="style-card" data-bar="C" aria-pressed="false"><div class="n">C</div><strong>Soft + solid</strong><span>Leer tint.</span></button>
+      <button type="button" class="style-card" data-bar="D" aria-pressed="false"><div class="n">D</div><strong>Icon DL</strong><span>Descarga compacta.</span></button>
+      <button type="button" class="style-card" data-bar="E" aria-pressed="false"><div class="n">E</div><strong>Gemelos</strong><span>Mismo peso invertido.</span></button>
+      <button type="button" class="style-card" data-bar="F" aria-pressed="false"><div class="n">F</div><strong>Apilados</strong><span>Columna en sticky.</span></button>
+      <button type="button" class="style-card" data-bar="G" aria-pressed="false"><div class="n">G</div><strong>Pills</strong><span>Muy redondeados.</span></button>
+      <button type="button" class="style-card" data-bar="H" aria-pressed="false"><div class="n">H</div><strong>Solo Descargar</strong><span>Sin Leer sticky.</span></button>
+      <button type="button" class="style-card" data-bar="I" aria-pressed="false"><div class="n">I</div><strong>Leer blanco</strong><span>Contraste alto.</span></button>
+      <button type="button" class="style-card" data-bar="J" aria-pressed="false"><div class="n">J</div><strong>Dual primary</strong><span>Ambos fuertes.</span></button>
+    </div>
+
+    <div class="stage">
+      <div class="note">
+        <h2>Vista previa</h2>
+        <p>Elige por separado tabs, <em>Leer libro</em> y la barra. Combos útiles:</p>
+        <ul>
+          <li><strong>Tabs 2 + L3 + B</strong> — primary + halo Q en ambos CTAs de leer.</li>
+          <li><strong>Tabs 4 + L0 + D</strong> — sin duplicar leer; descarga icono.</li>
+          <li><strong>Tabs 5 + L5 + E</strong> — pills coherentes.</li>
+          <li><strong>L0</strong> si solo quieres leer en la sticky (evita dos botones “Leer”).</li>
+        </ul>
+        <p class="pick">
+          Activo:<br />
+          tabs <strong id="pickTabs">2</strong><br />
+          Leer libro <strong id="pickLeer">L3</strong><br />
+          barra <strong id="pickBar">B</strong><br />
+          tema <strong id="pickT">Ultimate Blue</strong>
+        </p>
+      </div>
+
+      <div class="phone">
+        <div class="phone-body">
+          <p class="fake-title">Absolute Regression</p>
+          <p class="fake-meta">Autor desconocido</p>
+
+          <div class="tabs" id="tabRow" role="tablist">
+            <button type="button" class="tab on" role="tab">Novela</button>
+            <button type="button" class="tab" role="tab">Relacionado</button>
+            <button type="button" class="tab" role="tab">Capítulos</button>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><span class="v" style="opacity:.55;font-size:.72rem">Sin info</span><span class="l">Vistas</span></div>
+            <div class="stat"><span class="v" style="opacity:.55;font-size:.72rem">Sin info</span><span class="l">Rating</span></div>
+            <div class="stat"><span class="v">669</span><span class="l">Capítulos</span></div>
+          </div>
+
+          <p class="blurb">«Envíame al pasado». Así comenzó el primer paso hacia la venganza.</p>
+          <p class="progress">0/669</p>
+
+          <button type="button" class="inline-read" id="leerLibro" title="Abrir el EPUB descargado">
+            <span style="display:inline-flex;align-items:center;gap:8px">
+              <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/><path d="M11 5v14M13 5v14"/></svg>
+              Abrir EPUB
+            </span>
+            <span class="chev">›</span>
+          </button>
+        </div>
+
+        <div class="sticky">
+          <button type="button" class="btn-dl">
+            <svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg>
+            <span class="lab">Descargar</span>
+          </button>
+          <button type="button" class="btn-rd" title="Leer capítulos en línea">
+            <svg viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 11.7-1.7A4.5 4.5 0 0 1 18.5 18H7a4 4 0 0 1-1-7.9z"/></svg>
+            Leer en línea
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const THEMES = {
+      ultimate: "Ultimate Blue", fire: "Fire", green: "Green", pink: "Pink", banana: "Banana",
+    };
+    const TAB_NAMES = {
+      1: "1 — Pill blanca", 2: "2 — Pill primary", 3: "3 — Underline", 4: "4 — Segmented",
+      5: "5 — Chip soft", 6: "6 — Dot", 7: "7 — Equal cards", 8: "8 — Outline Q",
+      9: "9 — Glow text", 10: "10 — Rail blanca", 11: "11 — Breath pill", 12: "12 — Bottom rule",
+    };
+    const LEER_NAMES = {
+      L0: "L0 — Ocultar", L1: "L1 — Gris actual", L2: "L2 — Primary fill", L3: "L3 — Halo Q",
+      L4: "L4 — Soft tint", L5: "L5 — Pill primary", L6: "L6 — Gradient", L7: "L7 — Quiet",
+      L8: "L8 — Glass", L9: "L9 — Chevron", L10: "L10 — Link", L11: "L11 — Blanco", L12: "L12 — Bloom",
+    };
+    const BAR_NAMES = {
+      A: "A — Outline", B: "B — Halo Q", C: "C — Soft", D: "D — Icon DL", E: "E — Gemelos",
+      F: "F — Apilados", G: "G — Pills", H: "H — Solo DL", I: "I — Leer blanco", J: "J — Dual",
+    };
+    const root = document.documentElement;
+
+    function setTheme(t) {
+      root.setAttribute("data-theme", t);
+      document.querySelectorAll("#themes .chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.theme === t)));
+      document.getElementById("pickT").textContent = THEMES[t];
+    }
+    function setTabs(t) {
+      root.setAttribute("data-tabs", t);
+      document.querySelectorAll("#tabs .style-card").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.tabs === t)));
+      document.getElementById("pickTabs").textContent = TAB_NAMES[t];
+    }
+    function setLeer(l) {
+      root.setAttribute("data-leer", l);
+      document.querySelectorAll("#leers .style-card").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.leer === l)));
+      document.getElementById("pickLeer").textContent = LEER_NAMES[l];
+    }
+    function setBar(b) {
+      root.setAttribute("data-bar", b);
+      document.querySelectorAll("#bars .style-card").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.bar === b)));
+      document.getElementById("pickBar").textContent = BAR_NAMES[b];
+    }
+
+    document.getElementById("themes").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-theme]"); if (b) setTheme(b.dataset.theme);
+    });
+    document.getElementById("tabs").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-tabs]"); if (b) setTabs(b.dataset.tabs);
+    });
+    document.getElementById("leers").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-leer]"); if (b) setLeer(b.dataset.leer);
+    });
+    document.getElementById("bars").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-bar]"); if (b) setBar(b.dataset.bar);
+    });
+    document.getElementById("tabRow").addEventListener("click", (e) => {
+      const t = e.target.closest(".tab"); if (!t) return;
+      document.querySelectorAll("#tabRow .tab").forEach((x) => x.classList.toggle("on", x === t));
+    });
+  </script>
+</body>
+</html>

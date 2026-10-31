@@ -107,7 +107,8 @@
     <string name="overscroll_scroll">Перепрокрутка</string>
 
     <!-- read -->
-    <string name="read_epub">Читать epub</string>
+    <string name="read_epub">Открыть EPUB</string>
+    <string name="read_epub_desc">Открыть скачанный EPUB-файл</string>
     <string name="type_reading">Читаю</string>
     <string name="type_on_hold">На паузе</string>
     <string name="type_completed">Завершено</string>
@@ -218,6 +219,7 @@
     <string name="resume">Продолжить</string>
     <string name="re_downloaded">Перезагрузить</string>
     <string name="loading">Загрузка…</string>
+    <string name="loading_chapter">Загрузка главы…</string>
     <string name="loading_format" formatted="true">Загрузка %s…</string>
     <string name="chapter_format" formatted="true">Глава %s</string>
 

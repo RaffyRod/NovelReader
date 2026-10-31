@@ -27,6 +27,42 @@ class ReaderPage extends BasePage {
     return this.byId(`${APP_ID}:id/tts_action_stop`);
   }
 
+  get loadingOverlay() {
+    return this.byId(`${APP_ID}:id/read_loading`);
+  }
+
+  get loadingGlyph() {
+    return this.byId(`${APP_ID}:id/loading_glyph`);
+  }
+
+  get loadingTitle() {
+    return this.byId(`${APP_ID}:id/loading_title`);
+  }
+
+  get loadingSubtitle() {
+    return this.byId(`${APP_ID}:id/loading_text`);
+  }
+
+  /**
+   * Polls for Glyph Pulse (本). Cached chapters may skip the overlay.
+   * @param {number} timeoutMs
+   * @returns {Promise<{seen: boolean, title: string}>}
+   */
+  async waitForGlyphPulse(timeoutMs = 10000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const shown = await this.loadingGlyph.isDisplayed().catch(() => false);
+      if (shown) {
+        const glyph = (await this.loadingGlyph.getText().catch(() => '')) || '';
+        const title = (await this.loadingTitle.getText().catch(() => '')) || '';
+        const subtitle = (await this.loadingSubtitle.getText().catch(() => '')) || '';
+        return { seen: true, glyph, title, subtitle };
+      }
+      await driver.pause(200);
+    }
+    return { seen: false, glyph: '', title: '', subtitle: '' };
+  }
+
   async revealControls() {
     const { width, height } = await driver.getWindowSize();
     const x = Math.floor(width / 2);

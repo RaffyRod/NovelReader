@@ -15,7 +15,7 @@ function resolveAppPath() {
     path.join(
       process.env.USERPROFILE || process.env.HOME || '',
       'Desktop',
-      'QuickNovel-Ultimate-1.1.4-universal.apk',
+      'QuickNovel-Ultimate-1.2.3-universal.apk',
     ),
   ];
   return candidates.find((p) => p && fs.existsSync(p)) || candidates[0];
@@ -42,13 +42,19 @@ exports.config = {
     features: [
       [
         './test/specs/05-settings.e2e.js',
+        './test/specs/13-theme-defaults.e2e.js',
         './test/specs/06-import.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
         './test/specs/10-plugins.e2e.js',
         './test/specs/11-download-translate.e2e.js',
       ],
     ],
-    reader: [['./test/specs/07-reader-tts.e2e.js']],
+    reader: [
+      [
+        './test/specs/07-reader-tts.e2e.js',
+        './test/specs/12-reader-loading.e2e.js',
+      ],
+    ],
     providers: [['./test/specs/08-providers.e2e.js']],
   },
   exclude: [],

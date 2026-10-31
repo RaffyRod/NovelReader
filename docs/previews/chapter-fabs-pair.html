@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="ultimate" data-pair="1">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultimate · Par Select + Filtro — 12 opciones</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --phone-w: 300px;
+      --phone-h: 560px;
+    }
+    [data-theme="ultimate"] {
+      --page: #03060f; --bg: #050b18; --surface: #0a1224; --card: #0d1528;
+      --line: rgba(140,180,255,.12); --text: #e8f1ff; --muted: #8b97ab;
+      --primary: #1a6cff; --on-primary: #fff; --bar: #07101f;
+    }
+    [data-theme="fire"] {
+      --page: #0c0404; --bg: #140808; --surface: #1c0c0c; --card: #241010;
+      --line: rgba(255,120,90,.14); --text: #ffece8; --muted: #b89088;
+      --primary: #e53935; --on-primary: #fff; --bar: #1a0a0a;
+    }
+    [data-theme="party"] {
+      --page: #0a0610; --bg: #120a18; --surface: #1a1024; --card: #221530;
+      --line: rgba(255,120,180,.14); --text: #ffeef6; --muted: #b894a8;
+      --primary: #c1495b; --on-primary: #fff; --bar: #160c1c;
+    }
+    [data-theme="pink"] {
+      --page: #0c0408; --bg: #14060c; --surface: #1e0a14; --card: #281018;
+      --line: rgba(255,80,160,.14); --text: #ffe8f2; --muted: #b888a0;
+      --primary: #ff1493; --on-primary: #fff; --bar: #180610;
+    }
+    [data-theme="green"] {
+      --page: #030a06; --bg: #06140c; --surface: #0a1c12; --card: #0e2418;
+      --line: rgba(80,220,140,.12); --text: #e8fff2; --muted: #88b098;
+      --primary: #2e7d32; --on-primary: #fff; --bar: #07140c;
+    }
+    [data-theme="banana"] {
+      --page: #0c0a02; --bg: #141208; --surface: #1c1a0c; --card: #242210;
+      --line: rgba(240,200,60,.14); --text: #fffce8; --muted: #b0a878;
+      --primary: #f9a825; --on-primary: #1a1400; --bar: #161408;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: var(--font); color: var(--text);
+      background:
+        radial-gradient(880px 460px at 8% -8%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 55%),
+        var(--page);
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 22px 80px; }
+    h1 {
+      font-family: var(--display); font-weight: 400; letter-spacing: -.02em;
+      font-size: clamp(1.85rem, 3.5vw, 2.5rem); margin: 0 0 8px;
+    }
+    .lead { color: var(--muted); max-width: 62ch; line-height: 1.5; margin: 0 0 22px; font-size: .94rem; }
+    .ctrl-label {
+      font-size: .68rem; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin: 0 0 8px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .chip {
+      border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 85%, transparent);
+      color: var(--text); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: .84rem;
+      font-weight: 500; cursor: pointer;
+    }
+    .chip[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+    .chip .swatch {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+      vertical-align: middle; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+    }
+    .group-title { font-family: var(--display); font-size: 1.28rem; margin: 10px 0 12px; font-weight: 400; }
+    .styles {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+      gap: 10px; margin-bottom: 20px;
+    }
+    .style-card {
+      text-align: left; border: 1px solid var(--line); background: var(--surface);
+      border-radius: 14px; padding: 12px 13px; cursor: pointer; color: inherit; font: inherit;
+    }
+    .style-card[aria-pressed="true"] {
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+    }
+    .style-card .n { font-family: var(--display); font-size: 1.2rem; color: var(--primary); }
+    .style-card strong { display: block; font-size: .88rem; margin: 2px 0 3px; }
+    .style-card span { display: block; font-size: .72rem; color: var(--muted); line-height: 1.35; }
+
+    .stage {
+      display: grid; grid-template-columns: minmax(240px, 1fr) auto; gap: 28px; align-items: start;
+    }
+    @media (max-width: 880px) { .stage { grid-template-columns: 1fr; } }
+    .note {
+      border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 80%, transparent);
+      border-radius: 16px; padding: 18px;
+    }
+    .note h2 { font-family: var(--display); font-weight: 400; font-size: 1.3rem; margin: 0 0 8px; }
+    .note p, .note li { color: var(--muted); font-size: .88rem; line-height: 1.45; }
+    .note ul { margin: 0; padding-left: 1.1rem; }
+    .pick { margin-top: 12px; color: var(--text); font-size: .84rem; }
+    .pick strong { color: var(--primary); }
+
+    .phone {
+      width: var(--phone-w); height: var(--phone-h); border-radius: 28px; overflow: hidden;
+      border: 1px solid var(--line); background: var(--bg); position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    }
+    .chapters {
+      position: absolute; inset: 0; padding: 18px 14px 110px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 40%, transparent), transparent 28%),
+        var(--bg);
+    }
+    .chapters .row {
+      display: flex; gap: 10px; align-items: center; padding: 10px 0;
+      border-bottom: 1px solid var(--line); color: var(--text); font-size: .82rem;
+    }
+    .chapters .n {
+      width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+      background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary);
+      font-size: .7rem; font-weight: 700;
+    }
+    .sticky {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
+      background: var(--bar); border-top: 1px solid var(--line);
+      display: flex; gap: 8px; align-items: center; padding: 10px 12px 14px;
+    }
+    .sticky .dl {
+      flex: 2; height: 42px; border: 0; border-radius: 11px; background: var(--primary);
+      color: var(--on-primary); font: inherit; font-weight: 700; font-size: .85rem;
+    }
+    .sticky .rd {
+      flex: 1; height: 42px; border-radius: 11px; background: transparent; color: var(--text);
+      font: inherit; font-weight: 700; font-size: .85rem;
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent);
+    }
+
+    .fab-stack {
+      position: absolute; right: 14px; bottom: 92px;
+      display: flex; flex-direction: column; align-items: center; gap: var(--stack-gap, 14px);
+      z-index: 3;
+    }
+    .fab {
+      width: 48px; height: 48px; border: 0; border-radius: 14px; cursor: pointer;
+      display: grid; place-items: center; position: relative; color: var(--on-primary);
+      background: var(--primary); padding: 0;
+    }
+    .fab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    /* ——— 12 pair styles ——— */
+
+    /* 1 Current problem: overlapping bloom */
+    [data-pair="1"] {
+      --stack-gap: 10px;
+    }
+    [data-pair="1"] .fab {
+      box-shadow: 0 0 0 10px color-mix(in srgb, var(--primary) 22%, transparent);
+      filter: drop-shadow(0 0 12px color-mix(in srgb, var(--primary) 55%, transparent));
+    }
+
+    /* 2 Tight stack, single shared glow behind both */
+    [data-pair="2"] { --stack-gap: 10px; }
+    [data-pair="2"] .fab-stack::before {
+      content: ""; position: absolute; inset: -10px -12px;
+      border-radius: 28px;
+      background: color-mix(in srgb, var(--primary) 18%, transparent);
+      filter: blur(14px); z-index: -1;
+      animation: pulseSoft 2.6s ease-in-out infinite;
+    }
+    [data-pair="2"] .fab {
+      box-shadow: 0 8px 16px color-mix(in srgb, var(--primary) 35%, transparent);
+    }
+
+    /* 3 No glow — only drop shadow */
+    [data-pair="3"] { --stack-gap: 12px; }
+    [data-pair="3"] .fab {
+      box-shadow: 0 10px 18px rgba(0,0,0,.45), 0 2px 0 color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+
+    /* 4 Thin ring, no fill bloom */
+    [data-pair="4"] { --stack-gap: 14px; }
+    [data-pair="4"] .fab {
+      background: color-mix(in srgb, var(--bg) 55%, transparent); color: var(--primary);
+      box-shadow:
+        inset 0 0 0 2px var(--primary),
+        0 8px 16px rgba(0,0,0,.35);
+      animation: ringPulse 2.8s ease-in-out infinite;
+    }
+
+    /* 5 Connected pill rail (one capsule, 2 icons) */
+    [data-pair="5"] { --stack-gap: 0; }
+    [data-pair="5"] .fab-stack {
+      background: color-mix(in srgb, var(--card) 88%, transparent);
+      border-radius: 22px; padding: 8px;
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
+        0 12px 28px rgba(0,0,0,.4),
+        0 0 20px color-mix(in srgb, var(--primary) 25%, transparent);
+      animation: pulseSoft 2.8s ease-in-out infinite;
+    }
+    [data-pair="5"] .fab {
+      width: 44px; height: 44px; border-radius: 14px; margin: 4px 0;
+      box-shadow: none;
+    }
+    [data-pair="5"] .fab + .fab { margin-top: 6px; }
+
+    /* 6 Horizontal duo */
+    [data-pair="6"] .fab-stack {
+      flex-direction: row; right: 12px; bottom: 92px; gap: 10px;
+    }
+    [data-pair="6"] .fab {
+      box-shadow: 0 10px 20px color-mix(in srgb, var(--primary) 40%, transparent);
+      animation: breathScale 2.6s ease-in-out infinite;
+    }
+
+    /* 7 Staggered offset (no overlap) */
+    [data-pair="7"] { --stack-gap: 18px; }
+    [data-pair="7"] .fab:nth-child(1) { transform: translateX(-6px); }
+    [data-pair="7"] .fab:nth-child(2) { transform: translateX(6px); }
+    [data-pair="7"] .fab {
+      box-shadow: 0 12px 22px rgba(0,0,0,.5), 0 0 0 1px color-mix(in srgb, var(--primary) 50%, transparent);
+    }
+    [data-pair="7"] .fab:nth-child(1) { animation: breathScale 2.6s ease-in-out infinite; }
+    [data-pair="7"] .fab:nth-child(2) { animation: breathScale 2.6s ease-in-out .4s infinite; }
+
+    /* 8 Dark disc + primary glyph */
+    [data-pair="8"] { --stack-gap: 14px; }
+    [data-pair="8"] .fab {
+      background: var(--card); color: var(--primary);
+      box-shadow:
+        inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 70%, transparent),
+        0 10px 18px rgba(0,0,0,.45);
+    }
+    [data-pair="8"] .fab svg {
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 70%, transparent));
+      animation: glyphPulse 2.2s ease-in-out infinite;
+    }
+
+    /* 9 Soft separate halos with larger gap */
+    [data-pair="9"] { --stack-gap: 22px; }
+    [data-pair="9"] .fab {
+      box-shadow:
+        0 8px 16px rgba(0,0,0,.4),
+        0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+      animation: softHalo 2.7s ease-in-out infinite;
+    }
+
+    /* 10 Mini labels under icons */
+    [data-pair="10"] { --stack-gap: 16px; }
+    [data-pair="10"] .fab { margin-bottom: 14px; }
+    [data-pair="10"] .fab::after {
+      content: attr(data-lab); position: absolute; top: calc(100% + 4px); left: 50%;
+      transform: translateX(-50%); font-size: .58rem; font-weight: 600; color: var(--muted);
+      white-space: nowrap; letter-spacing: .02em;
+    }
+    [data-pair="10"] .fab {
+      box-shadow: 0 10px 18px color-mix(in srgb, var(--primary) 38%, transparent);
+      animation: breathScale 2.6s ease-in-out infinite;
+    }
+
+    /* 11 Speed-dial: filter solid, select outline */
+    [data-pair="11"] { --stack-gap: 14px; }
+    [data-pair="11"] .fab.select {
+      background: transparent; color: var(--primary);
+      box-shadow:
+        inset 0 0 0 2px var(--primary),
+        0 8px 16px rgba(0,0,0,.35),
+        0 0 16px color-mix(in srgb, var(--primary) 30%, transparent);
+      animation: ringPulse 2.8s ease-in-out infinite;
+    }
+    [data-pair="11"] .fab.filter {
+      box-shadow: 0 12px 24px color-mix(in srgb, var(--primary) 45%, transparent);
+    }
+
+    /* 12 Glass / frosted */
+    [data-pair="12"] { --stack-gap: 14px; }
+    [data-pair="12"] .fab {
+      background: color-mix(in srgb, var(--primary) 22%, rgba(255,255,255,.08));
+      color: var(--text);
+      backdrop-filter: blur(10px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.2),
+        inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent),
+        0 10px 22px rgba(0,0,0,.4);
+      animation: pulseSoft 2.8s ease-in-out infinite;
+    }
+    [data-pair="12"] .fab svg { stroke: var(--primary); }
+
+    @keyframes pulseSoft {
+      0%, 100% { filter: brightness(1); opacity: .95; }
+      50% { filter: brightness(1.12); opacity: 1; }
+    }
+    @keyframes breathScale {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    @keyframes ringPulse {
+      0%, 100% {
+        box-shadow:
+          inset 0 0 0 2px var(--primary),
+          0 8px 16px rgba(0,0,0,.35),
+          0 0 0 4px color-mix(in srgb, var(--primary) 10%, transparent);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 0 2px var(--primary),
+          0 10px 18px rgba(0,0,0,.4),
+          0 0 0 7px color-mix(in srgb, var(--primary) 22%, transparent),
+          0 0 22px color-mix(in srgb, var(--primary) 40%, transparent);
+      }
+    }
+    @keyframes softHalo {
+      0%, 100% {
+        box-shadow: 0 8px 16px rgba(0,0,0,.4), 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent);
+      }
+      50% {
+        box-shadow: 0 10px 20px rgba(0,0,0,.45), 0 0 0 7px color-mix(in srgb, var(--primary) 28%, transparent),
+          0 0 18px color-mix(in srgb, var(--primary) 35%, transparent);
+      }
+    }
+    @keyframes glyphPulse {
+      0%, 100% { opacity: .85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    /* Fix pair 7 transforms with animation */
+    [data-pair="7"] .fab:nth-child(1) { animation: breathScaleL 2.6s ease-in-out infinite; }
+    [data-pair="7"] .fab:nth-child(2) { animation: breathScaleR 2.6s ease-in-out .4s infinite; }
+    @keyframes breathScaleL {
+      0%, 100% { transform: translateX(-6px) scale(1); }
+      50% { transform: translateX(-6px) scale(1.05); }
+    }
+    @keyframes breathScaleR {
+      0%, 100% { transform: translateX(6px) scale(1); }
+      50% { transform: translateX(6px) scale(1.05); }
+    }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px; margin-top: 28px;
+    }
+    .mini {
+      border: 1px solid var(--line); background: var(--surface); border-radius: 14px;
+      padding: 10px; min-height: 150px; position: relative; overflow: hidden;
+    }
+    .mini .tag {
+      font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px;
+    }
+    .mini .fab-stack {
+      position: relative; right: auto; bottom: auto; margin: 18px auto 0; width: max-content;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Par Select + Filtro · 12 opciones</h1>
+    <p class="lead">
+      El problema actual (#1): dos halos circulares se solapan y forman un “8” borroso.
+      Elige una mejora; cambia el tema para ver Ultimate Blue / Fire / Party / Pink / Green / Banana.
+    </p>
+
+    <div class="ctrl-label">Tema</div>
+    <div class="chips" id="themes" role="group">
+      <button type="button" class="chip" data-theme="ultimate" aria-pressed="true"><span class="swatch" style="--sw:#1a6cff"></span>Ultimate Blue</button>
+      <button type="button" class="chip" data-theme="fire" aria-pressed="false"><span class="swatch" style="--sw:#e53935"></span>Fire</button>
+      <button type="button" class="chip" data-theme="party" aria-pressed="false"><span class="swatch" style="--sw:#c1495b"></span>Party</button>
+      <button type="button" class="chip" data-theme="pink" aria-pressed="false"><span class="swatch" style="--sw:#ff1493"></span>Pink</button>
+      <button type="button" class="chip" data-theme="green" aria-pressed="false"><span class="swatch" style="--sw:#2e7d32"></span>Green</button>
+      <button type="button" class="chip" data-theme="banana" aria-pressed="false"><span class="swatch" style="--sw:#f9a825"></span>Banana</button>
+    </div>
+
+    <div class="group-title">Estilos del par</div>
+    <div class="styles" id="pairs" role="group">
+      <button type="button" class="style-card" data-pair="1" aria-pressed="true"><div class="n">1</div><strong>Actual (problema)</strong><span>Halos grandes que se solapan.</span></button>
+      <button type="button" class="style-card" data-pair="2" aria-pressed="false"><div class="n">2</div><strong>Glow compartido</strong><span>Un solo bloom detrás del stack.</span></button>
+      <button type="button" class="style-card" data-pair="3" aria-pressed="false"><div class="n">3</div><strong>Solo sombra</strong><span>Sin halo; profundidad con shadow.</span></button>
+      <button type="button" class="style-card" data-pair="4" aria-pressed="false"><div class="n">4</div><strong>Anillo outline</strong><span>Hueco + stroke primary + pulse.</span></button>
+      <button type="button" class="style-card" data-pair="5" aria-pressed="false"><div class="n">5</div><strong>Rail unido</strong><span>Una cápsula con ambos iconos.</span></button>
+      <button type="button" class="style-card" data-pair="6" aria-pressed="false"><div class="n">6</div><strong>Dúo horizontal</strong><span>Lado a lado, sin solape vertical.</span></button>
+      <button type="button" class="style-card" data-pair="7" aria-pressed="false"><div class="n">7</div><strong>Escalonado</strong><span>Offset + más gap + breath.</span></button>
+      <button type="button" class="style-card" data-pair="8" aria-pressed="false"><div class="n">8</div><strong>Disco oscuro</strong><span>Fondo card + glyph primary.</span></button>
+      <button type="button" class="style-card" data-pair="9" aria-pressed="false"><div class="n">9</div><strong>Halos separados</strong><span>Gap grande; halo fino sin solape.</span></button>
+      <button type="button" class="style-card" data-pair="10" aria-pressed="false"><div class="n">10</div><strong>Con labels</strong><span>Select / Filtro debajo.</span></button>
+      <button type="button" class="style-card" data-pair="11" aria-pressed="false"><div class="n">11</div><strong>Jerarquía</strong><span>Filtro sólido · Select outline.</span></button>
+      <button type="button" class="style-card" data-pair="12" aria-pressed="false"><div class="n">12</div><strong>Glass</strong><span>Frosted + borde primary.</span></button>
+    </div>
+
+    <div class="stage">
+      <div class="note">
+        <h2>Vista previa</h2>
+        <p>Ambos botones (Select arriba, Filtro abajo) en contexto Capítulos + barra Descargar / Leer.</p>
+        <ul>
+          <li><strong>2 / 5</strong> — unifican el glow (recomendado si quieres luz sin “8”).</li>
+          <li><strong>3 / 8</strong> — más limpios, poca animación.</li>
+          <li><strong>6 / 9</strong> — evitan solape por layout.</li>
+          <li><strong>4 / 11 / 12</strong> — glow controlado + respiración.</li>
+        </ul>
+        <p class="pick">Activo: estilo <strong id="pickP">1</strong> · tema <strong id="pickT">Ultimate Blue</strong></p>
+      </div>
+
+      <div class="phone" id="phone">
+        <div class="chapters">
+          <div class="row"><span class="n">1</span> Prólogo</div>
+          <div class="row"><span class="n">2</span> La puerta de piedra</div>
+          <div class="row"><span class="n">3</span> Juramento</div>
+          <div class="row"><span class="n">4</span> Niebla en el valle</div>
+          <div class="row"><span class="n">5</span> El archivo sellado</div>
+        </div>
+
+        <div class="fab-stack" id="stack">
+          <button type="button" class="fab select" data-lab="Select" aria-label="Seleccionar">
+            <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          </button>
+          <button type="button" class="fab filter" data-lab="Filtro" aria-label="Filtro">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          </button>
+        </div>
+
+        <div class="sticky">
+          <button type="button" class="dl">Descargar</button>
+          <button type="button" class="rd">Leer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="group-title" style="margin-top:32px">Comparativa rápida (mismo tema)</div>
+    <div class="grid" id="compare"></div>
+  </div>
+
+  <script>
+    const THEMES = {
+      ultimate: "Ultimate Blue", fire: "Fire", party: "Party",
+      pink: "Pink", green: "Green", banana: "Banana",
+    };
+    const NAMES = {
+      1: "Actual", 2: "Glow compartido", 3: "Solo sombra", 4: "Anillo outline",
+      5: "Rail unido", 6: "Dúo horizontal", 7: "Escalonado", 8: "Disco oscuro",
+      9: "Halos separados", 10: "Con labels", 11: "Jerarquía", 12: "Glass",
+    };
+    const root = document.documentElement;
+    const icons = {
+      select: `<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>`,
+      filter: `<svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>`,
+    };
+
+    function setTheme(t) {
+      root.setAttribute("data-theme", t);
+      document.querySelectorAll("#themes .chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.theme === t)));
+      document.getElementById("pickT").textContent = THEMES[t];
+      paint();
+    }
+    function setPair(p) {
+      root.setAttribute("data-pair", p);
+      document.querySelectorAll("#pairs .style-card").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.pair === p)));
+      document.getElementById("pickP").textContent = p + " — " + NAMES[p];
+      paint();
+    }
+    function paint() {
+      const theme = root.getAttribute("data-theme");
+      document.getElementById("compare").innerHTML = Object.keys(NAMES).map((p) => `
+        <div class="mini" data-theme="${theme}" data-pair="${p}">
+          <div class="tag">${p}. ${NAMES[p]}</div>
+          <div class="fab-stack">
+            <button type="button" class="fab select" data-lab="Select">${icons.select}</button>
+            <button type="button" class="fab filter" data-lab="Filtro">${icons.filter}</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("themes").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-theme]"); if (b) setTheme(b.dataset.theme);
+    });
+    document.getElementById("pairs").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-pair]"); if (b) setPair(b.dataset.pair);
+    });
+    paint();
+  </script>
+</body>
+</html>

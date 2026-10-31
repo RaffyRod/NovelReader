@@ -1,22 +1,28 @@
 package com.lagradost.quicknovel.ui.result
 
+import android.animation.Animator
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
+import androidx.core.view.doOnLayout
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Outline
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
+import android.widget.ImageButton
 import android.text.InputType
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -167,7 +173,8 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
 
     private var taskDialog: AlertDialog? = null
     private var taskBinding: ChapterTaskDialogBinding? = null
-    private var selectFabHaloAnimator: ValueAnimator? = null
+    private val chapterFabBreathAnimators = mutableListOf<Animator>()
+    private val detailBreathAnimators = mutableListOf<Animator>()
 
     private val selectionBackCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
@@ -176,59 +183,215 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
     }
 
     /**
-     * Style E — Icon disc: solid primary squircle, white list icon, soft circular halo.
-     * Colors come from the active theme (`colorPrimary`).
+     * Detail chrome: actions C · info 2 · tabs 5 chip soft · Leer libro L4 soft tint ·
+     * sticky bar E gemelos (Descargar soft · Leer primary). Theme `colorPrimary`.
+     *
+     * Note: “Leer libro” opens the local EPUB; sticky “Leer” streams online — different actions.
      */
-    private fun applySelectFabIconDisc() {
+    private fun applyResultDetailStyles() {
         val binding = binding ?: return
-        val fab = binding.chaptersSelectFab
-        val glow = binding.chaptersSelectFabGlow
-        val host = binding.chaptersSelectFabHost
-        val ctx = fab.context
+        stopDetailBreath()
+        val ctx = binding.root.context
         val primary = ctx.colorFromAttribute(R.attr.colorPrimary)
+        val onPrimary = contrastingOnColor(primary)
+        val surface = ctx.colorFromAttribute(R.attr.iconGrayBackground)
+        val muted = ctx.colorFromAttribute(R.attr.grayTextColor)
         val density = resources.displayMetrics.density
-        val corner = 14f * density
+        val softFill = ColorUtils.setAlphaComponent(primary, 46)
 
-        fab.background = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = corner
-            setColor(primary)
-        }
-        fab.imageTintList = ColorStateList.valueOf(Color.WHITE)
-        fab.elevation = 0f
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            fab.outlineAmbientShadowColor = primary
-            fab.outlineSpotShadowColor = primary
-            fab.elevation = 8f * density
+        val discs = listOf(
+            binding.resultBookmark to binding.resultBookmarkGlow,
+            binding.resultFavorite to binding.resultFavoriteGlow,
+            binding.resultOpeninbrower to binding.resultOpeninbrowerGlow,
+            binding.resultShare to binding.resultShareGlow,
+        )
+        discs.forEach { (btn, glow) ->
+            applyActionGhostCircle(btn, glow, primary, surface, density)
         }
 
-        glow.background = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(ColorUtils.setAlphaComponent(primary, 38))
-            setStroke((2 * density).toInt(), ColorUtils.setAlphaComponent(primary, 90))
+        // Tabs 5 — soft primary chip + primary label
+        binding.resultTabs.setSelectedTabIndicatorColor(softFill)
+        binding.resultTabs.setTabTextColors(muted, primary)
+
+        // L4 Soft tint — local EPUB button
+        binding.resultDownloadGenerateEpub.apply {
+            backgroundTintList = ColorStateList.valueOf(softFill)
+            strokeColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 120))
+            strokeWidth = density.toInt().coerceAtLeast(1)
+            setTextColor(primary)
+            iconTint = ColorStateList.valueOf(primary)
+            rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 60))
         }
-        startSelectFabHaloBreath(host)
+
+        // Bar E — Gemelos: Descargar soft · Leer (stream) solid primary
+        binding.stickyDownload.apply {
+            backgroundTintList = ColorStateList.valueOf(softFill)
+            strokeColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 140))
+            strokeWidth = (1.5f * density).toInt()
+            setTextColor(primary)
+            iconTint = ColorStateList.valueOf(primary)
+            layoutParams = (layoutParams as? android.widget.LinearLayout.LayoutParams)?.apply {
+                weight = 1f
+            } ?: layoutParams
+        }
+        binding.stickyRead.apply {
+            backgroundTintList = ColorStateList.valueOf(primary)
+            strokeWidth = 0
+            setTextColor(onPrimary)
+            iconTint = ColorStateList.valueOf(onPrimary)
+            rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(onPrimary, 60))
+            elevation = 10f * density
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                outlineAmbientShadowColor = primary
+                outlineSpotShadowColor = ColorUtils.setAlphaComponent(primary, 180)
+            }
+            layoutParams = (layoutParams as? android.widget.LinearLayout.LayoutParams)?.apply {
+                weight = 1f
+            } ?: layoutParams
+        }
     }
 
-    private fun startSelectFabHaloBreath(target: View) {
-        if (selectFabHaloAnimator?.isRunning == true) return
-        selectFabHaloAnimator?.cancel()
-        selectFabHaloAnimator = ObjectAnimator.ofPropertyValuesHolder(
-            target,
-            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.04f),
-            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.04f),
-        ).apply {
-            duration = 2800L
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = AccelerateDecelerateInterpolator()
-            start()
+    /** Dark glyph on light accents (Soft/Black/Gold…); white on saturated Ultimate packs. */
+    private fun contrastingOnColor(background: Int): Int {
+        return if (ColorUtils.calculateLuminance(background) > 0.45) Color.BLACK else Color.WHITE
+    }
+
+    /** Style C — true circle tile, surface fill, primary glyph, thin rim (no mismatched bloom). */
+    private fun applyActionGhostCircle(
+        fab: ImageButton,
+        glow: View,
+        primary: Int,
+        surface: Int,
+        density: Float,
+    ) {
+        fab.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(surface)
+            setStroke((1.5f * density).toInt(), ColorUtils.setAlphaComponent(primary, 90))
+        }
+        fab.imageTintList = ColorStateList.valueOf(primary)
+        fab.elevation = 6f * density
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            fab.outlineAmbientShadowColor = ColorUtils.setAlphaComponent(primary, 80)
+            fab.outlineSpotShadowColor = ColorUtils.setAlphaComponent(primary, 60)
+        }
+        fab.doOnLayout {
+            fab.outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    outline.setOval(0, 0, view.width, view.height)
+                }
+            }
+            fab.clipToOutline = true
+            fab.invalidateOutline()
+        }
+        // Glow matches the circle size (no square/oval clash).
+        glow.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.TRANSPARENT)
+            setStroke((2 * density).toInt(), ColorUtils.setAlphaComponent(primary, 40))
+        }
+        glow.alpha = 0.7f
+    }
+
+    private fun stopDetailBreath() {
+        detailBreathAnimators.forEach { it.cancel() }
+        detailBreathAnimators.clear()
+        binding?.stickyRead?.let {
+            it.scaleX = 1f
+            it.scaleY = 1f
+            it.alpha = 1f
+        }
+    }
+
+    /** Select FAB only: primary circle + soft matching halo. Filter stays stock ExtendedFAB. */
+    private fun applySelectFabCircle(
+        fab: ImageButton,
+        glow: View,
+        primary: Int,
+        density: Float,
+    ) {
+        val onPrimary = contrastingOnColor(primary)
+        fab.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(primary)
+        }
+        fab.imageTintList = ColorStateList.valueOf(onPrimary)
+        fab.elevation = 12f * density
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            fab.outlineAmbientShadowColor = primary
+            fab.outlineSpotShadowColor = ColorUtils.setAlphaComponent(primary, 200)
+        }
+        fab.doOnLayout {
+            fab.outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    outline.setOval(0, 0, view.width, view.height)
+                }
+            }
+            fab.clipToOutline = true
+            fab.invalidateOutline()
+        }
+        glow.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(ColorUtils.setAlphaComponent(primary, 36))
+            setStroke((2 * density).toInt(), ColorUtils.setAlphaComponent(primary, 70))
+        }
+        glow.alpha = 0.65f
+    }
+
+    private fun applyChapterFabsStyleE() {
+        val binding = binding ?: return
+        val primary = binding.root.context.colorFromAttribute(R.attr.colorPrimary)
+        val density = resources.displayMetrics.density
+        applySelectFabCircle(binding.chaptersSelectFab, binding.chaptersSelectFabGlow, primary, density)
+        startChapterFabsBreath(
+            listOf(binding.chaptersSelectFabHost to binding.chaptersSelectFabGlow)
+        )
+    }
+
+    /** Soft scale + halo alpha pulse for the Select FAB only. */
+    private fun startChapterFabsBreath(pairs: List<Pair<View, View>>) {
+        if (chapterFabBreathAnimators.any { it.isRunning }) return
+        stopChapterFabsBreath()
+        val ease = AccelerateDecelerateInterpolator()
+        pairs.forEach { (host, glow) ->
+            chapterFabBreathAnimators += ObjectAnimator.ofPropertyValuesHolder(
+                host,
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.04f),
+                PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.04f),
+            ).apply {
+                duration = 2600L
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                interpolator = ease
+                start()
+            }
+            chapterFabBreathAnimators += ObjectAnimator.ofFloat(glow, View.ALPHA, 0.4f, 0.9f).apply {
+                duration = 2600L
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                interpolator = ease
+                start()
+            }
+        }
+    }
+
+    private fun stopChapterFabsBreath() {
+        chapterFabBreathAnimators.forEach { it.cancel() }
+        chapterFabBreathAnimators.clear()
+        binding?.chaptersSelectFabHost?.let {
+            it.scaleX = 1f
+            it.scaleY = 1f
+        }
+        binding?.chaptersSelectFabGlow?.let {
+            it.alpha = 0.65f
+            it.scaleX = 1f
+            it.scaleY = 1f
         }
     }
 
     override fun onDestroyView() {
-        selectFabHaloAnimator?.cancel()
-        selectFabHaloAnimator = null
+        stopChapterFabsBreath()
+        stopDetailBreath()
         super.onDestroyView()
     }
 
@@ -243,11 +406,9 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
         binding.chaptersFab.isVisible = onChapters && !selecting
         binding.chaptersSelectFabHost.isVisible = onChapters && !selecting
         if (onChapters && !selecting) {
-            applySelectFabIconDisc()
+            applyChapterFabsStyleE()
         } else {
-            selectFabHaloAnimator?.cancel()
-            binding.chaptersSelectFabHost.scaleX = 1f
-            binding.chaptersSelectFabHost.scaleY = 1f
+            stopChapterFabsBreath()
         }
         bar.isVisible = onChapters && selecting
         updateChapterListPadding(if (bar.isVisible) bar.height else 0)
@@ -1365,7 +1526,8 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             }
             stickyRead.setOnClickListener { resultQuickstream.performClick() }
 
-            applySelectFabIconDisc()
+            applyChapterFabsStyleE()
+            applyResultDetailStyles()
             chaptersSelectFab.setOnClickListener {
                 viewModel.setSelectionMode(true)
             }
@@ -1393,7 +1555,6 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
                 // hiddenView.isGone = 0 == pos
                 resultReviewsholder.isVisible = 1 == pos
                 reviewsFab.isVisible = 1 == pos
-                chaptersFab.isVisible = 3 == pos
                 resultRelatedholder.isVisible = 2 == pos
                 resultChapterholder.isVisible = 3 == pos
             }
@@ -1422,24 +1583,21 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
         }
 
         observe(viewModel.readState) { state ->
-            binding.resultBookmark.setText(if (state == ReadType.NONE) R.string.bookmark else state.stringRes)
-            binding.resultBookmark.setCompoundDrawablesWithIntrinsicBounds(
-                0,
-                0,
-                0,
-                if (state == ReadType.NONE) R.drawable.ic_baseline_bookmark_border_24 else R.drawable.ic_baseline_bookmark_24
-                //if (it == ReadType.NONE) R.drawable.ic_baseline_bookmark_border_24 else R.drawable.ic_baseline_bookmark_24
+            binding.resultBookmarkLabel.setText(
+                if (state == ReadType.NONE) R.string.bookmark else state.stringRes
+            )
+            binding.resultBookmark.setImageResource(
+                if (state == ReadType.NONE) R.drawable.ic_baseline_bookmark_border_24
+                else R.drawable.ic_baseline_bookmark_24
             )
         }
         observe(viewModel.loadResponse, ::newState)
 
         binding.resultFavorite.setOnClickListener { viewModel.toggleFavorite() }
         observe(viewModel.isFavorite) { favorite ->
-            binding.resultFavorite.setCompoundDrawablesWithIntrinsicBounds(
-                0,
-                0,
-                0,
-                if (favorite) R.drawable.ic_baseline_favorite_24 else R.drawable.ic_baseline_favorite_border_24
+            binding.resultFavorite.setImageResource(
+                if (favorite) R.drawable.ic_baseline_favorite_24
+                else R.drawable.ic_baseline_favorite_border_24
             )
         }
 

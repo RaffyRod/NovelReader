@@ -14,24 +14,92 @@
             android:id="@+id/read_loading"
             android:visibility="gone"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="?attr/primaryBlackBackground">
 
-        <ProgressBar
-                android:id="@+id/read_loading_bar"
-                android:layout_gravity="center"
-                android:progressTint="@color/colorPrimary"
-                android:layout_width="50dp"
-                android:layout_height="50dp" />
-
-        <TextView
-                android:id="@+id/loading_text"
-                android:layout_marginTop="50dp"
-                android:gravity="center"
-                android:layout_gravity="center"
-                android:textColor="@color/colorPrimary"
-                tools:text="@string/delete"
+        <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="28dp">
+
+            <FrameLayout
+                    android:id="@+id/loading_glyph_wrap"
+                    android:layout_width="96dp"
+                    android:layout_height="96dp">
+
+                <View
+                        android:id="@+id/loading_glyph_halo"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:alpha="0.12"
+                        android:background="@drawable/bg_reader_loading_glyph_halo"
+                        android:scaleX="1.18"
+                        android:scaleY="1.18" />
+
+                <View
+                        android:id="@+id/loading_glyph_ring"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_reader_loading_glyph_ring" />
+
+                <TextView
+                        android:id="@+id/loading_glyph"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/loading_glyph"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="40sp"
+                        android:textStyle="bold" />
+            </FrameLayout>
+
+            <TextView
+                    android:id="@+id/loading_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:textColor="?attr/textColor"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:text="Chapter 12" />
+
+            <TextView
+                    android:id="@+id/loading_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="@string/loading_chapter"
+                    android:textColor="?attr/grayTextColor"
+                    android:textSize="13sp" />
+
+            <TextView
+                    android:id="@+id/loading_source"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_reader_loading_source_chip"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="5dp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="11sp"
+                    android:visibility="gone"
+                    tools:text="NovelFire"
+                    tools:visibility="visible" />
+        </LinearLayout>
     </FrameLayout>
 
     <FrameLayout

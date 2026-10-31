@@ -12,8 +12,10 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.lagradost.cloudstream4.rememberAppSettings
 import com.lagradost.cloudstream4.theme.CloudStreamTheme
+import com.lagradost.cloudstream4.theme.CloudStreamThemeMode
 import com.lagradost.cloudstream4.theme.perfToColor
-import com.lagradost.cloudstream4.theme.perfToMode
+import com.lagradost.quicknovel.ui.IconStyle
+import com.lagradost.quicknovel.ui.LocalIconStyle
 import com.lagradost.quicknovel.ui.LocalUiIconTheme
 import com.lagradost.quicknovel.ui.UiIconTheme
 import com.mihon.presentation.LocalBackPress
@@ -34,15 +36,18 @@ fun Screen.createComposeView(
 @Composable
 fun CloudStreamThemeAppSettings(content: @Composable () -> Unit) {
     val settings = rememberAppSettings()
-    val mode by settings.ui.theme.collectAsState()
+    val darkMode by settings.ui.darkMode.collectAsState()
     val primaryColor by settings.ui.primaryColor.collectAsState()
     val uiIconKey by settings.ui.uiIconTheme.collectAsState()
     val appIconKey by settings.ui.appIconTheme.collectAsState()
+    val iconStyleKey by settings.ui.iconStyle.collectAsState()
     val fireTheme = UiIconTheme.fromKey(uiIconKey.ifBlank { appIconKey })
+    val iconStyle = IconStyle.fromKey(iconStyleKey)
+    val mode = if (darkMode) CloudStreamThemeMode.UltimateBlue else CloudStreamThemeMode.Light
 
     CloudStreamTheme(
-        mode = perfToMode(mode),
-        primaryColor = perfToColor(primaryColor),
+        mode = mode,
+        primaryColor = perfToColor(primaryColor, darkSurface = darkMode),
     ) {
         val backDispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current) {
             "No OnBackPressedDispatcherOwner was provided via LocalOnBackPressedDispatcherOwner"
@@ -51,6 +56,7 @@ fun CloudStreamThemeAppSettings(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalBackPress provides backDispatcher::onBackPressed,
             LocalUiIconTheme provides fireTheme,
+            LocalIconStyle provides iconStyle,
         ) {
             content()
         }

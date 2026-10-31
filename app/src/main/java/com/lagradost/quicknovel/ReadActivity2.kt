@@ -18,6 +18,8 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.AbsListView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
@@ -29,6 +31,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -42,6 +45,7 @@ import com.google.android.material.slider.Slider
 import com.jaredrummler.android.colorpicker.ColorPickerDialog
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import com.lagradost.quicknovel.CommonActivity.showToast
+import com.lagradost.quicknovel.CommonActivity.withAppLocale
 import com.lagradost.quicknovel.DataStore.getKey
 import com.lagradost.quicknovel.TTSNotifications.TTS_NOTIFICATION_ID
 import com.lagradost.quicknovel.databinding.ColorRoundCheckmarkBinding
@@ -65,6 +69,7 @@ import com.lagradost.quicknovel.ui.TextVisualLine
 import com.lagradost.quicknovel.ui.ViewHolderState
 import com.lagradost.quicknovel.util.Coroutines.ioSafe
 import com.lagradost.quicknovel.util.SingleSelectionHelper.showDialog
+import com.lagradost.quicknovel.ui.ReaderGlyphLoading
 import com.lagradost.quicknovel.util.UIHelper.colorFromAttribute
 import com.lagradost.quicknovel.util.UIHelper.fixPaddingStatusbar
 import com.lagradost.quicknovel.util.UIHelper.getStatusBarHeight
@@ -533,10 +538,57 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
     }
 
     private fun updateOtherTextConfig(config: TextConfig) {
-        config.setArgs(binding.loadingText, CONFIG_FONT or CONFIG_COLOR)
         config.setArgs(binding.readBattery, CONFIG_FONT or CONFIG_COLOR or CONFIG_FONT_BOLD)
         config.setArgs(binding.readTimeClock, CONFIG_FONT or CONFIG_COLOR or CONFIG_FONT_BOLD)
-        config.setArgs(binding.readLoadingBar)
+    }
+
+    private var glyphPulseAnim: Animation? = null
+
+    private fun startGlyphPulse() {
+        val primary = colorFromAttribute(R.attr.colorPrimary)
+        binding.loadingGlyphHalo.backgroundTintList =
+            ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 55))
+        binding.loadingGlyph.setTextColor(primary)
+        binding.loadingSource.setTextColor(primary)
+        if (glyphPulseAnim == null) {
+            glyphPulseAnim = AnimationUtils.loadAnimation(this, R.anim.reader_glyph_pulse)
+        }
+        binding.loadingGlyphWrap.startAnimation(glyphPulseAnim)
+    }
+
+    private fun stopGlyphPulse() {
+        binding.loadingGlyphWrap.clearAnimation()
+    }
+
+    private fun resolveChapterTitle(): String? {
+        if (!viewModel.isBookInitialized) return null
+        val index = viewModel.currentIndex
+        if (index == Int.MIN_VALUE) return null
+        return viewModel.book.getChapterTitle(index).asStringNull(this)?.takeIf { it.isNotBlank() }
+    }
+
+    private fun resolveSourceChip(): String? {
+        if (!viewModel.isBookInitialized) return null
+        return when (val book = viewModel.book) {
+            is QuickBook -> book.data.meta.apiName.takeIf { it.isNotBlank() }
+            else -> getString(R.string.app_name)
+        }
+    }
+
+    private fun bindGlyphLoading(status: String?) {
+        val model = ReaderGlyphLoading.resolve(
+            status = status,
+            chapterTitle = resolveChapterTitle(),
+            sourceChip = resolveSourceChip(),
+            loadingChapterLabel = getString(R.string.loading_chapter),
+            loadingFallback = getString(R.string.loading),
+        )
+        binding.loadingTitle.text = model.title
+        binding.loadingText.text = model.subtitle
+        binding.loadingSource.apply {
+            text = model.sourceChip
+            isGone = model.sourceChip.isNullOrBlank()
+        }
     }
 
     private fun updatePadding() {
@@ -680,6 +732,10 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
             // binding.realText.translationY =
             //     overscrollMaxTranslation * currentOverScrollValue //alpha = (1.0f - currentOverScrollValue.absoluteValue)
         }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(withAppLocale(newBase))
+    }
 
     override fun onDestroy() {
         viewModel.stopTTS()
@@ -969,6 +1025,7 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
             last = loading
             when (loading) {
                 is Resource.Success -> {
+                    stopGlyphPulse()
                     binding.readLoading.isVisible = false
                     binding.readFail.isVisible = false
 
@@ -990,13 +1047,12 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
                     binding.readNormalLayout.isVisible = false
                     binding.readFail.isVisible = false
                     binding.readLoading.isVisible = true
-                    binding.loadingText.apply {
-                        isGone = loading.url.isNullOrBlank()
-                        text = loading.url ?: ""
-                    }
+                    bindGlyphLoading(loading.url)
+                    startGlyphPulse()
                 }
 
                 is Resource.Failure -> {
+                    stopGlyphPulse()
                     binding.readLoading.isVisible = false
                     binding.readFail.isVisible = true
                     binding.failText.text = loading.errorString

@@ -77,6 +77,15 @@ fun modeToTheme(mode : CloudStreamThemeMode, primaryColor: CloudStreamPrimaryCol
     return color
 }
 
+private fun onPrimaryFor(primary: Color): Color {
+    // Relative luminance (sRGB) — light accents (Soft/Black/Gold…) need dark glyphs.
+    val r = primary.red
+    val g = primary.green
+    val b = primary.blue
+    val lum = 0.2126f * r + 0.7152f * g + 0.0722f * b
+    return if (lum > 0.55f) Color(0xFF0A0C10) else Color.White
+}
+
 private fun CloudStreamColorScheme.toMaterial3ColorScheme() = if (isLight) {
     lightColorScheme(
         primary = primary,
@@ -87,7 +96,7 @@ private fun CloudStreamColorScheme.toMaterial3ColorScheme() = if (isLight) {
         onBackground = onBackground,
         onSurface = onBackground,
         onSurfaceVariant = onSurfaceVariant,
-        onPrimary = Color.White,
+        onPrimary = onPrimaryFor(primary),
     )
 } else {
     darkColorScheme(
@@ -99,7 +108,7 @@ private fun CloudStreamColorScheme.toMaterial3ColorScheme() = if (isLight) {
         onBackground = onBackground,
         onSurface = onBackground,
         onSurfaceVariant = onSurfaceVariant,
-        onPrimary = Color.White,
+        onPrimary = onPrimaryFor(primary),
     )
 }
 

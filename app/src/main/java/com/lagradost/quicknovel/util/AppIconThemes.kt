@@ -6,12 +6,15 @@ import android.content.pm.PackageManager
 import androidx.preference.PreferenceManager
 
 /**
- * Launcher icon packs aligned with menu Fire themes:
- * BlueFire (default), BlackFire, LavaFire.
- * Legacy pref value [LEGACY_ULTIMATE_BLUE] maps to BlueFire.
+ * Launcher icon packs: only Blue / Black / Lava aliases exist as APK components.
+ * Newer Ultimate packs map onto the closest alias until dedicated icons ship.
+ *
+ * Component flips are deferred via [PENDING_LAUNCHER_KEY] so changing theme
+ * in Settings does not kill the process mid-session (common OEM behavior).
  */
 object AppIconThemes {
     const val PREF_KEY = "app_icon_theme_key"
+    const val PENDING_LAUNCHER_KEY = "app_icon_theme_pending"
     const val BLUE_FIRE = "BlueFire"
     const val BLACK_FIRE = "BlackFire"
     const val LAVA_FIRE = "LavaFire"
@@ -26,16 +29,29 @@ object AppIconThemes {
         LAVA_FIRE to "com.lagradost.quicknovel.icons.UltimateLavaLauncher",
     )
 
-    private fun normalize(themeId: String): String = when (themeId) {
-        LEGACY_ULTIMATE_BLUE, BLUE_FIRE -> BLUE_FIRE
-        BLACK_FIRE -> BLACK_FIRE
-        LAVA_FIRE -> LAVA_FIRE
+    /** Maps any Ultimate pack key onto an existing launcher alias. */
+    fun launcherBucket(themeId: String): String = when (themeId) {
+        LEGACY_ULTIMATE_BLUE, BLUE_FIRE,
+        "EmeraldFire", "CyanFire", "MidnightFire", "SoftFire",
+        "UltimateBlue", "UltimateEmerald", "UltimateCyan", "UltimateMidnight", "UltimateSoft",
+        -> BLUE_FIRE
+        BLACK_FIRE, "UltimateBlack", "White", "Grey",
+        -> BLACK_FIRE
+        LAVA_FIRE, "GoldFire", "RoseFire", "CrimsonFire",
+        "UltimateLava", "UltimateGold", "UltimateRose", "UltimateCrimson",
+        "Red", "Party", "Orange",
+        -> LAVA_FIRE
+        "VioletFire", "UltimateViolet",
+        -> BLUE_FIRE
         else -> BLUE_FIRE
     }
 
-    /** Enables the chosen launcher alias and disables the others. */
+    /**
+     * Enables the chosen launcher alias and disables the others.
+     * Prefer [applyFromPrefs] so pending mid-session changes wait for cold start.
+     */
     fun apply(context: Context, themeId: String = BLUE_FIRE) {
-        val chosen = normalize(themeId)
+        val chosen = launcherBucket(themeId)
         val pm = context.packageManager
         val pkg = context.packageName
         aliases.forEach { (id, className) ->
@@ -50,21 +66,25 @@ object AppIconThemes {
                 PackageManager.DONT_KILL_APP,
             )
         }
+        PreferenceManager.getDefaultSharedPreferences(context).edit()
+            .putBoolean(PENDING_LAUNCHER_KEY, false)
+            .apply()
     }
 
-    /** Reads the preference (default Blue Fire) and applies it. */
+    /**
+     * Applies launcher aliases only when a theme change was deferred.
+     * Does not rewrite the stored Ultimate pack key.
+     */
     fun applyFromPrefs(context: Context) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val pending = prefs.getBoolean(PENDING_LAUNCHER_KEY, false)
+        if (!pending) return
         val raw = prefs.getString(PREF_KEY, BLUE_FIRE) ?: BLUE_FIRE
-        val id = normalize(raw)
-        if (raw != id) {
-            prefs.edit().putString(PREF_KEY, id).apply()
-        }
-        apply(context, id)
+        apply(context, raw)
     }
 
     fun current(context: Context): String {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        return normalize(prefs.getString(PREF_KEY, BLUE_FIRE) ?: BLUE_FIRE)
+        return prefs.getString(PREF_KEY, BLUE_FIRE) ?: BLUE_FIRE
     }
 }

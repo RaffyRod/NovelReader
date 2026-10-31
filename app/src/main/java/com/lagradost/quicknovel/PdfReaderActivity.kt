@@ -1,5 +1,6 @@
 package com.lagradost.quicknovel
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lagradost.quicknovel.BaseApplication.Companion.getKey
 import com.lagradost.quicknovel.BaseApplication.Companion.setKey
 import com.lagradost.quicknovel.CommonActivity.showToast
+import com.lagradost.quicknovel.CommonActivity.withAppLocale
 import com.lagradost.quicknovel.databinding.ActivityPdfReaderBinding
 import com.lagradost.quicknovel.util.UIHelper.fixSystemBarsPadding
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +36,10 @@ class PdfReaderActivity : AppCompatActivity() {
     private var renderer: PdfRenderer? = null
     private var currentPage = 0
     private val lastPageKey get() = intent.data.toString()
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(withAppLocale(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

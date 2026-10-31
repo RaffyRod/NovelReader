@@ -45,9 +45,17 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RadialGradientShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.platform.LocalContext
 import com.lagradost.cloudstream4.compose.focusOutline
+import com.lagradost.quicknovel.ui.AppearanceMode
+import com.lagradost.quicknovel.ui.IconStyle
+import com.lagradost.quicknovel.ui.LocalIconStyle
 import com.lagradost.quicknovel.ui.LocalUiIconTheme
 import com.lagradost.quicknovel.ui.UiIconTheme
+import com.lagradost.quicknovel.ui.coreFor
+import com.lagradost.quicknovel.ui.glowFor
+import com.lagradost.quicknovel.ui.glyphFor
 import com.mihon.presentation.settings.LocalPreferenceHighlighted
 import com.mihon.presentation.settings.LocalPreferenceMinHeight
 import kotlinx.coroutines.delay
@@ -59,10 +67,8 @@ val LocalSettingsStyle = compositionLocalOf { 1 }
 /** Index and size of the item inside its group, used to round the corners of grouped cards. */
 val LocalItemPosition = compositionLocalOf { 0 to 1 }
 
-/** Soft fire halo behind a settings icon (matches Blue/Black/Lava Fire mocks). */
-private fun fireAuraBrush(theme: UiIconTheme): Brush {
-    val glow = theme.glow
-    val core = theme.core
+/** Soft fire halo behind a settings icon (style A). */
+private fun fireAuraBrush(glow: Color, core: Color): Brush {
     return object : ShaderBrush() {
         override fun createShader(size: androidx.compose.ui.geometry.Size) =
             RadialGradientShader(
@@ -86,6 +92,160 @@ private fun Modifier.recolor(color: Color): Modifier = this
         drawRect(color, blendMode = BlendMode.SrcIn)
     }
 
+private fun onFilledGlyph(theme: UiIconTheme, darkSurface: Boolean): Color {
+    val core = theme.coreFor(darkSurface)
+    val lum = 0.2126f * core.red + 0.7152f * core.green + 0.0722f * core.blue
+    return if (lum > 0.55f) Color(0xFF0A0C10) else Color.White
+}
+
+/**
+ * Settings-row icon badge. Colors from [UiIconTheme] (surface-aware); treatment from [IconStyle].
+ */
+@Composable
+private fun PreferenceIconBadge(
+    theme: UiIconTheme,
+    style: IconStyle,
+    icon: @Composable () -> Unit,
+    sizeDp: Int = 40,
+) {
+    val darkSurface = AppearanceMode.isDark(LocalContext.current)
+    val size = sizeDp.dp
+    val squircle = RoundedCornerShape(12.dp)
+    val core = theme.coreFor(darkSurface)
+    val glow = theme.glowFor(darkSurface)
+    val glyph = theme.glyphFor(darkSurface)
+    when (style) {
+        IconStyle.FIRE_AURA -> {
+            val fill = Brush.linearGradient(listOf(glow, core))
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(squircle)
+                    .background(fill)
+                    .background(fireAuraBrush(glow, core)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(onFilledGlyph(theme, darkSurface)), content = { icon() })
+            }
+        }
+        IconStyle.SOFT_HALO -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(CircleShape)
+                    .background(core.copy(alpha = if (darkSurface) 0.16f else 0.12f))
+                    .border(2.dp, core.copy(alpha = if (darkSurface) 0.55f else 0.85f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(core), content = { icon() })
+            }
+        }
+        IconStyle.FLAT_TINT -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(squircle)
+                    .background(core),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(onFilledGlyph(theme, darkSurface)), content = { icon() })
+            }
+        }
+        IconStyle.OUTLINE_RING -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(CircleShape)
+                    .border(1.5.dp, core, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(core), content = { icon() })
+            }
+        }
+        IconStyle.SQUIRCLE_TILE -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(squircle)
+                    .background(Brush.linearGradient(listOf(glow, core))),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(onFilledGlyph(theme, darkSurface)), content = { icon() })
+            }
+        }
+        IconStyle.NEON_EDGE -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(squircle)
+                    .background(if (darkSurface) Color(0xFF050505) else Color(0xFF1A1F2A))
+                    .border(1.dp, core, squircle),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(glow), content = { icon() })
+            }
+        }
+        IconStyle.GLASS_CAPSULE -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(core.copy(alpha = if (darkSurface) 0.22f else 0.14f))
+                    .border(1.dp, core.copy(alpha = if (darkSurface) 0.45f else 0.7f), RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(if (darkSurface) glyph else core), content = { icon() })
+            }
+        }
+        IconStyle.DUOTONE_BADGE -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(squircle)
+                    .background(
+                        Brush.linearGradient(
+                            0f to core,
+                            0.5f to core,
+                            0.5f to glow,
+                            1f to glow,
+                        )
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(Color.White), content = { icon() })
+            }
+        }
+        IconStyle.MINIMAL_GLYPH -> {
+            Box(
+                modifier = Modifier.size(size),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(core), content = { icon() })
+            }
+        }
+        IconStyle.ORBIT_DOT -> {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(squircle)
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.14f), squircle),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(modifier = Modifier.recolor(MaterialTheme.colorScheme.onBackground), content = { icon() })
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(5.dp)
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(core),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 internal fun BasePreferenceWidget(
     modifier: Modifier = Modifier,
@@ -100,7 +260,7 @@ internal fun BasePreferenceWidget(
     val style = LocalSettingsStyle.current
     val (position, count) = LocalItemPosition.current
     val uiIcon = LocalUiIconTheme.current
-    val primary = uiIcon.core
+    val iconStyle = LocalIconStyle.current
     val surface = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)
 
     if (style == 2) {
@@ -115,19 +275,8 @@ internal fun BasePreferenceWidget(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (icon != null) {
-                Box(
-                    modifier = Modifier
-                        .padding(start = PrefsHorizontalPadding)
-                        .size(36.dp)
-                        .background(fireAuraBrush(uiIcon), shape = RoundedCornerShape(50)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier.recolor(
-                            if (uiIcon == UiIconTheme.BLACK_FIRE) Color(0xFFF5F7FA) else Color.White
-                        ),
-                        content = { icon() },
-                    )
+                Box(modifier = Modifier.padding(start = PrefsHorizontalPadding)) {
+                    PreferenceIconBadge(theme = uiIcon, style = iconStyle, icon = icon, sizeDp = 36)
                 }
             }
             if (!title.isNullOrBlank()) {
@@ -172,42 +321,15 @@ internal fun BasePreferenceWidget(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            // Solid Fire badge so Blue / Black / Lava is obvious on every settings row.
-            val badgeFill = when (uiIcon) {
-                UiIconTheme.BLACK_FIRE -> Brush.linearGradient(
-                    listOf(Color(0xFF3A4050), Color(0xFF1A1D24))
-                )
-                else -> Brush.linearGradient(listOf(uiIcon.glow, uiIcon.core))
-            }
-            val glyph = when (uiIcon) {
-                UiIconTheme.BLACK_FIRE -> Color(0xFFF5F7FA)
-                else -> Color.White
-            }
-            val badge = when (style) {
-                1 -> Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(badgeFill)
-                    .background(fireAuraBrush(uiIcon))
-                else -> Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(fireAuraBrush(uiIcon))
-                    .background(primary.copy(alpha = 0.18f))
-                    .border(1.dp, primary.copy(alpha = 0.55f), RoundedCornerShape(10.dp))
-            }
             Box(
                 modifier = Modifier.padding(start = PrefsHorizontalPadding, end = 8.dp),
             ) {
-                Box(
-                    modifier = badge,
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier.recolor(glyph),
-                        content = { icon() },
-                    )
-                }
+                PreferenceIconBadge(
+                    theme = uiIcon,
+                    style = iconStyle,
+                    icon = icon,
+                    sizeDp = if (style == 1) 40 else 38,
+                )
             }
         }
         Column(

@@ -81,12 +81,20 @@ class UIPreferences(preferences: PreferenceStore) {
     val theme = preferences.getString(
         "theme_key", "UltimateBlue"
     )
+    /** Ultimate surface: true = dark, false = light. */
+    val darkMode = preferences.getBoolean(
+        "dark_mode_key", true
+    )
     val appIconTheme = preferences.getString(
         "app_icon_theme_key", "BlueFire"
     )
-    /** Fire packs for settings/menu icons: BlueFire | BlackFire | LavaFire. */
+    /** Ultimate accent pack (BlueFire, EmeraldFire, …). Colors only. */
     val uiIconTheme = preferences.getString(
         "ui_icon_theme_key", "BlueFire"
+    )
+    /** Icon treatment A–J; independent from [uiIconTheme]. */
+    val iconStyle = preferences.getString(
+        "icon_style_key", "A"
     )
     val ratingFormat = preferences.getString(
         "rating_format",

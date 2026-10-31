@@ -244,7 +244,7 @@ class QuickBook(val data: QuickStreamData) : AbstractBook() {
     }
 
     override fun getLoadingStatus(index: Int): String {
-        return data.data[index].url
+        return ChapterSpec.numberedTitle(index + 1, data.data[index].name)
     }
 
     override suspend fun getChapterData(index: Int, reload: Boolean): String {
@@ -459,6 +459,7 @@ data class ChapterUpdate(
 
 class ReadActivityViewModel : ViewModel() {
     lateinit var book: AbstractBook
+    val isBookInitialized: Boolean get() = ::book.isInitialized
     private lateinit var markwon: Markwon
     private var isInApp: Boolean = true
     private var leftAppAt: ScrollIndex? = null

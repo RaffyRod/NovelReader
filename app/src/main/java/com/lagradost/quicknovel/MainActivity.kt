@@ -573,11 +573,16 @@ class MainActivity : AppCompatActivity() {
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
 
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(this)
+        com.lagradost.quicknovel.ui.FireThemes.migrateIfNeeded(this)
+        com.lagradost.quicknovel.ui.AppearanceMode.syncNightMode(this)
         CommonActivity.loadThemes(this)
-        com.lagradost.quicknovel.util.AppIconThemes.applyFromPrefs(this)
         CommonActivity.init(this)
 
         super.onCreate(savedInstanceState)
+        // Launcher alias only on cold start — flipping it during recreate() kills many OEMs.
+        if (savedInstanceState == null) {
+            com.lagradost.quicknovel.util.AppIconThemes.applyFromPrefs(this)
+        }
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding!!.root)
 
@@ -626,11 +631,21 @@ class MainActivity : AppCompatActivity() {
                         com.lagradost.quicknovel.ui.UiIconTheme.DEFAULT_KEY,
                     )
                 ),
+                iconStyle = com.lagradost.quicknovel.ui.IconStyle.fromKey(
+                    settingsManager.getString(
+                        com.lagradost.quicknovel.ui.IconStyle.PREF_KEY,
+                        com.lagradost.quicknovel.ui.IconStyle.DEFAULT_KEY,
+                    )
+                ),
+                darkSurface = com.lagradost.quicknovel.ui.AppearanceMode.isDark(this),
             )
         }
         applyNavStyle()
         navStylePrefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == "nav_style" || key == com.lagradost.quicknovel.ui.UiIconTheme.PREF_KEY) {
+            if (key == "nav_style"
+                || key == com.lagradost.quicknovel.ui.UiIconTheme.PREF_KEY
+                || key == com.lagradost.quicknovel.ui.IconStyle.PREF_KEY
+            ) {
                 applyNavStyle()
                 syncSectionsButton(navController.currentDestination)
             }

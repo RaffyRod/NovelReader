@@ -3,6 +3,7 @@ package com.lagradost.quicknovel.ui.history
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -68,8 +69,11 @@ import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.compose.BaseSearchBar
 import com.lagradost.quicknovel.compose.IsScrolling
 import com.lagradost.quicknovel.compose.isLandscape
+import com.lagradost.quicknovel.ui.AppearanceMode
 import com.lagradost.quicknovel.ui.LocalUiIconTheme
 import com.lagradost.quicknovel.ui.UiIconTheme
+import com.lagradost.quicknovel.ui.coreFor
+import com.lagradost.quicknovel.ui.glowFor
 import com.lagradost.quicknovel.ui.common.ImmutableSearchList
 import com.lagradost.quicknovel.ui.common.ImmutableSearchResponse
 import com.lagradost.quicknovel.ui.common.SearchResponseAction
@@ -258,18 +262,23 @@ private fun ImmutableSearchResponse.historyKind(): HistoryKind =
 private fun historyStamp(item: ImmutableSearchResponse): Long =
     maxOf(item.timeOfPageOpened ?: 0L, item.timeOfCached)
 
-private fun fireAuraBrush(theme: UiIconTheme): Brush = object : ShaderBrush() {
+private fun fireAuraBrush(glow: Color, core: Color): Brush = object : ShaderBrush() {
     override fun createShader(size: androidx.compose.ui.geometry.Size) =
         RadialGradientShader(
             colors = listOf(
-                theme.glow.copy(alpha = 0.75f),
-                theme.core.copy(alpha = 0.35f),
+                glow.copy(alpha = 0.75f),
+                core.copy(alpha = 0.35f),
                 Color.Transparent,
             ),
             center = Offset(size.width * 0.5f, size.height * 0.7f),
             radius = size.minDimension * 0.85f,
             tileMode = TileMode.Clamp,
         )
+}
+
+private fun onAccentGlyph(core: Color): Color {
+    val lum = 0.2126f * core.red + 0.7152f * core.green + 0.0722f * core.blue
+    return if (lum > 0.55f) Color(0xFF0A0C10) else Color.White
 }
 
 @Composable
@@ -279,7 +288,10 @@ private fun FireSectionHeader(
     iconRes: Int,
 ) {
     val fire = LocalUiIconTheme.current
-    val glyph = if (fire == UiIconTheme.BLACK_FIRE) Color(0xFFF5F7FA) else Color.White
+    val darkSurface = AppearanceMode.isDark(LocalContext.current)
+    val core = fire.coreFor(darkSurface)
+    val glow = fire.glowFor(darkSurface)
+    val glyph = onAccentGlyph(core)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -287,17 +299,13 @@ private fun FireSectionHeader(
             .fillMaxWidth()
             .padding(start = 4.dp, end = 4.dp, top = 14.dp, bottom = 6.dp),
     ) {
-        val badgeFill = if (fire == UiIconTheme.BLACK_FIRE) {
-            Brush.linearGradient(listOf(Color(0xFF3A4050), Color(0xFF1A1D24)))
-        } else {
-            Brush.linearGradient(listOf(fire.glow, fire.core))
-        }
+        val badgeFill = Brush.linearGradient(listOf(glow, core))
         Box(
             modifier = Modifier
                 .size(28.dp)
                 .clip(RoundedCornerShape(9.dp))
                 .background(badgeFill)
-                .background(fireAuraBrush(fire)),
+                .background(fireAuraBrush(glow, core)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -321,7 +329,7 @@ private fun FireSectionHeader(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .clip(RoundedCornerShape(999.dp))
-                .background(fire.core.copy(alpha = if (fire == UiIconTheme.BLACK_FIRE) 0.35f else 0.85f))
+                .background(core)
                 .padding(horizontal = 8.dp, vertical = 3.dp),
         )
     }
@@ -330,24 +338,34 @@ private fun FireSectionHeader(
 @Composable
 private fun HistoryStatusPill(kind: HistoryKind) {
     val fire = LocalUiIconTheme.current
+    val darkSurface = AppearanceMode.isDark(LocalContext.current)
+    val core = fire.coreFor(darkSurface)
     val label = stringResource(
         if (kind == HistoryKind.READING) R.string.history_reading_pill
         else R.string.history_visited_pill
     )
-    val bg = if (kind == HistoryKind.READING) fire.core else fire.core.copy(alpha = 0.28f)
-    val fg = when {
-        kind == HistoryKind.READING && fire == UiIconTheme.BLACK_FIRE -> Color(0xFF0A0C10)
-        kind == HistoryKind.READING -> Color.White
-        else -> fire.glow
+    val shape = RoundedCornerShape(999.dp)
+    // Reading = solid accent; Visited = soft fill + strong border so it stays visible on light.
+    val bg = if (kind == HistoryKind.READING) {
+        core
+    } else if (darkSurface) {
+        core.copy(alpha = 0.28f)
+    } else {
+        core.copy(alpha = 0.14f)
     }
+    val fg = if (kind == HistoryKind.READING) onAccentGlyph(core) else core
     Text(
         text = label,
         color = fg,
         fontSize = 10.sp,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
+            .clip(shape)
             .background(bg)
+            .then(
+                if (kind == HistoryKind.VISITED) Modifier.border(1.dp, core, shape)
+                else Modifier
+            )
             .padding(horizontal = 7.dp, vertical = 2.dp),
     )
 }

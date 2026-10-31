@@ -4,6 +4,21 @@ import androidx.compose.ui.graphics.Color
 
 enum class CloudStreamPrimaryColor(val color: Color) {
     ULTIMATE_BLUE(Color(0xFF1A6CFF)),
+    ULTIMATE_BLACK(Color(0xFFE8EEF8)),
+    ULTIMATE_BLACK_LIGHT(Color(0xFF2A3142)),
+    ULTIMATE_LAVA(Color(0xFFFF3B1C)),
+    ULTIMATE_EMERALD(Color(0xFF00C853)),
+    ULTIMATE_EMERALD_LIGHT(Color(0xFF00A843)),
+    ULTIMATE_VIOLET(Color(0xFF7C4DFF)),
+    ULTIMATE_GOLD(Color(0xFFFFB300)),
+    ULTIMATE_GOLD_LIGHT(Color(0xFFC68400)),
+    ULTIMATE_CYAN(Color(0xFF00E5FF)),
+    ULTIMATE_CYAN_LIGHT(Color(0xFF00838F)),
+    ULTIMATE_ROSE(Color(0xFFFF4081)),
+    ULTIMATE_MIDNIGHT(Color(0xFF536DFE)),
+    ULTIMATE_CRIMSON(Color(0xFFFF1744)),
+    ULTIMATE_SOFT(Color(0xFF90CAF9)),
+    ULTIMATE_SOFT_LIGHT(Color(0xFF1565C0)),
     NORMAL(Color(0xFF1A6CFF)),
     BLUE(Color(0xFF5664B7)),
     PURPLE(Color(0xFF6200EA)),
@@ -56,14 +71,14 @@ internal object CloudStreamPalette {
     val AmoledBlack = Color(0xFF000000)
     val AmoledNearBlack = Color(0xFF121212)
 
-    // Light
-    val LightPrimaryGrayBg = Color(0xFFF1F1F1)
+    // Light (Ultimate-tinted)
+    val LightPrimaryGrayBg = Color(0xFFE8EDF5)
     val LightBlackBg = Color(0xFFFFFFFF)
-    val LightIconGrayBg = Color(0xFFEEEEEE)
-    val LightBoxItemBg = Color(0xFFEEEEEE)
-    val LightText = Color(0xFF202125)
-    val LightGrayText = Color(0xFF5F6267)
-    val LightIcon = Color(0xFF5F6267)
+    val LightIconGrayBg = Color(0xFFF1F4FA)
+    val LightBoxItemBg = Color(0xFFFFFFFF)
+    val LightText = Color(0xFF0F1419)
+    val LightGrayText = Color(0xFF4A5568)
+    val LightIcon = Color(0xFF2A3142)
 
     // Dracula
     val DraculaPrimaryGrayBg = Color(0xFF414450)

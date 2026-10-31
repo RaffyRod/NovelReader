@@ -6,8 +6,10 @@ on:
   workflow_dispatch:
 
 concurrency:
+  # Cancel only on PRs. Push cancel mid "Terminate Emulator" marked smoke as
+  # failed even when WDIO already reported 5 passing (operation canceled).
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   unit:

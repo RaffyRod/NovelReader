@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.CompositionLocalProvider
 import com.lagradost.cloudstream4.rememberAppSettings
+import com.lagradost.quicknovel.ui.IconStyle
+import com.lagradost.quicknovel.ui.LocalIconStyle
 import com.lagradost.quicknovel.ui.LocalUiIconTheme
 import com.lagradost.quicknovel.ui.UiIconTheme
 import com.mihon.presentation.settings.widget.LocalItemPosition
@@ -45,6 +47,7 @@ fun PreferenceScreen(
     val settings = rememberAppSettings()
     val style = settings.ui.settingsStyle.collectAsState().value.toIntOrNull() ?: 1
     val uiIcon = UiIconTheme.fromKey(settings.ui.uiIconTheme.collectAsState().value)
+    val iconStyle = IconStyle.fromKey(settings.ui.iconStyle.collectAsState().value)
     val highlightKey = SearchableSettings.highlightKey
     if (highlightKey != null) {
         LaunchedEffect(Unit) {
@@ -60,6 +63,7 @@ fun PreferenceScreen(
     CompositionLocalProvider(
         LocalSettingsStyle provides style,
         LocalUiIconTheme provides uiIcon,
+        LocalIconStyle provides iconStyle,
     ) {
     LazyColumn(
         modifier = modifier,

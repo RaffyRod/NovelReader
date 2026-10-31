@@ -125,7 +125,7 @@
         <item name="primaryGrayBackground">@color/amoledModeLight</item>
     </style>
 
-    <!-- Ultimate Blue: pure black + bright blue brand (matches launcher icon G) -->
+    <!-- Ultimate base surface: pure black. Accent comes from Ultimate* overlays. -->
     <style name="UltimateBlueMode">
         <item name="primaryGrayBackground">@color/ultimateBluePrimaryGray</item>
         <item name="primaryBlackBackground">@color/ultimateBlueBlack</item>
@@ -135,11 +135,18 @@
         <item name="grayTextColor">@color/ultimateBlueGrayText</item>
         <item name="white">@color/white</item>
         <item name="colorOnPrimary">@color/whiteText</item>
-        <item name="colorPrimary">@color/colorPrimaryUltimateBlue</item>
-        <item name="android:colorPrimary">@color/colorPrimaryUltimateBlue</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!-- Ultimate light surface (same accent overlays). -->
+    <style name="UltimateLightMode">
+        <item name="primaryGrayBackground">@color/ultimateLightPrimaryGray</item>
+        <item name="primaryBlackBackground">@color/ultimateLightBlack</item>
+        <item name="iconGrayBackground">@color/ultimateLightIconGray</item>
+        <item name="boxItemBackground">@color/ultimateLightBox</item>
+        <item name="textColor">@color/ultimateLightText</item>
+        <item name="grayTextColor">@color/ultimateLightGrayText</item>
+        <item name="white">#000000</item>
+        <item name="colorOnPrimary">@color/blackText</item>
     </style>
 
     <style name="ChipReviewAlt" parent="ChipFilled">
@@ -493,6 +500,141 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorOnPrimary">@color/whiteText</item>
         <item name="android:colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateBlack">
+        <item name="colorPrimary">@color/colorPrimaryUltimateBlack</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateBlack</item>
+        <item name="colorPrimaryDark">#9AA3B2</item>
+        <item name="colorAccent">#F5F7FA</item>
+        <item name="colorOnPrimary">@color/blackText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateBlack</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateLava">
+        <item name="colorPrimary">@color/colorPrimaryUltimateLava</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateLava</item>
+        <item name="colorPrimaryDark">#B01A08</item>
+        <item name="colorAccent">#FF7A3D</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateLava</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateEmerald">
+        <item name="colorPrimary">@color/colorPrimaryUltimateEmerald</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateEmerald</item>
+        <item name="colorPrimaryDark">#007E33</item>
+        <item name="colorAccent">#69F0AE</item>
+        <item name="colorOnPrimary">@color/blackText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateEmerald</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateViolet">
+        <item name="colorPrimary">@color/colorPrimaryUltimateViolet</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateViolet</item>
+        <item name="colorPrimaryDark">#4527A0</item>
+        <item name="colorAccent">#B388FF</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateViolet</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateGold">
+        <item name="colorPrimary">@color/colorPrimaryUltimateGold</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateGold</item>
+        <item name="colorPrimaryDark">#C68400</item>
+        <item name="colorAccent">#FFD54F</item>
+        <item name="colorOnPrimary">@color/blackText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateGold</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateCyan">
+        <item name="colorPrimary">@color/colorPrimaryUltimateCyan</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateCyan</item>
+        <item name="colorPrimaryDark">#00838F</item>
+        <item name="colorAccent">#84FFFF</item>
+        <item name="colorOnPrimary">@color/blackText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateCyan</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateRose">
+        <item name="colorPrimary">@color/colorPrimaryUltimateRose</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateRose</item>
+        <item name="colorPrimaryDark">#C51162</item>
+        <item name="colorAccent">#FF80AB</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateRose</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateMidnight">
+        <item name="colorPrimary">@color/colorPrimaryUltimateMidnight</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateMidnight</item>
+        <item name="colorPrimaryDark">#304FFE</item>
+        <item name="colorAccent">#8C9EFF</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateMidnight</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateCrimson">
+        <item name="colorPrimary">@color/colorPrimaryUltimateCrimson</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateCrimson</item>
+        <item name="colorPrimaryDark">#D50000</item>
+        <item name="colorAccent">#FF5252</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateCrimson</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateSoft">
+        <item name="colorPrimary">@color/colorPrimaryUltimateSoft</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateSoft</item>
+        <item name="colorPrimaryDark">#42A5F5</item>
+        <item name="colorAccent">#BBDEFB</item>
+        <item name="colorOnPrimary">@color/blackText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateSoft</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateBlackLight">
+        <item name="colorPrimary">@color/colorPrimaryUltimateBlackLight</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateBlackLight</item>
+        <item name="colorPrimaryDark">#1A1F2A</item>
+        <item name="colorAccent">#5C6578</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateBlackLight</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateSoftLight">
+        <item name="colorPrimary">@color/colorPrimaryUltimateSoftLight</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateSoftLight</item>
+        <item name="colorPrimaryDark">#0D47A1</item>
+        <item name="colorAccent">#42A5F5</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateSoftLight</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateGoldLight">
+        <item name="colorPrimary">@color/colorPrimaryUltimateGoldLight</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateGoldLight</item>
+        <item name="colorPrimaryDark">#8A5A00</item>
+        <item name="colorAccent">#FFB300</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateGoldLight</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateCyanLight">
+        <item name="colorPrimary">@color/colorPrimaryUltimateCyanLight</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateCyanLight</item>
+        <item name="colorPrimaryDark">#006064</item>
+        <item name="colorAccent">#00BCD4</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateCyanLight</item>
+    </style>
+
+    <style name="OverlayPrimaryColorUltimateEmeraldLight">
+        <item name="colorPrimary">@color/colorPrimaryUltimateEmeraldLight</item>
+        <item name="android:colorPrimary">@color/colorPrimaryUltimateEmeraldLight</item>
+        <item name="colorPrimaryDark">#007E33</item>
+        <item name="colorAccent">#00C853</item>
+        <item name="colorOnPrimary">@color/whiteText</item>
+        <item name="android:colorAccent">@color/colorPrimaryUltimateEmeraldLight</item>
     </style>
 
     <style name="OverlayPrimaryColorBlue">
