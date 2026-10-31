@@ -7,6 +7,10 @@
 
 Screenshots live under each language `imagenes/` folder.
 
+Also covers (Ultimate updates): **LNReader plugins**, download **language / translate engines**, chapter **Select** FAB (Halo ring).
+
+Related: [docs index](../README.md) · [UI previews](../previews/).
+
 Regenerate:
 ```bash
 python docs/manual-1.1.4/_generar_docs_es.py

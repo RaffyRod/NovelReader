@@ -65,6 +65,15 @@ class GeminiTranslatorTest {
     }
 
     @Test
+    fun `system prompt targets the chosen language`() {
+        val french = GeminiProtocol.buildRequest("<p>Hi</p>", "French")
+        val prompt = mapper.readTree(french)
+            .path("systemInstruction").path("parts").path(0).path("text").asText()
+        assertTrue(prompt.contains("fluent French"))
+        assertTrue(GeminiProtocol.systemPrompt("Spanish").contains("fluent Spanish"))
+    }
+
+    @Test
     fun `blocked answers are reported with their reason`() {
         val reply = GeminiProtocol.parseReply("""{"promptFeedback":{"blockReason":"SAFETY"}}""")
 

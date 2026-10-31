@@ -32,12 +32,18 @@ object GeminiProtocol {
     private val retryDelayRegex = Regex("\"retryDelay\"\\s*:\\s*\"(\\d+(?:\\.\\d+)?)s\"")
     private val fenceRegex = Regex("^```[a-zA-Z]*\\s*\\n(.*?)\\n?```\\s*$", RegexOption.DOT_MATCHES_ALL)
 
-    const val SYSTEM_PROMPT =
-        "You are a professional literary translator of web novels. Translate the HTML fragment " +
-            "you receive into natural, fluent Spanish. Keep every HTML tag, attribute and the " +
+    /** Default prompt target (Spanish), kept for tests and callers that omit a language. */
+    val SYSTEM_PROMPT: String get() = systemPrompt("Spanish")
+
+    /** Builds the literary-translator system prompt for [targetLanguage] (English name). */
+    fun systemPrompt(targetLanguage: String): String {
+        val lang = targetLanguage.trim().ifBlank { "Spanish" }
+        return "You are a professional literary translator of web novels. Translate the HTML fragment " +
+            "you receive into natural, fluent $lang. Keep every HTML tag, attribute and the " +
             "document structure exactly as they are and translate only the visible text. " +
             "Keep character and place names consistent. Do not add notes, explanations or " +
             "code fences: answer with the translated HTML only."
+    }
 
     sealed class Reply {
         data class Text(val text: String) : Reply()
@@ -47,10 +53,11 @@ object GeminiProtocol {
     fun endpoint(model: String) =
         "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent"
 
-    /** Body of a generateContent request that translates [chunk]. */
-    fun buildRequest(chunk: String): String {
+    /** Body of a generateContent request that translates [chunk] into [targetLanguage]. */
+    fun buildRequest(chunk: String, targetLanguage: String = "Spanish"): String {
         val root = mapper.createObjectNode()
-        root.putObject("systemInstruction").putArray("parts").addObject().put("text", SYSTEM_PROMPT)
+        root.putObject("systemInstruction").putArray("parts").addObject()
+            .put("text", systemPrompt(targetLanguage))
         val content = root.putArray("contents").addObject()
         content.put("role", "user")
         content.putArray("parts").addObject().put("text", chunk)
@@ -127,8 +134,8 @@ object DefaultGeminiTransport : GeminiTransport {
 }
 
 /**
- * Translates chapters to Spanish with Gemini. Requests are spaced out so the free tier
- * rate limit is respected, and temporary errors are retried.
+ * Translates chapters with Gemini into [targetLanguage] (English name, default Spanish).
+ * Requests are spaced out so the free tier rate limit is respected, and temporary errors are retried.
  */
 class GeminiTranslator(
     private val apiKey: String,
@@ -138,6 +145,7 @@ class GeminiTranslator(
     private val maxRetries: Int = 4,
     private val sleep: suspend (Long) -> Unit = { delay(it) },
     private val now: () -> Long = System::currentTimeMillis,
+    private val targetLanguage: String = "Spanish",
 ) {
     private var lastRequestAt = 0L
 
@@ -155,12 +163,21 @@ class GeminiTranslator(
         val title = titleNode?.text()?.takeIf { it.isNotBlank() } ?: chapter.title
         titleNode?.remove()
         translated[0] = first.body().html()
-        return LoadedChapter(title, translated.joinToString("\n").trim())
+        val result = LoadedChapter(
+            title.trim(),
+            sanitizeChapterHtmlForEpub(translated.joinToString("\n").trim()),
+        )
+        if (!DownloadTranslationGuard.looksTranslated(chapter, result)) {
+            throw TranslationException(
+                "Gemini returned the original text instead of $targetLanguage"
+            )
+        }
+        return result
     }
 
     /** Translates a short piece of HTML, used by the "test key" action as well. */
     suspend fun translateChunk(chunk: String): String {
-        val body = GeminiProtocol.buildRequest(chunk)
+        val body = GeminiProtocol.buildRequest(chunk, targetLanguage)
         var attempt = 0
         while (true) {
             val wait = lastRequestAt + minIntervalMs - now()

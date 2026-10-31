@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultimate · Plugin providers — design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font: "Sora", system-ui, sans-serif;
+      --display: "Fraunces", Georgia, serif;
+      --phone: 300px;
+      --phone-h: 640px;
+    }
+
+    [data-theme="blue"] {
+      --page: #050912;
+      --bg: #0a1220;
+      --elev: #0f1a2c;
+      --surface: #142238;
+      --surface2: #1a2d4a;
+      --line: rgba(140, 180, 255, 0.14);
+      --text: #eef4ff;
+      --muted: #93a8c9;
+      --faint: #617595;
+      --accent: #5b8dff;
+      --accent2: #a8c6ff;
+      --glow: #5b8dff55;
+      --soft: #5b8dff1f;
+      --ok: #3dd68c;
+      --warn: #f0b429;
+      --danger: #ff6d7d;
+      --grad: linear-gradient(135deg, #5b8dff, #7c6bff);
+      --ink: #071018;
+      --mesh1: #5b8dff33;
+      --mesh2: #7c6bff22;
+    }
+    [data-theme="black"] {
+      --page: #040404;
+      --bg: #0b0b0d;
+      --elev: #131316;
+      --surface: #1a1a1f;
+      --surface2: #24242b;
+      --line: rgba(255,255,255,0.09);
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --faint: #71717a;
+      --accent: #e8e8ed;
+      --accent2: #fff;
+      --glow: #ffffff28;
+      --soft: #ffffff0f;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --danger: #fb7185;
+      --grad: linear-gradient(135deg, #fff, #9ca3af);
+      --ink: #0a0a0a;
+      --mesh1: #ffffff14;
+      --mesh2: #ffffff08;
+    }
+    [data-theme="lava"] {
+      --page: #0c0503;
+      --bg: #160b08;
+      --elev: #21100c;
+      --surface: #2c1510;
+      --surface2: #3f1f16;
+      --line: rgba(255, 120, 70, 0.18);
+      --text: #fff1ea;
+      --muted: #d4a897;
+      --faint: #9a6a58;
+      --accent: #ff6a3d;
+      --accent2: #ffb089;
+      --glow: #ff6a3d55;
+      --soft: #ff6a3d24;
+      --ok: #6ee7a8;
+      --warn: #fbbf24;
+      --danger: #fb7185;
+      --grad: linear-gradient(135deg, #ff6a3d, #ffb347);
+      --ink: #1a0804;
+      --mesh1: #ff6a3d33;
+      --mesh2: #ffb34722;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 480px at 8% -10%, var(--mesh1), transparent 55%),
+        radial-gradient(700px 400px at 95% 5%, var(--mesh2), transparent 50%),
+        var(--page);
+    }
+
+    /* —— Page chrome —— */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 22px;
+      backdrop-filter: blur(16px);
+      background: color-mix(in srgb, var(--page) 78%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      font-family: var(--display);
+      font-size: 1.15rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .brand span { color: var(--accent2); font-style: italic; font-weight: 500; }
+    .topbar .spacer { flex: 1; }
+    .theme-pills { display: flex; gap: 6px; }
+    .theme-pills button {
+      border: 1px solid var(--line);
+      background: var(--elev);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .theme-pills button[aria-pressed="true"] {
+      color: var(--ink);
+      background: var(--grad);
+      border-color: transparent;
+    }
+
+    .hero {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 48px 24px 28px;
+    }
+    .fig {
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .hero h1 {
+      font-family: var(--display);
+      font-weight: 650;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin: 0 0 14px;
+      max-width: 16ch;
+    }
+    .hero h1 em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--accent2);
+    }
+    .hero .lede {
+      max-width: 48ch;
+      color: var(--muted);
+      line-height: 1.55;
+      margin: 0 0 22px;
+      font-size: 1rem;
+    }
+
+    .format-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .format-bar article {
+      padding: 14px 14px 12px;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--elev) 92%, transparent);
+      border: 1px solid var(--line);
+    }
+    .format-bar b {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      color: var(--accent2);
+    }
+    .format-bar p {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .format-bar code {
+      font-size: 0.75rem;
+      color: var(--text);
+      background: var(--soft);
+      padding: 1px 5px;
+      border-radius: 5px;
+    }
+
+    /* —— Storyboard —— */
+    .board {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 12px 24px 80px;
+    }
+    .board-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 28px 0 18px;
+      flex-wrap: wrap;
+    }
+    .board-head h2 {
+      font-family: var(--display);
+      font-size: 1.65rem;
+      font-weight: 650;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .board-head p {
+      margin: 0;
+      color: var(--faint);
+      font-size: 0.85rem;
+    }
+
+    .story {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .frame {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .frame .cap {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 600;
+    }
+    .frame .cap b { color: var(--accent2); font-weight: 700; }
+
+    .phone {
+      height: var(--phone-h);
+      border-radius: 28px;
+      padding: 9px;
+      background: linear-gradient(160deg, #3a4252, #12151c);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+    .glass {
+      height: 100%;
+      border-radius: 22px;
+      overflow: hidden;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      padding: 9px 14px 2px;
+      font-size: 0.62rem;
+      font-weight: 650;
+      color: var(--faint);
+    }
+    .bar {
+      padding: 4px 12px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .bar .eye {
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 650;
+    }
+    .bar h3 {
+      margin: 1px 0 0;
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      margin-top: 8px;
+      padding: 3px;
+      background: var(--elev);
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+    .seg span {
+      text-align: center;
+      font-size: 0.62rem;
+      font-weight: 650;
+      padding: 7px 2px;
+      border-radius: 8px;
+      color: var(--muted);
+    }
+    .seg span.on {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .scroll {
+      flex: 1;
+      overflow: hidden;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .banner {
+      border-radius: 14px;
+      padding: 12px;
+      background:
+        radial-gradient(180px 80px at 100% 0%, var(--glow), transparent 70%),
+        var(--surface);
+      border: 1px solid var(--line);
+    }
+    .banner h4 { margin: 0 0 3px; font-size: 0.82rem; }
+    .banner p { margin: 0; font-size: 0.68rem; color: var(--muted); line-height: 1.35; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .stat {
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 11px;
+      background: var(--elev);
+      border: 1px solid var(--line);
+    }
+    .stat b { display: block; font-size: 0.92rem; }
+    .stat i {
+      font-style: normal;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 650;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 38px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+    .row.sel {
+      background: var(--surface2);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    }
+    .av {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: var(--elev);
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--accent2);
+    }
+    .row .n { font-size: 0.74rem; font-weight: 700; margin: 0; }
+    .row .s {
+      margin: 1px 0 0;
+      font-size: 0.58rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 120px;
+    }
+    .pill {
+      font-size: 0.52rem;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent2);
+      white-space: nowrap;
+    }
+    .pill.warn {
+      background: color-mix(in srgb, var(--warn) 18%, transparent);
+      color: var(--warn);
+    }
+    .pill.ok {
+      background: color-mix(in srgb, var(--ok) 16%, transparent);
+      color: var(--ok);
+    }
+
+    .lang {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+    .lang.on {
+      background: var(--surface2);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    .sq {
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      border: 1.5px solid var(--faint);
+      display: grid;
+      place-items: center;
+      font-size: 0.55rem;
+      color: transparent;
+      flex: 0 0 auto;
+    }
+    .lang.on .sq {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--ink);
+    }
+    .lang b { font-size: 0.74rem; }
+    .lang .c { color: var(--faint); font-size: 0.65rem; margin-left: 4px; }
+    .prio {
+      margin-left: auto;
+      font-size: 0.5rem;
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: var(--grad);
+      color: var(--ink);
+    }
+
+    .field {
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 650;
+      margin-bottom: 4px;
+    }
+    .input {
+      background: var(--elev);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 0.65rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .actions {
+      display: grid;
+      gap: 6px;
+    }
+    .action {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border-radius: 11px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+    .action .g {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--soft);
+      color: var(--accent2);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .action.danger .g {
+      background: color-mix(in srgb, var(--danger) 16%, transparent);
+      color: var(--danger);
+    }
+    .action b { display: block; font-size: 0.7rem; }
+    .action small { color: var(--muted); font-size: 0.55rem; }
+
+    .dock {
+      padding: 8px 10px 12px;
+      border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+    }
+    .dock .hint {
+      font-size: 0.58rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .cta {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      border-radius: 11px;
+      background: var(--grad);
+      color: var(--ink);
+      font-size: 0.72rem;
+      font-weight: 750;
+      border: 0;
+    }
+    .cta.ghost {
+      background: var(--soft);
+      color: var(--accent2);
+      border: 1px solid var(--line);
+    }
+
+    /* Interactive live panel */
+    .live {
+      margin-top: 48px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 1fr minmax(280px, 340px);
+      gap: 36px;
+      align-items: start;
+    }
+    .live h2 {
+      font-family: var(--display);
+      font-size: 1.8rem;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .live .lede { color: var(--muted); margin: 0 0 16px; line-height: 1.5; max-width: 42ch; }
+    .live-phone {
+      width: 100%;
+      max-width: 340px;
+      height: 720px;
+      margin: 0 auto;
+      border-radius: 34px;
+      padding: 10px;
+      background: linear-gradient(160deg, #3a4252, #12151c);
+      box-shadow: 0 28px 70px rgba(0,0,0,0.45);
+      position: sticky;
+      top: 72px;
+    }
+    .live-screen {
+      height: 100%;
+      border-radius: 26px;
+      overflow: hidden;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .l-status {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 16px 0;
+      font-size: 0.68rem;
+      font-weight: 650;
+      color: var(--faint);
+    }
+    .l-bar {
+      padding: 6px 14px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .l-bar .eye {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 650;
+    }
+    .l-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .l-bar-row h2 {
+      flex: 1;
+      margin: 0;
+      font-family: var(--font);
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+    .ib {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: var(--elev);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 10px;
+      padding: 4px;
+      background: var(--elev);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+    .tabs button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 9px;
+      padding: 8px 4px;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .tabs button.on {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .l-body { flex: 1; overflow: auto; padding: 12px; }
+    .view { display: none; animation: up .25s ease; }
+    .view.on { display: block; }
+    @keyframes up {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .btn.primary { background: var(--grad); color: var(--ink); }
+    .btn.ghost { background: var(--soft); color: var(--accent2); border: 1px solid var(--line); }
+    .btn.sm { padding: 8px 10px; font-size: 0.74rem; }
+    .btn.block { width: 100%; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .row2 { display: flex; gap: 8px; }
+    .row2 .btn { flex: 1; }
+
+    .box {
+      background: var(--elev);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    input, textarea {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.84rem;
+      padding: 11px;
+      outline: none;
+      resize: vertical;
+    }
+    .lbl {
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-weight: 650;
+      margin: 0 0 6px;
+    }
+
+    .l-row {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .l-row.sel {
+      background: var(--surface2);
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+    .l-av {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--elev); border: 1px solid var(--line);
+      display: grid; place-items: center; font-weight: 750; color: var(--accent2);
+    }
+    .l-meta .n { margin: 0; font-weight: 700; font-size: .9rem; }
+    .l-meta .s { margin: 2px 0 0; font-size: .7rem; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .badge {
+      font-size: .6rem; font-weight: 750; padding: 3px 7px; border-radius: 999px;
+      background: var(--soft); color: var(--accent2);
+    }
+    .badge.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+    .badge.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+
+    .lang-i {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px; border-radius: 13px; background: var(--surface);
+      border: 1px solid var(--line); margin-bottom: 8px; cursor: pointer;
+    }
+    .lang-i.on { background: var(--surface2); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+    .lang-i .sq {
+      width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--faint);
+      display: grid; place-items: center; font-size: .7rem; color: transparent;
+    }
+    .lang-i.on .sq { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+    .lang-i .prio {
+      margin-left: auto; font-size: .58rem; font-weight: 750; letter-spacing: .05em;
+      text-transform: uppercase; padding: 4px 7px; border-radius: 999px;
+      background: var(--grad); color: var(--ink);
+    }
+
+    .sheet {
+      position: absolute; inset: 0; background: rgba(0,0,0,.48);
+      display: none; align-items: flex-end; z-index: 6;
+    }
+    .sheet.open { display: flex; }
+    .sheet-p {
+      width: 100%; background: var(--elev); border-radius: 22px 22px 0 0;
+      border-top: 1px solid var(--line); padding: 10px 14px 20px;
+      animation: up .22s ease;
+    }
+    .grab { width: 40px; height: 4px; border-radius: 99px; background: var(--faint); margin: 4px auto 12px; opacity: .5; }
+    .sheet-h { display: grid; grid-template-columns: 48px 1fr; gap: 12px; margin-bottom: 12px; }
+    .act {
+      width: 100%; text-align: left; display: grid; grid-template-columns: 34px 1fr;
+      gap: 10px; align-items: center; padding: 11px; border-radius: 13px;
+      background: var(--surface); border: 1px solid var(--line); color: var(--text);
+      font: inherit; cursor: pointer; margin-bottom: 8px;
+    }
+    .act .g {
+      width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+      background: var(--soft); color: var(--accent2); font-weight: 700;
+    }
+    .act.danger .g { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+    .act small { display: block; color: var(--muted); font-size: .72rem; margin-top: 2px; }
+
+    .foot {
+      padding: 10px 12px 14px; border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+    }
+    .foot .sum { font-size: .74rem; color: var(--muted); margin-bottom: 8px; }
+    .foot .sum b { color: var(--text); }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(12px);
+      background: var(--elev); border: 1px solid var(--line); padding: 11px 14px;
+      border-radius: 12px; font-weight: 650; font-size: .84rem; opacity: 0;
+      pointer-events: none; transition: .25s ease; z-index: 50;
+      box-shadow: 0 16px 40px rgba(0,0,0,.4);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 1100px) {
+      .story { grid-template-columns: repeat(2, 1fr); }
+      .format-bar { grid-template-columns: 1fr; }
+      .live { grid-template-columns: 1fr; }
+      .live-phone { position: relative; top: 0; }
+    }
+    @media (max-width: 640px) {
+      .story { grid-template-columns: 1fr; max-width: 320px; margin: 0 auto; }
+    }
+  </style>
+</head>
+<body data-theme="blue">
+  <header class="topbar">
+    <div class="brand">Ultimate · <span>plugins</span></div>
+    <div class="spacer"></div>
+    <div class="theme-pills" role="group" aria-label="Tema Fire">
+      <button type="button" data-theme="blue" aria-pressed="true">Blue</button>
+      <button type="button" data-theme="black" aria-pressed="false">Black</button>
+      <button type="button" data-theme="lava" aria-pressed="false">Lava</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="fig">Fig. 01 — Design system · LNReader-inspired</div>
+    <h1>Proveedores por plugin, <em>con oficio nativo</em></h1>
+    <p class="lede">
+      Storyboard del flujo Ultimate: catálogo JSON → idiomas (EN/ES primero) → cards →
+      gestión (update / edit / uninstall). El runtime del plugin es JS, no solo JSON.
+    </p>
+    <div class="format-bar">
+      <article>
+        <b>Manifest JSON</b>
+        <p><code>plugins.min.json</code> lista metadatos. Es el índice del repo (LNReader official).</p>
+      </article>
+      <article>
+        <b>Plugin JS</b>
+        <p>Campo <code>url</code> → <code>.js</code> compilado. LNReader lo descarga y ejecuta.</p>
+      </article>
+      <article>
+        <b>Gestión</b>
+        <p>Tras instalar: actualizar versión, editar local, reinstalar JS o desinstalar.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="board-head">
+      <h2>Storyboard</h2>
+      <p>Cuatro pantallas clave · mismos tokens Fire</p>
+    </div>
+
+    <div class="story">
+      <!-- 01 Manage -->
+      <div class="frame">
+        <div class="cap"><b>01</b> · Instalados</div>
+        <div class="phone"><div class="glass">
+          <div class="status"><span>9:41</span><span>Ultimate</span></div>
+          <div class="bar">
+            <div class="eye">Ajustes · Proveedores</div>
+            <h3>Plugins</h3>
+            <div class="seg"><span class="on">Instalados</span><span>Explorar</span><span>Repos</span></div>
+          </div>
+          <div class="scroll">
+            <div class="stats">
+              <div class="stat"><b>3</b><i>Activos</i></div>
+              <div class="stat"><b>1</b><i>Update</i></div>
+              <div class="stat"><b>1</b><i>Repo</i></div>
+            </div>
+            <div class="row">
+              <div class="av">A</div>
+              <div><p class="n">Archive Of Our Own</p><p class="s">archiveofourown.org · v1.0.4</p></div>
+              <span class="pill warn">↑ 1.0.5</span>
+            </div>
+            <div class="row">
+              <div class="av">N</div>
+              <div><p class="n">NOVA</p><p class="s">novelasligeras.net · v1.1.1</p></div>
+              <span class="pill ok">JS</span>
+            </div>
+            <div class="row">
+              <div class="av">A</div>
+              <div><p class="n">Arcane Translations</p><p class="s">arcanetranslations.com</p></div>
+              <span class="pill">English</span>
+            </div>
+          </div>
+          <div class="dock">
+            <div class="hint">Toca un plugin → actualizar / editar / quitar</div>
+            <button class="cta" type="button">Actualizar (1)</button>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- 02 Repo -->
+      <div class="frame">
+        <div class="cap"><b>02</b> · Añadir repo</div>
+        <div class="phone"><div class="glass">
+          <div class="status"><span>9:41</span><span>Ultimate</span></div>
+          <div class="bar">
+            <div class="eye">Plugins · Repositorio</div>
+            <h3>Repos</h3>
+            <div class="seg"><span>Instalados</span><span>Explorar</span><span class="on">Repos</span></div>
+          </div>
+          <div class="scroll">
+            <div class="banner">
+              <h4>Manifest LNReader</h4>
+              <p>JSON de catálogo. Al instalar cada fuente se baja su <b>.js</b>.</p>
+            </div>
+            <div>
+              <div class="field">URL del manifest</div>
+              <div class="input">…/plugins/v3.0.0/.dist/plugins.min.json</div>
+            </div>
+            <div>
+              <div class="field">O pegar JSON</div>
+              <div class="input">[{ "id", "name", "lang", "url"… }]</div>
+            </div>
+            <div class="row" style="margin-top:4px;">
+              <div class="av" style="font-size:.65rem;">328</div>
+              <div><p class="n">Official repo</p><p class="s">17 idiomas · EN 187 · ES 18</p></div>
+              <span class="pill ok">Synced</span>
+            </div>
+          </div>
+          <div class="dock">
+            <div class="hint">Fetch valida forma del array PluginItem</div>
+            <button class="cta" type="button">Fetch catálogo</button>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- 03 Languages -->
+      <div class="frame">
+        <div class="cap"><b>03</b> · Idiomas</div>
+        <div class="phone"><div class="glass">
+          <div class="status"><span>9:41</span><span>Ultimate</span></div>
+          <div class="bar">
+            <div class="eye">Explorar · filtro</div>
+            <h3>Idiomas</h3>
+          </div>
+          <div class="scroll">
+            <div class="banner">
+              <h4>Prioridad Ultimate</h4>
+              <p>English y Español anclados arriba. El resto por volumen.</p>
+            </div>
+            <div class="lang on"><span class="sq">✓</span><span><b>English</b><span class="c">187</span></span><span class="prio">Prioridad</span></div>
+            <div class="lang on"><span class="sq">✓</span><span><b>Español</b><span class="c">18</span></span><span class="prio">Prioridad</span></div>
+            <div class="lang"><span class="sq"></span><span><b>Русский</b><span class="c">26</span></span></div>
+            <div class="lang"><span class="sq"></span><span><b>العربية</b><span class="c">20</span></span></div>
+            <div class="lang"><span class="sq"></span><span><b>Français</b><span class="c">17</span></span></div>
+          </div>
+          <div class="dock">
+            <div class="hint">2 idiomas · listos para cards</div>
+            <button class="cta" type="button">Ver providers</button>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- 04 Install + manage sheet -->
+      <div class="frame">
+        <div class="cap"><b>04</b> · Cards + gestión</div>
+        <div class="phone"><div class="glass">
+          <div class="status"><span>9:41</span><span>Ultimate</span></div>
+          <div class="bar">
+            <div class="eye">Plugin instalado</div>
+            <h3>AO3</h3>
+          </div>
+          <div class="scroll">
+            <div class="row">
+              <div class="av">A</div>
+              <div><p class="n">Archive Of Our Own</p><p class="s">English · v1.0.4 → 1.0.5</p></div>
+              <span class="pill warn">Update</span>
+            </div>
+            <div class="actions">
+              <div class="action"><span class="g">↑</span><div><b>Actualizar</b><small>Re-descarga JS del manifest</small></div></div>
+              <div class="action"><span class="g">✎</span><div><b>Editar</b><small>Alias local, notas, repo</small></div></div>
+              <div class="action"><span class="g">↻</span><div><b>Reinstalar</b><small>Assets + runtime limpio</small></div></div>
+              <div class="action danger"><span class="g">✕</span><div><b>Desinstalar</b><small>Quitar de Ultimate</small></div></div>
+            </div>
+            <div class="row sel" style="margin-top:4px;">
+              <div class="av">N</div>
+              <div><p class="n">NOVA</p><p class="s">Seleccionado para install</p></div>
+              <span class="pill ok">.js</span>
+            </div>
+          </div>
+          <div class="dock">
+            <div class="hint">Install = fetch del campo url</div>
+            <button class="cta" type="button">Añadir seleccionados</button>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Live interactive -->
+    <div class="live">
+      <div>
+        <div class="fig">Fig. 02 — Prototipo vivo</div>
+        <h2>Prueba el flujo</h2>
+        <p class="lede">
+          Cambia tema Fire arriba. En el teléfono: Instalados, Repos (fetch/demo),
+          idiomas, cards e hoja de gestión.
+        </p>
+        <div class="format-bar" style="grid-template-columns:1fr;">
+          <article>
+            <b>Referencia LNReader</b>
+            <p>
+              Repo: Settings → Repos → pegar manifest → browse/install por fuente.
+              Aquí añadimos prioridad EN/ES, cards multi-select y administración explícita.
+            </p>
+          </article>
+        </div>
+      </div>
+
+      <div class="live-phone">
+        <div class="live-screen">
+          <div class="l-status"><span>9:41</span><span>Ultimate</span></div>
+          <div class="l-bar">
+            <div class="eye" id="eye">Ajustes · Proveedores</div>
+            <div class="l-bar-row">
+              <button class="ib" type="button" id="back" hidden>←</button>
+              <h2 id="title">Plugins</h2>
+              <button class="ib" type="button" id="add">＋</button>
+            </div>
+            <div class="tabs" id="tabs">
+              <button type="button" class="on" data-tab="manage">Instalados</button>
+              <button type="button" data-tab="explore">Explorar</button>
+              <button type="button" data-tab="repos">Repos</button>
+            </div>
+          </div>
+
+          <div class="l-body">
+            <section class="view on" data-view="manage">
+              <div class="stats" style="margin-bottom:10px;">
+                <div class="stat"><b id="sIn">3</b><i>Activos</i></div>
+                <div class="stat"><b id="sUp">1</b><i>Update</i></div>
+                <div class="stat"><b>1</b><i>Repo</i></div>
+              </div>
+              <div id="installed"></div>
+            </section>
+
+            <section class="view" data-view="explore">
+              <div class="banner" style="margin-bottom:10px;">
+                <h4>Explorar catálogo</h4>
+                <p>Filtra idiomas y elige providers. Install baja el JS.</p>
+              </div>
+              <div class="row2">
+                <button class="btn ghost" type="button" id="goLang">Idiomas</button>
+                <button class="btn primary" type="button" id="goCards">Providers</button>
+              </div>
+            </section>
+
+            <section class="view" data-view="repos">
+              <label class="lbl" for="url">URL manifest JSON</label>
+              <div class="box">
+                <input id="url" type="url" value="https://raw.githubusercontent.com/LNReader/lnreader-plugins/plugins/v3.0.0/.dist/plugins.min.json" />
+              </div>
+              <label class="lbl" for="paste">Pegar JSON</label>
+              <div class="box">
+                <textarea id="paste" rows="3" placeholder="[{ id, name, lang, version, url, iconUrl }]"></textarea>
+              </div>
+              <div class="row2">
+                <button class="btn ghost" type="button" id="demo">Demo</button>
+                <button class="btn primary" type="button" id="fetch">Fetch</button>
+              </div>
+              <p id="repoMsg" style="margin:12px 0 0;font-size:.78rem;color:var(--muted);line-height:1.4;">Sin catálogo.</p>
+            </section>
+
+            <section class="view" data-view="langs">
+              <div class="row2" style="margin-bottom:8px;">
+                <button class="btn ghost sm" type="button" id="prio">Solo EN+ES</button>
+                <button class="btn ghost sm" type="button" id="allL">Todos</button>
+              </div>
+              <div id="langs"></div>
+            </section>
+
+            <section class="view" data-view="cards">
+              <div class="box"><input id="q" type="search" placeholder="Filtrar nombre…" /></div>
+              <div class="row2" style="margin-bottom:8px;">
+                <button class="btn ghost sm" type="button" id="allC">Todos</button>
+                <button class="btn ghost sm" type="button" id="noneC">Ninguno</button>
+              </div>
+              <div id="cards"></div>
+            </section>
+          </div>
+
+          <div class="foot">
+            <div class="sum" id="sum">Gestiona plugins instalados</div>
+            <div class="row2">
+              <button class="btn ghost" type="button" id="sec" hidden>Atrás</button>
+              <button class="btn primary" type="button" id="pri">Actualizar (1)</button>
+            </div>
+          </div>
+
+          <div class="sheet" id="sheet">
+            <div class="sheet-p">
+              <div class="grab"></div>
+              <div class="sheet-h">
+                <div class="l-av" id="shAv">A</div>
+                <div>
+                  <div style="font-weight:700" id="shName">Plugin</div>
+                  <div style="font-size:.75rem;color:var(--muted);margin-top:3px" id="shSub">—</div>
+                </div>
+              </div>
+              <button class="act" type="button" data-a="update"><span class="g">↑</span><span><b>Actualizar</b><small>Compara versión y re-descarga JS</small></span></button>
+              <button class="act" type="button" data-a="edit"><span class="g">✎</span><span><b>Editar</b><small>Alias, notas, origen</small></span></button>
+              <button class="act" type="button" data-a="re"><span class="g">↻</span><span><b>Reinstalar</b><small>JS + assets limpios</small></span></button>
+              <button class="act danger" type="button" data-a="del"><span class="g">✕</span><span><b>Desinstalar</b><small>Quitar de Ultimate</small></span></button>
+              <button class="btn ghost block" type="button" id="shClose">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const OFFICIAL = "https://raw.githubusercontent.com/LNReader/lnreader-plugins/plugins/v3.0.0/.dist/plugins.min.json";
+    const PRIORITY = ["English", "Español"];
+    const DEMO = [
+      { id: "allnovel", name: "AllNovel", site: "https://novelfull.com/", lang: "English", version: "2.3.5", url: "x.js" },
+      { id: "arcane", name: "Arcane Translations", site: "https://arcanetranslations.com/", lang: "English", version: "1.1.12", url: "x.js" },
+      { id: "ao3", name: "Archive Of Our Own", site: "https://archiveofourown.org/", lang: "English", version: "1.0.5", url: "x.js" },
+      { id: "asura", name: "Asura Scans", site: "https://asurascans.com", lang: "English", version: "1.0.0", url: "x.js" },
+      { id: "nova", name: "NOVA", site: "https://novelasligeras.net", lang: "Español", version: "1.1.1", url: "x.js" },
+      { id: "anr", name: "AllNovelRead", site: "https://allnovelread.com/", lang: "Español", version: "1.1.12", url: "x.js" },
+      { id: "anslid", name: "Anslid", site: "https://anslid.com/", lang: "Español", version: "2.3.0", url: "x.js" },
+      { id: "hasu", name: "Hasu Translations", site: "https://hasutl.wordpress.com/", lang: "Español", version: "1.0.0", url: "x.js" },
+      { id: "fr", name: "Exemple FR", site: "https://example.fr/", lang: "Français", version: "1.0.0", url: "x.js" },
+      { id: "ru", name: "Пример RU", site: "https://example.ru/", lang: "Русский", version: "1.2.0", url: "x.js" },
+    ];
+
+    const state = {
+      view: "manage",
+      catalog: [],
+      langs: new Set(PRIORITY),
+      pick: new Set(),
+      installed: [
+        { id: "ao3", name: "Archive Of Our Own", lang: "English", version: "1.0.4", latest: "1.0.5", site: "archiveofourown.org", hasUpdate: true },
+        { id: "nova", name: "NOVA", lang: "Español", version: "1.1.1", latest: "1.1.1", site: "novelasligeras.net", hasUpdate: false },
+        { id: "arcane", name: "Arcane Translations", lang: "English", version: "1.1.12", latest: "1.1.12", site: "arcanetranslations.com", hasUpdate: false },
+      ],
+      active: null,
+    };
+
+    const titles = { manage: "Plugins", explore: "Explorar", repos: "Repos", langs: "Idiomas", cards: "Instalar" };
+
+    function toast(m) {
+      const t = document.getElementById("toast");
+      t.textContent = m; t.classList.add("show");
+      clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2000);
+    }
+
+    function norm(raw) {
+      const list = Array.isArray(raw) ? raw : raw?.plugins || Object.values(raw || {});
+      return list.filter(Boolean).map((p) => ({
+        id: String(p.id || p.name),
+        name: String(p.name || p.id),
+        site: String(p.site || ""),
+        lang: String(p.lang || "Multi").replace(/^\u200e/, ""),
+        version: String(p.version || ""),
+        url: String(p.url || ""),
+      }));
+    }
+
+    function langStats() {
+      const m = new Map();
+      for (const p of state.catalog) m.set(p.lang, (m.get(p.lang) || 0) + 1);
+      const rest = [...m.keys()].filter((l) => !PRIORITY.includes(l)).sort((a, b) => m.get(b) - m.get(a));
+      return [...PRIORITY.filter((l) => m.has(l)), ...rest].map((lang) => ({
+        lang, count: m.get(lang), priority: PRIORITY.includes(lang),
+      }));
+    }
+
+    function filtered() {
+      const q = document.getElementById("q").value.trim().toLowerCase();
+      return state.catalog.filter((p) => {
+        if (state.langs.size && !state.langs.has(p.lang)) return false;
+        return !q || p.name.toLowerCase().includes(q);
+      });
+    }
+
+    function setView(v) {
+      state.view = v;
+      document.querySelectorAll(".view").forEach((el) => el.classList.toggle("on", el.dataset.view === v));
+      document.getElementById("title").textContent = titles[v] || "Plugins";
+      const main = ["manage", "explore", "repos"].includes(v);
+      document.getElementById("tabs").style.display = main ? "grid" : "none";
+      document.getElementById("back").hidden = main;
+      document.getElementById("add").hidden = !main;
+      document.getElementById("tabs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.tab === v));
+      document.getElementById("eye").textContent = main ? "Ajustes · Proveedores" : "Explorar · catálogo";
+      foot();
+      if (v === "manage") drawInstalled();
+      if (v === "langs") drawLangs();
+      if (v === "cards") drawCards();
+    }
+
+    function foot() {
+      const pri = document.getElementById("pri");
+      const sec = document.getElementById("sec");
+      const sum = document.getElementById("sum");
+      sec.hidden = true;
+      if (state.view === "manage") {
+        const u = state.installed.filter((p) => p.hasUpdate).length;
+        pri.textContent = u ? `Actualizar (${u})` : "Todo al día";
+        pri.disabled = !u;
+        sum.innerHTML = `<b>${state.installed.length}</b> instalados · toca uno para gestionar`;
+      } else if (state.view === "repos") {
+        pri.textContent = "Ir a idiomas";
+        pri.disabled = !state.catalog.length;
+        sum.innerHTML = state.catalog.length ? `<b>${state.catalog.length}</b> en JSON · install baja JS` : "Carga un manifest";
+      } else if (state.view === "explore") {
+        pri.textContent = "Elegir idiomas";
+        pri.disabled = !state.catalog.length;
+        sum.textContent = state.catalog.length ? "Catálogo listo" : "Ve a Repos primero";
+      } else if (state.view === "langs") {
+        sec.hidden = false; sec.textContent = "Repos";
+        pri.textContent = "Ver providers";
+        pri.disabled = !state.langs.size;
+        sum.innerHTML = `<b>${state.langs.size}</b> idiomas · EN/ES prioritarios`;
+      } else if (state.view === "cards") {
+        sec.hidden = false; sec.textContent = "Idiomas";
+        pri.textContent = `Instalar (${state.pick.size})`;
+        pri.disabled = !state.pick.size;
+        sum.innerHTML = `Descargará el <b>.js</b> de cada selección`;
+      }
+    }
+
+    function drawInstalled() {
+      document.getElementById("sIn").textContent = state.installed.length;
+      document.getElementById("sUp").textContent = state.installed.filter((p) => p.hasUpdate).length;
+      const h = document.getElementById("installed");
+      h.innerHTML = state.installed.map((p) => `
+        <article class="l-row" data-id="${p.id}">
+          <div class="l-av">${p.name[0]}</div>
+          <div class="l-meta"><p class="n">${p.name}</p><p class="s">${p.site} · v${p.version}</p></div>
+          <div class="badges">
+            <span class="badge">${p.lang}</span>
+            ${p.hasUpdate ? `<span class="badge warn">↑ ${p.latest}</span>` : `<span class="badge ok">JS</span>`}
+          </div>
+        </article>`).join("");
+      h.querySelectorAll(".l-row").forEach((el) => el.addEventListener("click", () => openSheet(state.installed.find((x) => x.id === el.dataset.id))));
+    }
+
+    function drawLangs() {
+      const h = document.getElementById("langs");
+      h.innerHTML = langStats().map((s) => `
+        <div class="lang-i ${state.langs.has(s.lang) ? "on" : ""}" data-l="${encodeURIComponent(s.lang)}">
+          <span class="sq">✓</span>
+          <span><b>${s.lang}</b> <span style="color:var(--faint);font-size:.78rem">${s.count}</span></span>
+          ${s.priority ? `<span class="prio">Prioridad</span>` : ""}
+        </div>`).join("");
+      h.querySelectorAll(".lang-i").forEach((el) => el.addEventListener("click", () => {
+        const l = decodeURIComponent(el.dataset.l);
+        state.langs.has(l) ? state.langs.delete(l) : state.langs.add(l);
+        drawLangs(); foot();
+      }));
+    }
+
+    function drawCards() {
+      const h = document.getElementById("cards");
+      const list = filtered();
+      h.innerHTML = list.length ? list.map((p) => `
+        <article class="l-row ${state.pick.has(p.id) ? "sel" : ""}" data-id="${encodeURIComponent(p.id)}">
+          <div class="l-av">${p.name[0]}</div>
+          <div class="l-meta"><p class="n">${p.name}</p><p class="s">${p.site.replace(/^https?:\/\//,"")} · v${p.version}</p></div>
+          <div class="badges"><span class="badge">${p.lang}</span><span class="badge ok">.js</span></div>
+        </article>`).join("") : `<p style="color:var(--muted);font-size:.85rem;">Nada en esos idiomas.</p>`;
+      h.querySelectorAll(".l-row").forEach((el) => el.addEventListener("click", () => {
+        const id = decodeURIComponent(el.dataset.id);
+        state.pick.has(id) ? state.pick.delete(id) : state.pick.add(id);
+        drawCards();
+      }));
+      foot();
+    }
+
+    function openSheet(p) {
+      if (!p) return;
+      state.active = p;
+      document.getElementById("shName").textContent = p.name;
+      document.getElementById("shSub").textContent = `${p.lang} · v${p.version}${p.hasUpdate ? " → " + p.latest : ""} · runtime JS`;
+      document.getElementById("shAv").textContent = p.name[0];
+      document.getElementById("sheet").classList.add("open");
+    }
+    function closeSheet() {
+      document.getElementById("sheet").classList.remove("open");
+      state.active = null;
+    }
+
+    function ingest(data, label) {
+      state.catalog = norm(data);
+      state.langs = new Set(PRIORITY.filter((l) => state.catalog.some((p) => p.lang === l)));
+      if (!state.langs.size && state.catalog[0]) state.langs.add(state.catalog[0].lang);
+      state.pick = new Set();
+      document.getElementById("repoMsg").innerHTML =
+        `<b style="color:var(--ok)">OK · ${label}</b><br/>${state.catalog.length} JSON · ${langStats().length} langs · install = .js`;
+      toast("Catálogo listo");
+      foot();
+    }
+
+    document.querySelectorAll("[data-theme]").forEach((b) => b.addEventListener("click", () => {
+      document.body.dataset.theme = b.dataset.theme;
+      document.querySelectorAll("[data-theme]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    }));
+
+    document.getElementById("tabs").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-tab]"); if (b) setView(b.dataset.tab);
+    });
+    document.getElementById("add").onclick = () => setView("repos");
+    document.getElementById("back").onclick = () => setView(state.view === "cards" ? "langs" : state.view === "langs" ? "explore" : "manage");
+    document.getElementById("demo").onclick = () => ingest(DEMO, "Demo");
+    document.getElementById("fetch").onclick = async () => {
+      const paste = document.getElementById("paste").value.trim();
+      if (paste) { try { ingest(JSON.parse(paste), "Pegado"); } catch { toast("JSON inválido"); } return; }
+      const url = document.getElementById("url").value.trim() || OFFICIAL;
+      document.getElementById("repoMsg").textContent = "Fetching…";
+      try {
+        const r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        ingest(await r.json(), "Remoto");
+      } catch (e) {
+        document.getElementById("repoMsg").textContent = "Falló: " + e.message + " · usa Demo";
+        toast("Fetch falló");
+      }
+    };
+    document.getElementById("goLang").onclick = () => { if (!state.catalog.length) ingest(DEMO, "Demo"); setView("langs"); };
+    document.getElementById("goCards").onclick = () => { if (!state.catalog.length) ingest(DEMO, "Demo"); setView("cards"); };
+    document.getElementById("prio").onclick = () => { state.langs = new Set(PRIORITY.filter((l) => state.catalog.some((p) => p.lang === l))); drawLangs(); foot(); };
+    document.getElementById("allL").onclick = () => { langStats().forEach((s) => state.langs.add(s.lang)); drawLangs(); foot(); };
+    document.getElementById("allC").onclick = () => { filtered().forEach((p) => state.pick.add(p.id)); drawCards(); };
+    document.getElementById("noneC").onclick = () => { state.pick.clear(); drawCards(); };
+    document.getElementById("q").oninput = drawCards;
+    document.getElementById("shClose").onclick = closeSheet;
+    document.getElementById("sheet").onclick = (e) => { if (e.target.id === "sheet") closeSheet(); };
+    document.querySelectorAll("[data-a]").forEach((b) => b.addEventListener("click", () => {
+      const p = state.active; if (!p) return;
+      const a = b.dataset.a;
+      if (a === "update") { p.version = p.latest; p.hasUpdate = false; toast("Actualizado " + p.name); }
+      if (a === "edit") toast("Editar " + p.name);
+      if (a === "re") toast("Reinstalando " + p.name);
+      if (a === "del") { state.installed = state.installed.filter((x) => x.id !== p.id); toast("Desinstalado"); }
+      closeSheet(); drawInstalled(); foot();
+    }));
+    document.getElementById("sec").onclick = () => setView(state.view === "cards" ? "langs" : "repos");
+    document.getElementById("pri").onclick = () => {
+      if (state.view === "manage") {
+        state.installed.forEach((p) => { if (p.hasUpdate) { p.version = p.latest; p.hasUpdate = false; } });
+        toast("Updates aplicados"); drawInstalled(); foot();
+      } else if (state.view === "explore" || state.view === "repos") {
+        if (!state.catalog.length) ingest(DEMO, "Demo"); setView("langs");
+      } else if (state.view === "langs") setView("cards");
+      else if (state.view === "cards") {
+        for (const id of state.pick) {
+          const src = state.catalog.find((p) => p.id === id);
+          if (src && !state.installed.some((x) => x.id === id)) {
+            state.installed.unshift({ id: src.id, name: src.name, lang: src.lang, version: src.version, latest: src.version, site: src.site.replace(/^https?:\/\//, ""), hasUpdate: false });
+          }
+        }
+        toast("Instalados " + state.pick.size);
+        state.pick.clear(); setView("manage");
+      }
+    };
+
+    drawInstalled(); foot();
+  </script>
+</body>
+</html>

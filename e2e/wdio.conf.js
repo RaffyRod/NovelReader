@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const APP_ID = 'com.lagradost.quicknovel.ultimate';
+const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
 const APP_ACTIVITY = 'com.lagradost.quicknovel.MainActivity';
 
 function resolveAppPath() {
@@ -44,6 +44,8 @@ exports.config = {
         './test/specs/05-settings.e2e.js',
         './test/specs/06-import.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
+        './test/specs/10-plugins.e2e.js',
+        './test/specs/11-download-translate.e2e.js',
       ],
     ],
     reader: [['./test/specs/07-reader-tts.e2e.js']],

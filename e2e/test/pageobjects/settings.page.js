@@ -17,6 +17,26 @@ class SettingsPage extends BasePage {
     return this.byText('Descargas');
   }
 
+  get pluginGroup() {
+    return this.byTextContains('Plugins (LNReader)');
+  }
+
+  get pluginHub() {
+    return this.byTextContains('Administrar plugins');
+  }
+
+  get pluginAddRepo() {
+    return this.byTextContains('Añadir repositorio');
+  }
+
+  get pluginHubTitle() {
+    return this.byTextContains('Plugins instalados');
+  }
+
+  get pluginAddRepoTitle() {
+    return this.byTextContains('Añadir repositorio');
+  }
+
   get uiTheme() {
     return this.byTextContains('Fire');
   }
@@ -178,6 +198,112 @@ class SettingsPage extends BasePage {
         break;
       }
     }
+  }
+
+  /**
+   * Scrolls Settings until the Plugins (LNReader) group is visible.
+   * @returns {Promise<boolean>}
+   */
+  async scrollToPlugins() {
+    const markers = [
+      'Plugins (LNReader)',
+      'Administrar plugins',
+      'Manage plugins',
+      'Añadir repositorio',
+      'Add repository',
+      'Custom',
+      'Proveedores personalizados',
+    ];
+    for (let i = 0; i < 6; i++) {
+      await driver.execute('mobile: scrollGesture', {
+        left: 80,
+        top: 400,
+        width: 600,
+        height: 1200,
+        direction: 'up',
+        percent: 0.9,
+      }).catch(() => {});
+      await driver.pause(150);
+    }
+    for (const marker of markers) {
+      await this.scrollToText(marker);
+      await driver.pause(250);
+      if (
+        (await this.pluginGroup.isDisplayed().catch(() => false)) ||
+        (await this.pluginHub.isDisplayed().catch(() => false)) ||
+        (await this.pluginAddRepo.isDisplayed().catch(() => false))
+      ) {
+        return true;
+      }
+    }
+    for (let i = 0; i < 10; i++) {
+      await driver.execute('mobile: scrollGesture', {
+        left: 80,
+        top: 500,
+        width: 600,
+        height: 1400,
+        direction: 'down',
+        percent: 0.85,
+      });
+      await driver.pause(350);
+      if (
+        (await this.pluginGroup.isDisplayed().catch(() => false)) ||
+        (await this.pluginHub.isDisplayed().catch(() => false)) ||
+        (await this.pluginAddRepo.isDisplayed().catch(() => false))
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Opens the installed-plugins hub dialog from Settings.
+   * @returns {Promise<boolean>}
+   */
+  async openPluginHub() {
+    await this.open();
+    await this.expectLoaded();
+    if (!(await this.scrollToPlugins())) return false;
+    const hub = this.pluginHub;
+    if (!(await hub.isDisplayed().catch(() => false))) return false;
+    await hub.click();
+    await driver.pause(900);
+    return (
+      (await this.pluginHubTitle.isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Aún no hay plugins').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('No plugins yet').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Añadir repositorio').isDisplayed().catch(() => false))
+    );
+  }
+
+  /**
+   * Opens the add-repository dialog (URL / paste JSON).
+   * @returns {Promise<boolean>}
+   */
+  async openPluginAddRepo() {
+    await this.open();
+    await this.expectLoaded();
+    if (!(await this.scrollToPlugins())) return false;
+    // Prefer the dedicated preference row; hub positive button is also "Añadir repositorio".
+    const row = this.pluginAddRepo;
+    if (await row.isDisplayed().catch(() => false)) {
+      await row.click();
+      await driver.pause(900);
+    } else if (await this.openPluginHub()) {
+      const add = this.byTextContains('Añadir repositorio');
+      if (await add.isDisplayed().catch(() => false)) {
+        await add.click();
+        await driver.pause(900);
+      }
+    }
+    return (
+      (await this.byTextContains('plugins.min.json').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('pegar JSON').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('paste JSON').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Obtener').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Fetch').isDisplayed().catch(() => false))
+    );
   }
 
   /**

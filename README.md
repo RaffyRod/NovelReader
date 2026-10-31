@@ -37,10 +37,16 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 - Result chips filter by provider; cover size aligned with Popular
 - **Special characters blocked by default** in search fields; enable in Settings
 - **Custom providers**: Blog (Blogger) or Website (Madara) — simple validate flow + **Advanced CSS** mode, manage/edit/delete
+- **Plugins (LNReader)**: Settings hub to add a `plugins.min.json` catalog, filter by language, install/update/uninstall sources as searchable providers
+
+### Downloads & chapter select
+- Download dialog: range, chapters-per-file (EPUB/PDF), **download language** (default Español) via **Gemini** or **Google Translate online**, or keep Original
+- Translated downloads are verified so the saved file is not the silent original
+- Chapter tab: icon-only **Select** FAB with **Halo ring** stroke/glow from each theme’s `colorPrimary`
 
 ### TTS & translation
 - **TTS** prefers Piper/Sherpa neural voices (**Dave ES** / **Lessac EN**), language from text, notification controls
-- Optional **Gemini** API key / model for translation flows
+- Optional **Gemini** API key / model for translation flows (also used from the download dialog)
 
 ### Updates & safety
 - Auto check against upstream LagradOst releases **disabled by default** (avoids installing stock `com.lagradost.quicknovel` 3.x beside Ultimate)
@@ -48,7 +54,8 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 
 ### Docs & QA
 - Full manuals **ES + EN** (HTML + Word + bug templates + screenshots): [`docs/manual-1.1.4/`](docs/manual-1.1.4/)
-- Unit tests (Gradle) + **WebdriverIO / Appium / Allure** E2E suite (`e2e/`, specs 01–09)
+- UI previews (plugins flow, Select FAB styles): [`docs/previews/`](docs/previews/) · docs index: [`docs/README.md`](docs/README.md)
+- Unit tests (Gradle) + **WebdriverIO / Appium / Allure** E2E suite (`e2e/`, specs **01–11**)
 - CI on every push: [`.github/workflows/e2e-android.yml`](.github/workflows/e2e-android.yml)
 
 ---
@@ -125,7 +132,9 @@ Uninstall older Ultimate/stock packages on the device before installing so you a
 | English | [`docs/manual-1.1.4/en/`](docs/manual-1.1.4/en/) |
 | Index | [`docs/manual-1.1.4/README.md`](docs/manual-1.1.4/README.md) |
 
-Includes onboarding, every Settings group, **custom providers (simple + advanced)**, TTS/download tutorials, bug Word templates, and screenshots.
+Includes onboarding, every Settings group, **custom providers (simple + advanced)**, **LNReader plugins**, download language / translate engines, TTS/download tutorials, bug Word templates, and screenshots.
+
+Interactive HTML mocks: [`docs/previews/`](docs/previews/).
 
 ---
 
@@ -140,14 +149,14 @@ npm test
 npm run allure:report
 ```
 
-Coverage: library, navigation, search (+ special chars), history, settings, Import-B, **reader + TTS** (seeded — no skips), providers (HTTP probe + multi-select).
+Coverage: library, navigation, search (+ special chars), history, settings, Import-B, **reader + TTS** (seeded — no skips), providers (HTTP probe + multi-select), **plugins hub**, **download language / translate**.
 
 ---
 
 ## Built-in providers (sample)
 
 Includes sources such as SkyNovels, Nova, DevilNovels, Royal Road, Scribblehub, NovelFull, and many more (see app / `Apis.kt`).  
-Plus **user-defined** Blog / Website providers from Settings.
+Plus **user-defined** Blog / Website providers and **LNReader plugins** from Settings.
 
 ---
 

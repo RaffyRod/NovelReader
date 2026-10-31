@@ -139,7 +139,9 @@ class GoogleTranslateOnline {
                     val res = app2.get(url = "$BASEURL$from&tl=$to&dt=t&q=${Uri.encode(text)}")
                     val response: GoogleTranslationResponse = res.parsed()
                     val sentences = response.sentences
-                    if (sentences.isEmpty()) return text
+                    if (sentences.isEmpty()) {
+                        throw IllegalStateException("Empty Google Translate response")
+                    }
 
                     return sentences.joinToString("") { it.trans }
                 } catch (t: Throwable) {
@@ -150,7 +152,7 @@ class GoogleTranslateOnline {
                     if (retryNumber >= maxRetry) throw t
                 }
             }
-            return text
+            throw IllegalStateException("Google Translate failed after $maxRetry retries")
         }
 
         private fun chunkByLimit(fragments: List<Pair<String, Int>>): List<List<Pair<String, Int>>> {

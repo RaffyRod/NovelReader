@@ -52,6 +52,7 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
     <li><a href="#sections">Sections</a></li>
     <li><a href="#settings">Settings (all groups)</a></li>
     <li><a href="#providers">Custom providers (add / manage / advanced)</a></li>
+    <li><a href="#plugins">LNReader plugins (JSON catalog)</a></li>
     <li><a href="#detail">Novel detail, download &amp; export</a></li>
     <li><a href="#reader">Reader &amp; TTS</a></li>
     <li><a href="#tutorials">Official in-app tutorials</a></li>
@@ -73,6 +74,8 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
     <li>History split into <em>Reading</em> / <em>Visited</em>.</li>
     <li><strong>Import-B</strong> drop zone in Library.</li>
     <li><strong>Custom providers</strong> (Blogger blog or Madara-like site) with simple + advanced CSS modes.</li>
+    <li><strong>LNReader plugins</strong>: install sources from a <span class="mono">plugins.min.json</span> catalog.</li>
+    <li>Downloads with a <strong>target language</strong> (Español by default) via Gemini or Google Translate online.</li>
     <li>TTS prefers Piper/Sherpa neural voices.</li>
     <li>Search <strong>blocks special characters by default</strong> (optional toggle).</li>
   </ul>
@@ -183,11 +186,14 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
   <ul><li>Notify new chapters, frequency 3/6/12/24h, check now.</li></ul>
   <h3>8.5 Translation (Gemini)</h3>
   <ul><li>Get API key, paste key, pick model, test key.</li></ul>
+  <p>Used from the download dialog when the engine is <strong>Gemini</strong>. Without a key, use <strong>Google Translate (online)</strong> or keep Original.</p>
   <h3>8.6 Tutorial</h3>
   <p>Three help dialogs: Custom providers, Downloads, TTS (see §12).</p>
   <h3>8.7 Custom providers</h3>
   <p>See §9.</p>
-  <h3>8.8 Reader settings / Info</h3>
+  <h3>8.8 Plugins (LNReader)</h3>
+  <p>See §9b (<a href="#plugins">LNReader plugins</a>).</p>
+  <h3>8.9 Reader settings / Info</h3>
   <ul>
     <li>External reader toggle; download path (e.g. Download/My Novels/).</li>
     <li>Logcat viewer (save / copy / clear).</li>
@@ -254,15 +260,30 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
   <p>The provider appears in Search multi-select and Settings provider lists; you can search it like built-ins.</p>
 </section>
 
+<section id="plugins">
+  <h2>9b. LNReader plugins (JSON catalog)</h2>
+  <p><strong>Where:</strong> Settings → <strong>Plugins (LNReader)</strong> → <strong>Manage plugins</strong>.</p>
+  <p><strong>Code:</strong> <span class="mono">plugins/</span>, <span class="mono">PluginProviderDialogs.kt</span>.</p>
+  <ol class="steps">
+    <li>Open <strong>Manage plugins</strong> (shows installed count and available updates).</li>
+    <li><strong>Add repository</strong>: paste a <span class="mono">plugins.min.json</span> catalog URL or paste JSON.</li>
+    <li><strong>Fetch</strong> → pick languages (English / Español prioritized) → <strong>Show providers</strong>.</li>
+    <li>Select sources and <strong>Install</strong> (downloads JS and registers a searchable Madara/CSS provider).</li>
+    <li>From the installed list: update, rename, reinstall, or uninstall (downloaded novels are kept).</li>
+  </ol>
+  <div class="callout">The JSON is the <em>catalog</em>. Each plugin’s runtime JS is at its <span class="mono">url</span> field. Flow mock: <span class="mono">docs/previews/plugin-providers-flow.html</span>.</div>
+</section>
+
 <section id="detail">
   <h2>10. Novel detail, download &amp; export</h2>
   <ul>
     <li>Cover, synopsis, chapter list.</li>
     <li><strong>Stream / read online</strong> vs <strong>Download</strong>.</li>
-    <li>Download dialog: all chapters or range; chapters-per-file batches; EPUB/PDF flows; preview where available.</li>
+    <li>Chapters tab: filter FAB + circular <strong>Select</strong> FAB (Halo ring; stroke/glow use the active theme’s <span class="mono">colorPrimary</span>).</li>
+    <li>Download dialog: all chapters or range; chapters-per-file batches (EPUB/PDF); <strong>download language</strong> (default Español) with <strong>Gemini</strong> or <strong>Google Translate online</strong>, or Original; preview where available.</li>
     <li>Then open from Library; Update fetches new chapters; Delete removes local files.</li>
   </ul>
-  <div class="callout">Slow sources: prefer online reading. Gemini translation can make downloads much slower.</div>
+  <div class="callout">If you asked for translation and the text matches the original, the download fails on purpose (no silent original save). Free Gemini is slow due to rate limits.</div>
 </section>
 
 <section id="reader">
@@ -393,7 +414,7 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
   <h2>16. Automated tests</h2>
   <ul>
     <li>Unit: <span class="mono">./gradlew :app:testDebugUnitTest</span></li>
-    <li>E2E: <span class="mono">e2e/</span> specs 01–09 (library, nav, search, history, settings, import, reader/TTS seed, providers, special chars)</li>
+    <li>E2E: <span class="mono">e2e/</span> specs 01–11 (library, nav, search, history, settings, import, reader/TTS seed, providers, special chars, plugins, download-translate)</li>
     <li>Allure: <span class="mono">e2e/allure-report</span></li>
   </ul>
 </section>

@@ -1,6 +1,6 @@
 const { dismissBlockingDialogs } = require('../helpers/dialogs');
 
-const APP_ID = 'com.lagradost.quicknovel.ultimate';
+const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
 const APP_ACTIVITY = 'com.lagradost.quicknovel.MainActivity';
 const MAIN_TABS = ['Biblioteca', 'Buscar', 'Historial', 'Ajustes'];
 

@@ -1,17 +1,26 @@
 package com.lagradost.quicknovel.ui.result
 
 import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.text.InputType
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -21,6 +30,7 @@ import com.lagradost.quicknovel.ChapterPaging
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnNextLayout
@@ -34,6 +44,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lagradost.cloudstream4.AppSettings
 import com.google.android.material.chip.ChipDrawable
 import com.google.android.material.tabs.TabLayout
@@ -41,6 +52,9 @@ import com.lagradost.quicknovel.BookDownloader2
 import com.lagradost.quicknovel.ChapterSpec
 import com.lagradost.quicknovel.CommonActivity
 import com.lagradost.quicknovel.DownloadState
+import com.lagradost.quicknovel.DownloadTranslateEngine
+import com.lagradost.quicknovel.DownloadTranslateLangs
+import com.lagradost.quicknovel.DownloadTranslateRequest
 import com.lagradost.quicknovel.FileHelper
 import com.lagradost.quicknovel.FileOpener
 import androidx.lifecycle.lifecycleScope
@@ -155,11 +169,70 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
 
     private var taskDialog: AlertDialog? = null
     private var taskBinding: ChapterTaskDialogBinding? = null
+    private var selectFabHaloAnimator: ValueAnimator? = null
 
     private val selectionBackCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             viewModel.setSelectionMode(false)
         }
+    }
+
+    /**
+     * Style J — Halo ring: icon-only select FAB with a primary-colored stroke and soft glow.
+     * Colors come from the active theme (`colorPrimary` / `primaryBlackBackground`).
+     */
+    private fun applySelectFabHalo() {
+        val fab = binding?.chaptersSelectFab ?: return
+        val ctx = fab.context
+        val primary = ctx.colorFromAttribute(R.attr.colorPrimary)
+        val core = ctx.colorFromAttribute(R.attr.primaryBlackBackground)
+        val density = resources.displayMetrics.density
+
+        val outer = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.TRANSPARENT)
+            setStroke((7 * density).toInt(), ColorUtils.setAlphaComponent(primary, 46))
+        }
+        val inner = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(core)
+            setStroke((2 * density).toInt(), primary)
+        }
+        val inset = (5 * density).toInt()
+        fab.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+        fab.background = LayerDrawable(arrayOf(outer, inner)).apply {
+            setLayerInset(1, inset, inset, inset, inset)
+        }
+        fab.imageTintList = ColorStateList.valueOf(primary)
+        fab.compatElevation = 0f
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            fab.outlineAmbientShadowColor = primary
+            fab.outlineSpotShadowColor = primary
+            fab.elevation = 10f * density
+        }
+        startSelectFabHaloBreath(fab)
+    }
+
+    private fun startSelectFabHaloBreath(fab: FloatingActionButton) {
+        if (selectFabHaloAnimator?.isRunning == true) return
+        selectFabHaloAnimator?.cancel()
+        selectFabHaloAnimator = ObjectAnimator.ofPropertyValuesHolder(
+            fab,
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.05f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.05f),
+        ).apply {
+            duration = 2800L
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+    }
+
+    override fun onDestroyView() {
+        selectFabHaloAnimator?.cancel()
+        selectFabHaloAnimator = null
+        super.onDestroyView()
     }
 
     /** Shows or hides the selection controls depending on the current tab and selection mode. */
@@ -172,6 +245,13 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
 
         binding.chaptersFab.isVisible = onChapters && !selecting
         binding.chaptersSelectFab.isVisible = onChapters && !selecting
+        if (onChapters && !selecting) {
+            applySelectFabHalo()
+        } else {
+            selectFabHaloAnimator?.cancel()
+            binding.chaptersSelectFab.scaleX = 1f
+            binding.chaptersSelectFab.scaleY = 1f
+        }
         bar.isVisible = onChapters && selecting
         updateChapterListPadding(if (bar.isVisible) bar.height else 0)
         if (bar.isVisible) {
@@ -239,7 +319,10 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
         if (total <= 0) return
         val dialogBinding = ChapterDownloadDialogBinding.inflate(layoutInflater, null, false)
         dialogBinding.downloadChaptersLabel.text = getString(R.string.download_chapters_label, total)
-        dialogBinding.downloadChapters.setText(viewModel.selectionAsText())
+        // Prefill selection, or every chapter when the user opened Descargar without selecting.
+        dialogBinding.downloadChapters.setText(
+            viewModel.selectionAsText().ifBlank { "1-$total" }
+        )
 
         fun selectedKind() = when (dialogBinding.downloadFormat.checkedRadioButtonId) {
             R.id.format_pdf -> SelectionTaskKind.Pdf
@@ -290,7 +373,8 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             val numbers = parsedChapters()
             syncChips()
             dialogBinding.downloadPerFileHolder.isVisible = kind != SelectionTaskKind.Download
-            dialogBinding.downloadTranslateHolder.isVisible = kind != SelectionTaskKind.Download
+            // Language picker stays available for EPUB, PDF and chapters-only.
+            dialogBinding.downloadTranslateHolder.isVisible = true
             dialogBinding.downloadRanges.isVisible = false
             if (numbers != null && kind != SelectionTaskKind.Download) {
                 val groups = ChapterSpec.group(numbers.toList(), perFile())
@@ -312,10 +396,72 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             }
         }
 
+        val langLabels = listOf(getString(R.string.download_translate_none)) +
+            DownloadTranslateLangs.ALL.map { it.displayName }
+        dialogBinding.downloadTranslateLang.adapter = ArrayAdapter(
+            act,
+            android.R.layout.simple_spinner_dropdown_item,
+            langLabels,
+        )
+        // Default to Español so downloads are translated unless the user picks Original.
+        dialogBinding.downloadTranslateLang.setSelection(1)
+
+        val engineLabels = listOf(
+            getString(R.string.download_translate_engine_gemini),
+            getString(R.string.download_translate_engine_google),
+        )
+        dialogBinding.downloadTranslateEngine.adapter = ArrayAdapter(
+            act,
+            android.R.layout.simple_spinner_dropdown_item,
+            engineLabels,
+        )
+        // Prefer Gemini when a key exists; otherwise Google Translate online.
+        val hasGeminiKey = AppSettings(act).translation.geminiApiKey.get().trim().isNotBlank()
+        dialogBinding.downloadTranslateEngine.setSelection(if (hasGeminiKey) 0 else 1)
+
+        fun syncTranslateUi() {
+            val translating = dialogBinding.downloadTranslateLang.selectedItemPosition > 0
+            dialogBinding.downloadTranslateEngineLabel.isVisible = translating
+            dialogBinding.downloadTranslateEngine.isVisible = translating
+            dialogBinding.downloadTranslateHint.text = when {
+                !translating -> getString(R.string.download_translate_hint)
+                dialogBinding.downloadTranslateEngine.selectedItemPosition == 0 ->
+                    getString(R.string.download_translate_hint_gemini)
+                else -> getString(R.string.download_translate_hint_google)
+            }
+        }
+
+        dialogBinding.downloadTranslateLang.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long,
+                ) = syncTranslateUi()
+
+                override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            }
+        dialogBinding.downloadTranslateEngine.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long,
+                ) = syncTranslateUi()
+
+                override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            }
+
         dialogBinding.downloadChapters.doOnTextChanged { _, _, _, _ -> updateSummary() }
         dialogBinding.downloadPerFile.doOnTextChanged { _, _, _, _ -> updateSummary() }
-        dialogBinding.downloadFormat.setOnCheckedChangeListener { _, _ -> updateSummary() }
+        dialogBinding.downloadFormat.setOnCheckedChangeListener { _, _ ->
+            updateSummary()
+            syncTranslateUi()
+        }
         updateSummary()
+        syncTranslateUi()
 
         val dialog = AlertDialog.Builder(act, R.style.AlertDialogCustom)
             .setView(dialogBinding.root)
@@ -328,17 +474,29 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             val numbers = parsedChapters()
             if (numbers == null) {
                 CommonActivity.showToast(getString(R.string.download_chapters_invalid, total))
-            } else {
-                val translate = dialogBinding.downloadTranslate.isChecked &&
-                    selectedKind() != SelectionTaskKind.Download
-                val key = AppSettings(act).translation.geminiApiKey.get()
-                if (translate && key.isBlank()) {
-                    CommonActivity.showToast(getString(R.string.translation_key_missing))
-                } else {
-                    dialog.dismiss()
-                    viewModel.startDownload(selectedKind(), numbers, perFile(), translate)
-                }
+                return@setOnClickListener
             }
+            val langIndex = dialogBinding.downloadTranslateLang.selectedItemPosition
+            val translateRequest = if (langIndex > 0) {
+                val lang = DownloadTranslateLangs.ALL.getOrNull(langIndex - 1)
+                    ?: return@setOnClickListener
+                val engine = if (dialogBinding.downloadTranslateEngine.selectedItemPosition == 0) {
+                    DownloadTranslateEngine.Gemini
+                } else {
+                    DownloadTranslateEngine.GoogleOnline
+                }
+                if (engine == DownloadTranslateEngine.Gemini &&
+                    AppSettings(act).translation.geminiApiKey.get().trim().isBlank()
+                ) {
+                    CommonActivity.showToast(getString(R.string.translation_key_missing))
+                    return@setOnClickListener
+                }
+                DownloadTranslateRequest(lang, engine)
+            } else {
+                null
+            }
+            dialog.dismiss()
+            viewModel.startDownload(selectedKind(), numbers, perFile(), translateRequest)
         }
     }
 
@@ -1174,6 +1332,11 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             stickyDownload.setOnLongClickListener(downloadLongClick)
 
             val downloadClick = View.OnClickListener { v ->
+                // Primary path: EPUB/PDF/chapters dialog (batches + language translation).
+                if (viewModel.totalChapters > 0) {
+                    showDownloadDialog()
+                    return@OnClickListener
+                }
                 val actions = getActions()
                 if (actions == null) {
                     viewModel.downloadOrPause()
@@ -1205,6 +1368,7 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             }
             stickyRead.setOnClickListener { resultQuickstream.performClick() }
 
+            applySelectFabHalo()
             chaptersSelectFab.setOnClickListener {
                 viewModel.setSelectionMode(true)
             }

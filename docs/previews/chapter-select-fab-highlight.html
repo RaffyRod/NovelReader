@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="ultimate" data-style="J">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultimate · Select icon glow — mock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --phone-w: 320px;
+      --phone-h: 680px;
+    }
+
+    [data-theme="ultimate"] {
+      --page: #03060f; --bg: #050b18; --surface: #0a1224; --card: #0d1528;
+      --line: rgba(140,180,255,.12); --text: #e8f1ff; --muted: #8b97ab;
+      --primary: #1a6cff; --on-primary: #fff; --fab-idle: #050b18;
+    }
+    [data-theme="fire"] {
+      --page: #0c0404; --bg: #140808; --surface: #1c0c0c; --card: #241010;
+      --line: rgba(255,120,90,.14); --text: #ffece8; --muted: #b89088;
+      --primary: #e53935; --on-primary: #fff; --fab-idle: #140808;
+    }
+    [data-theme="party"] {
+      --page: #0a0610; --bg: #120a18; --surface: #1a1024; --card: #221530;
+      --line: rgba(255,120,180,.14); --text: #ffeef6; --muted: #b894a8;
+      --primary: #c1495b; --on-primary: #fff; --fab-idle: #120a18;
+    }
+    [data-theme="pink"] {
+      --page: #0c0408; --bg: #14060c; --surface: #1e0a14; --card: #281018;
+      --line: rgba(255,80,160,.14); --text: #ffe8f2; --muted: #b888a0;
+      --primary: #ff1493; --on-primary: #fff; --fab-idle: #14060c;
+    }
+    [data-theme="green"] {
+      --page: #030a06; --bg: #06140c; --surface: #0a1c12; --card: #0e2418;
+      --line: rgba(80,220,140,.12); --text: #e8fff2; --muted: #88b098;
+      --primary: #2e7d32; --on-primary: #fff; --fab-idle: #06140c;
+    }
+    [data-theme="banana"] {
+      --page: #0c0a02; --bg: #141208; --surface: #1c1a0c; --card: #242210;
+      --line: rgba(240,200,60,.14); --text: #fffce8; --muted: #b0a878;
+      --primary: #f9a825; --on-primary: #1a1400; --fab-idle: #141208;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: var(--font); color: var(--text);
+      background:
+        radial-gradient(900px 480px at 12% -8%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 55%),
+        radial-gradient(640px 360px at 92% 4%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 50%),
+        var(--page);
+      transition: background .25s, color .2s;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 36px 24px 72px; }
+    h1 {
+      font-family: var(--display); font-weight: 400; letter-spacing: -.02em;
+      font-size: clamp(2rem, 4vw, 2.7rem); margin: 0 0 8px;
+    }
+    .lead { color: var(--muted); max-width: 56ch; line-height: 1.5; margin: 0 0 28px; font-size: .95rem; }
+
+    .ctrl-label {
+      font-size: .7rem; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin: 0 0 10px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+    .chip {
+      border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 85%, transparent);
+      color: var(--text); border-radius: 999px; padding: 8px 14px; font: inherit; font-size: .85rem;
+      font-weight: 500; cursor: pointer;
+    }
+    .chip[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+    .chip .swatch {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+      vertical-align: middle; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+    }
+
+    .group-title {
+      font-family: var(--display); font-size: 1.35rem; margin: 8px 0 12px; font-weight: 400;
+    }
+    .styles {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+      gap: 10px; margin-bottom: 28px;
+    }
+    .style-card {
+      text-align: left; border: 1px solid var(--line); background: var(--surface);
+      border-radius: 14px; padding: 12px 14px; cursor: pointer; color: inherit; font: inherit;
+    }
+    .style-card[aria-pressed="true"] {
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+    }
+    .style-card .letter {
+      font-family: var(--display); font-size: 1.25rem; color: var(--primary); margin-bottom: 2px;
+    }
+    .style-card strong { display: block; font-size: .9rem; margin-bottom: 3px; }
+    .style-card span { display: block; font-size: .74rem; color: var(--muted); line-height: 1.4; }
+
+    .stage {
+      display: grid; grid-template-columns: 1fr auto; gap: 36px; align-items: start;
+    }
+    @media (max-width: 900px) { .stage { grid-template-columns: 1fr; justify-items: center; } }
+
+    .note { max-width: 420px; }
+    .note h2 { font-family: var(--display); font-weight: 400; font-size: 1.55rem; margin: 0 0 10px; }
+    .note p { color: var(--muted); line-height: 1.55; font-size: .92rem; margin: 0 0 12px; }
+    .note ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: .86rem; line-height: 1.55; }
+    .pick {
+      margin-top: 18px; padding: 14px 16px; border-radius: 12px; font-size: .9rem;
+      border: 1px dashed color-mix(in srgb, var(--primary) 40%, var(--line));
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
+    }
+    .pick strong { color: var(--primary); }
+
+    .phone {
+      width: var(--phone-w); height: var(--phone-h); border-radius: 28px;
+      background: var(--bg); border: 1px solid var(--line); position: relative; overflow: hidden;
+    }
+    .status {
+      height: 28px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px; font-size: .7rem; color: var(--muted);
+    }
+    .tabs { display: flex; border-bottom: 1px solid var(--line); padding: 0 8px; }
+    .tab { flex: 1; text-align: center; padding: 12px 4px 10px; font-size: .72rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; }
+    .tab.on { color: var(--primary); border-bottom-color: var(--primary); }
+    .chapters { padding: 8px 12px 160px; overflow: auto; height: calc(100% - 70px); }
+    .ch { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 10px; }
+    .ch .n {
+      width: 28px; height: 28px; border-radius: 8px; background: var(--card);
+      display: grid; place-items: center; font-size: .72rem; font-weight: 600; color: var(--muted);
+    }
+    .ch .t { flex: 1; font-size: .85rem; }
+    .ch .m { font-size: .7rem; color: var(--muted); }
+
+    .fab-stack {
+      position: absolute; right: 16px; bottom: 24px;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 14px; z-index: 2;
+    }
+
+    .fab {
+      display: inline-flex; align-items: center; gap: 8px; height: 48px;
+      padding: 0 16px 0 14px; border-radius: 16px; font-size: .82rem; font-weight: 700;
+      border: none; cursor: default; font-family: inherit; white-space: nowrap; position: relative;
+    }
+    .fab svg { width: 20px; height: 20px; flex-shrink: 0; stroke-linecap: round; stroke-linejoin: round; }
+    .fab .label { display: inline; }
+    .fab-filter {
+      background: var(--fab-idle); color: var(--text); box-shadow: inset 0 0 0 1px var(--line);
+    }
+    .fab-filter svg { stroke: var(--text); fill: none; stroke-width: 2; }
+
+    /* Extended label styles A–E (kept for comparison) */
+    [data-style="A"] .fab-select {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 42%, transparent);
+    }
+    [data-style="A"] .fab-select svg { stroke: var(--on-primary); fill: none; stroke-width: 2; }
+
+    [data-style="B"] .fab-select {
+      background: color-mix(in srgb, var(--primary) 22%, var(--fab-idle)); color: var(--primary);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 55%, transparent);
+    }
+    [data-style="B"] .fab-select svg { stroke: var(--primary); fill: none; stroke-width: 2; }
+
+    [data-style="C"] .fab-select {
+      background: var(--fab-idle); color: var(--primary);
+      box-shadow: inset 0 0 0 2px var(--primary), 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+    }
+    [data-style="C"] .fab-select svg { stroke: var(--primary); fill: none; stroke-width: 2; }
+
+    [data-style="D"] .fab-select {
+      background: var(--fab-idle); color: var(--text); box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-style="D"] .fab-select svg { stroke: var(--primary); fill: none; stroke-width: 2.25; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--primary) 70%, transparent)); }
+    [data-style="D"] .fab-select::after {
+      content: ""; position: absolute; left: 12px; right: 12px; bottom: 5px; height: 2px;
+      border-radius: 2px; background: var(--primary);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 80%, transparent);
+    }
+
+    [data-style="E"] .fab-select {
+      background: var(--fab-idle); color: var(--text); padding-left: 8px;
+      box-shadow: inset 0 0 0 1px var(--line); gap: 10px;
+    }
+    [data-style="E"] .fab-select .disc {
+      width: 34px; height: 34px; border-radius: 12px; background: var(--primary);
+      display: grid; place-items: center;
+      box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 55%, transparent);
+    }
+    [data-style="E"] .fab-select .disc svg { stroke: var(--on-primary); fill: none; stroke-width: 2; }
+
+    /* ——— Minimal icon + glow (F–K) ——— */
+    html[data-style="F"] .fab-select .label,
+    html[data-style="G"] .fab-select .label,
+    html[data-style="H"] .fab-select .label,
+    html[data-style="I"] .fab-select .label,
+    html[data-style="J"] .fab-select .label,
+    html[data-style="K"] .fab-select .label { display: none; }
+
+    html[data-style="F"] .fab-select,
+    html[data-style="G"] .fab-select,
+    html[data-style="H"] .fab-select,
+    html[data-style="I"] .fab-select,
+    html[data-style="J"] .fab-select,
+    html[data-style="K"] .fab-select {
+      width: 52px; height: 52px; padding: 0; border-radius: 50%;
+      justify-content: center; gap: 0;
+    }
+
+    /* F — Glow orb: solid primary circle + soft bloom */
+    [data-style="F"] .fab-select {
+      background: var(--primary); color: var(--on-primary);
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent),
+        0 0 18px color-mix(in srgb, var(--primary) 55%, transparent),
+        0 0 36px color-mix(in srgb, var(--primary) 28%, transparent);
+      animation: pulseGlow 2.4s ease-in-out infinite;
+    }
+    [data-style="F"] .fab-select svg { stroke: var(--on-primary); fill: none; stroke-width: 2; }
+
+    /* G — Neon rim: dark core, neon edge */
+    [data-style="G"] .fab-select {
+      background: color-mix(in srgb, var(--fab-idle) 70%, #000);
+      box-shadow:
+        inset 0 0 0 1.5px var(--primary),
+        0 0 12px color-mix(in srgb, var(--primary) 65%, transparent),
+        0 0 28px color-mix(in srgb, var(--primary) 35%, transparent);
+      animation: pulseGlow 2.6s ease-in-out infinite;
+    }
+    [data-style="G"] .fab-select svg {
+      stroke: var(--primary); fill: none; stroke-width: 2;
+      filter: drop-shadow(0 0 5px color-mix(in srgb, var(--primary) 90%, transparent));
+    }
+
+    /* H — Lit glyph: almost invisible pad, glowing strokes */
+    [data-style="H"] .fab-select {
+      background: transparent;
+      box-shadow: none;
+    }
+    [data-style="H"] .fab-select svg {
+      width: 26px; height: 26px;
+      stroke: var(--primary); fill: none; stroke-width: 2.1;
+      filter:
+        drop-shadow(0 0 2px var(--primary))
+        drop-shadow(0 0 10px color-mix(in srgb, var(--primary) 85%, transparent))
+        drop-shadow(0 0 22px color-mix(in srgb, var(--primary) 45%, transparent));
+      animation: glyphPulse 2.2s ease-in-out infinite;
+    }
+
+    /* I — Spark: radial shine highlight on primary */
+    [data-style="I"] .fab-select {
+      background:
+        radial-gradient(circle at 35% 30%, color-mix(in srgb, #fff 55%, var(--primary)), transparent 42%),
+        var(--primary);
+      box-shadow:
+        0 0 16px color-mix(in srgb, var(--primary) 60%, transparent),
+        0 8px 20px color-mix(in srgb, var(--primary) 25%, transparent);
+    }
+    [data-style="I"] .fab-select svg { stroke: var(--on-primary); fill: none; stroke-width: 2; }
+
+    /* J — Halo ring: hollow center, glowing ring */
+    [data-style="J"] .fab-select {
+      background: color-mix(in srgb, var(--bg) 80%, transparent);
+      box-shadow:
+        inset 0 0 0 2px color-mix(in srgb, var(--primary) 90%, transparent),
+        0 0 0 6px color-mix(in srgb, var(--primary) 14%, transparent),
+        0 0 22px color-mix(in srgb, var(--primary) 45%, transparent);
+      animation: haloBreathe 2.8s ease-in-out infinite;
+    }
+    [data-style="J"] .fab-select svg {
+      stroke: var(--primary); fill: none; stroke-width: 2;
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 80%, transparent));
+    }
+
+    /* K — Glass glow: frosted disc + bloom */
+    [data-style="K"] .fab-select {
+      background: color-mix(in srgb, var(--primary) 18%, rgba(255,255,255,.06));
+      backdrop-filter: blur(8px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.22),
+        inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent),
+        0 0 20px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    [data-style="K"] .fab-select svg {
+      stroke: var(--primary); fill: none; stroke-width: 2.1;
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent));
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.12); }
+    }
+    @keyframes glyphPulse {
+      0%, 100% { opacity: .88; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.06); }
+    }
+    @keyframes haloBreathe {
+      0%, 100% {
+        box-shadow:
+          inset 0 0 0 2px color-mix(in srgb, var(--primary) 90%, transparent),
+          0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent),
+          0 0 18px color-mix(in srgb, var(--primary) 40%, transparent);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 0 2px color-mix(in srgb, var(--primary) 95%, transparent),
+          0 0 0 8px color-mix(in srgb, var(--primary) 18%, transparent),
+          0 0 28px color-mix(in srgb, var(--primary) 55%, transparent);
+      }
+    }
+
+    .compare {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+    }
+    .mini {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      padding: 16px 8px 18px; text-align: center; min-height: 110px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    }
+    .mini .lab {
+      font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 16px;
+    }
+    .mini .fab { pointer-events: none; transform: scale(.95); }
+    .mini .fab .label { font-size: .72rem; }
+    /* Force icon-only in mini grid for F–K */
+    .mini[data-style="F"] .label,
+    .mini[data-style="G"] .label,
+    .mini[data-style="H"] .label,
+    .mini[data-style="I"] .label,
+    .mini[data-style="J"] .label,
+    .mini[data-style="K"] .label { display: none; }
+    .mini[data-style="F"] .fab-select,
+    .mini[data-style="G"] .fab-select,
+    .mini[data-style="H"] .fab-select,
+    .mini[data-style="I"] .fab-select,
+    .mini[data-style="J"] .fab-select,
+    .mini[data-style="K"] .fab-select {
+      width: 48px; height: 48px; padding: 0; border-radius: 50%; justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Select · minimal icons + brillo</h1>
+      <p class="lead">
+        Nuevas opciones <strong>F–K</strong>: solo icono, sin texto, con glow del
+        <code>colorPrimary</code> del tema. Abajo quedan A–E (con etiqueta) por si prefieres pastilla.
+      </p>
+    </header>
+
+    <div class="ctrl-label">Tema</div>
+    <div class="chips" id="themes" role="group">
+      <button type="button" class="chip" data-theme="ultimate" aria-pressed="true"><span class="swatch" style="--sw:#1a6cff"></span>Ultimate Blue</button>
+      <button type="button" class="chip" data-theme="fire" aria-pressed="false"><span class="swatch" style="--sw:#e53935"></span>Fire</button>
+      <button type="button" class="chip" data-theme="party" aria-pressed="false"><span class="swatch" style="--sw:#c1495b"></span>Party</button>
+      <button type="button" class="chip" data-theme="pink" aria-pressed="false"><span class="swatch" style="--sw:#ff1493"></span>Pink Pain</button>
+      <button type="button" class="chip" data-theme="green" aria-pressed="false"><span class="swatch" style="--sw:#2e7d32"></span>Green</button>
+      <button type="button" class="chip" data-theme="banana" aria-pressed="false"><span class="swatch" style="--sw:#f9a825"></span>Banana</button>
+    </div>
+
+    <div class="group-title">Minimal + glow</div>
+    <div class="styles" id="styles-glow" role="group">
+      <button type="button" class="style-card" data-style="F" aria-pressed="true">
+        <div class="letter">F</div>
+        <strong>Glow orb</strong>
+        <span>Círculo primary sólido + bloom suave (pulso).</span>
+      </button>
+      <button type="button" class="style-card" data-style="G" aria-pressed="false">
+        <div class="letter">G</div>
+        <strong>Neon rim</strong>
+        <span>Núcleo oscuro, borde neón e icono brillante.</span>
+      </button>
+      <button type="button" class="style-card" data-style="H" aria-pressed="false">
+        <div class="letter">H</div>
+        <strong>Lit glyph</strong>
+        <span>Sin fondo: solo el icono con glow de trazos.</span>
+      </button>
+      <button type="button" class="style-card" data-style="I" aria-pressed="false">
+        <div class="letter">I</div>
+        <strong>Spark</strong>
+        <span>Primary + highlight especular (como brillo de luz).</span>
+      </button>
+      <button type="button" class="style-card" data-style="J" aria-pressed="false">
+        <div class="letter">J</div>
+        <strong>Halo ring</strong>
+        <span>Anillo luminoso que respira alrededor del icono.</span>
+      </button>
+      <button type="button" class="style-card" data-style="K" aria-pressed="false">
+        <div class="letter">K</div>
+        <strong>Glass glow</strong>
+        <span>Disco glass/frost + icono primary con bloom.</span>
+      </button>
+    </div>
+
+    <div class="group-title">Con etiqueta (A–E)</div>
+    <div class="styles" id="styles-label" role="group">
+      <button type="button" class="style-card" data-style="A" aria-pressed="false">
+        <div class="letter">A</div>
+        <strong>Solid</strong>
+        <span>Pastilla primary completa.</span>
+      </button>
+      <button type="button" class="style-card" data-style="B" aria-pressed="false">
+        <div class="letter">B</div>
+        <strong>Soft tint</strong>
+        <span>Fondo teñido + texto primary.</span>
+      </button>
+      <button type="button" class="style-card" data-style="C" aria-pressed="false">
+        <div class="letter">C</div>
+        <strong>Outline</strong>
+        <span>Anillo primary, cuerpo oscuro.</span>
+      </button>
+      <button type="button" class="style-card" data-style="D" aria-pressed="false">
+        <div class="letter">D</div>
+        <strong>Icon accent</strong>
+        <span>Icono glow + subrayado.</span>
+      </button>
+      <button type="button" class="style-card" data-style="E" aria-pressed="false">
+        <div class="letter">E</div>
+        <strong>Icon disc</strong>
+        <span>Disco primary dentro de pastilla.</span>
+      </button>
+    </div>
+
+    <div class="stage">
+      <div class="note">
+        <h2>Vista previa</h2>
+        <p>Filtro se queda neutro. Seleccionar (arriba) usa el estilo activo. Prueba F–K cambiando tema.</p>
+        <ul>
+          <li><strong>F / I</strong> — más visibles, color lleno.</li>
+          <li><strong>G / J / K</strong> — minimal con brillo, sin “pintar” todo el FAB.</li>
+          <li><strong>H</strong> — el más ligero: solo el glyph luminoso.</li>
+        </ul>
+        <div class="pick">
+          Estilo <strong id="pickStyle">F — Glow orb</strong>
+          · tema <strong id="pickTheme">Ultimate Blue</strong>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>QN</span></div>
+        <div class="tabs">
+          <div class="tab">Info</div>
+          <div class="tab">Reviews</div>
+          <div class="tab">Related</div>
+          <div class="tab on">Capítulos</div>
+        </div>
+        <div class="chapters">
+          <div class="ch"><div class="n">1</div><div class="t">Prólogo</div><div class="m">12 min</div></div>
+          <div class="ch"><div class="n">2</div><div class="t">La puerta de piedra</div><div class="m">18 min</div></div>
+          <div class="ch"><div class="n">3</div><div class="t">Juramento</div><div class="m">15 min</div></div>
+          <div class="ch"><div class="n">4</div><div class="t">Niebla en el valle</div><div class="m">22 min</div></div>
+          <div class="ch"><div class="n">5</div><div class="t">El archivo sellado</div><div class="m">20 min</div></div>
+          <div class="ch"><div class="n">6</div><div class="t">Carta de medianoche</div><div class="m">16 min</div></div>
+        </div>
+        <div class="fab-stack">
+          <button type="button" class="fab fab-select" aria-label="Seleccionar">
+            <span class="disc" hidden>
+              <svg viewBox="0 0 24 24"><path d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01"/></svg>
+            </span>
+            <svg class="ico" viewBox="0 0 24 24"><path d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01"/></svg>
+            <span class="label">Seleccionar</span>
+          </button>
+          <button type="button" class="fab fab-filter" aria-label="Filtro">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            <span class="label">Filtro</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="group-title" style="margin-top:36px">Comparativa rápida</div>
+    <div class="compare" id="compare"></div>
+  </div>
+
+  <script>
+    const THEME_NAMES = {
+      ultimate: "Ultimate Blue", fire: "Fire", party: "Party",
+      pink: "Pink Pain", green: "Green", banana: "Banana",
+    };
+    const STYLE_NAMES = {
+      A: "A — Solid", B: "B — Soft tint", C: "C — Outline",
+      D: "D — Icon accent", E: "E — Icon disc",
+      F: "F — Glow orb", G: "G — Neon rim", H: "H — Lit glyph",
+      I: "I — Spark", J: "J — Halo ring", K: "K — Glass glow",
+    };
+    const ALL = ["F", "G", "H", "I", "J", "K", "A", "B", "C", "D", "E"];
+
+    const root = document.documentElement;
+    const selectFab = document.querySelector(".phone .fab-select");
+    const checklist = `<path d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01"/>`;
+
+    function syncDisc() {
+      const style = root.getAttribute("data-style");
+      const disc = selectFab.querySelector(".disc");
+      const ico = selectFab.querySelector(".ico");
+      const isE = style === "E";
+      disc.hidden = !isE;
+      ico.style.display = isE ? "none" : "";
+    }
+
+    function setTheme(theme) {
+      root.setAttribute("data-theme", theme);
+      document.querySelectorAll("#themes .chip").forEach((c) => {
+        c.setAttribute("aria-pressed", String(c.dataset.theme === theme));
+      });
+      document.getElementById("pickTheme").textContent = THEME_NAMES[theme];
+      paintCompare();
+    }
+
+    function setStyle(style) {
+      root.setAttribute("data-style", style);
+      document.querySelectorAll(".style-card").forEach((c) => {
+        c.setAttribute("aria-pressed", String(c.dataset.style === style));
+      });
+      document.getElementById("pickStyle").textContent = STYLE_NAMES[style];
+      syncDisc();
+      paintCompare();
+    }
+
+    document.getElementById("themes").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-theme]");
+      if (btn) setTheme(btn.dataset.theme);
+    });
+    document.querySelectorAll("#styles-glow, #styles-label").forEach((box) => {
+      box.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-style]");
+        if (btn) setStyle(btn.dataset.style);
+      });
+    });
+
+    function paintCompare() {
+      const theme = root.getAttribute("data-theme");
+      document.getElementById("compare").innerHTML = ALL.map((s) => `
+        <div class="mini" data-theme="${theme}" data-style="${s}">
+          <div class="lab">${s}</div>
+          <button type="button" class="fab fab-select">
+            <span class="disc"${s === "E" ? "" : " hidden"}>
+              <svg viewBox="0 0 24 24">${checklist}</svg>
+            </span>
+            <svg class="ico" viewBox="0 0 24 24"${s === "E" ? ' style="display:none"' : ""}>${checklist}</svg>
+            <span class="label">Seleccionar</span>
+          </button>
+        </div>
+      `).join("");
+    }
+
+    syncDisc();
+    paintCompare();
+  </script>
+</body>
+</html>

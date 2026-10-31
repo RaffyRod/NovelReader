@@ -1140,10 +1140,17 @@ class ReadActivityViewModel : ViewModel() {
             val isFromEpub = intent.type != "quickstream"
 
             val epub = if (isFromEpub) {
-                val fd = context.contentResolver.openFileDescriptor(data, "r")
-                    ?: throw ErrorLoadingException("Unable to open file descriptor")
+                val fd = try {
+                    context.contentResolver.openFileDescriptor(data, "r")
+                } catch (e: SecurityException) {
+                    throw ErrorLoadingException("No permission to read this file")
+                } ?: throw ErrorLoadingException("Unable to open file descriptor")
                 val zipFile = AndroidZipFile(fd, "")
-                val book = EpubReader().readEpubLazy(zipFile, "utf-8")
+                val book = try {
+                    EpubReader().readEpubLazy(zipFile, "utf-8")
+                } catch (e: Exception) {
+                    throw ErrorLoadingException("Invalid or corrupted EPUB: ${e.message}")
+                }
                 RegularBook(book)
             } else {
                 val input = context.contentResolver.openInputStream(data)

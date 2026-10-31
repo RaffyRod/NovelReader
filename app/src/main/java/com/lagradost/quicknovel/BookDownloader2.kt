@@ -982,7 +982,8 @@ object BookDownloader2Helper {
                 metadata.addDescription(synopsis)
             }
             val numbers = ChapterSpec.format(chapters.map { it.first })
-            metadata.addTitle("$name [$numbers]")
+            // Avoid [] in OPF titles — some readers / zip parsers choke on odd metadata.
+            metadata.addTitle("$name - $numbers")
 
             val posterFile = File(
                 context.filesDir.toString() + getFilenameIMG(
@@ -999,11 +1000,12 @@ object BookDownloader2Helper {
             book.resources.add(getGeneralCSStyleForEPUBs())
             for ((number, chapter) in chapters.sortedBy { it.first }) {
                 val title = ChapterSpec.numberedTitle(number, chapter.title)
+                val html = packageAsXHtml(title, chapter.html, title)
                 book.addSection(
                     title,
                     Resource(
                         "id$number",
-                        packageAsXHtml(title, chapter.html, title).toByteArray(),
+                        html.toByteArray(Charsets.UTF_8),
                         "chapter$number.html",
                         MediaTypes.XHTML
                     )

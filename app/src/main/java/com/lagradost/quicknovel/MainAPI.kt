@@ -136,20 +136,36 @@ fun chapterHeadingHtml(heading: String?): String {
     return if (clean.isEmpty()) "" else "<h2 class=\"chapter-title\">${Entities.escape(clean)}</h2>"
 }
 
+/**
+ * Normalizes chapter HTML so epublib / the in-app reader can open translated files.
+ * Strips nested html/head wrappers models sometimes return and forces XHTML escaping.
+ */
+fun sanitizeChapterHtmlForEpub(bodyHtml: String): String {
+    val doc = org.jsoup.Jsoup.parseBodyFragment(bodyHtml)
+    doc.outputSettings()
+        .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
+        .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
+        .prettyPrint(false)
+    doc.select("script, style").remove()
+    return doc.body().html()
+}
+
 /** Wraps [bodyHtml] in an XHTML page; a non-null [heading] is shown at the top as the chapter header. */
 fun packageAsXHtml(title: String, bodyHtml: String, heading: String? = null): String {
+    val safeTitle = Entities.escape(title.trim().ifBlank { "Chapter" })
     val headingHtml = chapterHeadingHtml(heading)
+    val safeBody = sanitizeChapterHtmlForEpub(bodyHtml)
     return """
         <?xml version='1.0' encoding='utf-8'?>
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> 
         <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
         <head>
-            <title>$title</title>
+            <title>$safeTitle</title>
             <link rel="stylesheet" type="text/css" href="style.css"/>
         </head>
         <body>
             $headingHtml
-            $bodyHtml
+            $safeBody
         </body>
         </html>
     """.trimIndent()

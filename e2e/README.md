@@ -15,6 +15,8 @@ Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and
 | `07-reader-tts` | Seeds a novel (import fixture / search stream), opens reader, shows TTS, starts TTS — **no skips** |
 | `08-providers` | HTTP probe + search multi-select (varios proveedores) + search scoped results |
 | `09-search-special-chars` | Blocks special chars by default; accepts them when Settings toggle is on |
+| `10-plugins` | Settings → Plugins (LNReader) hub: open manage plugins / add repository entry points |
+| `11-download-translate` | Novel detail → Download dialog: language picker + Gemini / Google online engine |
 
 ### Reader seed
 
@@ -49,6 +51,8 @@ npm run test:smoke           # 01–04
 npm run test:features        # 05, 06, 09
 npm run test:reader          # 07
 npm run test:providers       # 08 (long / network)
+npm run test:plugins         # 10
+npm run test:download-translate  # 11
 npm run allure:report
 ```
 

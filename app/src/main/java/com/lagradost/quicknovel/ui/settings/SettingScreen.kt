@@ -71,6 +71,7 @@ import com.lagradost.quicknovel.util.ProviderLanguages
 import com.lagradost.quicknovel.mvvm.logError
 import com.lagradost.quicknovel.ui.txt
 import com.lagradost.quicknovel.util.Apis.Companion.apis
+import com.lagradost.quicknovel.plugins.PluginStore
 import com.lagradost.quicknovel.util.CustomProviders
 import com.lagradost.quicknovel.util.BackupUtils
 import com.lagradost.quicknovel.util.SubtitleHelper
@@ -156,6 +157,12 @@ object SettingScreen : SearchableSettings {
         val settings = rememberAppSettings()
         val geminiKey by settings.translation.geminiApiKey.collectAsState()
         var customProviderCount by remember { mutableStateOf(CustomProviders.load().size) }
+        var pluginInstalledCount by remember {
+            mutableStateOf(PluginStore.loadInstalled().size)
+        }
+        var pluginUpdateCount by remember {
+            mutableStateOf(PluginStore.loadInstalled().count { it.hasUpdate })
+        }
         val githubViewModel = MainActivityScreen.githubViewModel()
         val logcat =
             getFilePreference(FileHelper.logcat, store, stringResource(R.string.log_cat_location))
@@ -592,6 +599,49 @@ object SettingScreen : SearchableSettings {
                         onClick = {
                             activity?.let { act ->
                                 CustomProviderDialogs.showManager(act) {
+                                    customProviderCount = CustomProviders.load().size
+                                }
+                            }
+                        }
+                    ),
+                )
+            ),
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.plugin_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.extension_24px),
+                        title = stringResource(R.string.plugin_hub),
+                        subtitle = stringResource(
+                            R.string.plugin_hub_count,
+                            pluginInstalledCount,
+                            if (pluginUpdateCount > 0) {
+                                stringResource(R.string.plugin_hub_updates, pluginUpdateCount)
+                            } else {
+                                ""
+                            },
+                        ),
+                        onClick = {
+                            activity?.let { act ->
+                                PluginProviderDialogs.showHub(act) {
+                                    val installed = PluginStore.loadInstalled()
+                                    pluginInstalledCount = installed.size
+                                    pluginUpdateCount = installed.count { it.hasUpdate }
+                                    customProviderCount = CustomProviders.load().size
+                                }
+                            }
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.plugin_lang),
+                        title = stringResource(R.string.plugin_add_repo),
+                        subtitle = stringResource(R.string.plugin_hub_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                PluginProviderDialogs.showAddRepo(act) {
+                                    val installed = PluginStore.loadInstalled()
+                                    pluginInstalledCount = installed.size
+                                    pluginUpdateCount = installed.count { it.hasUpdate }
                                     customProviderCount = CustomProviders.load().size
                                 }
                             }

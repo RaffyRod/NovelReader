@@ -1,9 +1,12 @@
 package com.lagradost.quicknovel
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AlertDialog
+import com.lagradost.quicknovel.CommonActivity.showToast
+import com.lagradost.quicknovel.mvvm.logError
 
 /** Where a book file is read: in this app or in any other reading app on the phone. */
 enum class OpenMode {
@@ -38,22 +41,39 @@ object FileOpener {
     private fun openInApp(activity: Activity, uri: Uri, mime: String) {
         val target = if (mime == FileHelper.PDF_MIME) PdfReaderActivity::class.java
         else ReadActivity2::class.java
+        // Prefer a FileProvider URI for raw files so the reader always has read access.
+        val readable = runCatching { FileHelper.exportUri(activity, uri) }.getOrDefault(uri)
         val intent = Intent(activity, target).apply {
-            setDataAndType(uri, mime)
+            setDataAndType(readable, mime)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // Android only forwards URI grants to the next activity when ClipData is set.
+            clipData = ClipData.newUri(activity.contentResolver, "book", readable)
         }
-        activity.startActivity(intent)
+        runCatching { activity.startActivity(intent) }
+            .onFailure { err ->
+                logError(err)
+                showToast(activity, activity.getString(R.string.open_file_failed))
+            }
     }
 
     private fun openInOtherApp(activity: Activity, uri: Uri, mime: String) {
+        val readable = runCatching { FileHelper.exportUri(activity, uri) }.getOrDefault(uri)
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(FileHelper.exportUri(activity, uri), mime)
+            setDataAndType(readable, mime)
             addFlags(
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
                         or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
                         or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
             )
+            clipData = ClipData.newUri(activity.contentResolver, "book", readable)
         }
-        activity.startActivity(Intent.createChooser(intent, activity.getString(R.string.open_with)))
+        runCatching {
+            activity.startActivity(
+                Intent.createChooser(intent, activity.getString(R.string.open_with))
+            )
+        }.onFailure { err ->
+            logError(err)
+            showToast(activity, activity.getString(R.string.open_file_failed))
+        }
     }
 }

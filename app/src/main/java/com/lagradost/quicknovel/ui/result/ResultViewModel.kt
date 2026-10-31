@@ -22,7 +22,11 @@ import com.lagradost.quicknovel.BaseApplication.Companion.setKey
 import com.lagradost.quicknovel.BookDownloader2
 import com.lagradost.quicknovel.BookDownloader2.downloadProgress
 import com.lagradost.cloudstream4.AppSettings
+import com.lagradost.quicknovel.DownloadTranslateEngine
+import com.lagradost.quicknovel.DownloadTranslateRequest
+import com.lagradost.quicknovel.DownloadTranslationGuard
 import com.lagradost.quicknovel.GeminiTranslator
+import com.lagradost.quicknovel.OnlineHtmlChapterTranslator
 import com.lagradost.quicknovel.TranslationException
 import com.lagradost.quicknovel.BookDownloader2Helper
 import com.lagradost.quicknovel.BookDownloader2Helper.clearChapterCache
@@ -1115,7 +1119,7 @@ class ResultViewModel : ViewModel() {
         kind: SelectionTaskKind,
         numbers: Set<Int>,
         perFile: Int,
-        translate: Boolean = false
+        translate: DownloadTranslateRequest? = null,
     ) {
         selectedChapters.value = numbers.map { it - 1 }.toSet()
         startSelectionTask(kind, perFile, translate)
@@ -1132,7 +1136,11 @@ class ResultViewModel : ViewModel() {
         selectionTask.value = null
     }
 
-    private fun startSelectionTask(kind: SelectionTaskKind, perFile: Int, translate: Boolean = false) {
+    private fun startSelectionTask(
+        kind: SelectionTaskKind,
+        perFile: Int,
+        translate: DownloadTranslateRequest? = null,
+    ) {
         if (selectionJob?.isActive == true) return
         val stream = (load as? StreamResponse)?.takeIf { hasLoaded } ?: return
         val selected = selectedChapterList()
@@ -1156,7 +1164,7 @@ class ResultViewModel : ViewModel() {
         selectionJob = viewModelScope.launch(Dispatchers.IO + errorHandler) {
             when (kind) {
                 SelectionTaskKind.Download ->
-                    runDownloadTask(appContext, api, meta, selected, worker)
+                    runDownloadTask(appContext, api, meta, selected, worker, translate)
 
                 SelectionTaskKind.Pdf, SelectionTaskKind.Epub ->
                     runExportTask(kind, appContext, stream, meta, selected, perFile, translate)
@@ -1169,26 +1177,70 @@ class ResultViewModel : ViewModel() {
         api: APIRepository,
         meta: QuickStreamMetaData,
         selected: List<Pair<Int, ChapterData>>,
-        worker: WaitOrCancel
+        worker: WaitOrCancel,
+        translate: DownloadTranslateRequest?,
     ) {
         var failed = 0
+        val stripAuthorNotes = appContext.getStripAuthorNodes()
         selected.forEachIndexed { position, (index, chapter) ->
             currentCoroutineContext().ensureActive()
+            val path = appContext.getFilePath(meta, index)
             val result = BookDownloader2Helper.downloadIndividualChapter(
-                appContext.getFilePath(meta, index),
+                path,
                 api,
                 chapter,
                 worker = worker
             )
             if (result != BookDownloader2Helper.DownloadResult.Success) {
                 failed++
+            } else if (translate != null) {
+                val loaded = appContext.getQuickChapter(
+                    meta, chapter, index, false, stripAuthorNotes
+                )
+                if (loaded == null) {
+                    failed++
+                } else {
+                    val translation = AppSettings(appContext).translation
+                    val gemini = if (translate.engine == DownloadTranslateEngine.Gemini) {
+                        GeminiTranslator(
+                            translation.geminiApiKey.get().trim(),
+                            translation.geminiModel.get(),
+                            targetLanguage = translate.lang.englishName,
+                        )
+                    } else {
+                        null
+                    }
+                    try {
+                        val translated = translateWithCache(
+                            translate, gemini, appContext, meta, index, loaded
+                        )
+                        // Overwrite the on-disk chapter so in-app reading uses the selected language.
+                        java.io.File(path).writeText(
+                            "${translated.title.replace('\n', ' ')}\n${translated.html}"
+                        )
+                    } catch (e: TranslationException) {
+                        selectionTask.postValue(
+                            SelectionTaskState(
+                                kind = SelectionTaskKind.Download,
+                                done = position + 1,
+                                total = selected.size,
+                                failed = failed + 1,
+                                finished = true,
+                                error = true,
+                                errorMessage = e.message,
+                            )
+                        )
+                        return
+                    }
+                }
             }
             selectionTask.postValue(
                 SelectionTaskState(
                     kind = SelectionTaskKind.Download,
                     done = position + 1,
                     total = selected.size,
-                    failed = failed
+                    failed = failed,
+                    translating = translate != null,
                 )
             )
         }
@@ -1204,27 +1256,56 @@ class ResultViewModel : ViewModel() {
     }
 
     /**
-     * Translates a chapter, keeping the result next to the downloaded chapter so a retry after
-     * a failure or a cancel does not translate the same chapters again.
+     * Translates a chapter into the selected language. Cache is only reused when it is clearly
+     * different from the source, so a failed/no-op translation never ships as the final file.
      */
     private suspend fun translateWithCache(
-        translator: GeminiTranslator,
+        request: DownloadTranslateRequest,
+        gemini: GeminiTranslator?,
         appContext: Context,
         meta: QuickStreamMetaData,
         index: Int,
-        chapter: LoadedChapter
+        chapter: LoadedChapter,
     ): LoadedChapter {
-        val cache = java.io.File(appContext.getFilePath(meta, index) + ".es")
+        val cache = java.io.File(appContext.getFilePath(meta, index) + "." + request.cacheSuffix)
         if (cache.isFile && cache.length() > 0) {
             val text = cache.readText()
             val newline = text.indexOf('\n')
             if (newline > 0) {
-                return LoadedChapter(text.substring(0, newline), text.substring(newline + 1))
+                val cached = LoadedChapter(text.substring(0, newline), text.substring(newline + 1))
+                if (DownloadTranslationGuard.looksTranslated(chapter, cached)) {
+                    return cached
+                }
+                cache.delete()
             }
         }
-        val translated = translator.translateChapter(chapter)
-        cache.writeText("${translated.title.replace('\n', ' ')}\n${translated.html}")
-        return translated
+
+        var lastError: TranslationException? = null
+        repeat(2) { attempt ->
+            val translated = try {
+                when (request.engine) {
+                    DownloadTranslateEngine.Gemini ->
+                        (gemini ?: throw TranslationException("Gemini translator missing"))
+                            .translateChapter(chapter)
+
+                    DownloadTranslateEngine.GoogleOnline ->
+                        OnlineHtmlChapterTranslator.translateChapter(chapter, request.lang.code)
+                }
+            } catch (e: TranslationException) {
+                lastError = e
+                return@repeat
+            }
+            if (DownloadTranslationGuard.looksTranslated(chapter, translated)) {
+                cache.writeText("${translated.title.replace('\n', ' ')}\n${translated.html}")
+                return translated
+            }
+            lastError = TranslationException(
+                "Translation to ${request.lang.displayName} still looks like the original (try ${attempt + 1}/2)"
+            )
+        }
+        throw lastError ?: TranslationException(
+            "Could not translate chapter to ${request.lang.displayName}"
+        )
     }
 
     /**
@@ -1238,7 +1319,7 @@ class ResultViewModel : ViewModel() {
         meta: QuickStreamMetaData,
         selected: List<Pair<Int, ChapterData>>,
         perFile: Int,
-        translate: Boolean
+        translate: DownloadTranslateRequest?,
     ) {
         val stripAuthorNotes = appContext.getStripAuthorNodes()
         val loadedChapters = LinkedHashMap<Int, LoadedChapter>()
@@ -1275,12 +1356,17 @@ class ResultViewModel : ViewModel() {
             return
         }
 
-        if (translate) {
+        if (translate != null) {
             val translation = AppSettings(appContext).translation
-            val translator = GeminiTranslator(
-                translation.geminiApiKey.get().trim(),
-                translation.geminiModel.get()
-            )
+            val gemini = if (translate.engine == DownloadTranslateEngine.Gemini) {
+                GeminiTranslator(
+                    translation.geminiApiKey.get().trim(),
+                    translation.geminiModel.get(),
+                    targetLanguage = translate.lang.englishName,
+                )
+            } else {
+                null
+            }
             val translatingState =
                 failedState.copy(finished = false, error = false, translating = true, done = 0)
             selectionTask.postValue(translatingState)
@@ -1288,7 +1374,9 @@ class ResultViewModel : ViewModel() {
                 loadedChapters.entries.forEachIndexed { position, entry ->
                     currentCoroutineContext().ensureActive()
                     val index = entry.key - 1
-                    entry.setValue(translateWithCache(translator, appContext, meta, index, entry.value))
+                    entry.setValue(
+                        translateWithCache(translate, gemini, appContext, meta, index, entry.value)
+                    )
                     selectionTask.postValue(translatingState.copy(done = position + 1))
                 }
             } catch (e: TranslationException) {
@@ -1309,7 +1397,7 @@ class ResultViewModel : ViewModel() {
         for (group in ChapterSpec.group(loadedChapters.keys.toList(), perFile)) {
             currentCoroutineContext().ensureActive()
             val fileName = "${meta.name} - ${ChapterSpec.format(group, ",")}" +
-                if (translate) " [ES]" else ""
+                if (translate != null) " [${translate.lang.code.uppercase()}]" else ""
             val file = storage.createFile(appContext, fileName, novelFolder = meta.name)
             val output = file?.openOutputStream(append = false)
             if (file == null || output == null) {

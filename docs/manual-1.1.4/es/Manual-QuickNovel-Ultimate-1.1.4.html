@@ -55,6 +55,7 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
     <li><a href="#secciones">Módulo Secciones</a></li>
     <li><a href="#ajustes">Módulo Ajustes (todas las secciones)</a></li>
     <li><a href="#proveedores">Proveedores propios (agregar / administrar / avanzado)</a></li>
+    <li><a href="#plugins">Plugins LNReader (catálogo JSON)</a></li>
     <li><a href="#detalle">Detalle de novela, descarga y export</a></li>
     <li><a href="#lector">Lector y TTS</a></li>
     <li><a href="#tutoriales">Tutoriales oficiales de la app (co-tutorial)</a></li>
@@ -76,6 +77,8 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
     <li>Historial separado en <em>Leyendo</em> / <em>Visitadas</em>.</li>
     <li><strong>Import-B</strong> en Biblioteca.</li>
     <li><strong>Proveedores propios</strong> (Blog Blogger o Sitio Madara) con modo simple y avanzado CSS.</li>
+    <li><strong>Plugins LNReader</strong>: instalar fuentes desde un catálogo <span class="mono">plugins.min.json</span>.</li>
+    <li>Descarga con <strong>idioma destino</strong> (Español por defecto) vía Gemini o Google Translate online.</li>
     <li>TTS priorizando voces neuronales Piper/Sherpa.</li>
     <li>Búsqueda que, por defecto, <strong>bloquea caracteres especiales</strong> (configurable).</li>
   </ul>
@@ -243,7 +246,7 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
     <li>Elegir modelo Gemini.</li>
     <li>Probar clave.</li>
   </ul>
-  <p>Sirve para flujos de traducción al descargar/leer cuando está configurado.</p>
+  <p>Se usa en el diálogo de descarga cuando eliges motor <strong>Gemini</strong>. Sin clave, usa <strong>Google Translate (online)</strong> o deja Original.</p>
 
   <h3>8.6 Tutorial</h3>
   <p>Tres entradas con diálogos de ayuda: Proveedores propios, Descargas, TTS (detalle en sección 12).</p>
@@ -251,13 +254,16 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
   <h3>8.7 Proveedores propios</h3>
   <p>Ver sección 9 completa.</p>
 
-  <h3>8.8 Reader Settings</h3>
+  <h3>8.8 Plugins (LNReader)</h3>
+  <p>Ver sección 9b (<a href="#plugins">Plugins LNReader</a>).</p>
+
+  <h3>8.9 Reader Settings</h3>
   <ul>
     <li><strong>Lector externo</strong> — usar otra app para abrir el libro.</li>
     <li><strong>Ruta de descarga</strong> — carpeta donde se guardan EPUB/PDF (ej. Download/My Novels/).</li>
   </ul>
 
-  <h3>8.9 Información</h3>
+  <h3>8.10 Información</h3>
   <ul>
     <li>Ver registros (Logcat) — útil para depurar; guardar / copiar / limpiar.</li>
     <li>Ubicación del logcat.</li>
@@ -340,6 +346,20 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
   </ul>
 </section>
 
+<section id="plugins">
+  <h2>9b. Plugins LNReader (catálogo JSON)</h2>
+  <p><strong>Dónde:</strong> Ajustes → grupo <strong>Plugins (LNReader)</strong> → <strong>Administrar plugins</strong>.</p>
+  <p><strong>Código:</strong> <span class="mono">plugins/</span>, <span class="mono">PluginProviderDialogs.kt</span>.</p>
+  <ol class="steps">
+    <li>Toca <strong>Administrar plugins</strong> (muestra cuántos tienes instalados y si hay actualizaciones).</li>
+    <li><strong>Agregar repositorio</strong>: pega la URL de un <span class="mono">plugins.min.json</span> (catálogo) o pega el JSON.</li>
+    <li><strong>Obtener</strong> el catálogo → elige idiomas (English / Español prioritarios) → <strong>Mostrar proveedores</strong>.</li>
+    <li>Marca fuentes e <strong>Instalar</strong> (descarga el JS y registra un proveedor Madara/CSS buscable).</li>
+    <li>Desde la lista instalada: actualizar, editar nombre, reinstalar o desinstalar (las novelas ya bajadas se conservan).</li>
+  </ol>
+  <div class="callout">El JSON es el <em>catálogo</em>. Cada plugin tiene su propio archivo JS en el campo <span class="mono">url</span>. Mock del flujo: <span class="mono">docs/previews/plugin-providers-flow.html</span>.</div>
+</section>
+
 <section id="detalle">
   <h2>10. Detalle de novela, descarga y export</h2>
   <p>Al tocar un resultado de Buscar (o una tarjeta) entras al <strong>detalle</strong>:</p>
@@ -347,16 +367,19 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
     <li>Portada, título, autor, sinopsis, lista de capítulos.</li>
     <li><strong>Leer en línea</strong> — abre el lector sin bajar todo.</li>
     <li><strong>Descargar</strong> — diálogo de descarga.</li>
+    <li>Pestaña Capítulos: FAB de filtro + FAB circular <strong>Seleccionar</strong> (estilo Halo ring; el color sigue el <span class="mono">colorPrimary</span> del tema activo).</li>
   </ul>
   <h3>Diálogo de descarga (conceptos)</h3>
   <ul>
     <li>Todos los capítulos o un <strong>rango</strong> (ej. 1-10, 15).</li>
-    <li><strong>Capítulos por archivo</strong>: vacío = un solo EPUB/PDF; número (ej. 50) = varios archivos.</li>
+    <li><strong>Capítulos por archivo</strong>: vacío = un solo EPUB/PDF; número (ej. 50) = varios archivos (solo EPUB/PDF).</li>
+    <li><strong>Idioma de descarga</strong> (por defecto Español): Original, o traducir al idioma elegido.</li>
+    <li><strong>Motor de traducción</strong>: Gemini (API key en Ajustes) o Google Translate (online, sin clave).</li>
     <li>Formatos: capítulos sueltos / EPUB / PDF según el flujo actual.</li>
     <li>Vista previa editable en algunos flujos de export.</li>
     <li>Al terminar: aparece en Biblioteca; Actualizar trae capítulos nuevos; Borrar limpia archivos locales.</li>
   </ul>
-  <div class="callout">En fuentes lentas conviene leer en línea. La traducción Gemini, si está activa, puede alargar mucho la descarga.</div>
+  <div class="callout">Si pediste traducción y el texto sale igual al original, la descarga falla a propósito (no se guarda “silenciosamente” el original). Gemini en plan gratuito es lento por el rate limit.</div>
 </section>
 
 <section id="lector">
@@ -394,7 +417,8 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
   <ol class="steps">
     <li>Abre una novela → Descargar.</li>
     <li>Todos o rango (1-10, 15…).</li>
-    <li>Capítulos por archivo opcional.</li>
+    <li>Capítulos por archivo opcional (EPUB/PDF).</li>
+    <li>Elige <strong>idioma de descarga</strong> y motor (Gemini / Google online) o Original.</li>
     <li>Ruta/formato en Ajustes → lector / ruta de descarga.</li>
     <li>Abre desde Biblioteca; Actualizar / Borrar según necesites.</li>
   </ol>
@@ -520,7 +544,7 @@ footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted
   <h2>16. Pruebas automatizadas</h2>
   <ul>
     <li>Unitarias: <span class="mono">./gradlew :app:testDebugUnitTest</span></li>
-    <li>E2E: carpeta <span class="mono">e2e/</span> (specs 01–09: biblioteca, nav, search, historial, ajustes, import, reader/TTS con seed, providers, special chars).</li>
+    <li>E2E: carpeta <span class="mono">e2e/</span> (specs 01–11: biblioteca, nav, search, historial, ajustes, import, reader/TTS con seed, providers, special chars, plugins, download-translate).</li>
     <li>Allure: <span class="mono">e2e/allure-report</span></li>
   </ul>
 </section>

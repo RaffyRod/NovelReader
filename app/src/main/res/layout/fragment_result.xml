@@ -954,7 +954,8 @@ Translator: Rainbow Turtle" />
         app:tint="?attr/textColor"
         tools:visibility="visible" />
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+    <!-- Style J — Halo ring: icon-only FAB; stroke/glow use ?attr/colorPrimary (all themes). -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/chapters_select_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -963,15 +964,17 @@ Translator: Rainbow Turtle" />
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="152dp"
+        android:background="@drawable/bg_fab_select_halo"
         android:contentDescription="@string/select_chapters"
-        android:textColor="?attr/textColor"
-        android:textStyle="bold"
+        android:src="@drawable/ic_baseline_checklist_24"
         android:visibility="gone"
-        app:backgroundTint="?attr/primaryBlackBackground"
+        app:backgroundTint="@android:color/transparent"
+        app:borderWidth="0dp"
         app:elevation="0dp"
-        app:icon="@drawable/ic_baseline_checklist_24"
-        app:iconTint="?attr/textColor"
-        app:tint="?attr/textColor"
+        app:fabCustomSize="56dp"
+        app:maxImageSize="24dp"
+        app:rippleColor="?attr/colorPrimary"
+        app:tint="?attr/colorPrimary"
         tools:visibility="visible" />
 
     <include
