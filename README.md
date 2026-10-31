@@ -42,7 +42,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 ### Downloads & chapter select
 - Download dialog: range, chapters-per-file (EPUB/PDF), **download language** (default Español) via **Gemini** or **Google Translate online**, or keep Original
 - Translated downloads are verified so the saved file is not the silent original
-- Chapter tab: icon-only **Select** FAB with **Halo ring** stroke/glow from each theme’s `colorPrimary`
+- Chapter tab: icon-only **Select** control — style **E Icon disc** (primary squircle + white list icon + soft halo from each theme’s `colorPrimary`)
 
 ### TTS & translation
 - **TTS** prefers Piper/Sherpa neural voices (**Dave ES** / **Lessac EN**), language from text, notification controls

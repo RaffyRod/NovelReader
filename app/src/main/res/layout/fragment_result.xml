@@ -954,28 +954,39 @@ Translator: Rainbow Turtle" />
         app:tint="?attr/textColor"
         tools:visibility="visible" />
 
-    <!-- Style J — Halo ring: icon-only FAB; stroke/glow use ?attr/colorPrimary (all themes). -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/chapters_select_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <!-- Style E — Icon disc: primary squircle + white list icon + soft circular halo (theme colorPrimary). -->
+    <FrameLayout
+        android:id="@+id/chapters_select_fab_host"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:layout_gravity="end|bottom"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="152dp"
-        android:background="@drawable/bg_fab_select_halo"
-        android:contentDescription="@string/select_chapters"
-        android:src="@drawable/ic_baseline_checklist_24"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="144dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:visibility="gone"
-        app:backgroundTint="@android:color/transparent"
-        app:borderWidth="0dp"
-        app:elevation="0dp"
-        app:fabCustomSize="56dp"
-        app:maxImageSize="24dp"
-        app:rippleColor="?attr/colorPrimary"
-        app:tint="?attr/colorPrimary"
-        tools:visibility="visible" />
+        tools:visibility="visible">
+
+        <View
+            android:id="@+id/chapters_select_fab_glow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_fab_select_halo"
+            android:importantForAccessibility="no" />
+
+        <ImageButton
+            android:id="@+id/chapters_select_fab"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_fab_select_disc"
+            android:contentDescription="@string/select_chapters"
+            android:padding="12dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_baseline_list_24"
+            app:tint="@android:color/white" />
+    </FrameLayout>
 
     <include
         android:id="@+id/chapter_selection_bar"

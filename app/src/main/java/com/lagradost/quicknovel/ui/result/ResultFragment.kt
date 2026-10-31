@@ -10,7 +10,6 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -44,7 +43,6 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lagradost.cloudstream4.AppSettings
 import com.google.android.material.chip.ChipDrawable
 import com.google.android.material.tabs.TabLayout
@@ -132,7 +130,7 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             it.chapterSelectionBar.root.keepAboveNavigationBar()
             it.chaptersFab.keepAboveNavigationBar(asMargin = true)
             it.reviewsFab.keepAboveNavigationBar(asMargin = true)
-            it.chaptersSelectFab.keepAboveNavigationBar(asMargin = true)
+            it.chaptersSelectFabHost.keepAboveNavigationBar(asMargin = true)
         }
 
         binding?.resultDownloadCard?.let {
@@ -178,48 +176,47 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
     }
 
     /**
-     * Style J — Halo ring: icon-only select FAB with a primary-colored stroke and soft glow.
-     * Colors come from the active theme (`colorPrimary` / `primaryBlackBackground`).
+     * Style E — Icon disc: solid primary squircle, white list icon, soft circular halo.
+     * Colors come from the active theme (`colorPrimary`).
      */
-    private fun applySelectFabHalo() {
-        val fab = binding?.chaptersSelectFab ?: return
+    private fun applySelectFabIconDisc() {
+        val binding = binding ?: return
+        val fab = binding.chaptersSelectFab
+        val glow = binding.chaptersSelectFabGlow
+        val host = binding.chaptersSelectFabHost
         val ctx = fab.context
         val primary = ctx.colorFromAttribute(R.attr.colorPrimary)
-        val core = ctx.colorFromAttribute(R.attr.primaryBlackBackground)
         val density = resources.displayMetrics.density
+        val corner = 14f * density
 
-        val outer = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(Color.TRANSPARENT)
-            setStroke((7 * density).toInt(), ColorUtils.setAlphaComponent(primary, 46))
+        fab.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = corner
+            setColor(primary)
         }
-        val inner = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(core)
-            setStroke((2 * density).toInt(), primary)
-        }
-        val inset = (5 * density).toInt()
-        fab.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
-        fab.background = LayerDrawable(arrayOf(outer, inner)).apply {
-            setLayerInset(1, inset, inset, inset, inset)
-        }
-        fab.imageTintList = ColorStateList.valueOf(primary)
-        fab.compatElevation = 0f
+        fab.imageTintList = ColorStateList.valueOf(Color.WHITE)
+        fab.elevation = 0f
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             fab.outlineAmbientShadowColor = primary
             fab.outlineSpotShadowColor = primary
-            fab.elevation = 10f * density
+            fab.elevation = 8f * density
         }
-        startSelectFabHaloBreath(fab)
+
+        glow.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(ColorUtils.setAlphaComponent(primary, 38))
+            setStroke((2 * density).toInt(), ColorUtils.setAlphaComponent(primary, 90))
+        }
+        startSelectFabHaloBreath(host)
     }
 
-    private fun startSelectFabHaloBreath(fab: FloatingActionButton) {
+    private fun startSelectFabHaloBreath(target: View) {
         if (selectFabHaloAnimator?.isRunning == true) return
         selectFabHaloAnimator?.cancel()
         selectFabHaloAnimator = ObjectAnimator.ofPropertyValuesHolder(
-            fab,
-            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.05f),
-            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.05f),
+            target,
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.04f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.04f),
         ).apply {
             duration = 2800L
             repeatMode = ValueAnimator.REVERSE
@@ -244,13 +241,13 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
         val bar = binding.chapterSelectionBar.root
 
         binding.chaptersFab.isVisible = onChapters && !selecting
-        binding.chaptersSelectFab.isVisible = onChapters && !selecting
+        binding.chaptersSelectFabHost.isVisible = onChapters && !selecting
         if (onChapters && !selecting) {
-            applySelectFabHalo()
+            applySelectFabIconDisc()
         } else {
             selectFabHaloAnimator?.cancel()
-            binding.chaptersSelectFab.scaleX = 1f
-            binding.chaptersSelectFab.scaleY = 1f
+            binding.chaptersSelectFabHost.scaleX = 1f
+            binding.chaptersSelectFabHost.scaleY = 1f
         }
         bar.isVisible = onChapters && selecting
         updateChapterListPadding(if (bar.isVisible) bar.height else 0)
@@ -1368,7 +1365,7 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             }
             stickyRead.setOnClickListener { resultQuickstream.performClick() }
 
-            applySelectFabHalo()
+            applySelectFabIconDisc()
             chaptersSelectFab.setOnClickListener {
                 viewModel.setSelectionMode(true)
             }

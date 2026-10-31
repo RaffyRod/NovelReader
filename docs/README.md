@@ -11,7 +11,7 @@
 | File | Topic |
 |------|--------|
 | [`previews/plugin-providers-flow.html`](previews/plugin-providers-flow.html) | Plugins hub: repo → languages → install cards |
-| [`previews/chapter-select-fab-highlight.html`](previews/chapter-select-fab-highlight.html) | Chapter **Select** FAB styles (shipped: **J — Halo ring**, theme `colorPrimary`) |
+| [`previews/chapter-select-fab-highlight.html`](previews/chapter-select-fab-highlight.html) | Chapter **Select** FAB styles (shipped: **E — Icon disc**, theme `colorPrimary`) |
 
 Open the HTML files in a browser. Theme chips in the FAB preview switch Ultimate Blue / Fire / Party / Pink / Green / Banana so the halo color matches each theme.
 
