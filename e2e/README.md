@@ -2,7 +2,8 @@
 
 Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and **Allure**.
 
-**App under test:** `1.2.3` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`).
+**App under test:** `1.2.3` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`).  
+Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 
 ## Scenarios
 

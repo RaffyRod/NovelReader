@@ -1,97 +1,45 @@
-# -*- coding: utf-8 -*-
-"""Manual completo QuickNovel Ultimate 1.1.4 (HTML + Word + plantilla bugs)."""
-from __future__ import annotations
-
-import shutil
-from datetime import date
-from pathlib import Path
-
-from docx import Document
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, RGBColor
-
-ROOT = Path(__file__).resolve().parent / "es"
-IMG = ROOT / "imagenes"
-PLANTILLAS = ROOT / "plantillas"
-VERSION = "1.1.4"
-HOY = date.today().strftime("%d/%m/%Y")
-APP_ID = "com.lagradost.quicknovel.ultimate"
-APK_NAME = "QuickNovel-Ultimate-1.1.4-universal.apk"
-
-IMAGENES = [
-    ("01-biblioteca.png", "Biblioteca: búsqueda local, Import-B y novelas"),
-    ("02-buscar.png", "Buscar: campo, populares y acceso a proveedores"),
-    ("03-historial.png", "Historial: Leyendo / Visitadas"),
-    ("04-ajustes.png", "Ajustes (inicio)"),
-    ("12-ajustes-general.png", "Ajustes: zona general / traducción / tutorial"),
-    ("09-ajustes-tutorial-y-proveedores.png", "Ajustes: Tutorial + Proveedores propios"),
-    ("10-dialogo-agregar-proveedor.png", "Diálogo Agregar proveedor (Blog / Sitio web)"),
-    ("11-administrar-proveedores.png", "Administrar proveedores propios"),
-    ("13-dialogo-proveedores-buscar.png", "Multi-select de proveedores en Buscar"),
-    ("06-secciones.png", "Secciones de la biblioteca"),
-    ("07-buscar-resultados.png", "Resultados de búsqueda con chips de proveedor"),
-    ("08-detalle-novela.png", "Flujo de novela / detalle"),
-]
-
-
-def esc(s: str) -> str:
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-
-
-def fig(file: str, caption: str) -> str:
-    if not (IMG / file).exists():
-        return f"<p><em>(Falta imagen {esc(file)})</em></p>"
-    return f"""<figure>
-  <img src="imagenes/{esc(file)}" alt="{esc(caption)}" />
-  <figcaption>{esc(caption)}</figcaption>
-</figure>"""
-
-
-def build_html() -> str:
-    gallery = "\n".join(fig(f, c) for f, c in IMAGENES)
-    return f"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Manual completo QuickNovel Ultimate {VERSION}</title>
+<title>Manual completo QuickNovel Ultimate 1.2.3</title>
 <style>
-:root {{ --ink:#132238; --muted:#5b6b7c; --accent:#1a66b3; --bg:#eef3f9; --card:#fff; --line:#d5deea; }}
-* {{ box-sizing:border-box; }}
-body {{ margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--ink); background:linear-gradient(#dfeaf6,#eef3f9 180px); line-height:1.55; }}
-header {{ max-width:1000px; margin:0 auto; padding:40px 24px 20px; }}
-.badge {{ display:inline-block; background:var(--accent); color:#fff; border-radius:999px; padding:4px 12px; font-size:.85rem; }}
-h1 {{ margin:10px 0 6px; font-size:2.15rem; letter-spacing:-.02em; }}
-header p {{ margin:4px 0; color:var(--muted); }}
-main {{ max-width:1000px; margin:0 auto 60px; padding:0 24px; }}
-nav.toc, section {{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 26px; margin-bottom:18px; }}
-nav.toc h2, section > h2 {{ margin-top:0; border-bottom:2px solid var(--line); padding-bottom:8px; }}
-h3 {{ color:#163552; margin-top:1.35em; }}
-h4 {{ margin-bottom:.35em; }}
-a {{ color:var(--accent); text-decoration:none; }}
-a:hover {{ text-decoration:underline; }}
-table {{ width:100%; border-collapse:collapse; margin:12px 0 16px; font-size:.94rem; }}
-th,td {{ border:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left; }}
-th {{ background:#eaf1f9; }}
-code,.mono {{ font-family:Consolas,monospace; background:#eaf0f6; padding:1px 6px; border-radius:5px; }}
-figure {{ margin:16px 0; text-align:center; }}
-figure img {{ max-width:min(340px,100%); border-radius:18px; border:1px solid var(--line); box-shadow:0 8px 24px rgba(19,34,56,.12); }}
-figcaption {{ color:var(--muted); font-size:.88rem; margin-top:7px; }}
-.gallery {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }}
-.gallery figure img {{ max-width:100%; }}
-.callout {{ background:#f3f8ff; border-left:4px solid var(--accent); padding:10px 14px; margin:12px 0; border-radius:0 10px 10px 0; }}
-ol.steps > li {{ margin-bottom:7px; }}
-footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted); font-size:.9rem; }}
-@media print {{ body {{ background:#fff; }} section,nav.toc {{ break-inside:avoid; }} }}
+:root { --ink:#132238; --muted:#5b6b7c; --accent:#1a66b3; --bg:#eef3f9; --card:#fff; --line:#d5deea; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--ink); background:linear-gradient(#dfeaf6,#eef3f9 180px); line-height:1.55; }
+header { max-width:1000px; margin:0 auto; padding:40px 24px 20px; }
+.badge { display:inline-block; background:var(--accent); color:#fff; border-radius:999px; padding:4px 12px; font-size:.85rem; }
+h1 { margin:10px 0 6px; font-size:2.15rem; letter-spacing:-.02em; }
+header p { margin:4px 0; color:var(--muted); }
+main { max-width:1000px; margin:0 auto 60px; padding:0 24px; }
+nav.toc, section { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 26px; margin-bottom:18px; }
+nav.toc h2, section > h2 { margin-top:0; border-bottom:2px solid var(--line); padding-bottom:8px; }
+h3 { color:#163552; margin-top:1.35em; }
+h4 { margin-bottom:.35em; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+table { width:100%; border-collapse:collapse; margin:12px 0 16px; font-size:.94rem; }
+th,td { border:1px solid var(--line); padding:9px 11px; vertical-align:top; text-align:left; }
+th { background:#eaf1f9; }
+code,.mono { font-family:Consolas,monospace; background:#eaf0f6; padding:1px 6px; border-radius:5px; }
+figure { margin:16px 0; text-align:center; }
+figure img { max-width:min(340px,100%); border-radius:18px; border:1px solid var(--line); box-shadow:0 8px 24px rgba(19,34,56,.12); }
+figcaption { color:var(--muted); font-size:.88rem; margin-top:7px; }
+.gallery { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
+.gallery figure img { max-width:100%; }
+.callout { background:#f3f8ff; border-left:4px solid var(--accent); padding:10px 14px; margin:12px 0; border-radius:0 10px 10px 0; }
+ol.steps > li { margin-bottom:7px; }
+footer { max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--muted); font-size:.9rem; }
+@media print { body { background:#fff; } section,nav.toc { break-inside:avoid; } }
 </style>
 </head>
 <body>
 <header>
-  <div class="badge">Versión estable {VERSION}</div>
+  <div class="badge">Versión estable 1.2.3</div>
   <h1>Manual completo de QuickNovel Ultimate</h1>
   <p>Guía para quien nunca ha visto la app: dónde está cada cosa, qué hace cada módulo, tutoriales y cómo reportar bugs.</p>
-  <p>Fecha: {HOY} · Package: <span class="mono">{APP_ID}</span> · APK: <span class="mono">{APK_NAME}</span></p>
+  <p>Fecha: 31/10/2026 · Package: <span class="mono">com.lagradost.quicknovel.ultimate</span> · APK: <span class="mono">QuickNovel-Ultimate-1.2.3-universal.apk</span></p>
 </header>
 <main>
 <nav class="toc" id="indice">
@@ -122,11 +70,13 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <p><strong>QuickNovel Ultimate</strong> es una app Android para <strong>buscar, leer, escuchar (TTS) y descargar novelas</strong> desde proveedores web, y también para <strong>importar EPUB/PDF</strong> propios.</p>
   <p>Es un fork de QuickNovel con identidad propia:</p>
   <ul>
-    <li>Marca y temas <strong>Fire</strong> (Blue / Black / Lava).</li>
-    <li>Package distinto: <span class="mono">{APP_ID}</span> (no confundir con la app original <span class="mono">com.lagradost.quicknovel</span>).</li>
+    <li>Marca <strong>Ultimate</strong> con acentos (Blue…Soft) e iconos A–J independientes.</li>
+    <li>Por defecto: <strong>modo oscuro</strong> + tema <strong>Ultimate Blue</strong>.</li>
+    <li>Package distinto: <span class="mono">com.lagradost.quicknovel.ultimate</span> (no confundir con la app original <span class="mono">com.lagradost.quicknovel</span>).</li>
     <li>Historial separado en <em>Leyendo</em> / <em>Visitadas</em>.</li>
     <li><strong>Import-B</strong> en Biblioteca.</li>
-    <li><strong>Proveedores propios</strong> (Blog Blogger o Sitio Madara) con modo simple y avanzado CSS.</li>
+    <li><strong>Proveedores propios</strong> y <strong>Plugins (LNReader)</strong>.</li>
+    <li>Lector con carga <strong>Glyph Pulse</strong> (本), textos en el idioma de la app.</li>
     <li>TTS priorizando voces neuronales Piper/Sherpa.</li>
     <li>Búsqueda que, por defecto, <strong>bloquea caracteres especiales</strong> (configurable).</li>
   </ul>
@@ -144,7 +94,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <h3>Instalar esta carpeta</h3>
   <ol class="steps">
     <li>Desinstala versiones viejas de Ultimate y, si existe, la QuickNovel stock.</li>
-    <li>Instala <span class="mono">{APK_NAME}</span>.</li>
+    <li>Instala <span class="mono">QuickNovel-Ultimate-1.2.3-universal.apk</span>.</li>
     <li>Al abrir, concede notificaciones si las pide.</li>
     <li>Si aparece “actualización” a 3.x de LagradOst → <strong>Skip update / Cancelar</strong> (no instalar ese APK sobre Ultimate).</li>
   </ol>
@@ -161,7 +111,10 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <tr><td><strong>Ajustes</strong></td><td>Configurar toda la app</td><td>Grupos: general, tema, app, capítulos nuevos, traducción, tutorial, proveedores propios, lector, info</td></tr>
     <tr><td><strong>Secciones</strong></td><td>Organizar la biblioteca en estantes</td><td>Secciones / estantes personalizados</td></tr>
   </table>
-  {fig("01-biblioteca.png", "Punto de partida típico: Biblioteca")}
+  <figure>
+  <img src="imagenes/01-biblioteca.png" alt="Punto de partida típico: Biblioteca" />
+  <figcaption>Punto de partida típico: Biblioteca</figcaption>
+</figure>
 </section>
 
 <section id="biblioteca">
@@ -207,8 +160,14 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <li>Confirma con OK / Aceptar.</li>
     <li>Busca: los chips de resultados deberían limitarse a esa selección.</li>
   </ol>
-  {fig("13-dialogo-proveedores-buscar.png", "Diálogo de proveedores en Buscar")}
-  {fig("07-buscar-resultados.png", "Resultados con filtros")}
+  <figure>
+  <img src="imagenes/13-dialogo-proveedores-buscar.png" alt="Diálogo de proveedores en Buscar" />
+  <figcaption>Diálogo de proveedores en Buscar</figcaption>
+</figure>
+  <figure>
+  <img src="imagenes/07-buscar-resultados.png" alt="Resultados con filtros" />
+  <figcaption>Resultados con filtros</figcaption>
+</figure>
 </section>
 
 <section id="historial">
@@ -231,7 +190,10 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <li>Usa la misma familia visual Fire que el resto de la app.</li>
     <li>Sirve para no mezclar todo en un solo listado plano de Biblioteca.</li>
   </ul>
-  {fig("06-secciones.png", "Secciones")}
+  <figure>
+  <img src="imagenes/06-secciones.png" alt="Secciones" />
+  <figcaption>Secciones</figcaption>
+</figure>
 </section>
 
 <section id="ajustes">
@@ -251,17 +213,17 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
 
   <h3>8.2 Tema</h3>
   <ul>
-    <li><strong>Tema</strong> de colores de la app (incluye Ultimate Blue).</li>
-    <li><strong>Tema de iconos Fire</strong> (Blue/Black/Lava) — afecta iconos de menú, nav, secciones y launcher.</li>
-    <li><strong>Icono de la app</strong> (launcher Blue/Black/Lava Fire).</li>
+    <li><strong>Modo oscuro</strong> — ON por defecto (superficie oscura). Off = superficie clara; el acento Ultimate no cambia.</li>
+    <li><strong>Tema Ultimate</strong> — acento de UI/menú/secciones (Ultimate Blue por defecto; también Black, Lava, Emerald, Violet, Gold, Cyan, Rose, Midnight, Crimson, Soft). El launcher se actualiza al reiniciar en frío.</li>
+    <li><strong>Tema de iconos</strong> — tratamiento visual A–J (Aura, Halo, Flat…), independiente del acento.</li>
     <li><strong>Estilo del menú inferior</strong> (A/B/C/D).</li>
     <li><strong>Estilo de los ajustes</strong> (lista / mosaico / etc.).</li>
-    <li><strong>Color primario</strong> y <strong>formato de rating</strong>.</li>
+    <li><strong>Formato de rating</strong>.</li>
   </ul>
 
   <h3>8.3 Ajustes de la app</h3>
   <ul>
-    <li>Comprobar actualización (versión actual {VERSION}).</li>
+    <li>Comprobar actualización (versión actual 1.2.3).</li>
     <li>Instalador de APK.</li>
     <li>Mostrar actualizaciones de app (en Ultimate conviene dejarlo off para no bajar el APK stock).</li>
     <li><strong>Copia de seguridad</strong> y ruta de backup.</li>
@@ -301,7 +263,10 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <li>Ver registros (Logcat) — útil para depurar; guardar / copiar / limpiar.</li>
     <li>Ubicación del logcat.</li>
   </ul>
-  {fig("09-ajustes-tutorial-y-proveedores.png", "Ajustes: Tutorial y Proveedores propios")}
+  <figure>
+  <img src="imagenes/09-ajustes-tutorial-y-proveedores.png" alt="Ajustes: Tutorial y Proveedores propios" />
+  <figcaption>Ajustes: Tutorial y Proveedores propios</figcaption>
+</figure>
 </section>
 
 <section id="proveedores">
@@ -324,7 +289,10 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <li>Si es OK, toca <strong>Agregar proveedor</strong>.</li>
   </ol>
   <div class="callout">Consejo: en blogs en español elige tipo Blog. Palabras inglesas tipo “the” casi no encuentran nada; la app prueba mejor con vacío o palabras en español.</div>
-  {fig("10-dialogo-agregar-proveedor.png", "Formulario simple de alta")}
+  <figure>
+  <img src="imagenes/10-dialogo-agregar-proveedor.png" alt="Formulario simple de alta" />
+  <figcaption>Formulario simple de alta</figcaption>
+</figure>
 
   <h3>9.2 Si la detección automática falla</h3>
   <ol class="steps">
@@ -340,7 +308,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <tr><td>Nombre</td><td>Nombre único del proveedor (no repetir uno existente).</td></tr>
     <tr><td>URL del sitio</td><td>Base https://…</td></tr>
     <tr><td>Idioma</td><td>Código de 2 letras.</td></tr>
-    <tr><td>URL de búsqueda</td><td>Debe incluir <span class="mono">{{query}}</span> donde va el texto buscado.</td></tr>
+    <tr><td>URL de búsqueda</td><td>Debe incluir <span class="mono">{query}</span> donde va el texto buscado.</td></tr>
     <tr><td>Selector de cada resultado</td><td>CSS del ítem en la lista de búsqueda.</td></tr>
     <tr><td>Enlace dentro del resultado</td><td>Normalmente <span class="mono">a</span>; vacío = a.</td></tr>
     <tr><td>Portada en resultado</td><td>Opcional.</td></tr>
@@ -360,7 +328,10 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <li>Si hay lista: toca uno → <strong>Editar</strong> o <strong>Eliminar</strong>.</li>
     <li>Eliminar quita el proveedor; las novelas ya descargadas se conservan.</li>
   </ol>
-  {fig("11-administrar-proveedores.png", "Administrar proveedores")}
+  <figure>
+  <img src="imagenes/11-administrar-proveedores.png" alt="Administrar proveedores" />
+  <figcaption>Administrar proveedores</figcaption>
+</figure>
 
   <h3>9.5 Dónde aparece después de agregarlo</h3>
   <ul>
@@ -394,6 +365,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <h3>Lector</h3>
   <ul>
     <li>Muestra el texto del capítulo; toca el centro para mostrar/ocultar barras.</li>
+    <li>Al cargar un capítulo aparece <strong>Glyph Pulse</strong>: kanji <strong>本</strong> con halo, título del capítulo y “Cargando capítulo…” (en el idioma de la app). Nunca muestra la URL cruda.</li>
     <li>Barra inferior típica: capítulos, <strong>TTS</strong>, ajustes del lector (fuente, tema, voz…).</li>
     <li>Si “Lector externo” está activo, puede ofrecer abrir con otra app (sobre todo PDF/EPUB).</li>
   </ul>
@@ -471,7 +443,54 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
 
 <section id="capturas">
   <h2>14. Galería de capturas</h2>
-  <div class="gallery">{gallery}</div>
+  <div class="gallery"><figure>
+  <img src="imagenes/01-biblioteca.png" alt="Biblioteca: búsqueda local, Import-B y novelas" />
+  <figcaption>Biblioteca: búsqueda local, Import-B y novelas</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/02-buscar.png" alt="Buscar: campo, populares y acceso a proveedores" />
+  <figcaption>Buscar: campo, populares y acceso a proveedores</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/03-historial.png" alt="Historial: Leyendo / Visitadas" />
+  <figcaption>Historial: Leyendo / Visitadas</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/04-ajustes.png" alt="Ajustes (inicio)" />
+  <figcaption>Ajustes (inicio)</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/12-ajustes-general.png" alt="Ajustes: zona general / traducción / tutorial" />
+  <figcaption>Ajustes: zona general / traducción / tutorial</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/09-ajustes-tutorial-y-proveedores.png" alt="Ajustes: Tutorial + Proveedores propios" />
+  <figcaption>Ajustes: Tutorial + Proveedores propios</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/10-dialogo-agregar-proveedor.png" alt="Diálogo Agregar proveedor (Blog / Sitio web)" />
+  <figcaption>Diálogo Agregar proveedor (Blog / Sitio web)</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/11-administrar-proveedores.png" alt="Administrar proveedores propios" />
+  <figcaption>Administrar proveedores propios</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/13-dialogo-proveedores-buscar.png" alt="Multi-select de proveedores en Buscar" />
+  <figcaption>Multi-select de proveedores en Buscar</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/06-secciones.png" alt="Secciones de la biblioteca" />
+  <figcaption>Secciones de la biblioteca</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/07-buscar-resultados.png" alt="Resultados de búsqueda con chips de proveedor" />
+  <figcaption>Resultados de búsqueda con chips de proveedor</figcaption>
+</figure>
+<figure>
+  <img src="imagenes/08-detalle-novela.png" alt="Flujo de novela / detalle" />
+  <figcaption>Flujo de novela / detalle</figcaption>
+</figure></div>
 </section>
 
 <section id="bugs">
@@ -479,7 +498,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <p>Plantilla: <span class="mono">plantillas/Plantilla-Reporte-Bugs.docx</span>.</p>
   <h3>Checklist antes de reportar</h3>
   <ol class="steps">
-    <li>Confirmar APK {VERSION} (Ultimate, no stock).</li>
+    <li>Confirmar APK 1.2.3 (Ultimate, no stock).</li>
     <li>Anotar dispositivo/emulador y Android.</li>
     <li>Reproducir ≥ 2 veces.</li>
     <li>Captura o video + módulo exacto (Biblioteca, Buscar, Proveedores propios, TTS…).</li>
@@ -496,7 +515,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <tr><td>Esperado / Actual</td><td>Mensaje OK vs error …</td></tr>
     <tr><td>Adjuntos</td><td>imagenes/evidencia-012.png</td></tr>
   </table>
-  <p>Guarda el archivo como <span class="mono">Bugs-QuickNovel-Ultimate-{VERSION}-AAAA-MM-DD.docx</span>.</p>
+  <p>Guarda el archivo como <span class="mono">Bugs-QuickNovel-Ultimate-1.2.3-AAAA-MM-DD.docx</span>.</p>
 </section>
 
 <section id="qa">
@@ -513,386 +532,11 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <ul>
     <li>Repo: https://github.com/RaffyRod/NovelReader</li>
     <li>Upstream: https://github.com/LagradOst/QuickNovel</li>
-    <li>Package Ultimate: <span class="mono">{APP_ID}</span></li>
-    <li>Esta carpeta incluye APK {VERSION}, manual HTML/DOCX, plantilla de bugs e imágenes.</li>
+    <li>Package Ultimate: <span class="mono">com.lagradost.quicknovel.ultimate</span></li>
+    <li>Esta carpeta incluye APK 1.2.3, manual HTML/DOCX, plantilla de bugs e imágenes.</li>
   </ul>
 </section>
 </main>
-<footer>Documento generado para QuickNovel Ultimate {VERSION} · {HOY} · Pensado para onboarding de usuarios nuevos</footer>
+<footer>Documento generado para QuickNovel Ultimate 1.2.3 · 31/10/2026 · Pensado para onboarding de usuarios nuevos</footer>
 </body>
-</html>"""
-
-
-def set_run_font(run, size=11, bold=False, color=None):
-    run.font.size = Pt(size)
-    run.font.bold = bold
-    run.font.name = "Calibri"
-    rFonts = run._element.get_or_add_rPr().get_or_add_rFonts()
-    rFonts.set(qn("w:eastAsia"), "Calibri")
-    if color:
-        run.font.color.rgb = color
-
-
-def add_para(doc, text, bold=False):
-    p = doc.add_paragraph()
-    r = p.add_run(text)
-    set_run_font(r, 11, bold=bold)
-    return p
-
-
-def bullets(doc, items):
-    for i in items:
-        p = doc.add_paragraph(i, style="List Bullet")
-        for r in p.runs:
-            set_run_font(r, 11)
-
-
-def numbers(doc, items):
-    for i in items:
-        p = doc.add_paragraph(i, style="List Number")
-        for r in p.runs:
-            set_run_font(r, 11)
-
-
-def table(doc, headers, rows):
-    t = doc.add_table(rows=1 + len(rows), cols=len(headers))
-    t.style = "Table Grid"
-    for i, h in enumerate(headers):
-        t.rows[0].cells[i].text = h
-        for p in t.rows[0].cells[i].paragraphs:
-            for r in p.runs:
-                set_run_font(r, 10, bold=True)
-    for ri, row in enumerate(rows):
-        for ci, val in enumerate(row):
-            t.rows[ri + 1].cells[ci].text = val
-            for p in t.rows[ri + 1].cells[ci].paragraphs:
-                for r in p.runs:
-                    set_run_font(r, 10)
-    doc.add_paragraph()
-
-
-def img(doc, name, caption):
-    path = IMG / name
-    if not path.exists():
-        return
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.add_run().add_picture(str(path), width=Cm(5.6))
-    c = doc.add_paragraph()
-    c.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = c.add_run(caption)
-    set_run_font(r, 9, color=RGBColor(90, 106, 122))
-
-
-def build_manual_docx():
-    doc = Document()
-    for s in doc.sections:
-        s.top_margin = Cm(1.8)
-        s.bottom_margin = Cm(1.8)
-        s.left_margin = Cm(2)
-        s.right_margin = Cm(2)
-
-    t = doc.add_paragraph()
-    t.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = t.add_run(f"Manual completo QuickNovel Ultimate {VERSION}")
-    set_run_font(r, 20, True, RGBColor(26, 102, 179))
-    s = doc.add_paragraph()
-    s.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = s.add_run(f"Onboarding + módulos + proveedores propios + bugs · {HOY}")
-    set_run_font(r, 11, color=RGBColor(90, 106, 122))
-    add_para(doc, f"Package: {APP_ID}")
-    add_para(doc, f"APK: {APK_NAME}")
-
-    doc.add_heading("Índice", 1)
-    numbers(
-        doc,
-        [
-            "Introducción",
-            "Instalación",
-            "Mapa de navegación",
-            "Biblioteca",
-            "Buscar",
-            "Historial",
-            "Secciones",
-            "Ajustes (todas las secciones)",
-            "Proveedores propios",
-            "Detalle / descarga",
-            "Lector y TTS",
-            "Tutoriales oficiales",
-            "Flujos paso a paso",
-            "Capturas",
-            "Bugs en Word",
-            "QA y anexos",
-        ],
-    )
-
-    doc.add_heading("1. Introducción", 1)
-    add_para(
-        doc,
-        "QuickNovel Ultimate busca, lee, escucha (TTS) y descarga novelas; también importa EPUB/PDF. Fork con temas Fire, package com.lagradost.quicknovel.ultimate, historial Leyendo/Visitadas, Import-B, proveedores propios y búsqueda sin caracteres especiales por defecto.",
-    )
-    bullets(
-        doc,
-        [
-            "No confundir con QuickNovel stock (sin Secciones Ultimate / Import-B).",
-            "Si pide update a 3.x upstream: Skip update.",
-        ],
-    )
-
-    doc.add_heading("2. Instalación", 1)
-    numbers(
-        doc,
-        [
-            "Desinstalar versiones viejas",
-            f"Instalar {APK_NAME}",
-            "Conceder notificaciones si aplica",
-            "Abrir QuickNovel Ultimate",
-        ],
-    )
-
-    doc.add_heading("3. Mapa de navegación", 1)
-    table(
-        doc,
-        ["Tab", "Función"],
-        [
-            ["Biblioteca", "Libros locales, Import-B, ordenar"],
-            ["Buscar", "Proveedores web, populares, resultados"],
-            ["Historial", "Leyendo / Visitadas"],
-            ["Ajustes", "Toda la configuración"],
-            ["Secciones", "Estantes de biblioteca"],
-        ],
-    )
-
-    doc.add_heading("4. Biblioteca", 1)
-    bullets(
-        doc,
-        [
-            "Buscar mis novelas (filtro local, barra fijada).",
-            "Import-B: EPUB/PDF.",
-            "Continuar leyendo, Seguir, Todas las novelas, progreso de capítulos.",
-            "FAB Ordenar; vista lista/grid.",
-        ],
-    )
-
-    doc.add_heading("5. Buscar", 1)
-    bullets(
-        doc,
-        [
-            "Campo Buscar novelas…; tune = multi-select proveedores.",
-            "Recientes, Populares, chips de filtro en resultados.",
-            "Sin especiales por defecto (@#$); toggle en Ajustes.",
-        ],
-    )
-
-    doc.add_heading("6. Historial", 1)
-    add_para(doc, "Pills Leyendo/Visitadas; grupos Hoy/Ayer/Esta semana/Antes; limpiar historial.")
-
-    doc.add_heading("7. Secciones", 1)
-    add_para(doc, "Tab exclusivo Ultimate para organizar la biblioteca en estantes/secciones.")
-
-    doc.add_heading("8. Ajustes (todas las secciones)", 1)
-    doc.add_heading("General", 2)
-    bullets(
-        doc,
-        [
-            "Idioma UI",
-            "Idiomas de proveedor + mostrar inglés",
-            "Permitir caracteres especiales en búsqueda",
-            "Lista de proveedores activos",
-        ],
-    )
-    doc.add_heading("Tema", 2)
-    bullets(doc, ["Tema", "Iconos Fire", "Icono launcher", "Estilo nav", "Estilo ajustes", "Color primario", "Rating"])
-    doc.add_heading("App", 2)
-    bullets(doc, ["Check update", "Instalador APK", "Mostrar updates", "Backup", "Restaurar"])
-    doc.add_heading("Nuevos capítulos", 2)
-    bullets(doc, ["Notificar", "Frecuencia 3/6/12/24 h", "Comprobar ahora"])
-    doc.add_heading("Traducción Gemini", 2)
-    bullets(doc, ["Obtener clave", "API key", "Modelo", "Probar clave"])
-    doc.add_heading("Tutorial", 2)
-    bullets(doc, ["Proveedores propios", "Descargas", "TTS"])
-    doc.add_heading("Proveedores propios", 2)
-    add_para(doc, "Agregar proveedor + Administrar (detalle en §9).")
-    doc.add_heading("Reader / Info", 2)
-    bullets(doc, ["Lector externo", "Ruta de descarga", "Logcat ver/guardar/copiar"])
-
-    doc.add_heading("9. Proveedores propios", 1)
-    doc.add_heading("Modo simple", 2)
-    numbers(
-        doc,
-        [
-            "Ajustes → Agregar proveedor",
-            "Elegir Blog (Blogger) o Sitio web (Madara)",
-            "Nombre + URL + idioma",
-            "VALIDAR → Agregar proveedor",
-        ],
-    )
-    doc.add_heading("Modo avanzado (CSS)", 2)
-    add_para(doc, "Botón Avanzado: URL de búsqueda con {query}, selectores de resultado, novela, capítulos, contenido, flags Madara ajax / newest first, Probar y plantilla Madara.")
-    table(
-        doc,
-        ["Campo avanzado", "Uso"],
-        [
-            ["URL búsqueda + {query}", "Dónde se busca"],
-            ["resultItem / resultLink / resultImage", "Lista de resultados"],
-            ["novelTitle / Author / Cover / Synopsis", "Página de novela"],
-            ["chapterLink / content", "Capítulos y texto"],
-            ["Ajax Madara / newest first", "Comportamiento del listado"],
-        ],
-    )
-    doc.add_heading("Administrar", 2)
-    bullets(doc, ["Lista de propios", "Editar / Eliminar", "Eliminar no borra descargas locales"])
-    img(doc, "10-dialogo-agregar-proveedor.png", "Agregar proveedor")
-    img(doc, "11-administrar-proveedores.png", "Administrar")
-
-    doc.add_heading("10. Detalle y descarga", 1)
-    bullets(
-        doc,
-        [
-            "Leer en línea vs Descargar",
-            "Rangos y capítulos por archivo",
-            "EPUB/PDF según flujo",
-            "Actualizar / Borrar desde biblioteca",
-        ],
-    )
-
-    doc.add_heading("11. Lector y TTS", 1)
-    numbers(
-        doc,
-        [
-            "Abrir capítulo",
-            "Altavoz = TTS",
-            "Pausa / stop / frases",
-            "Ajustes → Voz (idioma, velocidad, sueño)",
-            "Preferir Piper Dave ES / Lessac EN con Sherpa",
-        ],
-    )
-
-    doc.add_heading("12. Tutoriales oficiales", 1)
-    add_para(doc, "Los diálogos de Ajustes → Tutorial (Proveedores, Descargas, TTS) son la guía corta de la app; este manual los amplía con el resto de módulos.")
-
-    doc.add_heading("13. Flujos paso a paso", 1)
-    doc.add_heading("Primera lectura", 2)
-    numbers(doc, ["Buscar", "Elegir proveedores", "Abrir resultado", "Leer en línea"])
-    doc.add_heading("Importar EPUB", 2)
-    numbers(doc, ["Biblioteca → Importar un libro", "Elegir archivo", "Abrir en listado"])
-    doc.add_heading("Agregar blog/sitio", 2)
-    numbers(doc, ["Ajustes → Agregar proveedor", "VALIDAR", "Buscar con ese proveedor"])
-
-    doc.add_heading("14. Capturas", 1)
-    for f, c in IMAGENES:
-        img(doc, f, c)
-
-    doc.add_heading("15. Bugs para Word", 1)
-    add_para(doc, "Usar plantillas/Plantilla-Reporte-Bugs.docx. Campos: ID, título, severidad, módulo, entorno, precondiciones, pasos, esperado, actual, adjuntos.")
-    numbers(
-        doc,
-        [
-            f"Confirmar APK {VERSION}",
-            "Reproducir 2+ veces",
-            "Pasos numerados una acción cada uno",
-            f"Guardar Bugs-QuickNovel-Ultimate-{VERSION}-AAAA-MM-DD.docx",
-        ],
-    )
-
-    doc.add_heading("16. QA y anexos", 1)
-    bullets(
-        doc,
-        [
-            "Unit: gradlew :app:testDebugUnitTest",
-            "E2E e2e/ specs 01-09 + Allure",
-            "https://github.com/RaffyRod/NovelReader",
-            APP_ID,
-        ],
-    )
-
-    out = ROOT / f"Manual-QuickNovel-Ultimate-{VERSION}.docx"
-    doc.save(out)
-    return out
-
-
-def build_bug_template():
-    doc = Document()
-    t = doc.add_paragraph()
-    t.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = t.add_run(f"Plantilla de bugs — QuickNovel Ultimate {VERSION}")
-    set_run_font(r, 18, True, RGBColor(26, 102, 179))
-    add_para(doc, "Fecha: ________  Tester: ________  Dispositivo: ________  Android: ________")
-    add_para(doc, f"APK: {APK_NAME}")
-    doc.add_heading("Cómo completar", 1)
-    numbers(
-        doc,
-        [
-            "Un bug por bloque",
-            "Indicar módulo (Biblioteca, Buscar, Proveedores propios, TTS, etc.)",
-            "Pasos reproducibles",
-            "Adjuntar captura",
-        ],
-    )
-    for i in range(1, 6):
-        doc.add_heading(f"Bug BUG-{i:03d}", 1)
-        table(
-            doc,
-            ["Campo", "Contenido"],
-            [
-                ["Título", ""],
-                ["Severidad", "Bloqueante / Alta / Media / Baja"],
-                [
-                    "Módulo",
-                    "Biblioteca / Buscar / Historial / Secciones / Ajustes / Proveedores propios / Detalle / Descarga / Lector / TTS / Import / Traducción",
-                ],
-                ["Entorno", f"Ultimate {VERSION}"],
-                ["Precondiciones", ""],
-                ["Pasos", "1.\n2.\n3."],
-                ["Esperado", ""],
-                ["Actual", ""],
-                ["Adjuntos", ""],
-                ["Estado", "Nuevo"],
-            ],
-        )
-    doc.add_heading("Resumen", 1)
-    table(
-        doc,
-        ["ID", "Título", "Severidad", "Módulo", "Estado"],
-        [[f"BUG-{i:03d}", "", "", "", ""] for i in range(1, 6)],
-    )
-    out = PLANTILLAS / "Plantilla-Reporte-Bugs.docx"
-    doc.save(out)
-    return out
-
-
-def main():
-    PLANTILLAS.mkdir(exist_ok=True)
-    IMG.mkdir(exist_ok=True)
-    html = ROOT / f"Manual-QuickNovel-Ultimate-{VERSION}.html"
-    html.write_text(build_html(), encoding="utf-8")
-    print("HTML", html)
-    print("DOCX", build_manual_docx())
-    print("BUGS", build_bug_template())
-    for src in [
-        Path(r"C:\Users\Raffy Rodriguez\Desktop") / APK_NAME,
-        ROOT / APK_NAME,
-    ]:
-        if src.exists() and src.parent != ROOT:
-            shutil.copy2(src, ROOT / APK_NAME)
-            print("APK", ROOT / APK_NAME)
-            break
-    (ROOT / "LEEME.txt").write_text(
-        f"""QuickNovel Ultimate {VERSION} — documentación completa
-=====================================================
-Incluye:
-- {APK_NAME}
-- Manual HTML y Word (índice amplio: Biblioteca, Buscar, Historial, Secciones,
-  Ajustes completos, Proveedores propios simple/avanzado, descarga, TTS, tutoriales,
-  flujos para principiantes, capturas, bugs)
-- plantillas/Plantilla-Reporte-Bugs.docx
-- imagenes/
-
-Abre el HTML en el navegador o el DOCX en Word.
-""",
-        encoding="utf-8",
-    )
-
-
-if __name__ == "__main__":
-    main()
+</html>

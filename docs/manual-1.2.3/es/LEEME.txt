@@ -1,0 +1,11 @@
+QuickNovel Ultimate 1.2.3 — documentación completa
+=====================================================
+Incluye:
+- QuickNovel-Ultimate-1.2.3-universal.apk
+- Manual HTML y Word (índice amplio: Biblioteca, Buscar, Historial, Secciones,
+  Ajustes completos, Proveedores propios simple/avanzado, descarga, TTS, tutoriales,
+  flujos para principiantes, capturas, bugs)
+- plantillas/Plantilla-Reporte-Bugs.docx
+- imagenes/
+
+Abre el HTML en el navegador o el DOCX en Word.

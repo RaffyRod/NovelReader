@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Full English manual for QuickNovel Ultimate 1.1.4 (HTML + Word + bug template)."""
+"""Full English manual for QuickNovel Ultimate 1.2.3 (HTML + Word + bug template)."""
 from __future__ import annotations
 
 from datetime import date
@@ -13,10 +13,10 @@ from docx.shared import Cm, Pt, RGBColor
 ROOT = Path(__file__).resolve().parent / "en"
 IMG = ROOT / "imagenes"
 PLANTILLAS = ROOT / "plantillas"
-VERSION = "1.1.4"
+VERSION = "1.2.3"
 TODAY = date.today().strftime("%Y-%m-%d")
 APP_ID = "com.lagradost.quicknovel.ultimate"
-APK_NAME = "QuickNovel-Ultimate-1.1.4-universal.apk"
+APK_NAME = "QuickNovel-Ultimate-1.2.3-universal.apk"
 
 IMAGENES = [
     ("01-biblioteca.png", "Library: local search, Import-B and novels"),
@@ -88,7 +88,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <h1>QuickNovel Ultimate — Full Manual (English)</h1>
   <p>Onboarding guide: where everything is, what each module does, custom providers, official tutorials, and how to file bugs.</p>
   <p>Date: {TODAY} · Package: <span class="mono">{APP_ID}</span> · APK: <span class="mono">{APK_NAME}</span></p>
-  <p>Spanish edition: <a href="../es/Manual-QuickNovel-Ultimate-1.1.4.html">../es/</a></p>
+  <p>Spanish edition: <a href="../es/Manual-QuickNovel-Ultimate-1.2.3.html">../es/</a></p>
 </header>
 <main>
 <nav class="toc" id="toc">
@@ -119,11 +119,13 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <p><strong>QuickNovel Ultimate</strong> is an Android app to <strong>search, read, listen (TTS) and download</strong> web novels, and to <strong>import EPUB/PDF</strong> files.</p>
   <p>It is a fork of QuickNovel with its own branding:</p>
   <ul>
-    <li><strong>Fire</strong> themes (Blue / Black / Lava).</li>
+    <li><strong>Ultimate</strong> accent packs (Blue…Soft) and independent icon styles A–J.</li>
+    <li>Defaults: <strong>dark mode</strong> + <strong>Ultimate Blue</strong>.</li>
     <li>Distinct package: <span class="mono">{APP_ID}</span> (not stock <span class="mono">com.lagradost.quicknovel</span>).</li>
     <li>History split into <em>Reading</em> / <em>Visited</em>.</li>
     <li><strong>Import-B</strong> drop zone in Library.</li>
-    <li><strong>Custom providers</strong> (Blogger blog or Madara-like site) with simple + advanced CSS modes.</li>
+    <li><strong>Custom providers</strong> and <strong>LNReader plugins</strong>.</li>
+    <li>Reader <strong>Glyph Pulse</strong> loading (本) in the app language (no raw URLs).</li>
     <li>TTS prefers Piper/Sherpa neural voices.</li>
     <li>Search <strong>blocks special characters by default</strong> (optional toggle).</li>
   </ul>
@@ -207,9 +209,10 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   </table>
   <h3>8.2 Theme</h3>
   <ul>
-    <li>App theme (Ultimate Blue, etc.).</li>
-    <li>Fire icon pack + launcher icon (Blue/Black/Lava).</li>
-    <li>Bottom nav style, settings style, primary color, rating format.</li>
+    <li><strong>Dark mode</strong> — ON by default. Off = light surface; Ultimate accent stays the same.</li>
+    <li><strong>Ultimate theme</strong> — UI accent (Ultimate Blue default; also Black, Lava, Emerald, Violet, Gold, Cyan, Rose, Midnight, Crimson, Soft). Launcher updates on next cold start.</li>
+    <li><strong>Icon theme</strong> — treatments A–J, independent from the accent pack.</li>
+    <li>Bottom nav style, settings style, rating format.</li>
   </ul>
   <h3>8.3 App</h3>
   <ul>
@@ -299,6 +302,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
   <h2>11. Reader &amp; TTS</h2>
   <ul>
     <li>Tap center to show/hide bars; chapters, TTS, reader settings.</li>
+    <li>While a chapter loads, <strong>Glyph Pulse</strong> shows 本 + chapter title + “Loading chapter…” in the app language (never a raw URL).</li>
     <li>External reader setting may open EPUB/PDF in another app.</li>
   </ul>
   <ol class="steps">
@@ -387,7 +391,7 @@ footer {{ max-width:1000px; margin:0 auto 40px; padding:0 24px; color:var(--mute
     <li>https://github.com/RaffyRod/NovelReader</li>
     <li>https://github.com/LagradOst/QuickNovel</li>
     <li>Package: <span class="mono">{APP_ID}</span></li>
-    <li>Spanish manual: <span class="mono">docs/manual-1.1.4/es/</span></li>
+    <li>Spanish manual: <span class="mono">docs/manual-1.2.3/es/</span></li>
   </ul>
 </section>
 </main>
@@ -491,7 +495,7 @@ def build_manual_docx():
     doc.add_heading("1. Introduction", 1)
     add_para(
         doc,
-        "Ultimate searches, reads, listens (TTS) and downloads novels; imports EPUB/PDF. Fire themes, package com.lagradost.quicknovel.ultimate, Reading/Visited history, Import-B, custom providers, special-char filter off by default.",
+        "Ultimate searches, reads, listens (TTS) and downloads novels; imports EPUB/PDF. Ultimate Blue + dark mode by default, Glyph Pulse reader loading, package com.lagradost.quicknovel.ultimate, Reading/Visited history, Import-B, providers/plugins, special-char filter off by default.",
     )
 
     doc.add_heading("2. Install", 1)
@@ -587,7 +591,7 @@ def build_manual_docx():
     numbers(doc, [f"Confirm APK {VERSION}", "Reproduce 2+", f"Save Bugs-QuickNovel-Ultimate-{VERSION}-YYYY-MM-DD.docx"])
 
     doc.add_heading("16. QA & annex", 1)
-    bullets(doc, ["gradlew :app:testDebugUnitTest", "e2e specs 01-09 + Allure", "https://github.com/RaffyRod/NovelReader", "Spanish: docs/manual-1.1.4/es/"])
+    bullets(doc, ["gradlew :app:testDebugUnitTest", "e2e specs 01-13 + Allure", "https://github.com/RaffyRod/NovelReader", "Spanish: docs/manual-1.2.3/es/"])
 
     out = ROOT / f"Manual-QuickNovel-Ultimate-{VERSION}.docx"
     doc.save(out)

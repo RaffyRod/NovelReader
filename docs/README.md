@@ -1,40 +1,64 @@
-# QuickNovel Ultimate — docs
+# 📚 QuickNovel Ultimate — Docs
 
-**Current app version:** `1.2.3`  
-**Defaults:** dark mode ON · Ultimate Blue (`BlueFire`) · reader loading **F — Glyph Pulse** (本, no raw URL).
+Guía rápida de la documentación del proyecto.
 
-| Path | Description |
-|------|-------------|
-| [`manual-1.1.4/`](manual-1.1.4/) | User manuals ES + EN (HTML, Word, screenshots, bug templates) — historical 1.1.4 pack |
-| [`previews/`](previews/) | Interactive HTML UI mocks |
-| [`plugin-import-sample.json`](plugin-import-sample.json) | Sample LNReader catalog entry shape for paste/import tests |
+| | |
+|---|---|
+| 🏷️ **App** | **1.2.3** |
+| 🌙 **Defaults** | Modo oscuro ON · **Ultimate Blue** |
+| 本 **Lector** | Glyph Pulse (sin URL cruda) |
 
-## Previews
+---
 
-| File | Topic |
-|------|--------|
-| [`previews/plugin-providers-flow.html`](previews/plugin-providers-flow.html) | Plugins hub: repo → languages → install cards |
-| [`previews/chapter-select-fab-highlight.html`](previews/chapter-select-fab-highlight.html) | Chapter **Select** FAB styles (shipped: **E — Icon disc**, theme `colorPrimary`) |
-| [`previews/result-actions-info.html`](previews/result-actions-info.html) | Novel detail: action row, info stats, **Leer libro** CTA proposals |
-| [`previews/chapter-fabs-pair.html`](previews/chapter-fabs-pair.html) | Chapter **Select + Filter** pair — 12 layout/glow options × themes |
-| [`previews/chapter-filter-in-bottom-bar.html`](previews/chapter-filter-in-bottom-bar.html) | Move **Filter/Organize** into sticky bottom bar (8 layouts) |
-| [`previews/result-tabs-cta-bar.html`](previews/result-tabs-cta-bar.html) | Detail **tabs** + **Descargar/Leer** bar proposals |
-| [`previews/ultimate-themes.html`](previews/ultimate-themes.html) | **Ultimate color packs** — 11 accents (Blue…Soft) |
-| [`previews/ultimate-icon-themes.html`](previews/ultimate-icon-themes.html) | **10 icon treatments** (A–J) for Settings / nav — pick one |
-| [`previews/reader-loading.html`](previews/reader-loading.html) | Reader loading mocks — **shipped: F Glyph Pulse** |
+## 🗺️ Mapa
 
-Open the HTML files in a browser. Prefer [`ultimate-themes.html`](previews/ultimate-themes.html) for the Ultimate-only palette; older FAB mocks may still show retired stock colors.
+| Carpeta / archivo | Qué es |
+|-------------------|--------|
+| 📘 [`manual-1.2.3/`](manual-1.2.3/) | Manuales usuario ES + EN (HTML, Word, capturas, plantillas bugs) |
+| 🎨 [`previews/`](previews/) | Mocks HTML interactivos (temas, iconos, loading, FABs…) |
+| 🧩 [`plugin-import-sample.json`](plugin-import-sample.json) | Ejemplo de catálogo LNReader para pegar/importar |
 
-## 1.2.3 notes
+---
 
-- Reader overlay: Glyph Pulse (`loading_glyph` 本 + chapter title + optional source chip).
-- Appearance: `AppearanceMode.DEFAULT_DARK = true`; Ultimate pack default `UiIconTheme.DEFAULT_KEY = BlueFire`.
-- E2E: `12-reader-loading`, `13-theme-defaults`; unit: `ReaderGlyphLoadingTest`, `AppearanceAndThemeDefaultsTest`.
-- Desktop release APK: keep only `QuickNovel-Ultimate-1.2.3-universal.apk` (older `1.0.x`/`1.1.x` builds removed).
+## 📖 Manuales (tutoriales)
 
-## Regenerate manuals
+| 🌍 | HTML | Word | Bugs |
+|----|------|------|------|
+| 🇪🇸 Español | [Abrir](manual-1.2.3/es/Manual-QuickNovel-Ultimate-1.2.3.html) | [DOCX](manual-1.2.3/es/Manual-QuickNovel-Ultimate-1.2.3.docx) | [Plantilla](manual-1.2.3/es/plantillas/Plantilla-Reporte-Bugs.docx) |
+| 🇬🇧 English | [Open](manual-1.2.3/en/Manual-QuickNovel-Ultimate-1.2.3.html) | [DOCX](manual-1.2.3/en/Manual-QuickNovel-Ultimate-1.2.3.docx) | [Template](manual-1.2.3/en/plantillas/Bug-Report-Template.docx) |
+
+Índice detallado → [`manual-1.2.3/README.md`](manual-1.2.3/README.md)
+
+### 🔄 Regenerar
 
 ```bash
-python docs/manual-1.1.4/_generar_docs_es.py
-python docs/manual-1.1.4/_generar_docs_en.py
+python docs/manual-1.2.3/_generar_docs_es.py
+python docs/manual-1.2.3/_generar_docs_en.py
 ```
+
+---
+
+## 🎨 Previews (abrir en el navegador)
+
+| Preview | Tema |
+|---------|------|
+| 🔌 [`plugin-providers-flow.html`](previews/plugin-providers-flow.html) | Hub de plugins LNReader |
+| 🎯 [`chapter-select-fab-highlight.html`](previews/chapter-select-fab-highlight.html) | FAB Select (**E — Icon disc** shipped) |
+| ℹ️ [`result-actions-info.html`](previews/result-actions-info.html) | Detalle novela / CTAs |
+| ✨ [`chapter-fabs-pair.html`](previews/chapter-fabs-pair.html) | Select + Filter |
+| 📌 [`chapter-filter-in-bottom-bar.html`](previews/chapter-filter-in-bottom-bar.html) | Filtro en barra inferior |
+| 📑 [`result-tabs-cta-bar.html`](previews/result-tabs-cta-bar.html) | Tabs + Descargar/Leer |
+| 🌈 [`ultimate-themes.html`](previews/ultimate-themes.html) | 11 acentos Ultimate |
+| 🔠 [`ultimate-icon-themes.html`](previews/ultimate-icon-themes.html) | Estilos de icono A–J |
+| 本 [`reader-loading.html`](previews/reader-loading.html) | Loading lector — **F Glyph Pulse** |
+
+---
+
+## 💻 Pack Desktop
+
+| Contenido | Ubicación típica |
+|-----------|------------------|
+| 📦 APK + manuals + previews | `Desktop/QuickNovel-Ultimate-1.2.3-Docs/` |
+| 📱 Solo APK | `Desktop/QuickNovel-Ultimate-1.2.3-universal.apk` |
+
+Copia desde `docs/manual-1.2.3/` + el APK firmado cuando regeneres docs.
