@@ -4,9 +4,10 @@ Project documentation map.
 
 | | |
 |---|---|
-| 🏷️ **App** | **1.2.4** |
-| 🌙 **Defaults** | Dark mode ON · **Ultimate Blue** |
-| 本 **Reader** | Glyph Pulse (no raw URL) |
+| 🏷️ **App** | **1.2.6** (`versionCode` 126) |
+| 🌙 **Defaults** | Dark mode ON · **Ultimate Blue** · English providers ON |
+| 本 **Reader** | Glyph Pulse themed (no raw URL) |
+| 🖼️ **Covers** | Title-as-cover placeholder when missing art |
 
 ---
 
@@ -58,7 +59,7 @@ python docs/manual-1.2.3/_generar_docs_en.py
 
 | Content | Typical location |
 |---------|------------------|
-| 📦 APK + manuals + previews | `Desktop/QuickNovel-Ultimate-1.2.3-Docs/` |
-| 📱 APK only | `Desktop/QuickNovel-Ultimate-1.2.4-universal.apk` |
+| 📦 APK + manuals + previews | `Desktop/QuickNovel-Ultimate-1.2.6-Docs/` |
+| 📱 APK only | `Desktop/QuickNovel-Ultimate-1.2.6-universal.apk` |
 
 Copy from `docs/manual-1.2.3/` + the signed APK when you regenerate docs.

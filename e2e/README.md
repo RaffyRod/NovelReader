@@ -2,7 +2,7 @@
 
 Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and **Allure**.
 
-**App under test:** `1.2.3` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`).  
+**App under test:** `1.2.6` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`) · English providers ON.  
 Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 
 ## Scenarios
@@ -41,7 +41,7 @@ Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 # from repo root
 ./gradlew :app:assembleRelease
 # copy signed APK to e2e/apps/QuickNovel-Ultimate.apk
-# or Desktop: QuickNovel-Ultimate-1.2.3-universal.apk
+# or Desktop: QuickNovel-Ultimate-1.2.6-universal.apk
 ```
 
 4. Install and run:

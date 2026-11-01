@@ -16,9 +16,9 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 
 | | |
 |---|---|
-| 🏷️ **Version** | **1.2.4** (`versionCode` 124) |
+| 🏷️ **Version** | **1.2.6** (`versionCode` 126) |
 | 📦 **Package** | `com.lagradost.quicknovel.ultimate` |
-| 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** |
+| 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** · show English providers **ON** |
 | 📥 **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK |
 | 🧑‍💻 **Repo** | https://github.com/RaffyRod/NovelReader |
 | ⬆️ **Upstream** | https://github.com/LagradOst/QuickNovel |
@@ -28,7 +28,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | Step | What to do |
 |------|------------|
 | 1️⃣ | Uninstall older Ultimate / stock QuickNovel if present |
-| 2️⃣ | Install `QuickNovel-Ultimate-1.2.4-universal.apk` |
+| 2️⃣ | Install `QuickNovel-Ultimate-1.2.6-universal.apk` |
 | 3️⃣ | If prompted to update to LagradOst 3.x → **Cancel / Skip** |
 | 4️⃣ | Open **QuickNovel Ultimate** (orb + 本) |
 | 5️⃣ | App language defaults to **Español** (change in Settings) |
@@ -45,12 +45,13 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | 📚 **Library** | Pinned local search, follow, Import-B (EPUB/PDF) |
 | 🧭 **Sections** | Library shelves (Ultimate-only) |
 | 🕘 **History** | **Reading** / **Visited** with date groups |
-| 🔎 **Search** | Multi-provider, chips, special chars blocked by default |
-| 🔌 **Sources** | Custom providers (Blog/Madara) + **LNReader plugins** |
-| 📖 **Reader** | **Glyph Pulse** (本) while loading — UI language, no raw URL |
+| 🔎 **Search** | Multi-provider, chips, special chars blocked by default; English sources on by default |
+| 🔌 **Sources** | Custom providers (Blog/Madara) + **LNReader plugins** soft-card hub |
+| 🖼️ **Covers** | Title-as-cover placeholder (theme + language) when no art |
+| 📖 **Reader** | **Glyph Pulse** (本) while loading — themed, UI language, no raw URL |
 | ⬇️ **Download** | Ranges, chapters/file, language via Gemini / Google / Original |
 | 🔊 **TTS** | Piper/Sherpa voices (Dave ES / Lessac EN) + notification |
-| 🧪 **QA** | Unit + Appium E2E (specs 01–13) + CI on every push |
+| 🧪 **QA** | Unit + Appium E2E (specs 01–13) + CI suites (smoke / features / providers / reader) |
 
 ---
 
@@ -84,7 +85,7 @@ More shots → [`docs/manual-1.2.3/es/imagenes/`](docs/manual-1.2.3/es/imagenes/
 
 In-app: **Settings → Tutorial** (Providers · Downloads · TTS).
 
-Typical Desktop pack: `QuickNovel-Ultimate-1.2.3-Docs/` (APK + manuals + previews).
+Typical Desktop pack: `QuickNovel-Ultimate-1.2.6-Docs/` (APK + manuals + previews). Manuals folder remains `docs/manual-1.2.3/` until the next doc regen.
 
 ---
 
