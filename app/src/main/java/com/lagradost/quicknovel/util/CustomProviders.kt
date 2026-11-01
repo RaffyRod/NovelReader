@@ -8,31 +8,42 @@ import com.lagradost.quicknovel.BaseApplication.Companion.removeKey
 import com.lagradost.quicknovel.BaseApplication.Companion.setKey
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.providers.CustomProviderConfig
+import java.nio.charset.StandardCharsets
 
 /** Saves the providers the user created and keeps the provider lists up to date. */
 object CustomProviders {
     private const val FOLDER = "custom_provider"
 
     /**
-     * Stable preference key for [name]. Legacy installs used [hashCode] which can collide
-     * under bulk plugin installs and silently overwrite providers.
+     * Stable, collision-free preference key for any Unicode [name].
+     * Legacy [hashCode] collided; ASCII-only sanitizing collapsed CJK/Arabic names to one key.
      */
     fun storeKey(name: String): String {
+        val normalized = name.trim().lowercase()
+        if (normalized.isEmpty()) return "provider_empty"
+        return normalized.toByteArray(StandardCharsets.UTF_8).joinToString(separator = "") { byte ->
+            val v = byte.toInt() and 0xff
+            "%02x".format(v)
+        }
+    }
+
+    /** Previous key schemes — kept so we can migrate/remove old entries. */
+    fun legacyStoreKey(name: String): String = name.lowercase().hashCode().toString()
+
+    fun legacyAsciiStoreKey(name: String): String {
         val cleaned = name.trim().lowercase()
             .replace(Regex("[^a-z0-9._-]+"), "_")
             .trim('_')
         return cleaned.ifBlank { "provider" }
     }
 
-    /** Previous key scheme — kept so we can migrate/remove old entries. */
-    fun legacyStoreKey(name: String): String = name.lowercase().hashCode().toString()
-
     fun load(): List<CustomProviderConfig> {
         val keys = getKeys(FOLDER) ?: return emptyList()
         val byName = linkedMapOf<String, CustomProviderConfig>()
         for (fullKey in keys) {
+            // getKeys returns full prefs paths like "custom_provider/<key>"
+            if (!fullKey.startsWith("$FOLDER/")) continue
             val config = getKey<CustomProviderConfig>(fullKey) ?: continue
-            // Prefer the latest write when legacy hash keys collide with modern keys.
             byName[config.name] = config
         }
         return byName.values.sortedBy { it.name.lowercase() }
@@ -67,6 +78,7 @@ object CustomProviders {
     private fun removeKeysForName(name: String) {
         removeKey(FOLDER, storeKey(name))
         removeKey(FOLDER, legacyStoreKey(name))
+        removeKey(FOLDER, legacyAsciiStoreKey(name))
     }
 
     /**

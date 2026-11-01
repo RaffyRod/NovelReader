@@ -37,6 +37,7 @@ data class PluginRepo(
  *
  * [templateKind] is one of: `madara`, `blogger`, `js` (empty treated as js for older installs).
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class InstalledPlugin(
     val id: String,
     val name: String,

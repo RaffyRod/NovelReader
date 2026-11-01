@@ -512,7 +512,6 @@ object PluginProviderDialogs {
         }
         val grayText = activity.colorFromAttribute(R.attr.grayTextColor)
         val textColor = activity.colorFromAttribute(R.attr.textColor)
-        val selectable = PluginSelectAll.selectableIds(items, installedById)
         val updateCount = items.count {
             val inst = installedById[it.id] ?: return@count false
             PluginSelectAll.hasCatalogUpdate(inst, it)
@@ -534,6 +533,10 @@ object PluginProviderDialogs {
             setPadding(0, 0, 0, gap)
         })
 
+        val filterRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
         val filterEdit = EditText(activity).apply {
             hint = activity.getString(R.string.plugin_cards_filter_hint)
             setText(filterQuery)
@@ -541,8 +544,15 @@ object PluginProviderDialogs {
             setHintTextColor(grayText)
             inputType = InputType.TYPE_CLASS_TEXT
             setPadding(pad / 2, pad / 2, pad / 2, pad / 2)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
-        column.addView(filterEdit)
+        filterRow.addView(filterEdit)
+        filterRow.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(android.R.string.search_go)
+            setTextColor(activity.colorFromAttribute(R.attr.colorPrimary))
+            tag = "filter_go"
+        })
+        column.addView(filterRow)
 
         val checkBoxes = LinkedHashMap<String, CheckBox>()
         slice.forEach { item ->
@@ -595,6 +605,10 @@ object PluginProviderDialogs {
                 if (!box.isEnabled) return@forEach
                 box.isChecked = id in ids
             }
+            showToast(
+                activity,
+                activity.getString(R.string.plugin_select_all_applied, ids.size),
+            )
         }
 
         val scroll = ScrollView(activity).apply {
@@ -614,10 +628,6 @@ object PluginProviderDialogs {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
                 applySelectAll()
-                showToast(
-                    activity,
-                    activity.getString(R.string.plugin_select_all_applied, selectable.size),
-                )
             }
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val chosen = PluginSelectAll.filterSelectable(items, selected, installedById)
@@ -634,14 +644,18 @@ object PluginProviderDialogs {
                     showCards(activity, repoUrl, items, onChanged, query, nextPage, selected)
                 }
             }
-            (nav.findViewWithTag<Button>("prev")).setOnClickListener {
+            nav.findViewWithTag<Button>("prev")?.setOnClickListener {
                 reopen(safePage - 1, filterEdit.text?.toString().orEmpty())
             }
-            (nav.findViewWithTag<Button>("next")).setOnClickListener {
+            nav.findViewWithTag<Button>("next")?.setOnClickListener {
                 reopen(safePage + 1, filterEdit.text?.toString().orEmpty())
             }
-            filterEdit.setOnEditorActionListener { _, _, _ ->
+            val applyFilter = {
                 reopen(0, filterEdit.text?.toString().orEmpty())
+            }
+            filterRow.findViewWithTag<Button>("filter_go")?.setOnClickListener { applyFilter() }
+            filterEdit.setOnEditorActionListener { _, _, _ ->
+                applyFilter()
                 true
             }
         }
@@ -882,7 +896,18 @@ object PluginProviderDialogs {
     private fun editCssMapped(activity: Activity, plugin: InstalledPlugin, onChanged: () -> Unit) {
         val config = CustomProviders.load().firstOrNull { it.name == plugin.providerName }
         if (config == null) {
-            showToast(activity, activity.getString(R.string.plugin_js_not_in_search))
+            // Metadata says CSS-mapped but storage entry is missing (legacy hash wipe).
+            AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+                .setTitle(plugin.localName)
+                .setMessage(R.string.plugin_js_not_in_search)
+                .setPositiveButton(R.string.plugin_action_map_madara) { _, _ ->
+                    mapToTemplate(activity, plugin, onChanged, madara = true)
+                }
+                .setNeutralButton(R.string.plugin_action_map_blogger) { _, _ ->
+                    mapToTemplate(activity, plugin, onChanged, madara = false)
+                }
+                .setNegativeButton(R.string.close, null)
+                .show()
             return
         }
         CustomProviderDialogs.showEditor(activity, config) {
