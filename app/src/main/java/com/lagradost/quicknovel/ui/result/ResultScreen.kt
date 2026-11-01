@@ -294,6 +294,7 @@ fun ResultScreenImpl(
                         .rounded(),
                     model = response.imageRequest(),
                     contentDescription = stringResource(R.string.poster_descript),
+                    title = response.name,
                 )
                 Column(modifier = Modifier.padding(10.dp)) {
                     Text(

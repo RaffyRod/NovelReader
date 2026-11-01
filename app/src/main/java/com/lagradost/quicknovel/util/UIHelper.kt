@@ -356,7 +356,16 @@ object UIHelper {
         //colorCallback: ((Palette) -> Unit)? = null
     ): Boolean {
         if (url.isNullOrBlank()) {
-            this?.setImageResource(R.drawable.cover_placeholder)
+            this?.let { view ->
+                val posterLabel = view.context.getString(R.string.poster_descript)
+                val title = (view.getTag(R.id.cover_title_tag) as? String)
+                    ?: view.contentDescription?.toString()?.takeIf {
+                        it.isNotBlank() && !it.equals(posterLabel, ignoreCase = true)
+                    }
+                view.setImageDrawable(
+                    com.lagradost.quicknovel.ui.common.NoCoverDrawable(view.context, title),
+                )
+            }
             return false
         }
         this.setImage(

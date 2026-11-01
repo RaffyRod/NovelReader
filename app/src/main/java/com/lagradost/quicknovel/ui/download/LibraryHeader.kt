@@ -106,6 +106,7 @@ private fun ContinueCard(response: ImmutableSearchResponse, action: (SearchRespo
         CoverImage(
             model = response.imageRequest(),
             contentDescription = response.name,
+            title = response.name,
             modifier = Modifier
                 .width(64.dp)
                 .height(92.dp)

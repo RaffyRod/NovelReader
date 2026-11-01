@@ -25,12 +25,14 @@ import coil3.request.error
 import coil3.request.fallback
 import coil3.request.placeholder
 import com.lagradost.quicknovel.R
+import coil3.asImage
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.lagradost.nicehttp.ignoreAllSSLErrors
 import com.lagradost.quicknovel.BuildConfig
 import com.lagradost.quicknovel.network.CloudflareKiller
 import com.lagradost.quicknovel.ui.UiImage
+import com.lagradost.quicknovel.ui.common.NoCoverDrawable
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -139,8 +141,9 @@ object ImageLoader {
         // clear image to avoid loading & flickering issue at fast scrolling (e.g, an image recycler)
         this.dispose()
 
+        val noCover = noCoverDrawable()
         if (imageData == null) {
-            this.setImageResource(R.drawable.cover_placeholder)
+            this.setImageDrawable(noCover)
             return
         }
 
@@ -158,11 +161,22 @@ object ImageLoader {
                     headerBuilder[key] = value
                 }
             }.build())
-            placeholder(R.drawable.cover_placeholder)
-            error(R.drawable.cover_placeholder)
-            fallback(R.drawable.cover_placeholder)
+            val coverImage = noCover.asImage()
+            placeholder(coverImage)
+            error(coverImage)
+            fallback(coverImage)
             builder() // if passed
         }
+    }
+
+    /** Title-as-cover art from contentDescription / tag, themed + localized. */
+    private fun ImageView.noCoverDrawable(): NoCoverDrawable {
+        val posterLabel = context.getString(R.string.poster_descript)
+        val fromTag = getTag(R.id.cover_title_tag) as? String
+        val fromDesc = contentDescription?.toString()?.takeIf {
+            it.isNotBlank() && !it.equals(posterLabel, ignoreCase = true)
+        }
+        return NoCoverDrawable(context, fromTag ?: fromDesc)
     }
 
     /** TYPE_SAFE_LOADERS **/

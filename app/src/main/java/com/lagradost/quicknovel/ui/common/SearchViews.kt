@@ -241,6 +241,7 @@ fun SearchResponseRow(
         CoverImage(
             model = imageRequest,
             contentDescription = response.name,
+            title = response.name,
             modifier = Modifier
                 .width(67.5.dp)
                 .fillMaxHeight()
@@ -526,6 +527,7 @@ fun SearchResponseItem(
             CoverImage(
                 model = imageRequest,
                 contentDescription = response.name,
+                title = response.name,
                 modifier = Modifier.fillMaxSize()
             )
 

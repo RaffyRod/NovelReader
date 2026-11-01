@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sin portada — propuestas de placeholder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #03060f;
+      --bg: #000;
+      --surface: #0a1224;
+      --card: #101a30;
+      --line: rgba(140, 180, 255, 0.14);
+      --text: #e8f1ff;
+      --muted: #8b97ab;
+      --primary: #1a6cff;
+      --glow: #4da3ff;
+      --old: #2a2d3e;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(900px 480px at 12% -10%, rgba(26, 108, 255, 0.22), transparent 55%),
+        radial-gradient(700px 420px at 90% 0%, rgba(77, 163, 255, 0.1), transparent 50%),
+        var(--page);
+      color: var(--text);
+      padding: 32px 22px 80px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 400;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .lead {
+      color: var(--muted);
+      max-width: 46rem;
+      line-height: 1.5;
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+    .note {
+      max-width: 46rem;
+      margin: 0 0 32px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(251, 191, 36, 0.28);
+      background: rgba(251, 191, 36, 0.08);
+      color: #fde68a;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(16, 26, 48, 0.95), rgba(8, 12, 24, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px 16px 18px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+    .head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .badge {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--glow);
+      background: rgba(26, 108, 255, 0.14);
+      border: 1px solid rgba(26, 108, 255, 0.28);
+      border-radius: 999px;
+      padding: 3px 9px;
+    }
+    .badge.now {
+      color: #fde68a;
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+    .head strong { font-size: 1.05rem; font-weight: 600; }
+    .desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+      margin: 0 0 14px;
+      min-height: 2.6em;
+    }
+    .stage {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #05080f;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .cover {
+      aspect-ratio: 2 / 3;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      isolation: isolate;
+    }
+    .cover .title {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 8px 6px 6px;
+      font-size: 0.62rem;
+      line-height: 1.2;
+      color: #fff;
+      background: linear-gradient(transparent, rgba(0,0,0,0.75));
+      max-height: 42%;
+      overflow: hidden;
+    }
+    /* —— proposals —— */
+    .p01 {
+      background: var(--old);
+      display: grid;
+      place-items: center;
+      gap: 4px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.58rem;
+      text-align: center;
+      padding: 6px;
+    }
+    .p01 svg { width: 28px; height: 28px; opacity: 0.65; }
+
+    .p02 {
+      background: linear-gradient(160deg, #0b1220, #121a2e 55%, #0a1428);
+      display: grid;
+      place-items: center;
+    }
+    .p02 .glyph {
+      font-family: var(--display);
+      font-size: 2.2rem;
+      color: rgba(77, 163, 255, 0.55);
+      line-height: 1;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.45; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.04); }
+    }
+
+    .p03 {
+      background:
+        radial-gradient(120% 80% at 20% 0%, rgba(26,108,255,0.35), transparent 55%),
+        linear-gradient(180deg, #152038, #0c121f);
+      display: grid;
+      place-content: center;
+      padding: 10px;
+      text-align: center;
+    }
+    .p03 .letter {
+      font-family: var(--display);
+      font-size: 2.6rem;
+      color: #dce8ff;
+      line-height: 1;
+    }
+    .p03 .sub {
+      margin-top: 4px;
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(232,241,255,0.45);
+    }
+
+    .p04 {
+      background: #0d111a;
+      display: grid;
+      place-items: center;
+    }
+    .p04 .book {
+      width: 42%;
+      aspect-ratio: 2/3;
+      border-radius: 3px 6px 6px 3px;
+      background: linear-gradient(90deg, #1a2338 0 12%, #243049 12% 100%);
+      box-shadow:
+        inset 3px 0 0 rgba(26,108,255,0.55),
+        0 8px 16px rgba(0,0,0,0.35);
+      position: relative;
+    }
+    .p04 .book::after {
+      content: "";
+      position: absolute;
+      inset: 14% 18% 18% 22%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 2px;
+    }
+
+    .p05 {
+      background: #0c1018;
+      display: grid;
+      place-items: center;
+      border: 1.5px dashed rgba(140,180,255,0.28);
+      border-radius: 8px;
+    }
+    .p05 .plus {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(140,180,255,0.4);
+      display: grid; place-items: center;
+      color: rgba(180,210,255,0.7);
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .p06 {
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 9px,
+          rgba(140,180,255,0.06) 9px,
+          rgba(140,180,255,0.06) 10px
+        ),
+        #121826;
+      display: grid;
+      place-items: end start;
+      padding: 10px;
+    }
+    .p06 .mark {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: rgba(180,210,255,0.55);
+      letter-spacing: 0.08em;
+    }
+
+    .p07 {
+      background: radial-gradient(circle at 50% 42%, rgba(26,108,255,0.28), #0a0f1a 62%);
+      display: grid;
+      place-items: center;
+    }
+    .p07 .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 18px var(--glow);
+    }
+
+    .p08 {
+      background: linear-gradient(145deg, #152036, #0c1320);
+      display: grid;
+      place-items: center;
+    }
+    .p08 .mono {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(77,163,255,0.45);
+      display: grid; place-items: center;
+      font-family: var(--display);
+      font-size: 1.35rem;
+      color: #e8f1ff;
+      background: rgba(26,108,255,0.12);
+    }
+
+    .p09 {
+      background: #0e1420;
+      display: grid;
+      place-items: center;
+    }
+    .p09 .stack {
+      width: 38%;
+      height: 48%;
+      position: relative;
+    }
+    .p09 .stack span {
+      position: absolute;
+      inset: 0;
+      border-radius: 2px 5px 5px 2px;
+      background: #1c2740;
+      border: 1px solid rgba(140,180,255,0.15);
+    }
+    .p09 .stack span:nth-child(1) { transform: translate(6px, -6px); opacity: 0.45; }
+    .p09 .stack span:nth-child(2) { transform: translate(3px, -3px); opacity: 0.7; }
+    .p09 .stack span:nth-child(3) {
+      background: linear-gradient(180deg, #243556, #1a2438);
+      box-shadow: inset 2px 0 0 var(--primary);
+    }
+
+    .p10 {
+      background: #0b0f18;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      gap: 6px;
+      padding: 8px;
+    }
+    .p10 .em {
+      font-family: var(--display);
+      font-style: italic;
+      font-size: 1.6rem;
+      color: rgba(232,241,255,0.35);
+      line-height: 1;
+    }
+    .p10 .cap {
+      font-size: 0.55rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(139,151,171,0.8);
+    }
+
+    .p11 {
+      background:
+        linear-gradient(180deg, rgba(26,108,255,0.18), transparent 40%),
+        linear-gradient(180deg, #121a2c, #0a101c);
+      display: grid;
+      place-items: center;
+      padding: 10px;
+      text-align: center;
+    }
+    .p11 .q {
+      font-family: var(--display);
+      font-size: 0.95rem;
+      line-height: 1.25;
+      color: rgba(232,241,255,0.82);
+    }
+    .p11 .hint {
+      margin-top: 8px;
+      font-size: 0.52rem;
+      color: rgba(139,151,171,0.75);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .p12 {
+      background: #0c121c;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+    .p12::before {
+      content: "";
+      position: absolute;
+      inset: 10%;
+      border-radius: 6px;
+      border: 1px solid rgba(77,163,255,0.22);
+      background:
+        linear-gradient(135deg, transparent 46%, rgba(26,108,255,0.35) 49%, rgba(26,108,255,0.35) 51%, transparent 54%),
+        linear-gradient(45deg, transparent 46%, rgba(26,108,255,0.2) 49%, rgba(26,108,255,0.2) 51%, transparent 54%);
+      opacity: 0.85;
+    }
+    .p12 .lbl {
+      position: relative;
+      z-index: 1;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(180,210,255,0.7);
+      background: rgba(5,8,15,0.72);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .pick {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pick button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .pick button:hover { border-color: rgba(77,163,255,0.45); }
+    .pick button[aria-pressed="true"] {
+      background: rgba(26,108,255,0.22);
+      border-color: rgba(26,108,255,0.55);
+      color: #dbeafe;
+    }
+    footer {
+      margin-top: 36px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sin portada</h1>
+  <p class="lead">
+    Propuestas para el placeholder cuando no hay cover (biblioteca, búsqueda, resultado).
+    Cada tarjeta muestra 3 portadas en ratio 2:3 como en la grilla real.
+  </p>
+  <p class="note">
+    <strong>Actual / “viejo”:</strong> fondo <code>#2A2D3E</code> + icono libro Material + texto “Sin portada”
+    (<code>CoverImage</code> / <code>cover_placeholder</code>). Elige favoritos y te lo implemento.
+  </p>
+
+  <div class="grid">
+
+    <article class="card" data-id="01">
+      <div class="head"><span class="badge now">AHORA</span><strong>Libro Material + label</strong></div>
+      <p class="desc">El que volvió: flat slate, icono open-book, tipografía 10sp. Seguro pero genérico.</p>
+      <div class="stage">
+        <div class="cover p01"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg>Sin portada</div>
+        <div class="cover p01"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg>Sin portada</div>
+        <div class="cover p01"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1z"/></svg>Sin portada</div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="02">
+      <div class="head"><span class="badge">A</span><strong>Glyph Pulse 本</strong></div>
+      <p class="desc">Mismo lenguaje que el loading del reader: un kanji suave que late. Cero texto.</p>
+      <div class="stage">
+        <div class="cover p02"><span class="glyph">本</span></div>
+        <div class="cover p02"><span class="glyph">本</span></div>
+        <div class="cover p02"><span class="glyph">本</span></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="03">
+      <div class="head"><span class="badge">B</span><strong>Inicial tipográfica</strong></div>
+      <p class="desc">Primera letra del título + “NO COVER”. Cada card se siente distinta sin imagen.</p>
+      <div class="stage">
+        <div class="cover p03"><div class="letter">D</div><div class="sub">No cover</div><div class="title">Dark Magus Returns</div></div>
+        <div class="cover p03"><div class="letter">T</div><div class="sub">No cover</div><div class="title">The Last King of Darkness</div></div>
+        <div class="cover p03"><div class="letter">H</div><div class="sub">No cover</div><div class="title">Hero of Darkness</div></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="04">
+      <div class="head"><span class="badge">C</span><strong>Lomo Ultimate</strong></div>
+      <p class="desc">Silueta de libro con acento azul en el lomo. Parece objeto, no “error de imagen”.</p>
+      <div class="stage">
+        <div class="cover p04"><div class="book"></div></div>
+        <div class="cover p04"><div class="book"></div></div>
+        <div class="cover p04"><div class="book"></div></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="05">
+      <div class="head"><span class="badge">D</span><strong>Marco vacío</strong></div>
+      <p class="desc">Borde dashed + círculo “+”. Sugiere hueco a rellenar, muy UI.</p>
+      <div class="stage">
+        <div class="cover p05"><div class="plus">+</div></div>
+        <div class="cover p05"><div class="plus">+</div></div>
+        <div class="cover p05"><div class="plus">+</div></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="06">
+      <div class="head"><span class="badge">E</span><strong>Página pautada</strong></div>
+      <p class="desc">Líneas tipo folio / manuscrito. Silencioso, editorial.</p>
+      <div class="stage">
+        <div class="cover p06"><span class="mark">MS · —</span></div>
+        <div class="cover p06"><span class="mark">MS · —</span></div>
+        <div class="cover p06"><span class="mark">MS · —</span></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="07">
+      <div class="head"><span class="badge">F</span><strong>Solo punto de marca</strong></div>
+      <p class="desc">Casi vacío: un glow Ultimate Blue. Máxima calma en grillas densas.</p>
+      <div class="stage">
+        <div class="cover p07"><span class="dot"></span></div>
+        <div class="cover p07"><span class="dot"></span></div>
+        <div class="cover p07"><span class="dot"></span></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="08">
+      <div class="head"><span class="badge">G</span><strong>Monograma en círculo</strong></div>
+      <p class="desc">Inicial dentro de anillo. Funciona como avatar de novela.</p>
+      <div class="stage">
+        <div class="cover p08"><div class="mono">D</div><div class="title">Dark Mercy</div></div>
+        <div class="cover p08"><div class="mono">S</div><div class="title">Shadow's Claim</div></div>
+        <div class="cover p08"><div class="mono">T</div><div class="title">Turned at Dark</div></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="09">
+      <div class="head"><span class="badge">H</span><strong>Pila de tomos</strong></div>
+      <p class="desc">Tres hojas apiladas con lomo azul. Sugiere “hay libro”, no “falta archivo”.</p>
+      <div class="stage">
+        <div class="cover p09"><div class="stack"><span></span><span></span><span></span></div></div>
+        <div class="cover p09"><div class="stack"><span></span><span></span><span></span></div></div>
+        <div class="cover p09"><div class="stack"><span></span><span></span><span></span></div></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="10">
+      <div class="head"><span class="badge">I</span><strong>Em dash tipográfico</strong></div>
+      <p class="desc">Solo “—” + “SIN PORTADA”. Editorial, sin icono de sistema.</p>
+      <div class="stage">
+        <div class="cover p10"><div class="em">—</div><div class="cap">Sin portada</div></div>
+        <div class="cover p10"><div class="em">—</div><div class="cap">Sin portada</div></div>
+        <div class="cover p10"><div class="em">—</div><div class="cap">Sin portada</div></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="11">
+      <div class="head"><span class="badge now">ELEGIDO</span><strong>Título como cover</strong></div>
+      <p class="desc">El nombre de la novela es el arte. Ideal cuando el título ya está en la card.</p>
+      <div class="stage">
+        <div class="cover p11"><div class="q">The Dark<br/>King</div><div class="hint">Sin portada</div></div>
+        <div class="cover p11"><div class="q">Dark<br/>Demon</div><div class="hint">Sin portada</div></div>
+        <div class="cover p11"><div class="q">Darkness<br/>is Coming</div><div class="hint">Sin portada</div></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+    <article class="card" data-id="12">
+      <div class="head"><span class="badge">K</span><strong>Cruz de media</strong></div>
+      <p class="desc">Marco + X suave (foto rota) + pill. Comunica fallo de carga sin gritar error.</p>
+      <div class="stage">
+        <div class="cover p12"><span class="lbl">Sin portada</span></div>
+        <div class="cover p12"><span class="lbl">Sin portada</span></div>
+        <div class="cover p12"><span class="lbl">Sin portada</span></div>
+      </div>
+      <div class="pick"><button type="button" data-vote="like">Me gusta</button><button type="button" data-vote="no">No</button></div>
+    </article>
+
+  </div>
+
+  <footer>
+    Votos locales (no se envían): <span id="tally">ninguno aún</span>.
+    Archivo: <code>docs/previews/cover-placeholder-mocks.html</code>
+  </footer>
+
+  <script>
+    const votes = {};
+    const tally = document.getElementById("tally");
+    function refresh() {
+      const likes = Object.entries(votes).filter(([, v]) => v === "like").map(([k]) => k);
+      tally.textContent = likes.length ? "favoritos → " + likes.join(", ") : "ninguno aún";
+    }
+    document.querySelectorAll(".card").forEach((card) => {
+      const id = card.dataset.id;
+      card.querySelectorAll("[data-vote]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const v = btn.dataset.vote;
+          votes[id] = v;
+          card.querySelectorAll("[data-vote]").forEach((b) => {
+            b.setAttribute("aria-pressed", String(b.dataset.vote === v));
+          });
+          refresh();
+        });
+      });
+    });
+  </script>
+</body>
+</html>
