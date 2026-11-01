@@ -68,6 +68,7 @@ import com.lagradost.quicknovel.RESULT_CHAPTER_FILTER_DOWNLOADED
 import com.lagradost.quicknovel.RESULT_CHAPTER_FILTER_READ
 import com.lagradost.quicknovel.RESULT_CHAPTER_FILTER_UNREAD
 import com.lagradost.quicknovel.RESULT_CHAPTER_SORT
+import com.lagradost.quicknovel.SelectionTaskService
 import com.lagradost.quicknovel.StreamResponse
 import com.lagradost.quicknovel.UserReview
 import com.lagradost.quicknovel.WaitOrCancel
@@ -87,8 +88,10 @@ import com.lagradost.quicknovel.util.Apis
 import com.lagradost.quicknovel.util.Coroutines.ioSafe
 import com.lagradost.quicknovel.util.ResultCached
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -1129,11 +1132,49 @@ class ResultViewModel : ViewModel() {
     fun cancelSelectionTask() {
         selectionWorker.notifyEvent()
         selectionJob?.cancel()
-        selectionTask.value = null
+        publishSelectionTask(null)
     }
 
     fun dismissSelectionTask() {
-        selectionTask.value = null
+        publishSelectionTask(null)
+    }
+
+    /** True while a selection download/translate/export job is still running. */
+    fun isSelectionTaskActive(): Boolean = selectionJob?.isActive == true
+
+    /**
+     * Publishes progress to the UI and keeps [SelectionTaskService] foreground so the work
+     * survives navigating away or sending the app to the background.
+     */
+    private fun publishSelectionTask(state: SelectionTaskState?) {
+        if (state == null) {
+            selectionTask.postValue(null)
+            context?.let { SelectionTaskService.stop(it) }
+            return
+        }
+        selectionTask.postValue(state)
+        val appContext = context ?: return
+        if (state.finished) {
+            SelectionTaskService.stop(appContext)
+            return
+        }
+        val messageRes = when {
+            state.writing -> R.string.task_writing_file
+            state.translating -> R.string.task_translating
+            state.kind == SelectionTaskKind.Pdf -> R.string.task_creating_pdf
+            state.kind == SelectionTaskKind.Epub -> R.string.task_creating_epub
+            else -> R.string.task_downloading_chapters
+        }
+        val novel = (load as? StreamResponse)?.name?.takeIf { it.isNotBlank() }
+            ?: appContext.getString(R.string.app_name)
+        SelectionTaskService.start(
+            appContext,
+            title = novel,
+            message = appContext.getString(messageRes),
+            done = state.done,
+            total = state.total.coerceAtLeast(1),
+            indeterminate = state.writing,
+        )
     }
 
     private fun startSelectionTask(
@@ -1154,14 +1195,15 @@ class ResultViewModel : ViewModel() {
         val worker = WaitOrCancel()
         selectionWorker = worker
 
-        selectionTask.value = SelectionTaskState(kind = kind, total = selected.size)
+        publishSelectionTask(SelectionTaskState(kind = kind, total = selected.size))
         val errorHandler = CoroutineExceptionHandler { _, throwable ->
             logError(throwable)
-            selectionTask.postValue(
+            publishSelectionTask(
                 SelectionTaskState(kind = kind, total = selected.size, finished = true, error = true)
             )
         }
-        selectionJob = viewModelScope.launch(Dispatchers.IO + errorHandler) {
+        // Application-scoped so leaving the novel screen does not cancel mid-translate.
+        selectionJob = CoroutineScope(Dispatchers.IO + SupervisorJob() + errorHandler).launch {
             when (kind) {
                 SelectionTaskKind.Download ->
                     runDownloadTask(appContext, api, meta, selected, worker, translate)
@@ -1219,7 +1261,7 @@ class ResultViewModel : ViewModel() {
                             "${translated.title.replace('\n', ' ')}\n${translated.html}"
                         )
                     } catch (e: TranslationException) {
-                        selectionTask.postValue(
+                        publishSelectionTask(
                             SelectionTaskState(
                                 kind = SelectionTaskKind.Download,
                                 done = position + 1,
@@ -1234,7 +1276,7 @@ class ResultViewModel : ViewModel() {
                     }
                 }
             }
-            selectionTask.postValue(
+            publishSelectionTask(
                 SelectionTaskState(
                     kind = SelectionTaskKind.Download,
                     done = position + 1,
@@ -1244,7 +1286,7 @@ class ResultViewModel : ViewModel() {
                 )
             )
         }
-        selectionTask.postValue(
+        publishSelectionTask(
             SelectionTaskState(
                 kind = SelectionTaskKind.Download,
                 done = selected.size,
@@ -1333,7 +1375,7 @@ class ResultViewModel : ViewModel() {
                 loadedChapters[index + 1] =
                     loaded.copy(title = loaded.title.ifBlank { chapter.name })
             }
-            selectionTask.postValue(
+            publishSelectionTask(
                 SelectionTaskState(
                     kind = kind,
                     done = position + 1,
@@ -1352,7 +1394,7 @@ class ResultViewModel : ViewModel() {
             error = true
         )
         if (loadedChapters.isEmpty()) {
-            selectionTask.postValue(failedState)
+            publishSelectionTask(failedState)
             return
         }
 
@@ -1369,7 +1411,7 @@ class ResultViewModel : ViewModel() {
             }
             val translatingState =
                 failedState.copy(finished = false, error = false, translating = true, done = 0)
-            selectionTask.postValue(translatingState)
+            publishSelectionTask(translatingState)
             try {
                 loadedChapters.entries.forEachIndexed { position, entry ->
                     currentCoroutineContext().ensureActive()
@@ -1377,15 +1419,15 @@ class ResultViewModel : ViewModel() {
                     entry.setValue(
                         translateWithCache(translate, gemini, appContext, meta, index, entry.value)
                     )
-                    selectionTask.postValue(translatingState.copy(done = position + 1))
+                    publishSelectionTask(translatingState.copy(done = position + 1))
                 }
             } catch (e: TranslationException) {
-                selectionTask.postValue(failedState.copy(errorMessage = e.message))
+                publishSelectionTask(failedState.copy(errorMessage = e.message))
                 return
             }
         }
 
-        selectionTask.postValue(
+        publishSelectionTask(
             failedState.copy(finished = false, error = false, translating = false, writing = true)
         )
 
@@ -1401,7 +1443,7 @@ class ResultViewModel : ViewModel() {
             val file = storage.createFile(appContext, fileName, novelFolder = meta.name)
             val output = file?.openOutputStream(append = false)
             if (file == null || output == null) {
-                selectionTask.postValue(failedState)
+                publishSelectionTask(failedState)
                 return
             }
 
@@ -1432,7 +1474,7 @@ class ResultViewModel : ViewModel() {
             ExportedFiles.record(meta.name, "$fileName.$extension", file.uri, storage.mimeType)
         }
 
-        selectionTask.postValue(
+        publishSelectionTask(
             failedState.copy(
                 error = false,
                 writing = false,

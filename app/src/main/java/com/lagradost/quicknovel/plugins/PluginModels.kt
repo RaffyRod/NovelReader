@@ -30,8 +30,10 @@ data class PluginRepo(
 
 /**
  * A plugin the user installed into Ultimate.
- * Runtime for search is a [com.lagradost.quicknovel.providers.CustomProviderConfig]
- * derived from the site URL / multisrc hint; the JS file is kept for update/reinstall.
+ *
+ * When [cssMapped] is true, search uses a [com.lagradost.quicknovel.providers.CustomProviderConfig]
+ * (Madara/Blogger only when the catalog tags that template). Otherwise only the JS file is kept
+ * until the user configures selectors manually — we never invent Madara fields for every plugin.
  */
 data class InstalledPlugin(
     val id: String,
@@ -48,6 +50,7 @@ data class InstalledPlugin(
     val providerName: String = localName,
     val installedAt: Long = System.currentTimeMillis(),
     val jsPath: String = "",
+    val cssMapped: Boolean = providerName.isNotBlank(),
 ) {
     val hasUpdate: Boolean
         get() = latestVersion.isNotBlank() && latestVersion != version

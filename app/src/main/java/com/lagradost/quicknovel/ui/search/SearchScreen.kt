@@ -6,11 +6,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.font.FontWeight
 import com.lagradost.quicknovel.ui.common.SkeletonCover
 import com.lagradost.quicknovel.ui.common.SkeletonGrid
@@ -217,7 +213,7 @@ fun SearchScreen(state: HomeViewModelState, action: (HomeAction) -> Unit) {
                 top = innerPadding.calculateTopPadding()
             )
         if (state.isQueryOpen) {
-            SearchResults(state, action, searchAction, contentModifier)
+            SearchResults(state, action, contentModifier)
         } else {
             val columns = if (isLandscape) 6 else 3
             LazyVerticalGrid(
@@ -318,75 +314,48 @@ private fun PopularSection(state: HomeViewModelState, searchAction: (SearchRespo
     }
 }
 
-/** Every result in one grid, with chips to keep only the ones of a single provider. */
+/**
+ * Results grouped by provider (horizontal rows). Tapping the provider name opens that
+ * provider’s full result list ([HomeAction.OpenRow]).
+ */
 @Composable
 private fun SearchResults(
     state: HomeViewModelState,
     action: (HomeAction) -> Unit,
-    searchAction: (SearchResponseAction) -> Unit,
     modifier: Modifier,
 ) {
     val withResults = state.searchRows.filter { it.items.isNotEmpty() }
-    var selected by rememberSaveable { mutableStateOf<String?>(null) }
-    val shownRows = if (selected == null) withResults else withResults.filter { it.name == selected }
-    val items = shownRows.flatMap { it.items }
-    val columns = if (isLandscape) 6 else 3
 
-    Column(modifier) {
-        if (withResults.isNotEmpty()) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                item(key = "all") {
-                    FilterChip(
-                        selected = selected == null,
-                        onClick = { selected = null },
-                        label = { Text("${stringResource(R.string.search_filter_all)} (${withResults.sumOf { it.items.size }})") }
-                    )
-                }
-                items(withResults, key = { it.name }) { row ->
-                    FilterChip(
-                        selected = selected == row.name,
-                        onClick = { selected = row.name },
-                        label = { Text("${row.name} (${row.items.size})") }
-                    )
-                }
+    when {
+        withResults.isNotEmpty() -> LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(withResults, key = { it.name }) { row ->
+                SearchRow(row = row, action = action)
             }
-        }
-        when {
-            items.isNotEmpty() -> LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                itemsIndexed(items, key = { _, item -> item.randomUuid }) { index, response ->
+            if (state.isLoading) {
+                item(key = "loading_more") {
                     Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        SearchResponseItem(
-                            response = response,
-                            action = searchAction,
-                            modifier = Modifier
-                                .width(SearchCoverWidth)
-                                .animateItem()
-                                .staggeredEnter(index)
-                        )
+                        CircularProgressIndicator(Modifier.size(28.dp))
                     }
                 }
             }
+        }
 
-            state.isLoading -> SkeletonGrid(Modifier.fillMaxSize())
+        state.isLoading -> SkeletonGrid(modifier)
 
-            else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(R.string.search_no_results),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        else -> Box(modifier, contentAlignment = Alignment.Center) {
+            Text(
+                stringResource(R.string.search_no_results),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

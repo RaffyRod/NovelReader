@@ -403,7 +403,8 @@
     <string name="plugin_langs_continue">Ver providers</string>
     <string name="plugin_langs_pick_one">Elige al menos un idioma</string>
     <string name="plugin_cards_title">Elegir providers</string>
-    <string name="plugin_cards_hint">%1$d fuentes · install descarga JS y añade proveedor Madara/CSS</string>
+    <string name="plugin_cards_hint">%1$d fuentes · se respeta la plantilla de cada plugin (Madara solo si viene etiquetado; el resto guarda el JS sin reescribir selectores)</string>
+    <string name="plugin_select_all_applied">Todas las fuentes seleccionadas — pulsa Instalar</string>
     <string name="plugin_select_all">Seleccionar todos</string>
     <string name="plugin_install">Instalar</string>
     <string name="plugin_pick_one">Elige al menos un provider</string>
@@ -482,6 +483,10 @@
     <string name="download_translate_hint_gemini">Usa tu clave gratuita de Gemini. Es lento por el límite de la versión gratis.</string>
     <string name="download_translate_hint_google">Usa Google Translate online integrado (sin clave Gemini). La calidad varía según el idioma.</string>
     <string name="task_translating">Traduciendo…</string>
+    <string name="task_continue_background">Continuar en segundo plano</string>
+    <string name="task_running_background">Trabajando en segundo plano — puedes seguir usando la app</string>
+    <string name="task_background_done">Tarea en segundo plano terminada</string>
+    <string name="task_background_failed">Falló la tarea en segundo plano</string>
     <string name="task_translate_failed">Falló la traducción: %1$s</string>
     <string name="read_offline">Leer sin conexión (%1$d)</string>
     <string name="read_offline_empty">No hay capítulos descargados para leer</string>
@@ -499,6 +504,7 @@
     <string name="task_downloading_chapters">Descargando capítulos seleccionados…</string>
     <string name="task_creating_pdf">Creando PDF…</string>
     <string name="task_writing_file">Escribiendo archivo…</string>
+    <string name="task_progress_format">%1$d / %2$d</string>
     <string name="task_download_done">%1$d capítulos descargados, %2$d con error</string>
     <string name="open">Abrir</string>
     <string name="new_chapters_group">Capítulos nuevos</string>

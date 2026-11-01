@@ -14,7 +14,6 @@ import okhttp3.OkHttpClient
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
-import kotlin.time.Duration.Companion.seconds
 
 class GoogleTranslateOnline {
     companion object {
@@ -101,7 +100,8 @@ class GoogleTranslateOnline {
             if (contentFragments.isNotEmpty()) {
                 val chunks = chunkByLimit(contentFragments)
                 chunks.forEachIndexed { i, chunk ->
-                    if (i > 0) delay(1.seconds)
+                    // Light pacing only — 1s/chunk made ~25s chapters feel broken.
+                    if (i > 0) delay(120)
                     progress.invoke(i, chunks.size)
 
                     val combinedText = chunk.joinToString(PARAGRAPH_DELIMITER) { it.first }

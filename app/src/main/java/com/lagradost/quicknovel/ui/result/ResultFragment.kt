@@ -173,6 +173,8 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
 
     private var taskDialog: AlertDialog? = null
     private var taskBinding: ChapterTaskDialogBinding? = null
+    /** When true, progress updates stay in the notification; the modal dialog stays closed. */
+    private var taskDialogMinimized = false
     private val chapterFabBreathAnimators = mutableListOf<Animator>()
     private val detailBreathAnimators = mutableListOf<Animator>()
 
@@ -659,20 +661,46 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
     }
 
     private fun closeTaskDialog() {
+        taskDialog?.setOnDismissListener(null)
         taskDialog?.dismiss()
         taskDialog = null
         taskBinding = null
     }
 
+    /** Closes the blocking dialog without cancelling the job; progress continues in the notification. */
+    private fun minimizeTaskDialog() {
+        if (taskDialog == null && taskDialogMinimized) return
+        taskDialogMinimized = true
+        closeTaskDialog()
+        CommonActivity.showToast(activity, getString(R.string.task_running_background))
+    }
+
     private fun renderSelectionTask(state: SelectionTaskState?) {
         val act = activity ?: return
         if (state == null) {
+            taskDialogMinimized = false
             closeTaskDialog()
             return
         }
         if (state.finished) {
+            val wasMinimized = taskDialogMinimized
+            taskDialogMinimized = false
             closeTaskDialog()
             showTaskResult(state)
+            if (wasMinimized) {
+                CommonActivity.showToast(
+                    act,
+                    getString(
+                        if (state.error) R.string.task_background_failed
+                        else R.string.task_background_done
+                    ),
+                )
+            }
+            return
+        }
+
+        if (taskDialogMinimized) {
+            // Job keeps running via SelectionTaskService; do not re-block the UI.
             return
         }
 
@@ -684,9 +712,16 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             taskBinding = created
             taskDialog = AlertDialog.Builder(act, R.style.AlertDialogCustom)
                 .setView(created.root)
-                .setCancelable(false)
+                .setCancelable(true)
+                .setNeutralButton(R.string.task_continue_background, null)
                 .setNegativeButton(R.string.cancel) { _, _ -> viewModel.cancelSelectionTask() }
+                .setOnCancelListener { minimizeTaskDialog() }
                 .show()
+                .also { dialog ->
+                    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                        minimizeTaskDialog()
+                    }
+                }
         }
 
         dialogBinding.taskMessage.setText(

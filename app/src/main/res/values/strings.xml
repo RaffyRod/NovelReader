@@ -443,7 +443,8 @@
     <string name="plugin_langs_continue">Show providers</string>
     <string name="plugin_langs_pick_one">Pick at least one language</string>
     <string name="plugin_cards_title">Choose providers</string>
-    <string name="plugin_cards_hint">%1$d sources · install downloads JS and adds a Madara/CSS provider</string>
+    <string name="plugin_cards_hint">%1$d sources · install keeps each plugin’s template (Madara only when tagged; other JS is stored without rewriting selectors)</string>
+    <string name="plugin_select_all_applied">All sources selected — tap Install</string>
     <string name="plugin_select_all">Select all</string>
     <string name="plugin_install">Install</string>
     <string name="plugin_pick_one">Pick at least one provider</string>
@@ -522,6 +523,10 @@
     <string name="download_translate_hint_gemini">Uses your free Gemini key. It is slow because of the free rate limit.</string>
     <string name="download_translate_hint_google">Uses the built-in Google Translate online path (no Gemini key). Quality varies by language.</string>
     <string name="task_translating">Translating…</string>
+    <string name="task_continue_background">Continue in background</string>
+    <string name="task_running_background">Running in the background — you can keep using the app</string>
+    <string name="task_background_done">Background task finished</string>
+    <string name="task_background_failed">Background task failed</string>
     <string name="task_translate_failed">Translation failed: %1$s</string>
     <string name="read_offline">Read offline (%1$d)</string>
     <string name="read_offline_empty">No downloaded chapters to read</string>

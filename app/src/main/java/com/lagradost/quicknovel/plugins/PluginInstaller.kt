@@ -8,56 +8,96 @@ import com.lagradost.quicknovel.util.CustomProviders
 import java.io.File
 
 /**
- * Installs a manifest plugin into Ultimate as a CustomProvider (Madara/CSS templates)
- * and keeps the compiled JS on disk for updates / reinstall.
+ * Installs a catalog plugin into Ultimate.
  *
- * Full JS runtime (LNReader-style eval) is not executed here; the site URL drives the CSS provider.
+ * Madara / Blogger CSS templates are applied **only** when the plugin is tagged as such
+ * (e.g. `[madara]` in the JS URL). Other LNReader JS plugins keep their JS on disk and
+ * do **not** get Madara selectors invented for them.
  */
 object PluginInstaller {
 
-    fun configFromManifest(item: PluginManifestItem, localName: String? = null): CustomProviderConfig {
+    /**
+     * Builds a CSS config for search. Prefer [jsSource] hints from the downloaded plugin file.
+     * Returns null when Ultimate cannot map the plugin to a CSS template (JS-only).
+     */
+    fun configFromManifest(
+        item: PluginManifestItem,
+        localName: String? = null,
+        jsSource: String = "",
+    ): CustomProviderConfig? {
         val name = (localName ?: item.name).trim().ifBlank { item.id }
         val base = CustomProviderPresets.normalizeBaseUrl(item.site)
             ?: item.site.trim().trimEnd('/')
         val lang = PluginLangs.codeFor(item.displayLang)
-        val hint = (item.url + " " + item.id).lowercase()
-        return when {
-            "blogger" in hint || "blogspot" in base.lowercase() ->
+        return when (PluginTemplateHints.detect(item, jsSource)) {
+            PluginTemplateKind.BLOGGER ->
                 CustomProviderConfig.bloggerTemplate(name, base).copy(lang = lang)
-            else ->
-                // Madara / lightnovelwp / most LNReader multisrc map well to Madara selectors.
+            PluginTemplateKind.MADARA ->
                 CustomProviderConfig.madaraTemplate(name, base).copy(lang = lang)
+            PluginTemplateKind.UNSUPPORTED_JS -> null
         }
     }
 
-    suspend fun downloadJs(context: Context, item: PluginManifestItem): String {
-        if (item.url.isBlank()) return ""
+    suspend fun downloadJs(context: Context, item: PluginManifestItem): Pair<String, String> {
+        if (item.url.isBlank()) return "" to ""
         val dir = File(context.filesDir, "plugins").apply { mkdirs() }
         val safeId = item.id.replace(Regex("[^a-zA-Z0-9._-]"), "_")
         val out = File(dir, "$safeId.js")
         val text = app.get(item.url).text
         out.writeText(text)
-        return out.absolutePath
+        return out.absolutePath to text
     }
 
     /**
      * Installs [item] (or updates an existing install). Returns the saved [InstalledPlugin].
+     *
+     * Existing CustomProvider selectors are preserved on update/rename so a reinstall does not
+     * wipe user (or previously correct) configuration with Madara defaults.
      */
     suspend fun install(
         context: Context,
         item: PluginManifestItem,
         repoUrl: String,
         localName: String? = null,
+        forceRetemplate: Boolean = false,
     ): InstalledPlugin {
         val existing = PluginStore.getInstalled(item.id)
         val name = localName?.trim()?.takeIf { it.isNotBlank() }
             ?: existing?.localName
             ?: item.name
         val uniqueName = uniqueProviderName(name, ignoring = existing?.providerName)
-        val config = configFromManifest(item, uniqueName)
-        val jsPath = runCatching { downloadJs(context, item) }.getOrDefault(existing?.jsPath.orEmpty())
 
-        CustomProviders.save(context, config, replacing = existing?.providerName)
+        val (jsPath, jsText) = runCatching { downloadJs(context, item) }
+            .getOrElse {
+                val path = existing?.jsPath.orEmpty()
+                path to path.takeIf { it.isNotBlank() }?.let { File(it).takeIf { f -> f.isFile }?.readText() }.orEmpty()
+            }
+
+        val previousConfig = existing?.providerName
+            ?.let { prev -> CustomProviders.load().firstOrNull { it.name == prev } }
+        val detected = PluginTemplateHints.detect(item, jsText)
+        val freshConfig = configFromManifest(item, uniqueName, jsText)
+
+        // Keep prior CSS only when this install still maps to a CSS template. If detect says
+        // JS-only, drop a previously auto-applied Madara/Blogger config so every provider
+        // is not stuck with the same wp-manga query.
+        val config = when {
+            detected == PluginTemplateKind.UNSUPPORTED_JS -> null
+            previousConfig != null && !forceRetemplate && freshConfig != null ->
+                previousConfig.copy(
+                    name = uniqueName,
+                    baseUrl = CustomProviderPresets.normalizeBaseUrl(item.site)
+                        ?: item.site.trim().trimEnd('/').ifBlank { previousConfig.baseUrl },
+                    lang = PluginLangs.codeFor(item.displayLang).ifBlank { previousConfig.lang },
+                )
+            else -> freshConfig
+        }
+
+        if (config != null) {
+            CustomProviders.save(context, config, replacing = existing?.providerName)
+        } else if (existing?.providerName != null) {
+            CustomProviders.remove(existing.providerName)
+        }
 
         val installed = InstalledPlugin(
             id = item.id,
@@ -71,16 +111,19 @@ object PluginInstaller {
             jsUrl = item.url,
             iconUrl = item.iconUrl,
             repoUrl = repoUrl,
-            providerName = uniqueName,
+            providerName = if (config != null) uniqueName else "",
             jsPath = jsPath,
             installedAt = existing?.installedAt ?: System.currentTimeMillis(),
+            cssMapped = config != null,
         )
         PluginStore.saveInstalled(installed)
         return installed
     }
 
     fun uninstall(context: Context, plugin: InstalledPlugin) {
-        CustomProviders.remove(plugin.providerName)
+        if (plugin.providerName.isNotBlank()) {
+            CustomProviders.remove(plugin.providerName)
+        }
         if (plugin.jsPath.isNotBlank()) {
             runCatching { File(plugin.jsPath).delete() }
         }
@@ -117,7 +160,13 @@ object PluginInstaller {
             url = plugin.jsUrl,
             iconUrl = plugin.iconUrl,
         )
-        return install(context, item.copy(version = item.version.ifBlank { plugin.latestVersion }), plugin.repoUrl, plugin.localName)
+        return install(
+            context,
+            item.copy(version = item.version.ifBlank { plugin.latestVersion }),
+            plugin.repoUrl,
+            plugin.localName,
+            forceRetemplate = false,
+        )
     }
 
     private fun uniqueProviderName(desired: String, ignoring: String?): String {

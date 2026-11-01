@@ -22,6 +22,7 @@ import com.lagradost.quicknovel.plugins.PluginLangs
 import com.lagradost.quicknovel.plugins.PluginManifestClient
 import com.lagradost.quicknovel.plugins.PluginManifestItem
 import com.lagradost.quicknovel.plugins.PluginRepo
+import com.lagradost.quicknovel.plugins.PluginSelectAll
 import com.lagradost.quicknovel.plugins.PluginStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,7 +30,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * LNReader-style plugin flow: manage installed → add repo/fetch → languages → cards → install.
- * JSON is the catalog; install downloads JS and registers a CustomProvider from the site URL.
+ * JSON is the catalog; install downloads JS and maps Madara/Blogger templates only when tagged.
  */
 object PluginProviderDialogs {
 
@@ -264,9 +265,11 @@ object PluginProviderDialogs {
             text = activity.getString(R.string.plugin_cards_hint, items.size)
             setPadding(0, 0, 0, (8 * density).toInt())
         })
-        val boxes = items.map { item ->
+        val boxes = ArrayList<CheckBox>(items.size)
+        items.forEach { item ->
             val already = item.id in installedIds
-            CheckBox(activity).apply {
+            val box = CheckBox(activity).apply {
+                tag = item.id
                 text = buildString {
                     append(item.name)
                     append("\n")
@@ -276,10 +279,20 @@ object PluginProviderDialogs {
                     if (already) append("  ✓")
                 }
                 isChecked = false
-                setOnCheckedChangeListener { _, checked ->
-                    if (checked) selected.add(item.id) else selected.remove(item.id)
+                setOnCheckedChangeListener { button, checked ->
+                    val id = button.tag as? String ?: return@setOnCheckedChangeListener
+                    if (checked) selected.add(id) else selected.remove(id)
                 }
-            }.also { column.addView(it) }
+            }
+            boxes.add(box)
+            column.addView(box)
+        }
+        fun applySelectAll() {
+            selected.clear()
+            selected.addAll(PluginSelectAll.allIds(items))
+            boxes.forEach { box ->
+                if (!box.isChecked) box.isChecked = true
+            }
         }
         val scroll = ScrollView(activity).apply {
             addView(column)
@@ -288,23 +301,30 @@ object PluginProviderDialogs {
                 (420 * density).toInt(),
             )
         }
-        AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+        val dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.plugin_cards_title)
             .setView(scroll)
-            .setNeutralButton(R.string.plugin_select_all) { d, _ ->
-                boxes.forEach { it.isChecked = true }
-                d.dismiss()
-                showCards(activity, repoUrl, items, onChanged)
-            }
+            .setNeutralButton(R.string.plugin_select_all, null)
             .setNegativeButton(R.string.close, null)
-            .setPositiveButton(R.string.plugin_install) { _, _ ->
+            .setPositiveButton(R.string.plugin_install, null)
+            .create()
+        dialog.setOnShowListener {
+            // Keep the dialog open on Select all / empty Install (no dismiss + reset).
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                applySelectAll()
+                showToast(activity, activity.getString(R.string.plugin_select_all_applied))
+            }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (selected.isEmpty()) {
                     showToast(activity, activity.getString(R.string.plugin_pick_one))
-                    return@setPositiveButton
+                    return@setOnClickListener
                 }
-                installSelected(activity, repoUrl, items.filter { it.id in selected }, onChanged)
+                val chosen = items.filter { it.id in selected }
+                dialog.dismiss()
+                installSelected(activity, repoUrl, chosen, onChanged)
             }
-            .show()
+        }
+        dialog.show()
     }
 
     private fun installSelected(

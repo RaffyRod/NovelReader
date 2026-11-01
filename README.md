@@ -16,7 +16,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 
 | | |
 |---|---|
-| 🏷️ **Version** | **1.2.3** (`versionCode` 123) |
+| 🏷️ **Version** | **1.2.4** (`versionCode` 124) |
 | 📦 **Package** | `com.lagradost.quicknovel.ultimate` |
 | 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** |
 | 📥 **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK |
@@ -28,7 +28,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | Step | What to do |
 |------|------------|
 | 1️⃣ | Uninstall older Ultimate / stock QuickNovel if present |
-| 2️⃣ | Install `QuickNovel-Ultimate-1.2.3-universal.apk` |
+| 2️⃣ | Install `QuickNovel-Ultimate-1.2.4-universal.apk` |
 | 3️⃣ | If prompted to update to LagradOst 3.x → **Cancel / Skip** |
 | 4️⃣ | Open **QuickNovel Ultimate** (orb + 本) |
 | 5️⃣ | App language defaults to **Español** (change in Settings) |
