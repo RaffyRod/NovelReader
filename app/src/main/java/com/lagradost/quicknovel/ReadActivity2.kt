@@ -546,10 +546,19 @@ class ReadActivity2 : AppCompatActivity(), ColorPickerDialogListener {
 
     private fun startGlyphPulse() {
         val primary = colorFromAttribute(R.attr.colorPrimary)
+        val surface = colorFromAttribute(R.attr.primaryBlackBackground)
+        val text = colorFromAttribute(R.attr.textColor)
+        val muted = colorFromAttribute(R.attr.grayTextColor)
+        binding.readLoading.setBackgroundColor(surface)
         binding.loadingGlyphHalo.backgroundTintList =
             ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 55))
+        binding.loadingGlyphRing.backgroundTintList = ColorStateList.valueOf(primary)
         binding.loadingGlyph.setTextColor(primary)
+        binding.loadingTitle.setTextColor(text)
+        binding.loadingText.setTextColor(muted)
         binding.loadingSource.setTextColor(primary)
+        binding.loadingSource.backgroundTintList =
+            ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 36))
         if (glyphPulseAnim == null) {
             glyphPulseAnim = AnimationUtils.loadAnimation(this, R.anim.reader_glyph_pulse)
         }

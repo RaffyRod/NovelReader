@@ -1061,7 +1061,11 @@ fun RowScope.TextIcon(text: String, icon: Int, onClick: () -> Unit) {
 
 @Composable
 fun LoadingScreen(modifier: Modifier) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             LoadingPoster()
             Column {
