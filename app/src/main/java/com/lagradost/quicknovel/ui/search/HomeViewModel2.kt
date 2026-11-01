@@ -15,7 +15,9 @@ import com.lagradost.quicknovel.ui.common.ImmutableSearchResponse
 import com.lagradost.quicknovel.ui.common.SearchResponseAction
 import com.lagradost.quicknovel.ui.mainpage.FilterQuery
 import com.lagradost.quicknovel.ui.search.HomeEffect.NavigateToMainPage
+import com.lagradost.quicknovel.CommonActivity
 import com.lagradost.quicknovel.util.Apis
+import com.lagradost.quicknovel.util.CustomProviders
 import com.lagradost.quicknovel.util.ProviderLanguages
 import com.lagradost.quicknovel.util.RecentSearches
 import com.lagradost.quicknovel.util.cmap
@@ -26,6 +28,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -140,11 +143,14 @@ class HomeViewModel2 : ViewModel(),
             }
 
             is HomeAction.ConfigureApisNames -> {
+                val refreshed = refreshedApis()
                 updateState {
                     copy(
+                        allApis = refreshed.all,
+                        mainPageApis = refreshed.mainPage,
                         filterNames = action.names,
                         shownMainPageApis = filterApis(
-                            mainPageApis,
+                            refreshed.mainPage,
                             action.names,
                             filterLanguages
                         )
@@ -154,11 +160,14 @@ class HomeViewModel2 : ViewModel(),
             }
 
             is HomeAction.ConfigureApisLanguages -> {
+                val refreshed = refreshedApis()
                 updateState {
                     copy(
+                        allApis = refreshed.all,
+                        mainPageApis = refreshed.mainPage,
                         filterLanguages = action.languages,
                         shownMainPageApis = filterApis(
-                            mainPageApis,
+                            refreshed.mainPage,
                             filterNames,
                             action.languages
                         )
@@ -235,10 +244,45 @@ class HomeViewModel2 : ViewModel(),
         RecentSearches.save(recent)
         updateState { copy(recentSearches = recent.toImmutableList()) }
         searchQuery.launch {
-            val state = state.value
-            val searchApis = filterApis(state.allApis, state.filterNames, state.filterLanguages)
+            // Pick up providers added after the search screen opened (custom / plugins).
+            val refreshed = refreshedApis()
+            val act = CommonActivity.activity
+            val syncedNames = act?.let { CustomProviders.syncEnabledInSearch(it) }.orEmpty()
+            val current = state.value
+            val names = if (syncedNames.isNotEmpty()) {
+                syncedNames.toPersistentSet()
+            } else {
+                current.filterNames
+            }
+            // Always allow languages used by installed custom providers for this query.
+            val customLangs = CustomProviders.load().map { it.lang }.filter { it.isNotBlank() }.toSet()
+            val langs = (current.filterLanguages + customLangs).toPersistentSet()
+            updateState {
+                copy(
+                    allApis = refreshed.all,
+                    mainPageApis = refreshed.mainPage,
+                    filterNames = names,
+                    filterLanguages = langs,
+                    shownMainPageApis = filterApis(refreshed.mainPage, names, langs),
+                )
+            }
+            val searchApis = filterApis(refreshed.all, names, langs)
             searchQuery(query, searchApis)
         }
+    }
+
+    private data class RefreshedApis(
+        val all: ImmutableList<MainAPI>,
+        val mainPage: ImmutableList<MainAPI>,
+    )
+
+    private fun refreshedApis(): RefreshedApis {
+        Apis.refreshApis()
+        val all = Apis.apis.toImmutableList()
+        return RefreshedApis(
+            all = all,
+            mainPage = all.filter { api -> api.hasMainPage }.toImmutableList(),
+        )
     }
 
     private suspend fun searchQuery(query: String, apis: ImmutableList<MainAPI>) {

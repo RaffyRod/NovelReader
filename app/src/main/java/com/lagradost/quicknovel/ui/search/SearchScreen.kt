@@ -9,7 +9,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.font.FontWeight
 import com.lagradost.quicknovel.ui.common.SkeletonCover
-import com.lagradost.quicknovel.ui.common.SkeletonGrid
+import com.lagradost.quicknovel.ui.common.SkeletonProviderRows
 import com.lagradost.quicknovel.ui.common.staggeredEnter
 import kotlinx.collections.immutable.ImmutableList
 import androidx.compose.foundation.Image
@@ -284,7 +284,8 @@ private fun RecentSearchesSection(recent: ImmutableList<String>, action: (HomeAc
     }
 }
 
-private val SearchCoverWidth = 102.dp
+/** Base 87.dp (+5% after adding card gaps). */
+private val SearchCoverWidth = 91.dp
 
 @Composable
 private fun PopularSection(state: HomeViewModelState, searchAction: (SearchResponseAction) -> Unit) {
@@ -337,19 +338,21 @@ private fun SearchResults(
             }
             if (state.isLoading) {
                 item(key = "loading_more") {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(Modifier.size(28.dp))
-                    }
+                    SkeletonProviderRows(
+                        rows = 1,
+                        coversPerRow = 4,
+                        coverWidth = SearchCoverWidth,
+                    )
                 }
             }
         }
 
-        state.isLoading -> SkeletonGrid(modifier)
+        state.isLoading -> SkeletonProviderRows(
+            modifier = modifier,
+            rows = 4,
+            coversPerRow = 4,
+            coverWidth = SearchCoverWidth,
+        )
 
         else -> Box(modifier, contentAlignment = Alignment.Center) {
             Text(
@@ -480,7 +483,7 @@ private fun SearchRow(
             )
         }
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 10.dp)
         ) {
             items(items = row.items, key = { item -> item.randomUuid }) { response ->

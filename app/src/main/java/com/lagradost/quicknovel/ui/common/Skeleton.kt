@@ -146,3 +146,40 @@ fun SkeletonList(modifier: Modifier = Modifier, count: Int = 6) {
         repeat(count) { SkeletonRow() }
     }
 }
+
+/**
+ * Loading rows shaped like search-by-provider results (title + horizontal covers).
+ */
+@Composable
+fun SkeletonProviderRows(
+    modifier: Modifier = Modifier,
+    rows: Int = 3,
+    coversPerRow: Int = 4,
+    coverWidth: androidx.compose.ui.unit.Dp = 91.dp,
+) {
+    Column(
+        modifier = modifier.padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        repeat(rows) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier
+                        .padding(horizontal = 10.dp)
+                        .fillMaxWidth(0.45f)
+                        .height(18.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .shimmer()
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                ) {
+                    repeat(coversPerRow) {
+                        SkeletonCover(Modifier.width(coverWidth))
+                    }
+                }
+            }
+        }
+    }
+}

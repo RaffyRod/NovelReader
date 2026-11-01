@@ -140,10 +140,13 @@ class DevilNovelsProvider : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         val url = "$mainUrl/wp-admin/admin-ajax.php"
-        val document = app.post(url = url, data = mapOf(
-            "action" to "pvc_live_search",
-            "s" to "a will etern"
-        )).parsed<DevilNovelSearchResponse>()
+        val document = app.post(
+            url = url,
+            data = mapOf(
+                "action" to "pvc_live_search",
+                "s" to query,
+            ),
+        ).parsed<DevilNovelSearchResponse>()
 
         return document.data.map { card ->
             newSearchResponse(card.title, card.link) {

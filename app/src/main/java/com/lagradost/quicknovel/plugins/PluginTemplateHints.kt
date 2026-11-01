@@ -38,8 +38,9 @@ object PluginTemplateHints {
             ?: bracketTag.find(item.id)?.groupValues?.getOrNull(1)?.lowercase()
             ?: multisrc.find(item.url)?.groupValues?.getOrNull(1)?.lowercase()
 
+        // lightnovelwp and other multisrc families are NOT Madara — never invent wp-manga queries.
         return when (tag) {
-            "madara", "lightnovelwp" -> PluginTemplateKind.MADARA
+            "madara" -> PluginTemplateKind.MADARA
             "blogger" -> PluginTemplateKind.BLOGGER
             else -> PluginTemplateKind.UNSUPPORTED_JS
         }

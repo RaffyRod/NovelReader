@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plugins instalados — opciones visuales</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --surface: #161b22;
+      --surface2: #1c2330;
+      --line: #2a3340;
+      --text: #e8edf4;
+      --muted: #9aa6b5;
+      --accent: #3b82f6;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --danger: #f87171;
+      --radius: 14px;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: #07090c;
+      color: var(--text);
+      padding: 28px 20px 64px;
+    }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 8px; }
+    .lead { color: var(--muted); margin: 0 0 28px; max-width: 52rem; line-height: 1.45; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+      align-items: start;
+    }
+    .option-label {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .option-label strong {
+      font-size: 1.05rem;
+      letter-spacing: 0.02em;
+    }
+    .option-label span { color: var(--muted); font-size: 0.9rem; }
+    .phone {
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+      min-height: 560px;
+      display: flex;
+      flex-direction: column;
+    }
+    .status {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .titlebar {
+      padding: 8px 16px 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .body { flex: 1; overflow: hidden; padding: 0 12px 12px; }
+    .actions {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .btn {
+      flex: 1;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 8px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: default;
+      color: var(--text);
+      background: var(--surface2);
+    }
+    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--surface2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .chip.js { color: #93c5fd; background: rgba(59,130,246,0.15); }
+    .chip.madara { color: #6ee7b7; background: rgba(52,211,153,0.14); }
+    .chip.up { color: var(--warn); background: rgba(251,191,36,0.14); }
+    .meta { color: var(--muted); font-size: 11px; line-height: 1.35; }
+
+    /* A: denser list with dividers */
+    .a-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 11px 4px;
+      border-bottom: 1px solid var(--line);
+    }
+    .a-ico {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: linear-gradient(145deg, #243044, #1a2230);
+      flex: 0 0 auto;
+      display: grid; place-items: center;
+      font-size: 13px; font-weight: 600; color: #93c5fd;
+    }
+    .a-main { min-width: 0; flex: 1; }
+    .a-name { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+    .a-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    /* B: soft cards */
+    .b-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .b-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+    .b-name { font-size: 14px; font-weight: 600; }
+    .b-site { color: var(--muted); font-size: 11px; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .b-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .b-actions { display: flex; gap: 6px; }
+    .mini {
+      border: 0; border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 11px;
+      background: var(--surface2); color: var(--text);
+    }
+    .mini.danger { color: var(--danger); background: rgba(248,113,113,0.12); }
+
+    /* C: compact searchable + sections */
+    .c-search {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .c-search input {
+      flex: 1; border-radius: 10px; border: 1px solid var(--line);
+      background: var(--surface); color: var(--text);
+      padding: 9px 11px; font: inherit; font-size: 13px;
+    }
+    .c-sec {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); margin: 14px 2px 8px;
+    }
+    .c-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      background: var(--surface);
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .c-name { font-size: 13px; font-weight: 500; }
+    .c-toggle {
+      width: 40px; height: 22px; border-radius: 999px;
+      background: #2a3648; position: relative;
+    }
+    .c-toggle::after {
+      content: ""; position: absolute; top: 3px; left: 3px;
+      width: 16px; height: 16px; border-radius: 50%; background: #cbd5e1;
+    }
+    .c-toggle.on { background: rgba(59,130,246,0.55); }
+    .c-toggle.on::after { left: 21px; background: #fff; }
+
+    /* D: sheet / material detail */
+    .d-stat {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;
+    }
+    .d-pill {
+      background: var(--surface); border-radius: 12px; padding: 10px 8px; text-align: center;
+    }
+    .d-pill b { display: block; font-size: 16px; }
+    .d-pill span { color: var(--muted); font-size: 10px; }
+    .d-item {
+      display: flex; gap: 10px; align-items: center;
+      padding: 10px; border-radius: 12px;
+      background: linear-gradient(90deg, var(--surface), transparent);
+      margin-bottom: 6px;
+    }
+    .d-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: 0 0 auto;
+    }
+    .d-dot.js { background: #60a5fa; }
+    .d-dot.ok { background: var(--ok); }
+    .d-right { margin-left: auto; color: var(--muted); font-size: 11px; }
+
+    .pick {
+      margin-top: 12px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Plugins instalados — elige un estilo</h1>
+  <p class="lead">Cuatro propuestas para reemplazar la lista de texto plano. Misma info (nombre, versión, idioma, JS/Madara); distinta densidad e interacción. Di A, B, C o D (o mezcla).</p>
+
+  <div class="grid">
+    <section>
+      <div class="option-label"><strong>A · Lista con icono</strong><span>Cercana a ahora, más clara</span></div>
+      <div class="phone" aria-label="Opción A">
+        <div class="status"><span>12:17</span><span>Ultimate</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <div class="a-row">
+            <div class="a-ico">Al</div>
+            <div class="a-main">
+              <div class="a-name">AllNovel 2</div>
+              <div class="a-chips">
+                <span class="chip">v2.3.5</span>
+                <span class="chip">English</span>
+                <span class="chip js">JS</span>
+              </div>
+            </div>
+          </div>
+          <div class="a-row">
+            <div class="a-ico">AN</div>
+            <div class="a-main">
+              <div class="a-name">AllNovelRead</div>
+              <div class="a-chips">
+                <span class="chip">v1.1.12</span>
+                <span class="chip">Español</span>
+                <span class="chip js">JS</span>
+              </div>
+            </div>
+          </div>
+          <div class="a-row">
+            <div class="a-ico">AH</div>
+            <div class="a-main">
+              <div class="a-name">AnimesHoy12</div>
+              <div class="a-chips">
+                <span class="chip">v2.3.0</span>
+                <span class="chip">Español</span>
+                <span class="chip madara">Madara</span>
+                <span class="chip up">↑ 2.3.1</span>
+              </div>
+            </div>
+          </div>
+          <div class="a-row">
+            <div class="a-ico">As</div>
+            <div class="a-main">
+              <div class="a-name">Asura Scans</div>
+              <div class="a-chips">
+                <span class="chip">v1.0.0</span>
+                <span class="chip">English</span>
+                <span class="chip js">JS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button">Repo</button>
+          <button class="btn" type="button">Cerrar</button>
+          <button class="btn primary" type="button">Catálogo</button>
+        </div>
+      </div>
+      <p class="pick">Tap fila → opciones. Mínimo cambio de UX.</p>
+    </section>
+
+    <section>
+      <div class="option-label"><strong>B · Cards suaves</strong><span>Acciones visibles por plugin</span></div>
+      <div class="phone" aria-label="Opción B">
+        <div class="status"><span>12:17</span><span>Ultimate</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <article class="b-card">
+            <div class="b-top">
+              <div class="b-name">AllNovel 2</div>
+              <span class="chip js">JS</span>
+            </div>
+            <div class="b-site">novelfull.com</div>
+            <div class="b-foot">
+              <span class="meta">v2.3.5 · English</span>
+              <div class="b-actions">
+                <button class="mini" type="button">Actualizar</button>
+                <button class="mini danger" type="button">Quitar</button>
+              </div>
+            </div>
+          </article>
+          <article class="b-card">
+            <div class="b-top">
+              <div class="b-name">AnimesHoy12</div>
+              <span class="chip madara">Madara</span>
+            </div>
+            <div class="b-site">animeshoy.com</div>
+            <div class="b-foot">
+              <span class="meta">v2.3.0 · Español · ↑ disponible</span>
+              <div class="b-actions">
+                <button class="mini" type="button">Actualizar</button>
+                <button class="mini danger" type="button">Quitar</button>
+              </div>
+            </div>
+          </article>
+          <article class="b-card">
+            <div class="b-top">
+              <div class="b-name">Arcane Translations</div>
+              <span class="chip js">JS</span>
+            </div>
+            <div class="b-site">arcanetranslations.com</div>
+            <div class="b-foot">
+              <span class="meta">v1.1.12 · English</span>
+              <div class="b-actions">
+                <button class="mini" type="button">Renombrar</button>
+                <button class="mini danger" type="button">Quitar</button>
+              </div>
+            </div>
+          </article>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button">Repo</button>
+          <button class="btn" type="button">Cerrar</button>
+          <button class="btn primary" type="button">Catálogo</button>
+        </div>
+      </div>
+      <p class="pick">Más espacio; menos plugins visibles a la vez.</p>
+    </section>
+
+    <section>
+      <div class="option-label"><strong>C · Buscar + grupos</strong><span>Mejor con muchos plugins</span></div>
+      <div class="phone" aria-label="Opción C">
+        <div class="status"><span>12:17</span><span>Ultimate</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <div class="c-search">
+            <input type="search" value="" placeholder="Filtrar por nombre…" aria-label="Filtrar plugins" readonly />
+          </div>
+          <div class="c-sec">Español · 2</div>
+          <div class="c-row">
+            <div>
+              <div class="c-name">AllNovelRead</div>
+              <div class="meta">v1.1.12 · JS</div>
+            </div>
+            <div class="c-toggle on" title="Activo en búsqueda" aria-hidden="true"></div>
+          </div>
+          <div class="c-row">
+            <div>
+              <div class="c-name">AnimesHoy12</div>
+              <div class="meta">v2.3.0 · Madara · ↑</div>
+            </div>
+            <div class="c-toggle on" title="Activo" aria-hidden="true"></div>
+          </div>
+          <div class="c-sec">English · 3</div>
+          <div class="c-row">
+            <div>
+              <div class="c-name">AllNovel 2</div>
+              <div class="meta">v2.3.5 · JS</div>
+            </div>
+            <div class="c-toggle on" aria-hidden="true"></div>
+          </div>
+          <div class="c-row">
+            <div>
+              <div class="c-name">Anime Anyway</div>
+              <div class="meta">v1.0.0 · JS</div>
+            </div>
+            <div class="c-toggle" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button">Repo</button>
+          <button class="btn" type="button">Cerrar</button>
+          <button class="btn primary" type="button">Catálogo</button>
+        </div>
+      </div>
+      <p class="pick">Filtro + toggle “usar en búsqueda”.</p>
+    </section>
+
+    <section>
+      <div class="option-label"><strong>D · Resumen + filas</strong><span>Look Ultimate / Material</span></div>
+      <div class="phone" aria-label="Opción D">
+        <div class="status"><span>12:17</span><span>Ultimate</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <div class="d-stat">
+            <div class="d-pill"><b>48</b><span>Instalados</span></div>
+            <div class="d-pill"><b>3</b><span>Updates</span></div>
+            <div class="d-pill"><b>12</b><span>Madara</span></div>
+          </div>
+          <div class="d-item">
+            <span class="d-dot js"></span>
+            <div>
+              <div class="c-name">AllNovel 2</div>
+              <div class="meta">English · v2.3.5</div>
+            </div>
+            <span class="d-right">JS</span>
+          </div>
+          <div class="d-item">
+            <span class="d-dot ok"></span>
+            <div>
+              <div class="c-name">AnimesHoy12</div>
+              <div class="meta">Español · v2.3.0</div>
+            </div>
+            <span class="d-right">Madara</span>
+          </div>
+          <div class="d-item">
+            <span class="d-dot" style="background:var(--warn)"></span>
+            <div>
+              <div class="c-name">Asura Scans</div>
+              <div class="meta">English · update 1.0.1</div>
+            </div>
+            <span class="d-right">↑</span>
+          </div>
+          <div class="d-item">
+            <span class="d-dot js"></span>
+            <div>
+              <div class="c-name">Archive Of Our Own</div>
+              <div class="meta">English · v1.0.0</div>
+            </div>
+            <span class="d-right">JS</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button">Actualizar todo</button>
+          <button class="btn primary" type="button">Explorar</button>
+        </div>
+      </div>
+      <p class="pick">Contadores arriba; filas limpias; CTA fuerte.</p>
+    </section>
+  </div>
+</body>
+</html>

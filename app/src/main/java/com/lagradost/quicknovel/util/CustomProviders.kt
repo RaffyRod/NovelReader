@@ -39,6 +39,39 @@ object CustomProviders {
         Apis.refreshApis()
     }
 
+    /**
+     * Ensures every saved custom provider is enabled for search and its language is allowed.
+     * Call before a novel search so newly added providers are queried even if the UI still
+     * holds a stale provider snapshot.
+     */
+    fun syncEnabledInSearch(context: Context): Set<String> {
+        val customs = load()
+        val settings = PreferenceManager.getDefaultSharedPreferences(context)
+        val providersKey = context.getString(R.string.search_providers_list_key)
+        val savedProviders = settings.getStringSet(providersKey, null)?.toMutableSet()
+            ?: Apis.apis.map { it.name }.toMutableSet()
+        var providersChanged = false
+        for (config in customs) {
+            if (savedProviders.add(config.name)) providersChanged = true
+        }
+        if (providersChanged) {
+            settings.edit().putStringSet(providersKey, savedProviders).apply()
+        }
+
+        val langKey = context.getString(R.string.provider_lang_key)
+        val savedLangs = settings.getStringSet(langKey, null)?.toMutableSet()
+        if (savedLangs != null) {
+            var langsChanged = false
+            for (config in customs) {
+                if (config.lang.isNotBlank() && savedLangs.add(config.lang)) langsChanged = true
+            }
+            if (langsChanged) {
+                settings.edit().putStringSet(langKey, savedLangs).apply()
+            }
+        }
+        return savedProviders.toSet()
+    }
+
     /** New providers start enabled for search, otherwise they would not show up in the results. */
     private fun enableInSearch(context: Context, config: CustomProviderConfig, replacing: String?) {
         val settings = PreferenceManager.getDefaultSharedPreferences(context)

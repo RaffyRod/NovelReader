@@ -60,8 +60,14 @@ object PluginInstaller {
         repoUrl: String,
         localName: String? = null,
         forceRetemplate: Boolean = false,
+        /**
+         * When true (bulk “add plugins”), an already-installed id is left untouched —
+         * no JS rewrite, no Madara remap, no local-name change.
+         */
+        skipIfInstalled: Boolean = false,
     ): InstalledPlugin {
         val existing = PluginStore.getInstalled(item.id)
+        if (skipIfInstalled && existing != null) return existing
         val name = localName?.trim()?.takeIf { it.isNotBlank() }
             ?: existing?.localName
             ?: item.name

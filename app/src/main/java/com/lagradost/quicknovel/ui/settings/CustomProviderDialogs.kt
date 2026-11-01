@@ -179,10 +179,20 @@ object CustomProviderDialogs {
         dialog.getButton(DialogInterface.BUTTON_NEUTRAL).setOnClickListener {
             dialog.dismiss()
             val url = baseUrl().orEmpty()
+            // Do not auto-fill Madara selectors — optional via the editor's "Madara preset" button.
             val prefill = if (selectedKind() == CustomProviderConfig.KIND_BLOGGER) {
                 CustomProviderConfig.bloggerTemplate(name(), url).copy(lang = lang())
             } else {
-                CustomProviderConfig.madaraTemplate(name(), url).copy(lang = lang())
+                CustomProviderConfig(
+                    name = name(),
+                    baseUrl = url,
+                    lang = lang(),
+                    searchUrl = "",
+                    resultItem = "",
+                    novelTitle = "",
+                    chapterLink = "",
+                    content = "",
+                )
             }
             showEditor(activity, existing = null, prefill = prefill, onSaved = onSaved)
         }

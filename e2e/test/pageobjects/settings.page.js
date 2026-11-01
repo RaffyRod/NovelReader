@@ -147,17 +147,42 @@ class SettingsPage extends BasePage {
   }
 
   /**
-   * Finds the Switch nearest to a preference title row.
+   * True when an accessibility checked attribute means ON.
+   * @param {unknown} value
+   */
+  isCheckedValue(value) {
+    return value === true || value === 'true' || value === 1 || value === '1';
+  }
+
+  /**
+   * Finds the Switch / checkable control nearest to a preference title row.
+   * Compose Material3 Switch is often exposed as a checkable View, not android.widget.Switch.
    * @param {WebdriverIO.Element} titleEl
    * @returns {Promise<boolean>}
    */
   async isPreferenceSwitchOnNear(titleEl) {
     const titleBounds = await titleEl.getLocation().catch(() => null);
-    const switches = await $$('android.widget.Switch');
+    const pools = await Promise.all([
+      $$('android.widget.Switch'),
+      $$('android=new UiSelector().checkable(true)'),
+    ]);
+    const seen = new Set();
+    const candidates = [];
+    for (const pool of pools) {
+      for (const el of pool) {
+        const id = el.elementId || el.ELEMENT;
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        candidates.push(el);
+      }
+    }
+
     let best = null;
     let bestDist = Number.POSITIVE_INFINITY;
-    for (const sw of switches) {
+    for (const sw of candidates) {
       if (!(await sw.isDisplayed().catch(() => false))) continue;
+      const checkable = await sw.getAttribute('checkable').catch(() => null);
+      if (checkable === 'false' || checkable === false) continue;
       if (!titleBounds) {
         best = sw;
         continue;
@@ -165,13 +190,19 @@ class SettingsPage extends BasePage {
       const loc = await sw.getLocation().catch(() => null);
       if (!loc) continue;
       const dist = Math.abs(loc.y - titleBounds.y);
+      // Prefer controls on the same preference row (within ~120px).
       if (dist < bestDist) {
         bestDist = dist;
         best = sw;
       }
     }
-    if (!best) return false;
-    return (await best.getAttribute('checked')) === 'true';
+    if (!best || bestDist > 160) return false;
+    const checked = await best.getAttribute('checked').catch(() => null);
+    if (checked != null && String(checked).length > 0) {
+      return this.isCheckedValue(checked);
+    }
+    const selected = await best.getAttribute('selected').catch(() => null);
+    return this.isCheckedValue(selected);
   }
 
   /**

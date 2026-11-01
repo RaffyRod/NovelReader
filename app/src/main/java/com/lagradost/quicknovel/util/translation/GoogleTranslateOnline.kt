@@ -100,8 +100,8 @@ class GoogleTranslateOnline {
             if (contentFragments.isNotEmpty()) {
                 val chunks = chunkByLimit(contentFragments)
                 chunks.forEachIndexed { i, chunk ->
-                    // Light pacing only — 1s/chunk made ~25s chapters feel broken.
-                    if (i > 0) delay(120)
+                    // Minimal pacing — keep chapters snappy without hammering the endpoint.
+                    if (i > 0) delay(40)
                     progress.invoke(i, chunks.size)
 
                     val combinedText = chunk.joinToString(PARAGRAPH_DELIMITER) { it.first }

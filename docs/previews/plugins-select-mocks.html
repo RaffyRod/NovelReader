@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elegir providers — opciones visuales</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --surface: #161b22;
+      --surface2: #1c2330;
+      --line: #2a3340;
+      --text: #e8edf4;
+      --muted: #9aa6b5;
+      --accent: #3b82f6;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --danger: #f87171;
+      --radius: 14px;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: #07090c;
+      color: var(--text);
+      padding: 28px 20px 64px;
+    }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 8px; }
+    .lead { color: var(--muted); margin: 0 0 12px; max-width: 54rem; line-height: 1.45; }
+    .note {
+      max-width: 54rem;
+      margin: 0 0 28px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(52,211,153,0.28);
+      background: rgba(52,211,153,0.08);
+      color: #a7f3d0;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+      align-items: start;
+    }
+    .option-label {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .option-label strong { font-size: 1.05rem; }
+    .option-label span { color: var(--muted); font-size: 0.9rem; }
+    .phone {
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+      min-height: 580px;
+      display: flex;
+      flex-direction: column;
+    }
+    .status {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .titlebar {
+      padding: 8px 16px 4px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .hint {
+      padding: 0 16px 10px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .body { flex: 1; overflow: hidden; padding: 0 12px 12px; }
+    .actions {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .btn {
+      flex: 1;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 8px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--surface2);
+    }
+    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+    .chip {
+      display: inline-flex;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--surface2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .chip.js { color: #93c5fd; background: rgba(59,130,246,0.15); }
+    .chip.madara { color: #6ee7b7; background: rgba(52,211,153,0.14); }
+    .chip.ok { color: var(--ok); background: rgba(52,211,153,0.14); }
+    .chip.lock { color: var(--muted); background: rgba(154,166,181,0.12); }
+
+    /* A — soft select cards (alineado al hub B) */
+    .a-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 11px 12px;
+      margin-bottom: 9px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: start;
+    }
+    .a-card.installed {
+      opacity: 0.62;
+      border-style: dashed;
+    }
+    .check {
+      width: 20px; height: 20px; border-radius: 6px;
+      border: 2px solid var(--line);
+      margin-top: 2px;
+      background: transparent;
+    }
+    .check.on {
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: inset 0 0 0 3px var(--surface);
+    }
+    .check.off {
+      border-color: #3a4556;
+      background: #12161d;
+    }
+    .a-name { font-size: 14px; font-weight: 600; }
+    .a-meta { color: var(--muted); font-size: 11px; margin-top: 3px; line-height: 1.35; }
+    .a-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+
+    /* B — fila compacta */
+    .b-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .b-row.installed { opacity: 0.55; }
+    .b-main { min-width: 0; flex: 1; }
+    .b-name { font-size: 13px; font-weight: 500; }
+    .b-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+    /* C — búsqueda + secciones */
+    .c-search {
+      display: flex; gap: 8px; margin-bottom: 10px;
+    }
+    .c-search input {
+      flex: 1; border-radius: 10px; border: 1px solid var(--line);
+      background: var(--surface); color: var(--text);
+      padding: 9px 11px; font: inherit; font-size: 13px;
+    }
+    .c-sec {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); margin: 12px 2px 8px;
+    }
+    .c-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .c-card.installed { border-style: dashed; opacity: 0.7; }
+    .c-name { font-size: 13px; font-weight: 500; }
+    .c-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .pick {
+      margin-top: 12px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Elegir providers — elige un estilo</h1>
+  <p class="lead">
+    Tres propuestas para la pantalla de catálogo (multi-selección → Instalar).
+    Misma idea que el hub B: más claras que un checkbox plano, con estado <b>Instalado</b> visible.
+  </p>
+  <p class="note">
+    Regla de producto: al agregar plugins nuevos, los ya instalados <b>no se reescriben</b>
+    (ni JS, ni CSS/Madara, ni nombre local). Solo se instalan los que faltan.
+  </p>
+
+  <div class="grid">
+    <section>
+      <div class="option-label"><strong>A · Cards suaves</strong><span>Misma familia que hub B</span></div>
+      <div class="phone" aria-label="Opción A">
+        <div class="status"><span>12:41</span><span>Ultimate</span></div>
+        <div class="titlebar">Elegir providers</div>
+        <div class="hint">18 fuentes · los instalados quedan bloqueados y no se sobrescriben</div>
+        <div class="body">
+          <div class="a-card">
+            <div class="check on" aria-hidden="true"></div>
+            <div>
+              <div class="a-name">SkyNovels</div>
+              <div class="a-meta">skynovels.net</div>
+              <div class="a-chips">
+                <span class="chip">v1.1.0</span>
+                <span class="chip">Español</span>
+                <span class="chip js">JS</span>
+              </div>
+            </div>
+          </div>
+          <div class="a-card">
+            <div class="check on" aria-hidden="true"></div>
+            <div>
+              <div class="a-name">LightNovelDaily</div>
+              <div class="a-meta">lightnoveldaily.com</div>
+              <div class="a-chips">
+                <span class="chip">v1.0.1</span>
+                <span class="chip">Español</span>
+                <span class="chip madara">Madara</span>
+              </div>
+            </div>
+          </div>
+          <div class="a-card installed">
+            <div class="check off" aria-hidden="true"></div>
+            <div>
+              <div class="a-name">AllNovelRead</div>
+              <div class="a-meta">allnovelread.com · ya en tu lista</div>
+              <div class="a-chips">
+                <span class="chip">v1.1.12</span>
+                <span class="chip">Español</span>
+                <span class="chip js">JS</span>
+                <span class="chip ok">Instalado</span>
+              </div>
+            </div>
+            <span class="chip lock">🔒</span>
+          </div>
+          <div class="a-card">
+            <div class="check" aria-hidden="true"></div>
+            <div>
+              <div class="a-name">TuNovelaLigera</div>
+              <div class="a-meta">tunovelaligera.com</div>
+              <div class="a-chips">
+                <span class="chip">v1.2.1</span>
+                <span class="chip">Español</span>
+                <span class="chip madara">Madara</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button">Todos*</button>
+          <button class="btn" type="button">Cerrar</button>
+          <button class="btn primary" type="button">Instalar 2</button>
+        </div>
+      </div>
+      <p class="pick">* Todos = solo los pendientes</p>
+    </section>
+
+    <section>
+      <div class="option-label"><strong>B · Filas compactas</strong><span>Más densas, menos aire</span></div>
+      <div class="phone" aria-label="Opción B">
+        <div class="status"><span>12:41</span><span>Ultimate</span></div>
+        <div class="titlebar">Elegir providers</div>
+        <div class="hint">Marca solo lo nuevo · Instalado = sin tocar</div>
+        <div class="body">
+          <div class="b-row">
+            <div class="check on"></div>
+            <div class="b-main">
+              <div class="b-name">SkyNovels</div>
+              <div class="b-sub">Español · v1.1.0 · JS</div>
+            </div>
+          </div>
+          <div class="b-row">
+            <div class="check on"></div>
+            <div class="b-main">
+              <div class="b-name">LightNovelDaily</div>
+              <div class="b-sub">Español · v1.0.1 · Madara</div>
+            </div>
+          </div>
+          <div class="b-row installed">
+            <div class="check off"></div>
+            <div class="b-main">
+              <div class="b-name">AllNovelRead <span class="chip ok">Instalado</span></div>
+              <div class="b-sub">Se conserva tal cual · no se reescribe</div>
+            </div>
+          </div>
+          <div class="b-row">
+            <div class="check"></div>
+            <div class="b-main">
+              <div class="b-name">NOVA</div>
+              <div class="b-sub">Español · v1.1.1 · JS</div>
+            </div>
+          </div>
+          <div class="b-row">
+            <div class="check"></div>
+            <div class="b-main">
+              <div class="b-name">Oasis Translations</div>
+              <div class="b-sub">Español · v1.0.0 · JS</div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button">Todos</button>
+          <button class="btn" type="button">Cerrar</button>
+          <button class="btn primary" type="button">Instalar</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="option-label"><strong>C · Buscar + secciones</strong><span>Disponibles / Ya instalados</span></div>
+      <div class="phone" aria-label="Opción C">
+        <div class="status"><span>12:41</span><span>Ultimate</span></div>
+        <div class="titlebar">Elegir providers</div>
+        <div class="body">
+          <div class="c-search"><input value="novel" readonly /></div>
+          <div class="c-sec">Disponibles (3)</div>
+          <div class="c-card">
+            <div class="check on"></div>
+            <div>
+              <div class="c-name">LightNovelDaily</div>
+              <div class="c-sub">Español · Madara · v1.0.1</div>
+            </div>
+          </div>
+          <div class="c-card">
+            <div class="check"></div>
+            <div>
+              <div class="c-name">TuNovelaLigera</div>
+              <div class="c-sub">Español · Madara · v1.2.1</div>
+            </div>
+          </div>
+          <div class="c-card">
+            <div class="check"></div>
+            <div>
+              <div class="c-name">Novelas Ligera</div>
+              <div class="c-sub">Español · JS · v1.0.0</div>
+            </div>
+          </div>
+          <div class="c-sec">Ya instalados (1) — no se tocan</div>
+          <div class="c-card installed">
+            <div class="check off"></div>
+            <div>
+              <div class="c-name">AllNovelRead</div>
+              <div class="c-sub">Conservado · v1.1.12</div>
+            </div>
+            <span class="chip ok">OK</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button">Todos</button>
+          <button class="btn" type="button">Cerrar</button>
+          <button class="btn primary" type="button">Instalar 1</button>
+        </div>
+      </div>
+      <p class="pick">Ideal si el catálogo es largo</p>
+    </section>
+  </div>
+</body>
+</html>

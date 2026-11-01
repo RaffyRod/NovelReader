@@ -95,11 +95,31 @@ class ReaderPage extends BasePage {
     await this.expectInReader();
   }
 
+  /**
+   * Starts TTS from the reader chrome. Retries reveal because the bottom bar auto-hides,
+   * and falls back to content-description when the resource-id node is momentarily gone.
+   */
   async startTts() {
-    const visible = await this.isReaderVisible();
-    expect(visible).toBe(true);
-    await this.ttsButton.click();
-    await driver.pause(2500);
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await this.revealControls();
+
+      // Already on the TTS bottom bar from a prior tap / retry.
+      if (await this.ttsPausePlay.isDisplayed().catch(() => false)) return;
+      if (await this.ttsStop.isDisplayed().catch(() => false)) return;
+
+      if (await this.ttsButton.isDisplayed().catch(() => false)) {
+        await this.ttsButton.click();
+        await driver.pause(2500);
+        return;
+      }
+      if (await this.ttsButtonA11y.isDisplayed().catch(() => false)) {
+        await this.ttsButtonA11y.click();
+        await driver.pause(2500);
+        return;
+      }
+      await driver.pause(400);
+    }
+    throw new Error('TTS control not found after reveal retries');
   }
 }
 

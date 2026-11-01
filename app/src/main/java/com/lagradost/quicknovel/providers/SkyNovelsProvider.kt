@@ -159,8 +159,19 @@ class SkyNovelsProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val root = app.get("${apiBase}novels?q=$query", headers = mapOf("referer" to mainUrl)).parsed<NovelListResponse>()
-        return root.novels.mapNotNull { it.toSearchResponse() }
+        val q = query.trim()
+        if (q.isEmpty()) return emptyList()
+        // Same as LNReader: encode + page. The API often returns popular noise for
+        // unmatched English terms, so keep only titles that actually match the query.
+        val encoded = java.net.URLEncoder.encode(q.lowercase(), Charsets.UTF_8.name())
+        val root = app.get(
+            "${apiBase}novels?page=1&q=$encoded",
+            headers = mapOf("referer" to mainUrl),
+        ).parsed<NovelListResponse>()
+        val needle = q.lowercase()
+        return root.novels
+            .filter { it.title.contains(needle, ignoreCase = true) }
+            .mapNotNull { it.toSearchResponse() }
     }
 
     override suspend fun load(url: String): LoadResponse? {
