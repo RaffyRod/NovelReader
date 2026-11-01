@@ -204,7 +204,10 @@ object PluginProviderDialogs {
         }
 
         card.addView(TextView(activity).apply {
-            text = PluginHubUi.metaLine(plugin)
+            text = PluginHubUi.metaLine(
+                plugin,
+                notInSearchLabel = activity.getString(R.string.plugin_meta_not_in_search),
+            )
             setTextColor(grayText)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setPadding(0, (6 * density).toInt(), 0, (8 * density).toInt())

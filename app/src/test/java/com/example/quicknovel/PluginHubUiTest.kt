@@ -47,7 +47,8 @@ class PluginHubUiTest {
             providerName = "",
             templateKind = "js",
         )
-        assertTrue(PluginHubUi.metaLine(plugin).contains("no search"))
+        assertTrue(PluginHubUi.metaLine(plugin, notInSearchLabel = "sin búsqueda").contains("sin búsqueda"))
+        assertTrue(PluginHubUi.metaLine(plugin).contains("not in Search"))
     }
 
     @Test

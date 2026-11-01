@@ -12,6 +12,7 @@
     <string name="history_reading_pill">Leyendo</string>
     <string name="history_visited_pill">Visitada</string>
     <string name="title_settings">Ajustes</string>
+    <string name="active_providers">%d proveedores activos</string>
 
     <!-- Información de la Novela / Detalles -->
     <string name="synopsis">Sinopsis</string>
@@ -185,7 +186,7 @@
     <string name="general">General</string>
     <string name="general_settings">Ajustes generales</string>
     <string name="locale_settings">Idioma de la aplicación</string>
-    <string name="provider_lang_settings">Idiomas del proveedor</string>
+    <string name="provider_lang_settings">Idiomas de proveedores</string>
     <string name="app_icon_theme_settings">Icono del launcher</string>
     <string name="app_icon_theme_settings_desc">Estilo del icono en el launcher</string>
     <string name="app_icon_theme_key">app_icon_theme_key</string>
@@ -403,9 +404,9 @@
     <string name="plugin_langs_hint">English y Español van primero (prioridad).</string>
     <string name="plugin_lang_priority">★ %1$s (%2$d)</string>
     <string name="plugin_langs_all">Todos</string>
-    <string name="plugin_langs_continue">Ver providers</string>
+    <string name="plugin_langs_continue">Ver proveedores</string>
     <string name="plugin_langs_pick_one">Elige al menos un idioma</string>
-    <string name="plugin_cards_title">Elegir providers</string>
+    <string name="plugin_cards_title">Elegir proveedores</string>
     <string name="plugin_cards_hint">%1$d fuentes · %2$d nuevas · %3$d actualizaciones · instalados bloqueados salvo versión nueva</string>
     <string name="plugin_already_installed">Instalado</string>
     <string name="plugin_update_available">Actualizar v%1$s → v%2$s</string>
@@ -414,7 +415,8 @@
     <string name="plugin_select_all">Seleccionar todos</string>
     <string name="plugin_install_done_skip">Instalados %1$d · fallidos %2$d · omitidos %3$d (ya estaban)</string>
     <string name="plugin_install">Instalar</string>
-    <string name="plugin_pick_one">Elige al menos un provider</string>
+    <string name="plugin_pick_one">Elige al menos un proveedor</string>
+    <string name="plugin_meta_not_in_search">sin búsqueda</string>
     <string name="plugin_installing">Instalando…</string>
     <string name="plugin_installing_msg">Instalando %1$d plugin(s)</string>
     <string name="plugin_install_done">Instalados %1$d · fallidos %2$d</string>

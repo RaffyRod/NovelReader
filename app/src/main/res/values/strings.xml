@@ -465,6 +465,7 @@
     <string name="plugin_action_map_madara">Map as Madara (search)</string>
     <string name="plugin_action_map_blogger">Map as Blogger (search)</string>
     <string name="plugin_js_not_in_search">JS only — not in Search until mapped</string>
+    <string name="plugin_meta_not_in_search">not in Search</string>
     <string name="plugin_cards_page">Showing %1$d–%2$d of %3$d</string>
     <string name="plugin_cards_filter_hint">Filter by name…</string>
     <string name="plugin_cards_next">Next</string>

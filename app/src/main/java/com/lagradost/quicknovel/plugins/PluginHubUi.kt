@@ -18,7 +18,13 @@ object PluginHubUi {
             PluginTemplateKind.UNSUPPORTED_JS -> "JS"
         }
 
-    fun metaLine(plugin: InstalledPlugin): String = buildString {
+    /**
+     * @param notInSearchLabel localized label (e.g. ES "sin búsqueda", EN "not in Search")
+     */
+    fun metaLine(
+        plugin: InstalledPlugin,
+        notInSearchLabel: String = "not in Search",
+    ): String = buildString {
         append("v")
         append(plugin.version.ifBlank { "—" })
         append(" · ")
@@ -27,7 +33,7 @@ object PluginHubUi {
         append(kindLabel(plugin))
         if (!plugin.inSearch) {
             append(" · ")
-            append("no search")
+            append(notInSearchLabel)
         }
         if (plugin.hasUpdate) {
             append(" · ↑ ")
