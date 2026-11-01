@@ -92,63 +92,85 @@ class SearchPage extends BasePage {
   }
 
   /**
-   * Clicks a provider row by visible text (fresh lookup avoids stale Compose nodes).
+   * Clicks a provider row by exact normalized name (never textContains — "Nova" ≠ "Novel*").
    * @param {string} name
    */
   async clickProviderRowByName(name) {
-    const exact = $(`android=new UiSelector().text("${name}")`);
-    if (await exact.isExisting().catch(() => false)) {
-      await exact.click();
-      return true;
-    }
-    const contains = $(`android=new UiSelector().textContains("${name}")`);
-    if (await contains.isExisting().catch(() => false)) {
-      await contains.click();
-      return true;
+    const rows = await this.readVisibleProviderRows();
+    const row = rows.find((r) => r.name === name);
+    if (!row) return false;
+    await row.el.click();
+    return true;
+  }
+
+  /**
+   * Scrolls the multi-select LazyColumn until a provider name is visible.
+   * @param {string} name
+   */
+  async scrollProviderIntoViewExact(name) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const sel =
+      `android=new UiScrollable(new UiSelector().scrollable(true))` +
+      `.scrollIntoView(new UiSelector().textMatches("^.*${escaped}$"))`;
+    const el = $(sel);
+    if (await el.isExisting().catch(() => false)) return true;
+
+    for (let i = 0; i < 24; i++) {
+      const rows = await this.readVisibleProviderRows();
+      if (rows.some((r) => r.name === name)) return true;
+      await this.scrollDialog(i < 12 ? 'down' : 'up');
     }
     return false;
   }
 
   /**
    * Leaves only the given provider names selected.
-   * Default dialog starts with all selected → clear each once, then re-enable wanted.
+   * Default dialog starts with all selected → deselect non-wanted only (never toggle wanted).
    * @param {string[]} names
    */
   async selectOnlyProviders(names) {
     await this.openProvidersDialog();
     const wanted = [...new Set(names)];
+    const wantedSet = new Set(wanted);
     const cleared = new Set();
+    const seenWanted = new Set();
 
-    // Pass 1: clear default selection (click each distinct visible name once)
-    for (const direction of ['down', 'up']) {
-      for (let i = 0; i < 10; i++) {
+    const sweep = async (direction, times) => {
+      for (let i = 0; i < times; i++) {
         const rows = await this.readVisibleProviderRows();
         for (const row of rows) {
+          if (wantedSet.has(row.name)) {
+            seenWanted.add(row.name);
+            continue;
+          }
           if (cleared.has(row.name)) continue;
           if (await this.clickProviderRowByName(row.name)) {
             cleared.add(row.name);
-            await driver.pause(120);
+            await driver.pause(90);
           }
         }
         await this.scrollDialog(direction);
       }
+    };
+
+    // Thorough sweeps — English providers make the list long on CI.
+    await sweep('down', 18);
+    await sweep('up', 18);
+    await sweep('down', 14);
+
+    for (const name of wanted) {
+      if (seenWanted.has(name)) continue;
+      await this.scrollProviderIntoViewExact(name);
+      const rows = await this.readVisibleProviderRows();
+      if (rows.some((r) => r.name === name)) seenWanted.add(name);
     }
 
-    // Pass 2: enable only wanted (fresh find each time)
-    const enabled = new Set();
-    for (const name of wanted) {
-      for (let attempt = 0; attempt < 12; attempt++) {
-        if (await this.clickProviderRowByName(name)) {
-          enabled.add(name);
-          await driver.pause(150);
-          break;
-        }
-        await this.scrollDialog(attempt % 2 === 0 ? 'down' : 'up');
-      }
-    }
+    // Clear stragglers brought into view while locating wanted names.
+    await sweep('up', 10);
+    await sweep('down', 10);
 
     await this.confirmProvidersDialog();
-    return { enabled: [...enabled], clearedCount: cleared.size };
+    return { enabled: [...seenWanted], clearedCount: cleared.size };
   }
 
   /**

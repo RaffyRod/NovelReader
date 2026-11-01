@@ -26,23 +26,6 @@ describe('Theme defaults', () => {
       await driver.pause(150);
     }
 
-    const darkLabels = ['Modo oscuro', 'Dark mode'];
-    let darkRow = null;
-    for (const label of darkLabels) {
-      await settingsPage.scrollToText(label);
-      await driver.pause(350);
-      const row = settingsPage.byText(label);
-      if (await row.isDisplayed().catch(() => false)) {
-        darkRow = row;
-        break;
-      }
-    }
-    expect(darkRow).not.toBeNull();
-    await darkRow.waitForDisplayed({ timeout: 15000 });
-
-    const darkOn = await settingsPage.isPreferenceSwitchOnNear(darkRow);
-    expect(darkOn).toBe(true);
-
     const themeLabels = ['Tema Ultimate', 'Ultimate theme', 'Ultimate Theme'];
     let themeVisible = false;
     for (const label of themeLabels) {
@@ -59,5 +42,22 @@ describe('Theme defaults', () => {
     const blueVisible = await blue.isDisplayed().catch(() => false);
     // ListPreference shows current value as subtitle next to the row.
     expect(blueVisible).toBe(true);
+
+    const darkLabels = ['Modo oscuro', 'Dark mode'];
+    let darkRow = null;
+    for (const label of darkLabels) {
+      await settingsPage.scrollToText(label);
+      await driver.pause(400);
+      const row = settingsPage.byText(label);
+      if (await row.isDisplayed().catch(() => false)) {
+        darkRow = row;
+        break;
+      }
+    }
+    expect(darkRow).not.toBeNull();
+    await darkRow.waitForDisplayed({ timeout: 15000 });
+
+    const darkOn = await settingsPage.isPreferenceSwitchOnNear(darkRow);
+    expect(darkOn).toBe(true);
   });
 });

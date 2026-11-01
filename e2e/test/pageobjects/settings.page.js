@@ -162,9 +162,11 @@ class SettingsPage extends BasePage {
    */
   async isPreferenceSwitchOnNear(titleEl) {
     const titleBounds = await titleEl.getLocation().catch(() => null);
+    const titleText = ((await titleEl.getText().catch(() => '')) || '').trim();
     const pools = await Promise.all([
       $$('android.widget.Switch'),
       $$('android=new UiSelector().checkable(true)'),
+      $$('android=new UiSelector().className("android.view.View").checkable(true)'),
     ]);
     const seen = new Set();
     const candidates = [];
@@ -190,19 +192,37 @@ class SettingsPage extends BasePage {
       const loc = await sw.getLocation().catch(() => null);
       if (!loc) continue;
       const dist = Math.abs(loc.y - titleBounds.y);
-      // Prefer controls on the same preference row (within ~120px).
+      // Prefer controls on the same preference row (density-tolerant).
       if (dist < bestDist) {
         bestDist = dist;
         best = sw;
       }
     }
-    if (!best || bestDist > 160) return false;
-    const checked = await best.getAttribute('checked').catch(() => null);
-    if (checked != null && String(checked).length > 0) {
-      return this.isCheckedValue(checked);
+    if (best && bestDist <= 280) {
+      const checked = await best.getAttribute('checked').catch(() => null);
+      if (checked != null && String(checked).length > 0) {
+        return this.isCheckedValue(checked);
+      }
+      const selected = await best.getAttribute('selected').catch(() => null);
+      if (selected != null && String(selected).length > 0) {
+        return this.isCheckedValue(selected);
+      }
+      const stateDesc = await best.getAttribute('stateDescription').catch(() => null);
+      if (stateDesc && /on|activado|encendido|marcado/i.test(String(stateDesc))) return true;
+      if (stateDesc && /off|desactivado|apagado|desmarcado/i.test(String(stateDesc))) return false;
     }
-    const selected = await best.getAttribute('selected').catch(() => null);
-    return this.isCheckedValue(selected);
+
+    // Hierarchy fallback: Compose sometimes omits Switch class — parse page source near title.
+    if (!titleText) return false;
+    const source = await driver.getPageSource().catch(() => '');
+    if (!source) return false;
+    const idx = source.indexOf(titleText);
+    if (idx < 0) return false;
+    const window = source.slice(Math.max(0, idx - 200), idx + 3500);
+    const attrs = [...window.matchAll(/\bchecked="(true|false)"/gi)];
+    if (attrs.length === 0) return false;
+    // First checked attr after the title text is the trailing Switch on that row.
+    return attrs[0][1].toLowerCase() === 'true';
   }
 
   /**

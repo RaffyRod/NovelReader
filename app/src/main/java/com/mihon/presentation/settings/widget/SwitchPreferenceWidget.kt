@@ -27,9 +27,11 @@ fun SwitchPreferenceWidget(
         subtitle = subtitle,
         icon = icon,
         widget = {
+            // Non-null onCheckedChange so Compose exposes ToggleableState to UiAutomator
+            // (checked=true/false). Row click still toggles via onPreferenceClick.
             Switch(
                 checked = checked,
-                onCheckedChange = null,
+                onCheckedChange = { onCheckedChanged(it) },
                 modifier = Modifier.padding(start = TrailingWidgetBuffer),
             )
         },
