@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
@@ -24,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import com.lagradost.quicknovel.CommonActivity.showToast
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.plugins.InstalledPlugin
+import com.lagradost.quicknovel.plugins.PluginCatalogFilter
 import com.lagradost.quicknovel.plugins.PluginHubUi
 import com.lagradost.quicknovel.plugins.PluginInstaller
 import com.lagradost.quicknovel.plugins.PluginLangs
@@ -45,11 +47,11 @@ import kotlinx.coroutines.withContext
 
 /**
  * LNReader-style plugin flow: manage installed → add repo/fetch → languages → cards → install.
- * JSON is the catalog; install downloads JS and maps Madara/Blogger templates only when tagged.
+ * JSON is the catalog; install downloads JS. Search needs a CSS map (site URL first; Madara/Blogger optional).
  */
 object PluginProviderDialogs {
-    /** Catalog cards are paged so a 200+ JSON never freezes / looks truncated. */
-    private const val CARDS_PAGE_SIZE = 60
+    /** Catalog cards are paged so a 200+ JSON never freezes / looks truncated (no hard 100 cap). */
+    private const val CARDS_PAGE_SIZE = PluginCatalogFilter.DEFAULT_PAGE_SIZE
 
     fun showHub(activity: Activity, onChanged: () -> Unit) {
         PluginStore.ensureOfficialRepo()
@@ -111,6 +113,10 @@ object PluginProviderDialogs {
                             dialog.dismiss()
                             activity.postUi { confirmUninstall(activity, plugin, onChanged) }
                         }
+                        CardAction.ConfigureSearch -> {
+                            dialog.dismiss()
+                            activity.postUi { showAddToSearchChooser(activity, plugin, onChanged) }
+                        }
                         CardAction.More -> showOptions(activity, plugin, onChanged)
                     }
                 })
@@ -120,7 +126,7 @@ object PluginProviderDialogs {
         if (activity.canShowDialog()) dialog.show()
     }
 
-    private enum class CardAction { Update, Remove, More }
+    private enum class CardAction { Update, Remove, More, ConfigureSearch }
 
     private fun themedCardBackground(activity: Activity): GradientDrawable {
         val density = activity.resources.displayMetrics.density
@@ -224,6 +230,18 @@ object PluginProviderDialogs {
         val actions = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.END
+        }
+        if (!plugin.inSearch) {
+            actions.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+                text = activity.getString(R.string.plugin_action_configure_url_short)
+                setTextColor(primary)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                isAllCaps = false
+                minHeight = 0
+                minimumHeight = 0
+                setPadding((10 * density).toInt(), (6 * density).toInt(), (10 * density).toInt(), (6 * density).toInt())
+                setOnClickListener { onAction(CardAction.ConfigureSearch) }
+            })
         }
         actions.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_action_update)
@@ -488,26 +506,27 @@ object PluginProviderDialogs {
         filterQuery: String = "",
         page: Int = 0,
         selectedIds: LinkedHashSet<String> = linkedSetOf(),
+        statusFilter: PluginCatalogFilter.Status = PluginCatalogFilter.Status.ALL,
+        kindFilter: PluginCatalogFilter.Kind = PluginCatalogFilter.Kind.ALL,
     ) {
         val density = activity.resources.displayMetrics.density
         val pad = (14 * density).toInt()
         val gap = (10 * density).toInt()
         val installedById = PluginStore.loadInstalled().associateBy { it.id }
         val selected = selectedIds
-        val filtered = if (filterQuery.isBlank()) {
-            items
-        } else {
-            items.filter {
-                it.name.contains(filterQuery, ignoreCase = true) ||
-                    it.site.contains(filterQuery, ignoreCase = true) ||
-                    it.id.contains(filterQuery, ignoreCase = true)
-            }
-        }
-        val pageCount = ((filtered.size + CARDS_PAGE_SIZE - 1) / CARDS_PAGE_SIZE).coerceAtLeast(1)
+        val filtered = PluginCatalogFilter.filter(
+            items = items,
+            query = filterQuery,
+            status = statusFilter,
+            kind = kindFilter,
+            installedById = installedById,
+        )
+        val pageCount = PluginCatalogFilter.pageCount(filtered.size, CARDS_PAGE_SIZE)
         val safePage = page.coerceIn(0, pageCount - 1)
         val from = safePage * CARDS_PAGE_SIZE
-        val slice = filtered.drop(from).take(CARDS_PAGE_SIZE)
+        val slice = PluginCatalogFilter.pageSlice(filtered, safePage, CARDS_PAGE_SIZE)
         val to = (from + slice.size).coerceAtLeast(from)
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
 
         val column = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
@@ -525,16 +544,23 @@ object PluginProviderDialogs {
             setTextColor(grayText)
             setPadding(0, 0, 0, gap / 2)
         })
-        column.addView(TextView(activity).apply {
+        val pageLabel = TextView(activity).apply {
             text = activity.getString(
                 R.string.plugin_cards_page,
+                safePage + 1,
+                pageCount,
                 if (slice.isEmpty()) 0 else from + 1,
                 to,
                 filtered.size,
             )
-            setTextColor(grayText)
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setPadding(0, 0, 0, gap)
-        })
+            isClickable = pageCount > 1
+            isFocusable = pageCount > 1
+            tag = "page_label"
+        }
+        column.addView(pageLabel)
 
         val filterRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -552,10 +578,110 @@ object PluginProviderDialogs {
         filterRow.addView(filterEdit)
         filterRow.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(android.R.string.search_go)
-            setTextColor(activity.colorFromAttribute(R.attr.colorPrimary))
+            setTextColor(primary)
             tag = "filter_go"
         })
+        if (filterQuery.isNotBlank() ||
+            statusFilter != PluginCatalogFilter.Status.ALL ||
+            kindFilter != PluginCatalogFilter.Kind.ALL
+        ) {
+            filterRow.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+                text = activity.getString(R.string.plugin_cards_filter_clear)
+                setTextColor(activity.getColor(R.color.colorPrimaryRed))
+                tag = "filter_clear"
+            })
+        }
         column.addView(filterRow)
+
+        fun chipButton(label: String, active: Boolean, tag: String): Button =
+            Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+                text = label
+                this.tag = tag
+                isAllCaps = false
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                minHeight = 0
+                minimumHeight = 0
+                setPadding((8 * density).toInt(), (4 * density).toInt(), (8 * density).toInt(), (4 * density).toInt())
+                setTextColor(if (active) primary else grayText)
+                typeface = Typeface.defaultFromStyle(if (active) Typeface.BOLD else Typeface.NORMAL)
+            }
+
+        val statusRow = HorizontalScrollView(activity).apply {
+            isHorizontalScrollBarEnabled = false
+        }
+        val statusChips = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        statusChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_all),
+                statusFilter == PluginCatalogFilter.Status.ALL,
+                "status_all",
+            ),
+        )
+        statusChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_new),
+                statusFilter == PluginCatalogFilter.Status.NEW,
+                "status_new",
+            ),
+        )
+        statusChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_updates),
+                statusFilter == PluginCatalogFilter.Status.UPDATES,
+                "status_updates",
+            ),
+        )
+        statusChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_installed),
+                statusFilter == PluginCatalogFilter.Status.INSTALLED,
+                "status_installed",
+            ),
+        )
+        statusRow.addView(statusChips)
+        column.addView(statusRow)
+
+        val kindRow = HorizontalScrollView(activity).apply {
+            isHorizontalScrollBarEnabled = false
+            setPadding(0, (4 * density).toInt(), 0, gap)
+        }
+        val kindChips = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        kindChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_all),
+                kindFilter == PluginCatalogFilter.Kind.ALL,
+                "kind_all",
+            ),
+        )
+        kindChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_madara),
+                kindFilter == PluginCatalogFilter.Kind.MADARA,
+                "kind_madara",
+            ),
+        )
+        kindChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_blogger),
+                kindFilter == PluginCatalogFilter.Kind.BLOGGER,
+                "kind_blogger",
+            ),
+        )
+        kindChips.addView(
+            chipButton(
+                activity.getString(R.string.plugin_cards_filter_js),
+                kindFilter == PluginCatalogFilter.Kind.JS,
+                "kind_js",
+            ),
+        )
+        kindRow.addView(kindChips)
+        column.addView(kindRow)
 
         val checkBoxes = LinkedHashMap<String, CheckBox>()
         slice.forEach { item ->
@@ -588,10 +714,13 @@ object PluginProviderDialogs {
         nav.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_prev)
             isEnabled = safePage > 0
-            setOnClickListener {
-                // current dialog dismissed by recreate below
-            }
             tag = "prev"
+        })
+        nav.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_cards_goto_page)
+            isEnabled = pageCount > 1
+            setTextColor(primary)
+            tag = "goto"
         })
         nav.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_next)
@@ -641,10 +770,25 @@ object PluginProviderDialogs {
                 dialog.dismiss()
                 installSelected(activity, repoUrl, chosen, installedById, onChanged)
             }
-            fun reopen(nextPage: Int, query: String) {
+            fun reopen(
+                nextPage: Int,
+                query: String,
+                status: PluginCatalogFilter.Status = statusFilter,
+                kind: PluginCatalogFilter.Kind = kindFilter,
+            ) {
                 dialog.dismiss()
                 activity.postUi {
-                    showCards(activity, repoUrl, items, onChanged, query, nextPage, selected)
+                    showCards(
+                        activity,
+                        repoUrl,
+                        items,
+                        onChanged,
+                        query,
+                        nextPage,
+                        selected,
+                        status,
+                        kind,
+                    )
                 }
             }
             nav.findViewWithTag<Button>("prev")?.setOnClickListener {
@@ -653,13 +797,61 @@ object PluginProviderDialogs {
             nav.findViewWithTag<Button>("next")?.setOnClickListener {
                 reopen(safePage + 1, filterEdit.text?.toString().orEmpty())
             }
+            fun askGoToPage() {
+                if (pageCount <= 1) return
+                val edit = EditText(activity).apply {
+                    inputType = InputType.TYPE_CLASS_NUMBER
+                    hint = activity.getString(R.string.plugin_cards_goto_hint, pageCount)
+                    setText((safePage + 1).toString())
+                    setPadding(pad, pad, pad, pad)
+                }
+                AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+                    .setTitle(R.string.plugin_cards_goto_page)
+                    .setView(edit)
+                    .setPositiveButton(R.string.plugin_cards_goto_page) { _, _ ->
+                        val target = edit.text?.toString()?.toIntOrNull()
+                            ?.coerceIn(1, pageCount) ?: return@setPositiveButton
+                        reopen(target - 1, filterEdit.text?.toString().orEmpty())
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
+            nav.findViewWithTag<Button>("goto")?.setOnClickListener { askGoToPage() }
+            pageLabel.setOnClickListener { askGoToPage() }
             val applyFilter = {
                 reopen(0, filterEdit.text?.toString().orEmpty())
             }
             filterRow.findViewWithTag<Button>("filter_go")?.setOnClickListener { applyFilter() }
+            filterRow.findViewWithTag<Button>("filter_clear")?.setOnClickListener {
+                reopen(0, "", PluginCatalogFilter.Status.ALL, PluginCatalogFilter.Kind.ALL)
+            }
             filterEdit.setOnEditorActionListener { _, _, _ ->
                 applyFilter()
                 true
+            }
+            statusChips.findViewWithTag<Button>("status_all")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.ALL)
+            }
+            statusChips.findViewWithTag<Button>("status_new")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.NEW)
+            }
+            statusChips.findViewWithTag<Button>("status_updates")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.UPDATES)
+            }
+            statusChips.findViewWithTag<Button>("status_installed")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.INSTALLED)
+            }
+            kindChips.findViewWithTag<Button>("kind_all")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.ALL)
+            }
+            kindChips.findViewWithTag<Button>("kind_madara")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.MADARA)
+            }
+            kindChips.findViewWithTag<Button>("kind_blogger")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.BLOGGER)
+            }
+            kindChips.findViewWithTag<Button>("kind_js")?.setOnClickListener {
+                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.JS)
             }
         }
         if (activity.canShowDialog()) dialog.show()
@@ -860,11 +1052,8 @@ object PluginProviderDialogs {
                 editCssMapped(activity, plugin, onChanged)
             }
         } else {
-            add(activity.getString(R.string.plugin_action_map_madara)) {
-                mapToTemplate(activity, plugin, onChanged, madara = true)
-            }
-            add(activity.getString(R.string.plugin_action_map_blogger)) {
-                mapToTemplate(activity, plugin, onChanged, madara = false)
+            add(activity.getString(R.string.plugin_action_configure_url)) {
+                showAddToSearchChooser(activity, plugin, onChanged)
             }
         }
         add(activity.getString(R.string.plugin_action_edit)) {
@@ -900,25 +1089,121 @@ object PluginProviderDialogs {
         val config = CustomProviders.load().firstOrNull { it.name == plugin.providerName }
         if (config == null) {
             // Metadata says CSS-mapped but storage entry is missing (legacy hash wipe).
-            AlertDialog.Builder(activity, R.style.AlertDialogCustom)
-                .setTitle(plugin.localName)
-                .setMessage(R.string.plugin_js_not_in_search)
-                .setPositiveButton(R.string.plugin_action_map_madara) { _, _ ->
-                    mapToTemplate(activity, plugin, onChanged, madara = true)
-                }
-                .setNeutralButton(R.string.plugin_action_map_blogger) { _, _ ->
-                    mapToTemplate(activity, plugin, onChanged, madara = false)
-                }
-                .setNegativeButton(R.string.close, null)
-                .show()
+            showAddToSearchChooser(activity, plugin, onChanged)
             return
         }
         CustomProviderDialogs.showEditor(activity, config) {
-            onChanged()
-            showHub(activity, onChanged)
+            linkInstalledAfterSave(activity, plugin, onChanged)
         }
     }
 
+    /**
+     * One chooser: Madara / Blogger / manual CSS with site URL.
+     * Keeps Madara optional — never applied until the user picks it.
+     */
+    private fun showAddToSearchChooser(activity: Activity, plugin: InstalledPlugin, onChanged: () -> Unit) {
+        val labels = arrayOf(
+            activity.getString(R.string.plugin_action_map_madara),
+            activity.getString(R.string.plugin_action_map_blogger),
+            activity.getString(R.string.plugin_action_edit_selectors),
+        )
+        AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+            .setTitle(R.string.plugin_add_to_search_title)
+            .setMessage(
+                activity.getString(R.string.plugin_configure_url_hint) +
+                    "\n\n" + PluginHubUi.siteHost(plugin).ifBlank { plugin.site },
+            )
+            .setItems(labels) { _, which ->
+                when (which) {
+                    0 -> mapToTemplate(activity, plugin, onChanged, madara = true)
+                    1 -> mapToTemplate(activity, plugin, onChanged, madara = false)
+                    else -> configureWithSiteUrl(activity, plugin, onChanged)
+                }
+            }
+            .setNegativeButton(R.string.close, null)
+            .show()
+    }
+
+    /**
+     * Manual path: editor with site URL + empty selectors (user fills or taps Madara inside).
+     */
+    private fun configureWithSiteUrl(activity: Activity, plugin: InstalledPlugin, onChanged: () -> Unit) {
+        val base = CustomProviderPresets.normalizeBaseUrl(plugin.site)
+            ?: plugin.site.trim().trimEnd('/')
+        if (base.isBlank()) {
+            showToast(activity, activity.getString(R.string.plugin_js_not_in_search))
+            return
+        }
+        val existing = findMappedConfig(plugin)
+        if (existing != null) {
+            CustomProviderDialogs.showEditor(activity, existing) {
+                linkInstalledAfterSave(activity, plugin, onChanged)
+            }
+            return
+        }
+        val prefill = if (base.contains("blogspot", ignoreCase = true) ||
+            base.contains("blogger", ignoreCase = true)
+        ) {
+            CustomProviderConfig.bloggerTemplate(plugin.localName, base).copy(lang = plugin.langCode)
+        } else {
+            CustomProviderConfig(
+                name = plugin.localName,
+                baseUrl = base,
+                searchUrl = "/?s={query}",
+                resultItem = "",
+                resultLink = "a",
+                novelTitle = "",
+                chapterLink = "",
+                content = "",
+                lang = plugin.langCode,
+            )
+        }
+        CustomProviderDialogs.showEditor(activity, existing = null, prefill = prefill) {
+            linkInstalledAfterSave(activity, plugin, onChanged)
+        }
+    }
+
+    private fun findMappedConfig(plugin: InstalledPlugin): CustomProviderConfig? {
+        val all = CustomProviders.load()
+        return all.firstOrNull { it.name.equals(plugin.providerName, ignoreCase = true) }
+            ?: all.firstOrNull { it.name.equals(plugin.localName, ignoreCase = true) }
+    }
+
+    private fun linkInstalledAfterSave(
+        activity: Activity,
+        plugin: InstalledPlugin,
+        onChanged: () -> Unit,
+    ) {
+        val hostKey = PluginHubUi.siteHost(plugin).substringBefore('/').lowercase()
+        val all = CustomProviders.load()
+        val saved = all.firstOrNull { it.name.equals(plugin.providerName, ignoreCase = true) }
+            ?: all.firstOrNull { it.name.equals(plugin.localName, ignoreCase = true) }
+            ?: all.firstOrNull { cfg ->
+                hostKey.isNotBlank() &&
+                    PluginHubUi.siteHost(cfg.baseUrl).substringBefore('/').equals(hostKey, ignoreCase = true)
+            }
+        if (saved != null) {
+            val kind = when {
+                saved.isBlogger -> "blogger"
+                "wp-manga" in saved.searchUrl || "ajax/chapters" in saved.searchUrl ||
+                    saved.chaptersViaAjax -> "madara"
+                else -> "css"
+            }
+            PluginStore.saveInstalled(
+                plugin.copy(
+                    localName = saved.name,
+                    providerName = saved.name,
+                    cssMapped = true,
+                    templateKind = kind,
+                ),
+            )
+            showToast(activity, activity.getString(R.string.plugin_edited))
+        }
+        onChanged()
+        showHub(activity, onChanged)
+    }
+
+    /** One-tap Madara/Blogger map using the plugin site URL — no empty-selector trap. */
     private fun mapToTemplate(
         activity: Activity,
         plugin: InstalledPlugin,
@@ -926,29 +1211,37 @@ object PluginProviderDialogs {
         madara: Boolean,
     ) {
         val scope = activity.pluginScope() ?: return
+        val base = CustomProviderPresets.normalizeBaseUrl(plugin.site)
+            ?: plugin.site.trim().trimEnd('/')
+        if (base.isBlank()) {
+            showToast(activity, activity.getString(R.string.plugin_js_not_in_search))
+            return
+        }
         scope.launch {
             withContext(Dispatchers.IO) {
-                val base = CustomProviderPresets.normalizeBaseUrl(plugin.site)
-                    ?: plugin.site.trim().trimEnd('/')
+                val existing = findMappedConfig(plugin)
+                val name = existing?.name?.takeIf { it.isNotBlank() } ?: plugin.localName
                 val config = if (madara) {
-                    CustomProviderConfig.madaraTemplate(plugin.localName, base)
-                        .copy(lang = plugin.langCode)
+                    CustomProviderConfig.madaraTemplate(name, base).copy(lang = plugin.langCode)
                 } else {
-                    CustomProviderConfig.bloggerTemplate(plugin.localName, base)
-                        .copy(lang = plugin.langCode)
+                    CustomProviderConfig.bloggerTemplate(name, base).copy(lang = plugin.langCode)
                 }
-                CustomProviders.save(activity, config, replacing = plugin.providerName.takeIf { it.isNotBlank() })
+                CustomProviders.save(
+                    activity,
+                    config,
+                    replacing = existing?.name ?: plugin.providerName.takeIf { it.isNotBlank() },
+                )
                 PluginStore.saveInstalled(
                     plugin.copy(
+                        localName = config.name,
                         providerName = config.name,
                         cssMapped = true,
                         templateKind = if (madara) "madara" else "blogger",
-                        localName = config.name,
                     ),
                 )
             }
-            onChanged()
             showToast(activity, activity.getString(R.string.plugin_edited))
+            onChanged()
             activity.postUi { showHub(activity, onChanged) }
         }
     }

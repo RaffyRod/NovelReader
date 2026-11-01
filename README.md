@@ -16,7 +16,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 
 | | |
 |---|---|
-| 🏷️ **Version** | **1.2.6** (`versionCode` 126) |
+| 🏷️ **Version** | **1.2.8** (`versionCode` 128) |
 | 📦 **Package** | `com.lagradost.quicknovel.ultimate` |
 | 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** · show English providers **ON** |
 | 📥 **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK |
@@ -28,7 +28,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | Step | What to do |
 |------|------------|
 | 1️⃣ | Uninstall older Ultimate / stock QuickNovel if present |
-| 2️⃣ | Install `QuickNovel-Ultimate-1.2.6-universal.apk` |
+| 2️⃣ | Install `QuickNovel-Ultimate-1.2.8-universal.apk` |
 | 3️⃣ | If prompted to update to LagradOst 3.x → **Cancel / Skip** |
 | 4️⃣ | Open **QuickNovel Ultimate** (orb + 本) |
 | 5️⃣ | App language defaults to **Español** (change in Settings) |
@@ -85,7 +85,7 @@ More shots → [`docs/manual-1.2.3/es/imagenes/`](docs/manual-1.2.3/es/imagenes/
 
 In-app: **Settings → Tutorial** (Providers · Downloads · TTS).
 
-Typical Desktop pack: `QuickNovel-Ultimate-1.2.6-Docs/` (APK + manuals + previews). Manuals folder remains `docs/manual-1.2.3/` until the next doc regen.
+Typical Desktop pack: `QuickNovel-Ultimate-1.2.8/` (APK on Desktop). Manuals folder remains `docs/manual-1.2.3/` until the next doc regen.
 
 ---
 
