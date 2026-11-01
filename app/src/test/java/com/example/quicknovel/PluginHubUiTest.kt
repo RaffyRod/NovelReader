@@ -16,8 +16,38 @@ class PluginHubUiTest {
 
     @Test
     fun kindLabel_madaraWhenCssMapped() {
-        val plugin = InstalledPlugin(id = "x", name = "X", cssMapped = true, providerName = "X")
+        val plugin = InstalledPlugin(
+            id = "x",
+            name = "X",
+            cssMapped = true,
+            providerName = "X",
+            templateKind = "madara",
+        )
         assertEquals("Madara", PluginHubUi.kindLabel(plugin))
+    }
+
+    @Test
+    fun kindLabel_bloggerWhenTemplateKindBlogger() {
+        val plugin = InstalledPlugin(
+            id = "b",
+            name = "Blog",
+            cssMapped = true,
+            providerName = "Blog",
+            templateKind = "blogger",
+        )
+        assertEquals("Blogger", PluginHubUi.kindLabel(plugin))
+    }
+
+    @Test
+    fun metaLine_marksPluginsNotInSearch() {
+        val plugin = InstalledPlugin(
+            id = "x",
+            name = "X",
+            cssMapped = false,
+            providerName = "",
+            templateKind = "js",
+        )
+        assertTrue(PluginHubUi.metaLine(plugin).contains("no search"))
     }
 
     @Test

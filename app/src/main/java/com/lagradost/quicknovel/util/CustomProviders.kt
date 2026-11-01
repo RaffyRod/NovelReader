@@ -13,11 +13,29 @@ import com.lagradost.quicknovel.providers.CustomProviderConfig
 object CustomProviders {
     private const val FOLDER = "custom_provider"
 
-    private fun storeKey(name: String) = name.lowercase().hashCode().toString()
+    /**
+     * Stable preference key for [name]. Legacy installs used [hashCode] which can collide
+     * under bulk plugin installs and silently overwrite providers.
+     */
+    fun storeKey(name: String): String {
+        val cleaned = name.trim().lowercase()
+            .replace(Regex("[^a-z0-9._-]+"), "_")
+            .trim('_')
+        return cleaned.ifBlank { "provider" }
+    }
+
+    /** Previous key scheme — kept so we can migrate/remove old entries. */
+    fun legacyStoreKey(name: String): String = name.lowercase().hashCode().toString()
 
     fun load(): List<CustomProviderConfig> {
         val keys = getKeys(FOLDER) ?: return emptyList()
-        return keys.mapNotNull { key -> getKey<CustomProviderConfig>(key) }.sortedBy { it.name }
+        val byName = linkedMapOf<String, CustomProviderConfig>()
+        for (fullKey in keys) {
+            val config = getKey<CustomProviderConfig>(fullKey) ?: continue
+            // Prefer the latest write when legacy hash keys collide with modern keys.
+            byName[config.name] = config
+        }
+        return byName.values.sortedBy { it.name.lowercase() }
     }
 
     /** Names that cannot be used because a provider already has them. */
@@ -27,16 +45,28 @@ object CustomProviders {
     /** Adds or replaces a provider, [replacing] is the name it had before an edit. */
     fun save(context: Context, config: CustomProviderConfig, replacing: String? = null) {
         if (replacing != null && replacing != config.name) {
-            removeKey(FOLDER, storeKey(replacing))
+            removeKeysForName(replacing)
         }
+        removeKeysForName(config.name)
         setKey(FOLDER, storeKey(config.name), config)
         Apis.refreshApis()
         enableInSearch(context, config, replacing)
     }
 
     fun remove(name: String) {
-        removeKey(FOLDER, storeKey(name))
+        removeKeysForName(name)
         Apis.refreshApis()
+    }
+
+    /** Removes the custom provider and drops it from the search multi-select. */
+    fun remove(context: Context, name: String) {
+        remove(name)
+        disableInSearch(context, name)
+    }
+
+    private fun removeKeysForName(name: String) {
+        removeKey(FOLDER, storeKey(name))
+        removeKey(FOLDER, legacyStoreKey(name))
     }
 
     /**
@@ -87,6 +117,15 @@ object CustomProviders {
         val langKey = context.getString(R.string.provider_lang_key)
         settings.getStringSet(langKey, null)?.let { saved ->
             settings.edit().putStringSet(langKey, saved.toMutableSet().apply { add(config.lang) }).apply()
+        }
+    }
+
+    private fun disableInSearch(context: Context, name: String) {
+        val settings = PreferenceManager.getDefaultSharedPreferences(context)
+        val providersKey = context.getString(R.string.search_providers_list_key)
+        val saved = settings.getStringSet(providersKey, null)?.toMutableSet() ?: return
+        if (saved.remove(name)) {
+            settings.edit().putStringSet(providersKey, saved).apply()
         }
     }
 }

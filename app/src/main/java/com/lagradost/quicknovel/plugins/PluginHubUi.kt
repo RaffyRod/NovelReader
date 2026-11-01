@@ -5,7 +5,11 @@ package com.lagradost.quicknovel.plugins
  */
 object PluginHubUi {
     fun kindLabel(plugin: InstalledPlugin): String =
-        if (plugin.cssMapped) "Madara" else "JS"
+        when (plugin.templateKind.lowercase()) {
+            "madara" -> "Madara"
+            "blogger" -> "Blogger"
+            else -> if (plugin.cssMapped) "CSS" else "JS"
+        }
 
     fun kindLabel(item: PluginManifestItem): String =
         when (PluginTemplateHints.detect(item)) {
@@ -21,6 +25,10 @@ object PluginHubUi {
         append(plugin.lang.ifBlank { plugin.langCode }.ifBlank { "—" })
         append(" · ")
         append(kindLabel(plugin))
+        if (!plugin.inSearch) {
+            append(" · ")
+            append("no search")
+        }
         if (plugin.hasUpdate) {
             append(" · ↑ ")
             append(plugin.latestVersion)

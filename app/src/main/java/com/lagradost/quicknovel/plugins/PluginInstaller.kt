@@ -101,10 +101,15 @@ object PluginInstaller {
 
         if (config != null) {
             CustomProviders.save(context, config, replacing = existing?.providerName)
-        } else if (existing?.providerName != null) {
-            CustomProviders.remove(existing.providerName)
+        } else if (!existing?.providerName.isNullOrBlank()) {
+            CustomProviders.remove(context, existing!!.providerName)
         }
 
+        val kind = when (detected) {
+            PluginTemplateKind.MADARA -> "madara"
+            PluginTemplateKind.BLOGGER -> "blogger"
+            PluginTemplateKind.UNSUPPORTED_JS -> "js"
+        }
         val installed = InstalledPlugin(
             id = item.id,
             name = item.name,
@@ -121,6 +126,7 @@ object PluginInstaller {
             jsPath = jsPath,
             installedAt = existing?.installedAt ?: System.currentTimeMillis(),
             cssMapped = config != null,
+            templateKind = kind,
         )
         PluginStore.saveInstalled(installed)
         return installed
@@ -128,7 +134,7 @@ object PluginInstaller {
 
     fun uninstall(context: Context, plugin: InstalledPlugin) {
         if (plugin.providerName.isNotBlank()) {
-            CustomProviders.remove(plugin.providerName)
+            CustomProviders.remove(context, plugin.providerName)
         }
         if (plugin.jsPath.isNotBlank()) {
             runCatching { File(plugin.jsPath).delete() }

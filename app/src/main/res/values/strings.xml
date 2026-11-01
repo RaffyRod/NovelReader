@@ -461,6 +461,14 @@
     <string name="plugin_options_msg">Language: %1$s\nVersion: %2$s · latest: %3$s\n%4$s</string>
     <string name="plugin_action_update">Update</string>
     <string name="plugin_action_edit">Edit name</string>
+    <string name="plugin_action_edit_css">Edit CSS / selectors</string>
+    <string name="plugin_action_map_madara">Map as Madara (search)</string>
+    <string name="plugin_action_map_blogger">Map as Blogger (search)</string>
+    <string name="plugin_js_not_in_search">JS only — not in Search until mapped</string>
+    <string name="plugin_cards_page">Showing %1$d–%2$d of %3$d</string>
+    <string name="plugin_cards_filter_hint">Filter by name…</string>
+    <string name="plugin_cards_next">Next</string>
+    <string name="plugin_cards_prev">Previous</string>
     <string name="plugin_action_reinstall">Reinstall</string>
     <string name="plugin_action_uninstall">Uninstall</string>
     <string name="plugin_uninstall_confirm">Uninstall %1$s? Downloaded novels are kept.</string>

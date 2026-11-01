@@ -421,6 +421,14 @@
     <string name="plugin_options_msg">Idioma: %1$s\nVersión: %2$s · última: %3$s\n%4$s</string>
     <string name="plugin_action_update">Actualizar</string>
     <string name="plugin_action_edit">Editar nombre</string>
+    <string name="plugin_action_edit_css">Editar CSS / selectores</string>
+    <string name="plugin_action_map_madara">Mapear como Madara (búsqueda)</string>
+    <string name="plugin_action_map_blogger">Mapear como Blogger (búsqueda)</string>
+    <string name="plugin_js_not_in_search">Solo JS — no aparece en Buscar hasta mapearlo</string>
+    <string name="plugin_cards_page">Mostrando %1$d–%2$d de %3$d</string>
+    <string name="plugin_cards_filter_hint">Filtrar por nombre…</string>
+    <string name="plugin_cards_next">Siguiente</string>
+    <string name="plugin_cards_prev">Anterior</string>
     <string name="plugin_action_reinstall">Reinstalar</string>
     <string name="plugin_action_uninstall">Desinstalar</string>
     <string name="plugin_uninstall_confirm">¿Desinstalar %1$s? Las novelas descargadas se conservan.</string>

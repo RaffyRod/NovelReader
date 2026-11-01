@@ -339,7 +339,7 @@ object CustomProviderDialogs {
             .setTitle(config.name)
             .setMessage(R.string.cp_delete_confirm)
             .setPositiveButton(R.string.cp_delete) { _, _ ->
-                CustomProviders.remove(config.name)
+                CustomProviders.remove(activity, config.name)
                 showToast(R.string.cp_deleted)
                 onChanged()
                 showManager(activity, onChanged)
