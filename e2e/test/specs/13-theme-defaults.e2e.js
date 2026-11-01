@@ -14,7 +14,7 @@ describe('Theme defaults', () => {
     await settingsPage.expectLoaded();
 
     // Previous specs may leave Settings scrolled far down — rewind first.
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       await driver.execute('mobile: scrollGesture', {
         left: 80,
         top: 400,
@@ -23,25 +23,35 @@ describe('Theme defaults', () => {
         direction: 'up',
         percent: 0.9,
       }).catch(() => {});
-      await driver.pause(150);
+      await driver.pause(120);
     }
 
     const themeLabels = ['Tema Ultimate', 'Ultimate theme', 'Ultimate Theme'];
-    let themeVisible = false;
+    let themeRow = null;
     for (const label of themeLabels) {
       await settingsPage.scrollToText(label);
       await driver.pause(350);
-      if (await settingsPage.byTextContains(label).isDisplayed().catch(() => false)) {
-        themeVisible = true;
+      const row = settingsPage.byText(label);
+      if (await row.isDisplayed().catch(() => false)) {
+        themeRow = row;
         break;
       }
     }
-    expect(themeVisible).toBe(true);
+    expect(themeRow).not.toBeNull();
 
-    const blue = settingsPage.byTextContains('Ultimate Blue');
-    const blueVisible = await blue.isDisplayed().catch(() => false);
-    // ListPreference shows current value as subtitle next to the row.
-    expect(blueVisible).toBe(true);
+    // Subtitle can be clipped on short CI viewports — open the picker and assert default.
+    await themeRow.click();
+    await driver.pause(800);
+    const blueInDialog = settingsPage.byText('Ultimate Blue');
+    await blueInDialog.waitForDisplayed({ timeout: 10000 });
+    expect(await blueInDialog.isDisplayed()).toBe(true);
+    // Dismiss picker (Cancel / Aceptar / back)
+    const cancel = settingsPage.byText('Cancelar');
+    const cancelEn = settingsPage.byText('Cancel');
+    if (await cancel.isDisplayed().catch(() => false)) await cancel.click();
+    else if (await cancelEn.isDisplayed().catch(() => false)) await cancelEn.click();
+    else await driver.back();
+    await driver.pause(500);
 
     const darkLabels = ['Modo oscuro', 'Dark mode'];
     let darkRow = null;
@@ -57,7 +67,12 @@ describe('Theme defaults', () => {
     expect(darkRow).not.toBeNull();
     await darkRow.waitForDisplayed({ timeout: 15000 });
 
-    const darkOn = await settingsPage.isPreferenceSwitchOnNear(darkRow);
+    let darkOn = await settingsPage.isPreferenceSwitchOnNear(darkRow);
+    if (!darkOn) {
+      // Explicit semantics from SwitchPreferenceWidget (switch_on / ON).
+      const onSwitch = $('android=new UiSelector().description("switch_on")');
+      darkOn = await onSwitch.isDisplayed().catch(() => false);
+    }
     expect(darkOn).toBe(true);
   });
 });

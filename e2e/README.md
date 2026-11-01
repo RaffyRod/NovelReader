@@ -16,7 +16,7 @@ Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 | `05-settings` | Settings + Tutorial TTS |
 | `06-import` | Import-B UI + system document picker |
 | `07-reader-tts` | Seeds a novel (import fixture / search stream), opens reader, shows TTS, starts TTS — **no skips** |
-| `08-providers` | HTTP probe + search multi-select (varios proveedores) + search scoped results |
+| `08-providers` | HTTP probe + multi-select (Select none → enable 2+) + best-effort scoped search |
 | `09-search-special-chars` | Blocks special chars by default; accepts them when Settings toggle is on |
 | `10-plugins` | Settings → Plugins (LNReader) hub: open manage plugins / add repository entry points |
 | `11-download-translate` | Novel detail → Download dialog: language picker + Gemini / Google online engine |

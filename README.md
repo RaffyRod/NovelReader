@@ -51,7 +51,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | 📖 **Reader** | **Glyph Pulse** (本) while loading — themed, UI language, no raw URL |
 | ⬇️ **Download** | Ranges, chapters/file, language via Gemini / Google / Original |
 | 🔊 **TTS** | Piper/Sherpa voices (Dave ES / Lessac EN) + notification |
-| 🧪 **QA** | Unit + Appium E2E (specs 01–13) + CI suites (smoke / features / providers / reader) |
+| 🧪 **QA** | Unit + Appium E2E (specs 01–13) + CI (validate i18n/timing → unit → smoke / features / providers / reader) |
 
 ---
 

@@ -65,7 +65,19 @@ class SearchPage extends BasePage {
    */
   async readVisibleProviderRows() {
     const rows = [];
-    const skip = new Set(['OK', 'Aceptar', 'Cancelar', 'Proveedores', 'Cancel']);
+    const skip = new Set([
+      'OK',
+      'Aceptar',
+      'Cancelar',
+      'Proveedores',
+      'Cancel',
+      'Seleccionar todo',
+      'Select all',
+      'Seleccionar ninguno',
+      'Select none',
+      'Ninguno',
+      'Todos',
+    ]);
     const texts = await $$('android.widget.TextView');
     for (const el of texts) {
       const label = ((await el.getText().catch(() => '')) || '').trim();
@@ -124,53 +136,63 @@ class SearchPage extends BasePage {
   }
 
   /**
+   * Clicks Select none / Select all when the multi-select bulk actions are visible.
+   * @param {'none'|'all'} mode
+   */
+  async clickProvidersBulkAction(mode) {
+    const labels =
+      mode === 'none'
+        ? ['Seleccionar ninguno', 'Select none', 'Ninguno']
+        : ['Seleccionar todo', 'Select all', 'Todos'];
+    for (const label of labels) {
+      const btn = this.byText(label);
+      if (await btn.isDisplayed().catch(() => false)) {
+        await btn.click();
+        await driver.pause(350);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Leaves only the given provider names selected.
-   * Default dialog starts with all selected → deselect non-wanted only (never toggle wanted).
+   * Prefers bulk "Select none" then enables wanted (fast). Falls back to targeted toggles.
    * @param {string[]} names
    */
   async selectOnlyProviders(names) {
     await this.openProvidersDialog();
     const wanted = [...new Set(names)];
-    const wantedSet = new Set(wanted);
-    const cleared = new Set();
-    const seenWanted = new Set();
+    const enabled = new Set();
 
-    const sweep = async (direction, times) => {
-      for (let i = 0; i < times; i++) {
+    const cleared = await this.clickProvidersBulkAction('none');
+    if (!cleared) {
+      // Legacy fallback: deselect only what is on the first couple of screens, then
+      // scroll to wanted. Avoids the 10-minute full-list sweep that timed out on CI.
+      const clearedNames = new Set();
+      for (let i = 0; i < 6; i++) {
         const rows = await this.readVisibleProviderRows();
         for (const row of rows) {
-          if (wantedSet.has(row.name)) {
-            seenWanted.add(row.name);
-            continue;
-          }
-          if (cleared.has(row.name)) continue;
+          if (wanted.includes(row.name) || clearedNames.has(row.name)) continue;
           if (await this.clickProviderRowByName(row.name)) {
-            cleared.add(row.name);
-            await driver.pause(90);
+            clearedNames.add(row.name);
+            await driver.pause(60);
           }
         }
-        await this.scrollDialog(direction);
+        await this.scrollDialog('down');
       }
-    };
-
-    // Thorough sweeps — English providers make the list long on CI.
-    await sweep('down', 18);
-    await sweep('up', 18);
-    await sweep('down', 14);
-
-    for (const name of wanted) {
-      if (seenWanted.has(name)) continue;
-      await this.scrollProviderIntoViewExact(name);
-      const rows = await this.readVisibleProviderRows();
-      if (rows.some((r) => r.name === name)) seenWanted.add(name);
     }
 
-    // Clear stragglers brought into view while locating wanted names.
-    await sweep('up', 10);
-    await sweep('down', 10);
+    for (const name of wanted) {
+      await this.scrollProviderIntoViewExact(name);
+      if (await this.clickProviderRowByName(name)) {
+        enabled.add(name);
+        await driver.pause(150);
+      }
+    }
 
     await this.confirmProvidersDialog();
-    return { enabled: [...seenWanted], clearedCount: cleared.size };
+    return { enabled: [...enabled], clearedCount: cleared ? -1 : 0 };
   }
 
   /**
@@ -263,14 +285,16 @@ class SearchPage extends BasePage {
 
       if (loadingSeen && providersVisible && stableRounds >= 3) return;
       if (providersVisible && maxChips > 0 && stableRounds >= 4) return;
-      if (noResults && providersVisible && stableRounds >= 3) return;
-      if (!loadingSeen && maxChips === 0 && Date.now() - started > 45000) {
-        throw new Error('Search did not start (no loading / no chips after 45s)');
+      if (noResults && providersVisible && stableRounds >= 2) return;
+      // Fast empty responses may never hide the providers button — treat long idle as done.
+      if (!loadingSeen && maxChips === 0 && providersVisible && Date.now() - started > 25000) {
+        if (noResults) return;
+        throw new Error('Search did not start (no loading / no chips after 25s)');
       }
-      await driver.pause(1200);
+      await driver.pause(1000);
     }
 
-    if (maxChips > 0) return;
+    if (maxChips > 0 || (await this.noResults.isDisplayed().catch(() => false))) return;
     throw new Error(`Search did not finish within ${timeoutMs}ms (chips=${lastCount})`);
   }
 

@@ -41,8 +41,9 @@ exports.config = {
     ],
     features: [
       [
-        './test/specs/05-settings.e2e.js',
+        // Theme first: assert defaults before other specs scroll/deep-link Settings.
         './test/specs/13-theme-defaults.e2e.js',
+        './test/specs/05-settings.e2e.js',
         './test/specs/06-import.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
         './test/specs/10-plugins.e2e.js',

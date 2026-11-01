@@ -1,6 +1,7 @@
 package com.lagradost.cloudstream4.compose
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -373,6 +376,29 @@ fun <T> MultiSelectDialog(
         title = title?.let { { Text(text = it) } },
         text = {
             LazyColumn {
+                item(key = "__bulk_actions__") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextButton(
+                            onClick = {
+                                selected.clear()
+                                selected.addAll(entries.keys)
+                            },
+                        ) {
+                            Text(text = stringResource(R.string.select_all))
+                        }
+                        TextButton(
+                            onClick = { selected.clear() },
+                        ) {
+                            Text(text = stringResource(R.string.select_none))
+                        }
+                    }
+                }
                 entries.forEach { (key, value) ->
                     item(key = key) {
                         val isSelected = selected.contains(key)

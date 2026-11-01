@@ -321,6 +321,7 @@
     <string name="select_chapters">Seleccionar capítulos</string>
     <string name="selected_chapters_count">%1$d seleccionados</string>
     <string name="select_all">Seleccionar todo</string>
+    <string name="select_none">Seleccionar ninguno</string>
     <string name="select_range">Seleccionar rango</string>
     <string name="select_range_from">Desde</string>
     <string name="select_range_to">Hasta</string>

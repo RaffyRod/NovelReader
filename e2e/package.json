@@ -17,6 +17,7 @@
     "test:theme": "wdio run ./wdio.conf.js --spec ./test/specs/13-theme-defaults.e2e.js",
     "test:reader-loading": "wdio run ./wdio.conf.js --spec ./test/specs/12-reader-loading.e2e.js",
     "test:providers": "npm run providers:generate && wdio run ./wdio.conf.js --suite providers",
+    "ci:local": "npm run providers:generate && wdio run ./wdio.conf.js --suite smoke && wdio run ./wdio.conf.js --suite features && wdio run ./wdio.conf.js --suite providers",
     "pretest": "npm run providers:generate",
     "pretest:smoke": "npm run providers:generate",
     "pretest:features": "npm run providers:generate",
