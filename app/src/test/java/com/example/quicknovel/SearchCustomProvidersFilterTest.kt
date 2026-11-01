@@ -54,4 +54,23 @@ class SearchCustomProvidersFilterTest {
         )
         assertEquals(listOf("Royal Road", "Mi Blog Custom"), filtered.map { it.name })
     }
+
+    @Test
+    fun apisForSearch_keepsEnglishWhenSelectedEvenIfLangFilterIsSpanishOnly() {
+        val vm = HomeViewModel2()
+        val apis = listOf(
+            FakeApi("Royal Road", "en"),
+            FakeApi("AllNovel", "en"),
+            FakeApi("SkyNovels", "es"),
+        ).toImmutableList()
+        val filtered = vm.apisForSearch(
+            apis,
+            names = persistentSetOf("Royal Road", "AllNovel", "SkyNovels"),
+            languages = persistentSetOf("es"),
+        )
+        assertEquals(
+            listOf("Royal Road", "AllNovel", "SkyNovels"),
+            filtered.map { it.name },
+        )
+    }
 }

@@ -116,6 +116,24 @@ class HomeViewModel2 : ViewModel(),
         }.toPersistentList()
     }
 
+    /**
+     * Providers to hit for a novel search. Selected names win so English sources stay
+     * searchable when they are enabled in prefs even if "show English" is off.
+     */
+    fun apisForSearch(
+        apis: ImmutableList<MainAPI>,
+        names: ImmutableSet<String>,
+        languages: ImmutableSet<String>,
+    ): ImmutableList<MainAPI> = when {
+        names.isNotEmpty() -> apis.filter { names.contains(it.name) }.toPersistentList()
+        languages.isNotEmpty() -> filterApis(
+            apis,
+            apis.map { it.name }.toPersistentSet(),
+            languages,
+        )
+        else -> persistentListOf()
+    }
+
     override fun onAction(action: HomeAction) {
         when (action) {
             HomeAction.ConfigureApis -> {
@@ -266,7 +284,7 @@ class HomeViewModel2 : ViewModel(),
                     shownMainPageApis = filterApis(refreshed.mainPage, names, langs),
                 )
             }
-            val searchApis = filterApis(refreshed.all, names, langs)
+            val searchApis = apisForSearch(refreshed.all, names, langs)
             searchQuery(query, searchApis)
         }
     }

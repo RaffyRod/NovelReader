@@ -58,7 +58,7 @@ class ProviderPreferences(preferences: PreferenceStore) {
         preferences.getStringSet("search_providers_list", apis.map { it.name }.toSet())
     val searchLangList =
         preferences.getStringSet("provider_lang_key", persistentSetOf("es"))
-    val showEnglishProviders = preferences.getBoolean("show_english_providers", false)
+    val showEnglishProviders = preferences.getBoolean("show_english_providers", true)
     /** When false (default), search fields strip symbols like @ # $ %. */
     val allowSpecialSearchChars = preferences.getBoolean("allow_special_search_chars", false)
 }
