@@ -1,12 +1,10 @@
-# Auto-bump Ultimate 2.x, build signed universal APK, post to private Telegram.
-# Runs only when there are new commits since the last Ultimate release tag (v2.*).
+# Manual only: auto-bump Ultimate 2.x, build signed universal APK, post to Telegram.
+# Skips if there are no new commits since the last Ultimate release tag (v2.*).
 # Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 # Optional: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
 name: Release → Telegram
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       note:
@@ -34,14 +32,6 @@ jobs:
     name: Bump, build & send APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # Ignore the commit this job pushes after a release.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'push' &&
-        !contains(github.event.head_commit.message, '[skip ci]') &&
-        !startsWith(github.event.head_commit.message, 'chore(release):')
-      )
     permissions:
       contents: write
 
@@ -55,7 +45,7 @@ jobs:
       - name: Gate — new commits since last Ultimate release
         id: gate
         env:
-          FORCE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force || 'false' }}
+          FORCE: ${{ github.event.inputs.force || 'false' }}
         run: |
           set -euo pipefail
 
@@ -112,7 +102,7 @@ jobs:
         if: steps.gate.outputs.should_release == 'true'
         id: bump
         env:
-          BUMP: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.bump || 'patch' }}
+          BUMP: ${{ github.event.inputs.bump || 'patch' }}
           CURRENT_NAME: ${{ steps.gate.outputs.current_name }}
           CURRENT_CODE: ${{ steps.gate.outputs.current_code }}
           LAST_TAG: ${{ steps.gate.outputs.last_tag }}
@@ -236,7 +226,7 @@ jobs:
         id: notes
         env:
           VER_NAME: ${{ steps.bump.outputs.name }}
-          NOTE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.note || '' }}
+          NOTE: ${{ github.event.inputs.note || '' }}
           APP_NAME: QuickNovel Ultimate
         run: |
           set -euo pipefail
