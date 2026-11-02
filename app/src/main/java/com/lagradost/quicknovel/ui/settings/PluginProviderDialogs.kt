@@ -1442,7 +1442,10 @@ object PluginProviderDialogs {
         val prefill = if (base.contains("blogspot", ignoreCase = true) ||
             base.contains("blogger", ignoreCase = true)
         ) {
-            CustomProviderConfig.bloggerTemplate(plugin.localName, base).copy(lang = plugin.langCode)
+            CustomProviderConfig.bloggerTemplate(plugin.localName, base).copy(
+                lang = plugin.langCode,
+                iconUrl = plugin.iconUrl,
+            )
         } else {
             CustomProviderConfig(
                 name = plugin.localName,
@@ -1454,6 +1457,7 @@ object PluginProviderDialogs {
                 chapterLink = "",
                 content = "",
                 lang = plugin.langCode,
+                iconUrl = plugin.iconUrl,
             )
         }
         CustomProviderDialogs.showEditor(activity, existing = null, prefill = prefill) {
@@ -1520,9 +1524,15 @@ object PluginProviderDialogs {
                 val existing = findMappedConfig(plugin)
                 val name = existing?.name?.takeIf { it.isNotBlank() } ?: plugin.localName
                 val config = if (madara) {
-                    CustomProviderConfig.madaraTemplate(name, base).copy(lang = plugin.langCode)
+                    CustomProviderConfig.madaraTemplate(name, base).copy(
+                        lang = plugin.langCode,
+                        iconUrl = plugin.iconUrl,
+                    )
                 } else {
-                    CustomProviderConfig.bloggerTemplate(name, base).copy(lang = plugin.langCode)
+                    CustomProviderConfig.bloggerTemplate(name, base).copy(
+                        lang = plugin.langCode,
+                        iconUrl = plugin.iconUrl,
+                    )
                 }
                 CustomProviders.save(
                     activity,

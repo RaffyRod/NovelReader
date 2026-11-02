@@ -49,6 +49,10 @@ abstract class MainAPI {
 
     open val iconId: Int? = null
     open val iconBackgroundId: Int = R.color.primaryGrayBackground
+    /** Remote icon (plugin / custom). Prefer [iconId] when both are set. */
+    open val iconUrl: String? = null
+    /** True for user-added providers — Search shows a NEW pill over the tile. */
+    open val showNewBadge: Boolean = false
 
     open suspend fun loadMainPage(
         page: Int,

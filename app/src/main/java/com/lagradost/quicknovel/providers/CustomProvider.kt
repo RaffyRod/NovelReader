@@ -1,5 +1,6 @@
 package com.lagradost.quicknovel.providers
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.lagradost.quicknovel.ChapterData
 import com.lagradost.quicknovel.ErrorLoadingException
 import com.lagradost.quicknovel.HeadMainPageResponse
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
  * A provider described only by CSS selectors, so a site can be added without writing code.
  * Selectors that are not required are left empty.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class CustomProviderConfig(
     val name: String,
     val baseUrl: String,
@@ -40,6 +42,8 @@ data class CustomProviderConfig(
     val content: String,
     /** [KIND_CSS] reads pages with the selectors above, [KIND_BLOGGER] reads the feed of a Blogger site. */
     val kind: String = KIND_CSS,
+    /** Optional remote logo (plugin catalog iconUrl). Empty → Search uses favicon / initials. */
+    val iconUrl: String = "",
 ) {
     val isBlogger get() = kind == KIND_BLOGGER
 
@@ -385,6 +389,8 @@ class CustomProvider(val config: CustomProviderConfig) : MainAPI() {
     override val name = config.name
     override val mainUrl = config.baseUrl.trim().trimEnd('/')
     override val lang = config.lang
+    override val iconUrl: String? = config.iconUrl.trim().takeIf { it.isNotEmpty() }
+    override val showNewBadge: Boolean = true
 
     /** Downloads [url] and parses it with the url as base, so relative links resolve to absolute ones. */
     private suspend fun fetch(url: String): Document = Jsoup.parse(app.get(url).text, url)

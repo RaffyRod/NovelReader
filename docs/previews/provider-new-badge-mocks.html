@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Proveedores nuevos — badge NEW (mocks)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #03060f;
+      --text: #e8f1ff;
+      --muted: #8b97ab;
+      --primary: #1a6cff;
+      --glow: #4da3ff;
+      --surface: #101a30;
+      --card: #0a1224;
+      --line: rgba(140, 180, 255, 0.14);
+      --danger: #fb7185;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 480px at 12% -10%, rgba(26, 108, 255, 0.22), transparent 55%),
+        radial-gradient(700px 420px at 90% 0%, rgba(77, 163, 255, 0.1), transparent 50%),
+        var(--page);
+      padding: 32px 22px 80px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 400;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .lead {
+      color: var(--muted);
+      max-width: 48rem;
+      line-height: 1.5;
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+    .note {
+      max-width: 48rem;
+      margin: 0 0 28px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(251, 191, 36, 0.28);
+      background: rgba(251, 191, 36, 0.08);
+      color: #fde68a;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .note code { font-family: var(--mono); font-size: 0.85em; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(16, 26, 48, 0.95), rgba(8, 12, 24, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px 16px 18px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+    .card.current {
+      border-color: rgba(251, 113, 133, 0.45);
+      background: linear-gradient(180deg, rgba(40, 16, 24, 0.9), rgba(8, 12, 24, 0.98));
+    }
+    .head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .tag {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(26, 108, 255, 0.18);
+      color: #9ec5ff;
+      border: 1px solid rgba(77, 163, 255, 0.35);
+    }
+    .tag.bad {
+      background: rgba(251, 113, 133, 0.15);
+      color: #fda4af;
+      border-color: rgba(251, 113, 133, 0.4);
+    }
+    .tag.pick {
+      background: rgba(52, 211, 153, 0.12);
+      color: #6ee7b7;
+      border-color: rgba(52, 211, 153, 0.35);
+    }
+    .title { font-size: 1.05rem; font-weight: 600; margin: 0; }
+    .desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+      margin: 0 0 14px;
+      min-height: 2.6em;
+    }
+    /* Phone frame — Buscar providers strip */
+    .phone {
+      border-radius: 16px;
+      background: #05070e;
+      border: 1px solid rgba(140, 180, 255, 0.12);
+      padding: 14px 12px 16px;
+      overflow: hidden;
+    }
+    .phone-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin: 0 0 10px;
+      letter-spacing: 0.02em;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      overflow: hidden;
+    }
+    .prov {
+      flex: 0 0 86px;
+      width: 86px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .tile {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      border-radius: 14px;
+      background: #151d30;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .tile img, .tile .fake-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+    .fake-logo {
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #0a1224;
+      background: linear-gradient(145deg, #fff, #c7d7ff);
+    }
+    .fake-logo.devil { background: #1a1020; color: #f0abfc; }
+    .fake-logo.nova { background: #fff; color: #7c3aed; font-size: 0.7rem; }
+    .fake-logo.sky { background: #fff; color: #dc2626; }
+    .fake-logo.madara {
+      background: linear-gradient(145deg, #1e3a8a, #3b82f6);
+      color: #fff;
+      font-size: 0.65rem;
+      letter-spacing: 0.04em;
+    }
+    .name {
+      font-size: 0.72rem;
+      text-align: center;
+      line-height: 1.15;
+      color: var(--text);
+      max-width: 86px;
+    }
+    /* —— Badges —— */
+    .badge {
+      position: absolute;
+      z-index: 2;
+      font-family: var(--mono);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      pointer-events: none;
+    }
+    /* A — pill top-end */
+    .a .badge {
+      top: 5px;
+      right: 5px;
+      font-size: 0.52rem;
+      padding: 3px 5px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--primary), var(--glow));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(26, 108, 255, 0.45);
+    }
+    /* B — ribbon top-start */
+    .b .badge {
+      top: 0;
+      left: 0;
+      font-size: 0.48rem;
+      padding: 5px 7px 4px;
+      border-radius: 0 0 8px 0;
+      background: var(--warn);
+      color: #1a1200;
+    }
+    /* C — soft chip top-start with glow */
+    .c .badge {
+      top: 4px;
+      left: 4px;
+      font-size: 0.5rem;
+      padding: 3px 6px;
+      border-radius: 6px;
+      background: rgba(5, 10, 20, 0.72);
+      color: #93c5fd;
+      border: 1px solid rgba(77, 163, 255, 0.55);
+      backdrop-filter: blur(4px);
+    }
+    /* D — mini fiber icon only (no NEW text) */
+    .d .badge {
+      top: 4px;
+      right: 4px;
+      width: 18px;
+      height: 14px;
+      border-radius: 4px;
+      background: #22c55e;
+      color: #052e16;
+      font-size: 0.42rem;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+    /* E — corner triangle fold */
+    .e .badge {
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      padding: 0;
+      border-style: solid;
+      border-width: 0 28px 28px 0;
+      border-color: transparent var(--primary) transparent transparent;
+      background: transparent;
+      letter-spacing: 0;
+    }
+    .e .badge span {
+      position: absolute;
+      top: 3px;
+      right: -26px;
+      transform: rotate(45deg);
+      font-size: 0.42rem;
+      color: #fff;
+      width: 28px;
+      text-align: center;
+    }
+    /* F — outline ring + NEW caption above tile */
+    .f .prov { gap: 4px; }
+    .f .cap {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.08em;
+      color: var(--glow);
+      font-weight: 700;
+    }
+    .f .tile {
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.06),
+        0 0 0 2px rgba(26, 108, 255, 0.55);
+    }
+    /* Current bad state */
+    .bad-now .tile {
+      background: #1a2238;
+    }
+    .bad-now .fiber {
+      width: 40px;
+      height: 40px;
+      opacity: 0.95;
+      filter: drop-shadow(0 0 8px rgba(77,163,255,0.35));
+    }
+    .pick-hint {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .pick-hint strong { color: #9ec5ff; }
+  </style>
+</head>
+<body>
+  <h1>Proveedores nuevos en Buscar</h1>
+  <p class="lead">
+    Hoy, si un proveedor no tiene <code>iconId</code> (plugins / custom), la tarjeta usa
+    <code>fiber_new_24px</code> como si fuera la portada entera. Quieres: <strong>portada real</strong>
+    + un <strong>iconito NEW</strong> arriba.
+  </p>
+  <p class="note">
+    Elige una letra (A–F). En todos los mocks (salvo “Actual”) el logo del sitio queda visible;
+    solo cambia el badge. Favicon / <code>iconUrl</code> del plugin o letra del nombre como fallback.
+  </p>
+
+  <div class="grid">
+    <!-- CURRENT -->
+    <article class="card current">
+      <div class="head">
+        <span class="tag bad">ACTUAL</span>
+        <h2 class="title">NEW como portada</h2>
+      </div>
+      <p class="desc">El glyph “NEW” ocupa todo el icono. Misleading: parece el logo del sitio.</p>
+      <div class="phone bad-now">
+        <p class="phone-label">Buscar → Proveedores</p>
+        <div class="row">
+          <div class="prov">
+            <div class="tile"><div class="fake-logo devil">DN</div></div>
+            <div class="name">DevilNovels</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo nova">NOVA</div></div>
+            <div class="name">Nova</div>
+          </div>
+          <div class="prov">
+            <div class="tile">
+              <svg class="fiber" viewBox="0 0 960 960" fill="#9ec5ff" aria-hidden="true">
+                <path d="M120 800q-33 0-56.5-23.5T40 720V240q0-33 23.5-56.5T120 160h720q33 0 56.5 23.5T920 240v480q0 33-23.5 56.5T840 800H120zm20-200h50V460h102l48 140h48V360h-50v140L190 360H140v240zm240 0h160v-50H440v-44h100v-50H440v-46h160V360H380v240zm240 0h160q17 0 28.5-11.5T820 560V360h-50v180h-44V400h-50v140h-46V360h-50v200q0 17 11.5 28.5T620 600z"/>
+              </svg>
+            </div>
+            <div class="name">LightNovel…</div>
+          </div>
+        </div>
+      </div>
+      <p class="pick-hint">No elegir — es el bug actual.</p>
+    </article>
+
+    <!-- A -->
+    <article class="card a">
+      <div class="head">
+        <span class="tag pick">A</span>
+        <h2 class="title">Píldora esquina</h2>
+      </div>
+      <p class="desc">Portada + badge azul redondeado arriba a la derecha. Compacto, estilo Ultimate Blue.</p>
+      <div class="phone">
+        <p class="phone-label">Buscar → Proveedores</p>
+        <div class="row">
+          <div class="prov">
+            <div class="tile"><div class="fake-logo devil">DN</div></div>
+            <div class="name">DevilNovels</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo nova">NOVA</div></div>
+            <div class="name">Nova</div>
+          </div>
+          <div class="prov">
+            <div class="tile">
+              <div class="fake-logo madara">LN</div>
+              <span class="badge">NEW</span>
+            </div>
+            <div class="name">LightNovel…</div>
+          </div>
+        </div>
+      </div>
+      <p class="pick-hint"><strong>Recomendado</strong> si quieres contraste claro sin tapar el logo.</p>
+    </article>
+
+    <!-- B -->
+    <article class="card b">
+      <div class="head">
+        <span class="tag">B</span>
+        <h2 class="title">Cinta ámbar</h2>
+      </div>
+      <p class="desc">Esquina superior izquierda, color aviso. Más “sticker de tienda”.</p>
+      <div class="phone">
+        <p class="phone-label">Buscar → Proveedores</p>
+        <div class="row">
+          <div class="prov">
+            <div class="tile"><div class="fake-logo sky">SN</div></div>
+            <div class="name">SkyNovels</div>
+          </div>
+          <div class="prov">
+            <div class="tile">
+              <div class="fake-logo madara">AR</div>
+              <span class="badge">NEW</span>
+            </div>
+            <div class="name">AllNovel…</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo nova">NOVA</div></div>
+            <div class="name">Nova</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- C -->
+    <article class="card c">
+      <div class="head">
+        <span class="tag">C</span>
+        <h2 class="title">Chip glass</h2>
+      </div>
+      <p class="desc">Badge semitransparente con borde. Menos agresivo sobre logos claros.</p>
+      <div class="phone">
+        <p class="phone-label">Buscar → Proveedores</p>
+        <div class="row">
+          <div class="prov">
+            <div class="tile"><div class="fake-logo devil">DN</div></div>
+            <div class="name">DevilNovels</div>
+          </div>
+          <div class="prov">
+            <div class="tile">
+              <div class="fake-logo madara">MX</div>
+              <span class="badge">NEW</span>
+            </div>
+            <div class="name">MadaraX</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo sky">SN</div></div>
+            <div class="name">SkyNovels</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- D -->
+    <article class="card d">
+      <div class="head">
+        <span class="tag">D</span>
+        <h2 class="title">Mini “NEW” verde</h2>
+      </div>
+      <p class="desc">Pastilla mínima (estilo fiber). Casi no tapa la portada; menos legible.</p>
+      <div class="phone">
+        <p class="phone-label">Buscar → Proveedores</p>
+        <div class="row">
+          <div class="prov">
+            <div class="tile">
+              <div class="fake-logo madara">PL</div>
+              <span class="badge">NEW</span>
+            </div>
+            <div class="name">PluginSite</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo nova">NOVA</div></div>
+            <div class="name">Nova</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo devil">DN</div></div>
+            <div class="name">DevilNovels</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- E -->
+    <article class="card e">
+      <div class="head">
+        <span class="tag">E</span>
+        <h2 class="title">Esquina doblada</h2>
+      </div>
+      <p class="desc">Triángulo de esquina con NEW en diagonal. Familiar en catálogos, un poco busy.</p>
+      <div class="phone">
+        <p class="phone-label">Buscar → Proveedores</p>
+        <div class="row">
+          <div class="prov">
+            <div class="tile"><div class="fake-logo sky">SN</div></div>
+            <div class="name">SkyNovels</div>
+          </div>
+          <div class="prov">
+            <div class="tile">
+              <div class="fake-logo madara">LN</div>
+              <span class="badge"><span>NEW</span></span>
+            </div>
+            <div class="name">LightNovel…</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo nova">NOVA</div></div>
+            <div class="name">Nova</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- F -->
+    <article class="card f">
+      <div class="head">
+        <span class="tag">F</span>
+        <h2 class="title">Anillo + caption</h2>
+      </div>
+      <p class="desc">NEW fuera del icono + borde azul. La portada queda 100% limpia.</p>
+      <div class="phone">
+        <p class="phone-label">Buscar → Proveedores</p>
+        <div class="row">
+          <div class="prov">
+            <div class="tile"><div class="fake-logo devil">DN</div></div>
+            <div class="name">DevilNovels</div>
+          </div>
+          <div class="prov">
+            <div class="cap">NEW</div>
+            <div class="tile"><div class="fake-logo madara">LN</div></div>
+            <div class="name">LightNovel…</div>
+          </div>
+          <div class="prov">
+            <div class="tile"><div class="fake-logo nova">NOVA</div></div>
+            <div class="name">Nova</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</body>
+</html>

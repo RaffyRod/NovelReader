@@ -1,23 +1,13 @@
 package com.lagradost.quicknovel.ui.search
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.text.font.FontWeight
-import com.lagradost.quicknovel.ui.common.SkeletonCover
-import com.lagradost.quicknovel.ui.common.SkeletonProviderRows
-import com.lagradost.quicknovel.ui.common.staggeredEnter
-import kotlinx.collections.immutable.ImmutableList
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,35 +17,48 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -63,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.lagradost.cloudstream4.compose.MultiSelectDialog
 import com.lagradost.cloudstream4.compose.Screen
 import com.lagradost.cloudstream4.compose.rounded
@@ -77,15 +81,20 @@ import com.lagradost.quicknovel.compose.BaseSearchBar
 import com.lagradost.quicknovel.compose.isLandscape
 import com.lagradost.quicknovel.ui.common.SearchResponseAction
 import com.lagradost.quicknovel.ui.common.SearchResponseItem
+import com.lagradost.quicknovel.ui.common.SkeletonCover
+import com.lagradost.quicknovel.ui.common.SkeletonProviderRows
+import com.lagradost.quicknovel.ui.common.staggeredEnter
 import com.lagradost.quicknovel.ui.mainpage.MainPageFragment
 import com.lagradost.quicknovel.ui.mainpage.SearchResponseDialog
 import com.lagradost.quicknovel.ui.settings.searchLangList
-import com.lagradost.quicknovel.util.ProviderLanguages
 import com.lagradost.quicknovel.ui.settings.searchProvidersList
 import com.lagradost.quicknovel.util.Apis.Companion.apis
+import com.lagradost.quicknovel.util.ProviderIcons
+import com.lagradost.quicknovel.util.ProviderLanguages
 import com.lagradost.quicknovel.util.SubtitleHelper
 import com.mihon.common.preference.AndroidPreferenceStore
 import com.mihon.presentation.settings.collectAsState
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.collections.immutable.toPersistentSet
@@ -420,15 +429,34 @@ fun MainAPIItem(
                 action(HomeAction.Open(api))
             })
     ) {
-        Image(
-            painter = painterResource(api.iconId ?: R.drawable.fiber_new_24px),
-            contentDescription = api.name,
+        Box(
             modifier = Modifier
                 .padding(10.dp)
-                .size(40.dp)
-                .rounded()
-                .background(colorResource(api.iconBackgroundId))
-        )
+                .size(40.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            ProviderIconTile(api = api)
+            if (api.showNewBadge) {
+                Text(
+                    text = stringResource(R.string.provider_new_badge),
+                    color = Color.White,
+                    fontSize = 7.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.4.sp,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 4.dp, y = (-3).dp)
+                        .background(
+                            brush = Brush.linearGradient(
+                                listOf(Color(0xFF1A6CFF), Color(0xFF4DA3FF)),
+                            ),
+                            shape = RoundedCornerShape(999.dp),
+                        )
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                )
+            }
+        }
         Text(
             text = api.name,
             color = MaterialTheme.colorScheme.onBackground,
@@ -437,6 +465,61 @@ fun MainAPIItem(
             textAlign = TextAlign.Center
         )
     }
+}
+
+/**
+ * Provider tile art: built-in [MainAPI.iconId], else remote URL / favicon, else initials placeholder.
+ * Never uses the full-tile `fiber_new` glyph as a fake logo.
+ */
+@Composable
+private fun ProviderIconTile(api: MainAPI) {
+    val tileModifier = Modifier
+        .fillMaxSize()
+        .rounded()
+        .background(colorResource(api.iconBackgroundId))
+    val iconId = api.iconId
+    if (iconId != null) {
+        Image(
+            painter = painterResource(iconId),
+            contentDescription = api.name,
+            modifier = tileModifier.padding(4.dp),
+            contentScale = ContentScale.Fit,
+        )
+        return
+    }
+    val remote = remember(api.iconUrl, api.mainUrl) {
+        ProviderIcons.resolvedIconUrl(api.iconUrl, api.mainUrl)
+    }
+    var showRemote by remember(remote) { mutableStateOf(!remote.isNullOrBlank()) }
+    Box(modifier = tileModifier, contentAlignment = Alignment.Center) {
+        ProviderIconPlaceholder(name = api.name)
+        if (showRemote && !remote.isNullOrBlank()) {
+            AsyncImage(
+                model = remote,
+                contentDescription = api.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+                    .rounded(),
+                onError = { showRemote = false },
+                onSuccess = { showRemote = true },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProviderIconPlaceholder(name: String) {
+    val initials = remember(name) { ProviderIcons.initials(name) }
+    Text(
+        text = initials,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+    )
 }
 
 @PreviewLightDark

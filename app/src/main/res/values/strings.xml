@@ -666,6 +666,7 @@
     <string name="search_recent_clear">Clear</string>
     <string name="search_popular">Popular</string>
     <string name="search_providers_title">Providers</string>
+    <string name="provider_new_badge">NEW</string>
     <string name="search_filter_all">All</string>
     <string name="search_no_results">No results</string>
     <string name="detail_download">Download</string>

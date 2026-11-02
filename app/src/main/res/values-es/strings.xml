@@ -627,6 +627,7 @@
     <string name="search_recent_clear">Borrar</string>
     <string name="search_popular">Populares</string>
     <string name="search_providers_title">Proveedores</string>
+    <string name="provider_new_badge">NEW</string>
     <string name="search_filter_all">Todos</string>
     <string name="search_no_results">Sin resultados</string>
     <string name="detail_download">Descargar</string>

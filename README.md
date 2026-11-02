@@ -46,7 +46,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | 🧭 **Sections** | Library shelves + **Traducciones** (Material Translate icon, not globe) |
 | 🕘 **History** | **Reading** / **Visited** with date groups |
 | 🔎 **Search** | Multi-provider, chips, special chars blocked by default; English sources on by default |
-| 🔌 **Sources** | Custom providers (Blog/Madara) + **LNReader plugins**: language cards (Continuar), Arabic→“Arabic”, in-place catalog paging + empty “Ir a página” |
+| 🔌 **Sources** | Custom providers (Blog/Madara) + **LNReader plugins**: language cards (Continuar), Arabic→“Arabic”, in-place catalog paging + empty “Ir a página”; new providers in Search show **real icon/favicon** + **NEW** pill |
 | 🖼️ **Covers** | Title-as-cover placeholder (theme + language) when no art |
 | 📖 **Reader** | **Glyph Pulse** (本) while loading — themed, UI language, no raw URL |
 | ⬇️ **Download** | Ranges, chapters/file, language via Gemini / Google / Original |
