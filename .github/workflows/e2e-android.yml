@@ -94,9 +94,9 @@ jobs:
           packages: platform-tools
       - name: Grant Gradle execute
         run: chmod +x gradlew
-      # Emulator is x86_64 — skip arm/universal to cut assemble time roughly in half.
+      # Emulator is x86_64 — -PabiFilter skips arm/universal (splits API has no assembleX86_64Release).
       - name: Assemble x86_64 release
-        run: ./gradlew :app:assembleX86_64Release --no-daemon
+        run: ./gradlew :app:assembleRelease --no-daemon -PabiFilter=x86_64
       - name: Sign APK (debug keystore for CI)
         run: |
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)

@@ -52,12 +52,14 @@ android {
     }
 
     // One APK per processor type for release builds; debug stays a single APK so emulators work.
+    // CI: ./gradlew :app:assembleRelease -PabiFilter=x86_64  (emulator-only, faster)
     splits {
         abi {
             enable gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
             reset()
-            include "arm64-v8a", "armeabi-v7a", "x86_64"
-            universalApk true
+            def abiFilter = (findProperty("abiFilter") ?: "arm64-v8a,armeabi-v7a,x86_64").toString()
+            include(*abiFilter.split(",").collect { it.trim() }.findAll { !it.isEmpty() })
+            universalApk !project.hasProperty("abiFilter")
         }
     }
 
