@@ -8,7 +8,7 @@
 | 🇬🇧 English | [Full manual](docs/manual-1.2.3/en/) |
 | 🇷🇺 Русский | [README_RU](README_RU.md) |
 
-Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate branding, themes, Import-B, Sections, custom providers, plugins, and stronger QA.
+Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate branding, themes, Import-B, Sections, custom providers, LNReader plugins, and stronger QA.
 
 ---
 
@@ -18,8 +18,8 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 |---|---|
 | 🏷️ **Version** | **2.0.0** (`versionCode` 200) |
 | 📦 **Package** | `com.lagradost.quicknovel.ultimate` |
-| 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** · show English providers **ON** |
-| 📥 **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK |
+| 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** · English providers **ON** |
+| 📥 **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK · or run **Release → Telegram** (manual) |
 | 🧑‍💻 **Repo** | https://github.com/RaffyRod/NovelReader |
 | ⬆️ **Upstream** | https://github.com/LagradOst/QuickNovel |
 
@@ -37,40 +37,72 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 
 ---
 
-## ✨ What you can do
+## ✨ Features
 
-| Area | Highlights |
-|------|------------|
-| 🎨 **Look** | Ultimate Blue + dark mode; 11 accent packs; icon styles A–J |
-| 📚 **Library** | Pinned local search, follow, Import-B (EPUB/PDF) |
-| 🧭 **Sections** | Library shelves + **Traducciones** (Material Translate icon, not globe) |
+| Area | What you get |
+|------|----------------|
+| 🎨 **Look** | Ultimate Blue + dark mode by default; 11 accent packs; icon styles A–J; bottom-nav / settings styles |
+| 📚 **Library** | Local search, follow, shelves rail, Import-B (**EPUB / PDF**) |
+| 🧭 **Sections** | Library shelves + **Traducciones** (Material Translate icon) |
 | 🕘 **History** | **Reading** / **Visited** with date groups |
 | 🔎 **Search** | Multi-provider, chips, special chars blocked by default; English sources on by default |
-| 🔌 **Sources** | Custom providers (Blog/Madara) + **LNReader plugins**: language cards (Continuar), Arabic→“Arabic”, in-place catalog paging + empty “Ir a página”; new providers in Search show **real icon/favicon** + **NEW** pill |
-| 🖼️ **Covers** | Title-as-cover placeholder (theme + language) when no art |
+| 🔌 **Sources** | Built-in sites + custom Blog/Madara + **LNReader plugins** |
+| 🖼️ **Covers** | Title-as-cover placeholder (theme + language) when art is missing |
 | 📖 **Reader** | **Glyph Pulse** (本) while loading — themed, UI language, no raw URL |
 | ⬇️ **Download** | Ranges, chapters/file, language via Gemini / Google / Original |
 | 🔊 **TTS** | Piper/Sherpa voices (Dave ES / Lessac EN) + notification |
-| 🧪 **QA** | Unit + Appium E2E (specs 01–14) + CI (validate i18n/timing → unit → smoke / features / providers / reader) |
+| 🧪 **QA** | Unit + Appium E2E (specs 01–14) + CI validate → unit → smoke / features / providers / reader |
+
+---
+
+## 🚀 What’s new in 2.0.0
+
+### Added
+| | |
+|---|---|
+| Plugin language picker | Cards with **Continuar** before opening the catalog |
+| Catalog paging | In-place page changes; empty **Ir a página** no longer jumps away |
+| **NEW** pill | New Search providers keep real icon/favicon + NEW badge (not a fake cover glyph) |
+| Sections · Traducciones | Translate icon on the library rail (not a globe) |
+| Release → Telegram | Manual Actions job: auto-bump next `v2.*` only if there are new commits, then post style **D** |
+
+### Improved / fixed
+| | |
+|---|---|
+| Go-to-page | Typo / bad page no longer dumps you out of the catalog |
+| Translation history | Correct Translate icon in Sections |
+| Defaults | Dark mode, Ultimate Blue, English providers ON out of the box |
+| Package | `com.lagradost.quicknovel.ultimate` · `versionCode` 200 |
+
+Full history → [`CHANGELOG.md`](CHANGELOG.md)
 
 ---
 
 ## 📱 Screenshots
 
-<p>
-<img src="./.github/ultimate/library.png" height="360" alt="Library"/>
-<img src="./.github/ultimate/search.png" height="360" alt="Search"/>
-<img src="./.github/ultimate/search-results.png" height="360" alt="Search results"/>
-<img src="./.github/ultimate/history.png" height="360" alt="History"/>
-</p>
-<p>
-<img src="./.github/ultimate/sections.png" height="360" alt="Sections"/>
-<img src="./.github/ultimate/settings-providers.png" height="360" alt="Settings"/>
-<img src="./.github/ultimate/add-provider.png" height="360" alt="Add provider"/>
-<img src="./.github/ultimate/provider-multiselect.png" height="360" alt="Multi-select"/>
-</p>
+_Captured on **2.0.0** (Ultimate Blue · dark mode · Español)._
 
-More shots → [`docs/manual-1.2.3/es/imagenes/`](docs/manual-1.2.3/es/imagenes/)
+| Biblioteca | Buscar |
+|:---:|:---:|
+| <img src="./.github/ultimate/library.png" width="220" alt="Library"/> | <img src="./.github/ultimate/search.png" width="220" alt="Search"/> |
+| Import EPUB/PDF · local search | Populares + multi-provider grid |
+
+| Resultados | Secciones |
+|:---:|:---:|
+| <img src="./.github/ultimate/search-results.png" width="220" alt="Search results"/> | <img src="./.github/ultimate/sections.png" width="220" alt="Sections rail"/> |
+| Results grouped by source | Library rail · Descargas · Traducciones |
+
+| Historial | Ajustes |
+|:---:|:---:|
+| <img src="./.github/ultimate/history.png" width="220" alt="History"/> | <img src="./.github/ultimate/settings.png" width="220" alt="Settings"/> |
+| Reading / visited empty state | Language · English providers · themes |
+
+| Proveedores | |
+|:---:|:---:|
+| <img src="./.github/ultimate/settings-providers.png" width="220" alt="Providers dialog"/> | |
+| Multi-select · flags · Select all / none | |
+
+More shots → [`docs/manual-1.2.3/es/imagenes/`](docs/manual-1.2.3/es/imagenes/) · mocks → [`docs/previews/`](docs/previews/)
 
 ---
 
@@ -104,6 +136,7 @@ Typical Desktop pack: `QuickNovel-Ultimate-2.0.0/` (APK on Desktop). Manuals fol
 | `python docs/manual-1.2.3/_generar_docs_en.py` | Regenerate EN manual |
 
 Sign the universal APK under `app/build/outputs/apk/release/` or use the Desktop build.  
+Telegram release (manual): **Actions → Release → Telegram → Run workflow**.  
 E2E details → [`e2e/README.md`](e2e/README.md) · CI → [`.github/workflows/e2e-android.yml`](.github/workflows/e2e-android.yml)
 
 ---
