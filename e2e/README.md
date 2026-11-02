@@ -91,8 +91,8 @@ GitHub Actions workflow `.github/workflows/e2e-android.yml` runs on **every push
 | `allure-report` | Merges Allure shards → HTML artifact |
 
 Speed notes (target ~10m warm):
-- Cache includes `$ANDROID_SDK_ROOT/system-images` (avoids ~10m `sdkmanager` reinstall per shard)
-- AOSP `default` image (smaller than `google_apis`) + snapshot boot (`-no-snapshot-save`)
+- Cache includes `$ANDROID_HOME/system-images` + AVD (avoids ~10m `sdkmanager` reinstall per shard)
+- `google_apis` API 30 + snapshot boot (`-no-snapshot-save`)
 - Plugin dialogs in **features-plugins**; download/sections in **features-flows**
 - First run after cache key change is still cold (~15–20m); later pushes reuse cache
 

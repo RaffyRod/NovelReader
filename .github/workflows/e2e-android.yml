@@ -13,13 +13,13 @@ concurrency:
 
 env:
   # Shared emulator profile — keep in sync across prepare-emulator + e2e matrix.
+  # google_apis (not AOSP default): proven on this runner; avoid hardcoding ANDROID_SDK_ROOT
+  # (overrides setup-android and breaks sdkmanager → prepare-emulator exit 1).
   EMU_API: 30
-  EMU_TARGET: default
+  EMU_TARGET: google_apis
   EMU_ARCH: x86_64
   EMU_PROFILE: pixel_4
-  EMU_AVD: qn_ci_api30
-  # Hosted runner SDK root (android-actions/setup-android).
-  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  EMU_AVD: qn_ci_api30_gapis
 
 jobs:
   validate:
@@ -136,6 +136,16 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: platform-tools emulator
+      - name: Resolve SDK root
+        id: sdk
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          echo "ANDROID_HOME=${ANDROID_HOME:-}"
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-}"
+          test -n "$SDK"
+          test -d "$SDK"
+          echo "dir=$SDK" >> "$GITHUB_OUTPUT"
+          mkdir -p "$SDK/system-images"
       - name: Emulator cache
         uses: actions/cache@v4
         id: emu-cache
@@ -143,8 +153,11 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-            ${{ env.ANDROID_SDK_ROOT }}/system-images
-          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v2
+            ${{ steps.sdk.outputs.dir }}/system-images
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v3
+      - name: Accept SDK licenses
+        if: steps.emu-cache.outputs.cache-hit != 'true'
+        run: yes | sdkmanager --licenses >/dev/null || true
       - name: Seed AVD snapshot
         if: steps.emu-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
@@ -154,7 +167,7 @@ jobs:
           arch: ${{ env.EMU_ARCH }}
           profile: ${{ env.EMU_PROFILE }}
           avd-name: ${{ env.EMU_AVD }}
-          force-avd-creation: false
+          force-avd-creation: true
           cores: 2
           ram-size: 2048M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
@@ -209,14 +222,21 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: platform-tools emulator
+      - name: Resolve SDK root
+        id: sdk
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK" && test -d "$SDK"
+          echo "dir=$SDK" >> "$GITHUB_OUTPUT"
+          mkdir -p "$SDK/system-images"
       - name: Emulator cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-            ${{ env.ANDROID_SDK_ROOT }}/system-images
-          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v2
+            ${{ steps.sdk.outputs.dir }}/system-images
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v3
       - name: Download APK
         uses: actions/download-artifact@v4
         with:
