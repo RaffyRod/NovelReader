@@ -418,7 +418,8 @@
     <string name="plugin_langs_hint">English y Español van primero (prioridad).</string>
     <string name="plugin_lang_priority">★ %1$s (%2$d)</string>
     <string name="plugin_langs_all">Todos</string>
-    <string name="plugin_langs_continue">Ver proveedores</string>
+    <string name="plugin_langs_continue">Continuar</string>
+    <string name="plugin_langs_sources">%1$d fuentes</string>
     <string name="plugin_langs_pick_one">Elige al menos un idioma</string>
     <string name="plugin_cards_title">Elegir proveedores</string>
     <string name="plugin_cards_hint">%1$d fuentes · %2$d nuevas · %3$d actualizaciones · instalados bloqueados salvo versión nueva</string>
@@ -450,6 +451,7 @@
     <string name="plugin_cards_filter_hint">Filtrar nombre, sitio, idioma…</string>
     <string name="plugin_cards_filter_clear">Limpiar</string>
     <string name="plugin_cards_filter_all">Todos</string>
+    <string name="plugin_cards_filter_kind_all">Cualquier tipo</string>
     <string name="plugin_cards_filter_new">Nuevos</string>
     <string name="plugin_cards_filter_updates">Actualiz.</string>
     <string name="plugin_cards_filter_installed">Instalados</string>
@@ -457,7 +459,8 @@
     <string name="plugin_cards_filter_blogger">Blogger</string>
     <string name="plugin_cards_filter_js">JS</string>
     <string name="plugin_cards_goto_page">Ir a página</string>
-    <string name="plugin_cards_goto_hint">Página 1–%1$d</string>
+    <string name="plugin_cards_goto_hint">Número de página (1–%1$d)</string>
+    <string name="plugin_cards_goto_current">Ahora estás en la página %1$d de %2$d. Escribe el número:</string>
     <string name="plugin_cards_next">Siguiente</string>
     <string name="plugin_cards_prev">Anterior</string>
     <string name="plugin_action_reinstall">Reinstalar</string>

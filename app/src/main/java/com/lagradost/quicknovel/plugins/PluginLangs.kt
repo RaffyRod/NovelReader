@@ -6,8 +6,27 @@ import com.lagradost.quicknovel.util.ProviderLanguages
 object PluginLangs {
     val PRIORITY_LABELS = listOf("English", "Español")
 
+    /** Strip bidi / isolate marks so Arabic (etc.) stay left-aligned in LTR UI lists. */
+    fun cleanLabel(label: String): String =
+        label.trim().replace(BIDI_MARKS, "")
+
+    /**
+     * Latin UI label for catalog rows. RTL scripts (Arabic, …) are shown in English so every
+     * card stays left-aligned and matches the rest of the list.
+     */
+    fun listLabel(label: String): String {
+        val clean = cleanLabel(label)
+        return when (codeFor(clean)) {
+            "ar" -> "Arabic"
+            "he" -> "Hebrew"
+            "fa" -> "Persian"
+            "ur" -> "Urdu"
+            else -> clean
+        }
+    }
+
     fun codeFor(label: String): String {
-        val l = label.trim().trimStart('\u200e').lowercase()
+        val l = cleanLabel(label).lowercase()
         return when {
             l.startsWith("english") || l == "en" -> ProviderLanguages.ENGLISH
             l.startsWith("español") || l.startsWith("espanol") || l.startsWith("spanish") || l == "es" -> "es"
@@ -16,6 +35,9 @@ object PluginLangs {
             l.startsWith("русский") || l.startsWith("russian") || l == "ru" -> "ru"
             l.startsWith("türkçe") || l.startsWith("turkce") || l.startsWith("turkish") || l == "tr" -> "tr"
             l.startsWith("العرب") || l.startsWith("arabic") || l == "ar" -> "ar"
+            l.startsWith("עבר") || l.startsWith("hebrew") || l == "he" -> "he"
+            l.startsWith("فارسی") || l.startsWith("persian") || l.startsWith("farsi") || l == "fa" -> "fa"
+            l.startsWith("اردو") || l.startsWith("urdu") || l == "ur" -> "ur"
             l.startsWith("bahasa") || l.startsWith("indonesian") || l == "id" -> "id"
             l.startsWith("中文") || l.startsWith("chinese") || l == "zh" -> "zh"
             l.startsWith("日本語") || l.startsWith("japanese") || l == "ja" -> "ja"
@@ -41,4 +63,6 @@ object PluginLangs {
             .map { it.key to it.value }
         return priority + rest
     }
+
+    private val BIDI_MARKS = Regex("[\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069]")
 }

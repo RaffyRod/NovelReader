@@ -2,7 +2,7 @@
 
 Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and **Allure**.
 
-**App under test:** `1.2.6` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`) · English providers ON.  
+**App under test:** `2.0.0` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`) · English providers ON.  
 Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 
 ## Scenarios
@@ -22,6 +22,7 @@ Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 | `11-download-translate` | Novel detail → Download dialog: language picker + Gemini / Google online engine |
 | `12-reader-loading` | Reader **Glyph Pulse (F)**: 本 overlay, no raw URL as title (cache may skip flash) |
 | `13-theme-defaults` | Fresh install: **Modo oscuro** ON + **Ultimate Blue** |
+| `14-sections-translations` | Secciones → **Traducciones** opens translation history dialog |
 
 ### Reader seed
 
@@ -41,7 +42,7 @@ Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 # from repo root
 ./gradlew :app:assembleRelease
 # copy signed APK to e2e/apps/QuickNovel-Ultimate.apk
-# or Desktop: QuickNovel-Ultimate-1.2.6-universal.apk
+# or Desktop: QuickNovel-Ultimate-2.0.0-universal.apk
 ```
 
 4. Install and run:
@@ -53,13 +54,14 @@ npx appium driver install uiautomator2
 npm run providers:generate   # refresh list from Apis.kt
 npm test                     # full suite
 npm run test:smoke           # 01–04
-npm run test:features        # 05, 13, 06, 09–11
+npm run test:features        # 05, 13, 06, 09–11, 14
 npm run test:reader          # 07 + 12
 npm run test:theme           # 13 only
 npm run test:reader-loading  # 12 only
 npm run test:providers       # 08 (long / network)
 npm run test:plugins         # 10
 npm run test:download-translate  # 11
+npm run test:sections        # 14 Secciones → Traducciones
 npm run allure:report
 ```
 

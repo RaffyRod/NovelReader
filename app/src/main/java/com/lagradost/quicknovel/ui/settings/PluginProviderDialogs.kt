@@ -1,6 +1,7 @@
 package com.lagradost.quicknovel.ui.settings
 
 import android.app.Activity
+import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -491,7 +492,8 @@ object PluginProviderDialogs {
         onChanged: () -> Unit,
     ) {
         val density = activity.resources.displayMetrics.density
-        val pad = (16 * density).toInt()
+        val pad = (14 * density).toInt()
+        val gap = (8 * density).toInt()
         val counts = PluginManifestClient.languageCounts(items)
         val ordered = PluginLangs.ordered(counts)
         val selected = linkedSetOf<String>().apply {
@@ -499,64 +501,215 @@ object PluginProviderDialogs {
             if (isEmpty() && ordered.isNotEmpty()) add(ordered.first().first)
         }
 
-        val column = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad / 2, pad, 0)
-        }
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
+        val onPrimary = activity.colorFromAttribute(R.attr.colorOnPrimary)
         val grayText = activity.colorFromAttribute(R.attr.grayTextColor)
         val textColor = activity.colorFromAttribute(R.attr.textColor)
+        val boxBg = activity.colorFromAttribute(R.attr.boxItemBackground)
+        // Light themes remap attr.white → black; dark themes keep white. Same stroke helper as hub cards.
+        val mutedStroke = activity.getResourceColor(R.attr.white, 0.18f)
+        val checkTint = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked),
+            ),
+            intArrayOf(primary, grayText),
+        )
+
+        val column = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad / 2, pad, pad / 2)
+            // Keep every language row LTR so Arabic / Hebrew labels don't push right.
+            layoutDirection = View.LAYOUT_DIRECTION_LTR
+        }
         column.addView(TextView(activity).apply {
             text = activity.getString(R.string.plugin_langs_hint)
             setTextColor(grayText)
-            setPadding(0, 0, 0, (8 * density).toInt())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setPadding(0, 0, 0, gap)
+            textAlignment = View.TEXT_ALIGNMENT_VIEW_START
         })
-        val boxes = ordered.map { (lang, count) ->
-            val row = LinearLayout(activity).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(0, (4 * density).toInt(), 0, (4 * density).toInt())
+
+        data class LangCard(
+            val lang: String,
+            val root: LinearLayout,
+            val check: CheckBox,
+            val avatar: TextView,
+        )
+
+        fun styleAvatar(avatar: TextView, checked: Boolean) {
+            val fill = if (checked) primary else ColorUtils.setAlphaComponent(primary, 38)
+            avatar.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 10 * density
+                setColor(fill)
             }
-            val box = CheckBox(activity).apply {
-                text = if (lang in PluginLangs.PRIORITY_LABELS) {
-                    activity.getString(R.string.plugin_lang_priority, lang, count)
-                } else {
-                    "$lang ($count)"
-                }
-                setTextColor(textColor)
-                isChecked = lang in selected
-                setOnCheckedChangeListener { _, checked ->
-                    if (checked) selected.add(lang) else selected.remove(lang)
-                }
-            }
-            row.addView(box, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            column.addView(row)
-            box
+            // colorOnPrimary follows each Ultimate / Light / Amoled overlay.
+            avatar.setTextColor(if (checked) onPrimary else primary)
         }
 
-        val scroll = ScrollView(activity).apply { addView(column) }
-        AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+        fun styleCard(card: LinearLayout, checked: Boolean) {
+            card.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 14 * density
+                setColor(boxBg)
+                setStroke(
+                    (1 * density).toInt().coerceAtLeast(1),
+                    if (checked) primary else mutedStroke,
+                )
+            }
+            card.alpha = 1f
+        }
+
+        val cards = ordered.map { (langRaw, count) ->
+            val lang = PluginLangs.cleanLabel(langRaw)
+            val code = PluginLangs.codeFor(lang).ifBlank { lang.take(2) }.uppercase().take(2)
+            val checked0 = lang in selected || langRaw in selected
+            val check = CheckBox(activity).apply {
+                isChecked = checked0
+                minWidth = 0
+                minimumWidth = 0
+                // No label on the checkbox — name lives in the card body (avoids RTL text runs).
+                text = null
+                buttonTintList = checkTint
+                // Keep a clear gap from the language name / subtitle.
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).also {
+                    it.marginStart = (14 * density).toInt()
+                    it.gravity = Gravity.CENTER_VERTICAL
+                }
+            }
+            val avatar = TextView(activity).apply {
+                text = code
+                gravity = Gravity.CENTER
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                setTypeface(typeface, Typeface.BOLD)
+                layoutParams = LinearLayout.LayoutParams(
+                    (32 * density).toInt(),
+                    (32 * density).toInt(),
+                ).also { it.marginEnd = (12 * density).toInt() }
+            }
+            styleAvatar(avatar, checked0)
+
+            val body = LinearLayout(activity).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).also {
+                    it.marginEnd = (8 * density).toInt()
+                }
+                layoutDirection = View.LAYOUT_DIRECTION_LTR
+            }
+            val title = PluginLangs.listLabel(lang)
+            body.addView(TextView(activity).apply {
+                text = if (lang in PluginLangs.PRIORITY_LABELS || title in PluginLangs.PRIORITY_LABELS) {
+                    "★ $title"
+                } else {
+                    title
+                }
+                setTextColor(textColor)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                setTypeface(typeface, Typeface.BOLD)
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+                textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+                textDirection = View.TEXT_DIRECTION_LTR
+                layoutDirection = View.LAYOUT_DIRECTION_LTR
+                gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            })
+            body.addView(TextView(activity).apply {
+                text = activity.getString(R.string.plugin_langs_sources, count)
+                setTextColor(grayText)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+                textDirection = View.TEXT_DIRECTION_LTR
+            })
+
+            val card = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutDirection = View.LAYOUT_DIRECTION_LTR
+                val cardPadH = (12 * density).toInt()
+                val cardPadV = (12 * density).toInt()
+                // Extra end padding so the check isn't flush against the card edge.
+                setPadding(cardPadH, cardPadV, (10 * density).toInt(), cardPadV)
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).also { it.bottomMargin = gap }
+                isClickable = true
+                isFocusable = true
+            }
+            styleCard(card, checked0)
+            card.addView(avatar)
+            card.addView(body)
+            card.addView(check)
+
+            fun sync(checked: Boolean) {
+                if (checked) {
+                    selected.add(lang)
+                    selected.add(langRaw)
+                } else {
+                    selected.remove(lang)
+                    selected.remove(langRaw)
+                }
+                styleAvatar(avatar, checked)
+                styleCard(card, checked)
+            }
+            check.setOnCheckedChangeListener { _, checked -> sync(checked) }
+            card.setOnClickListener { check.isChecked = !check.isChecked }
+
+            column.addView(card)
+            LangCard(lang, card, check, avatar)
+        }
+
+        val scroll = ScrollView(activity).apply {
+            addView(column)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (480 * density).toInt(),
+            )
+        }
+        val dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.plugin_langs_title)
             .setView(scroll)
-            .setNeutralButton(R.string.plugin_langs_all) { d, _ ->
-                boxes.forEach { it.isChecked = true }
-                // keep dialog open: recreate
-                d.dismiss()
-                selected.clear()
-                ordered.forEach { selected.add(it.first) }
-                showLanguages(activity, repoId, repoUrl, items, onChanged)
-            }
+            .setNeutralButton(R.string.plugin_langs_all, null)
             .setNegativeButton(R.string.close, null)
-            .setPositiveButton(R.string.plugin_langs_continue) { _, _ ->
-                if (selected.isEmpty()) {
-                    showToast(activity, activity.getString(R.string.plugin_langs_pick_one))
-                    showLanguages(activity, repoId, repoUrl, items, onChanged)
-                    return@setPositiveButton
+            .setPositiveButton(R.string.plugin_langs_continue, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).apply {
+                isAllCaps = false
+                setTextColor(primary)
+                setOnClickListener {
+                    cards.forEach { it.check.isChecked = true }
                 }
-                val filtered = items.filter { it.displayLang in selected }
-                    .sortedBy { it.name.lowercase() }
-                showCards(activity, repoUrl, filtered, onChanged, filterQuery = "", page = 0)
             }
-            .show()
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).apply {
+                isAllCaps = false
+                setTextColor(grayText)
+            }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).apply {
+                isAllCaps = false
+                isSingleLine = true
+                maxLines = 1
+                setTextColor(primary)
+                setOnClickListener {
+                    val chosen = selected.map { PluginLangs.cleanLabel(it) }.toSet()
+                    if (chosen.isEmpty()) {
+                        showToast(activity, activity.getString(R.string.plugin_langs_pick_one))
+                        return@setOnClickListener
+                    }
+                    dialog.dismiss()
+                    val filtered = items.filter { PluginLangs.cleanLabel(it.displayLang) in chosen }
+                        .sortedBy { it.name.lowercase() }
+                    activity.postUi {
+                        showCards(activity, repoUrl, filtered, onChanged, filterQuery = "", page = 0)
+                    }
+                }
+            }
+        }
+        if (activity.canShowDialog()) dialog.show()
     }
 
     private fun showCards(
@@ -573,55 +726,39 @@ object PluginProviderDialogs {
         val density = activity.resources.displayMetrics.density
         val pad = (14 * density).toInt()
         val gap = (10 * density).toInt()
-        val installedById = PluginStore.loadInstalled().associateBy { it.id }
-        val selected = selectedIds
-        val filtered = PluginCatalogFilter.filter(
-            items = items,
-            query = filterQuery,
-            status = statusFilter,
-            kind = kindFilter,
-            installedById = installedById,
-        )
-        val pageCount = PluginCatalogFilter.pageCount(filtered.size, CARDS_PAGE_SIZE)
-        val safePage = page.coerceIn(0, pageCount - 1)
-        val from = safePage * CARDS_PAGE_SIZE
-        val slice = PluginCatalogFilter.pageSlice(filtered, safePage, CARDS_PAGE_SIZE)
-        val to = (from + slice.size).coerceAtLeast(from)
         val primary = activity.colorFromAttribute(R.attr.colorPrimary)
-
-        val column = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad / 2, pad, pad)
-        }
         val grayText = activity.colorFromAttribute(R.attr.grayTextColor)
         val textColor = activity.colorFromAttribute(R.attr.textColor)
-        val updateCount = items.count {
-            val inst = installedById[it.id] ?: return@count false
-            PluginSelectAll.hasCatalogUpdate(inst, it)
+
+        var installedById = PluginStore.loadInstalled().associateBy { it.id }
+        val selected = selectedIds
+        var currentPage = page
+        var currentQuery = filterQuery
+        var currentStatus = statusFilter
+        var currentKind = kindFilter
+        val checkBoxes = LinkedHashMap<String, CheckBox>()
+        var dialog: AlertDialog? = null
+
+        val root = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad / 2, pad, pad / 2)
         }
-        val newCount = items.count { it.id !in installedById }
-        column.addView(TextView(activity).apply {
-            text = activity.getString(R.string.plugin_cards_hint, items.size, newCount, updateCount)
+        val header = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        val hintView = TextView(activity).apply {
             setTextColor(grayText)
             setPadding(0, 0, 0, gap / 2)
-        })
+        }
+        header.addView(hintView)
+
         val pageLabel = TextView(activity).apply {
-            text = activity.getString(
-                R.string.plugin_cards_page,
-                safePage + 1,
-                pageCount,
-                if (slice.isEmpty()) 0 else from + 1,
-                to,
-                filtered.size,
-            )
             setTextColor(primary)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setPadding(0, 0, 0, gap)
-            isClickable = pageCount > 1
-            isFocusable = pageCount > 1
             tag = "page_label"
         }
-        column.addView(pageLabel)
+        header.addView(pageLabel)
 
         val filterRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -629,7 +766,7 @@ object PluginProviderDialogs {
         }
         val filterEdit = EditText(activity).apply {
             hint = activity.getString(R.string.plugin_cards_filter_hint)
-            setText(filterQuery)
+            setText(currentQuery)
             setTextColor(textColor)
             setHintTextColor(grayText)
             inputType = InputType.TYPE_CLASS_TEXT
@@ -642,19 +779,16 @@ object PluginProviderDialogs {
             setTextColor(primary)
             tag = "filter_go"
         })
-        if (filterQuery.isNotBlank() ||
-            statusFilter != PluginCatalogFilter.Status.ALL ||
-            kindFilter != PluginCatalogFilter.Kind.ALL
-        ) {
-            filterRow.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
-                text = activity.getString(R.string.plugin_cards_filter_clear)
-                setTextColor(activity.getColor(R.color.colorPrimaryRed))
-                tag = "filter_clear"
-            })
+        val clearBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_cards_filter_clear)
+            setTextColor(activity.getColor(R.color.colorPrimaryRed))
+            tag = "filter_clear"
+            visibility = View.GONE
         }
-        column.addView(filterRow)
+        filterRow.addView(clearBtn)
+        header.addView(filterRow)
 
-        fun chipButton(label: String, active: Boolean, tag: String): Button =
+        fun chipButton(label: String, tag: String): Button =
             Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
                 text = label
                 this.tag = tag
@@ -663,9 +797,13 @@ object PluginProviderDialogs {
                 minHeight = 0
                 minimumHeight = 0
                 setPadding((8 * density).toInt(), (4 * density).toInt(), (8 * density).toInt(), (4 * density).toInt())
-                setTextColor(if (active) primary else grayText)
-                typeface = Typeface.defaultFromStyle(if (active) Typeface.BOLD else Typeface.NORMAL)
             }
+
+        fun styleChip(chip: Button?, active: Boolean) {
+            chip ?: return
+            chip.setTextColor(if (active) primary else grayText)
+            chip.typeface = Typeface.defaultFromStyle(if (active) Typeface.BOLD else Typeface.NORMAL)
+        }
 
         val statusRow = HorizontalScrollView(activity).apply {
             isHorizontalScrollBarEnabled = false
@@ -674,36 +812,12 @@ object PluginProviderDialogs {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        statusChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_all),
-                statusFilter == PluginCatalogFilter.Status.ALL,
-                "status_all",
-            ),
-        )
-        statusChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_new),
-                statusFilter == PluginCatalogFilter.Status.NEW,
-                "status_new",
-            ),
-        )
-        statusChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_updates),
-                statusFilter == PluginCatalogFilter.Status.UPDATES,
-                "status_updates",
-            ),
-        )
-        statusChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_installed),
-                statusFilter == PluginCatalogFilter.Status.INSTALLED,
-                "status_installed",
-            ),
-        )
+        statusChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_all), "status_all"))
+        statusChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_new), "status_new"))
+        statusChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_updates), "status_updates"))
+        statusChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_installed), "status_installed"))
         statusRow.addView(statusChips)
-        column.addView(statusRow)
+        header.addView(statusRow)
 
         val kindRow = HorizontalScrollView(activity).apply {
             isHorizontalScrollBarEnabled = false
@@ -713,85 +827,175 @@ object PluginProviderDialogs {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        kindChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_all),
-                kindFilter == PluginCatalogFilter.Kind.ALL,
-                "kind_all",
-            ),
-        )
-        kindChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_madara),
-                kindFilter == PluginCatalogFilter.Kind.MADARA,
-                "kind_madara",
-            ),
-        )
-        kindChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_blogger),
-                kindFilter == PluginCatalogFilter.Kind.BLOGGER,
-                "kind_blogger",
-            ),
-        )
-        kindChips.addView(
-            chipButton(
-                activity.getString(R.string.plugin_cards_filter_js),
-                kindFilter == PluginCatalogFilter.Kind.JS,
-                "kind_js",
-            ),
-        )
+        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_kind_all), "kind_all"))
+        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_madara), "kind_madara"))
+        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_blogger), "kind_blogger"))
+        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_js), "kind_js"))
         kindRow.addView(kindChips)
-        column.addView(kindRow)
+        header.addView(kindRow)
+        root.addView(header)
 
-        val checkBoxes = LinkedHashMap<String, CheckBox>()
-        slice.forEach { item ->
-            val installed = installedById[item.id]
-            val canSelect = PluginSelectAll.isSelectable(item, installedById)
-            val hasUpdate = installed != null && PluginSelectAll.hasCatalogUpdate(installed, item)
-            val built = buildCatalogSelectCard(
-                activity = activity,
-                item = item,
-                installed = installed,
-                canSelect = canSelect,
-                hasUpdate = hasUpdate,
-                gap = gap,
-                textColor = textColor,
-                grayText = grayText,
-                onToggle = { id, checked ->
-                    if (checked) selected.add(id) else selected.remove(id)
-                },
-            )
-            built.checkBox.isChecked = item.id in selected && canSelect
-            checkBoxes[item.id] = built.checkBox
-            column.addView(built.root)
+        val cardsHost = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            tag = "cards_host"
         }
+        // Fixed height so filters + nav stay visible; only the card list scrolls.
+        val scroll = ScrollView(activity).apply {
+            addView(cardsHost)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (420 * density).toInt(),
+            )
+        }
+        root.addView(scroll)
 
         val nav = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(0, gap, 0, 0)
         }
-        nav.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+        val prevBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_prev)
-            isEnabled = safePage > 0
+            isAllCaps = false
             tag = "prev"
-        })
-        nav.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+        }
+        val gotoBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_goto_page)
-            isEnabled = pageCount > 1
+            isAllCaps = false
             setTextColor(primary)
             tag = "goto"
-        })
-        nav.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+        }
+        val nextBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_next)
-            isEnabled = safePage < pageCount - 1
+            isAllCaps = false
             tag = "next"
-        })
-        column.addView(nav)
+        }
+        nav.addView(prevBtn)
+        nav.addView(gotoBtn)
+        nav.addView(nextBtn)
+        root.addView(nav)
+
+        fun filteredList(): List<PluginManifestItem> = PluginCatalogFilter.filter(
+            items = items,
+            query = currentQuery,
+            status = currentStatus,
+            kind = currentKind,
+            installedById = installedById,
+        )
+
+        fun reopenAfterExternalChange() {
+            dialog?.dismiss()
+            activity.postUi {
+                showCards(
+                    activity,
+                    repoUrl,
+                    items,
+                    onChanged,
+                    currentQuery,
+                    currentPage,
+                    selected,
+                    currentStatus,
+                    currentKind,
+                )
+            }
+        }
+
+        fun renderPage(scrollToTop: Boolean = true) {
+            installedById = PluginStore.loadInstalled().associateBy { it.id }
+            val updateCount = items.count {
+                val inst = installedById[it.id] ?: return@count false
+                PluginSelectAll.hasCatalogUpdate(inst, it)
+            }
+            val newCount = items.count { it.id !in installedById }
+            hintView.text = activity.getString(R.string.plugin_cards_hint, items.size, newCount, updateCount)
+
+            val filtered = filteredList()
+            val pageCount = PluginCatalogFilter.pageCount(filtered.size, CARDS_PAGE_SIZE)
+            currentPage = currentPage.coerceIn(0, pageCount - 1)
+            val from = currentPage * CARDS_PAGE_SIZE
+            val slice = PluginCatalogFilter.pageSlice(filtered, currentPage, CARDS_PAGE_SIZE)
+            val to = (from + slice.size).coerceAtLeast(from)
+
+            pageLabel.text = activity.getString(
+                R.string.plugin_cards_page,
+                currentPage + 1,
+                pageCount,
+                if (slice.isEmpty()) 0 else from + 1,
+                to,
+                filtered.size,
+            )
+            pageLabel.isClickable = pageCount > 1
+            pageLabel.isFocusable = pageCount > 1
+
+            val filtersActive = currentQuery.isNotBlank() ||
+                currentStatus != PluginCatalogFilter.Status.ALL ||
+                currentKind != PluginCatalogFilter.Kind.ALL
+            clearBtn.visibility = if (filtersActive) View.VISIBLE else View.GONE
+
+            styleChip(statusChips.findViewWithTag("status_all"), currentStatus == PluginCatalogFilter.Status.ALL)
+            styleChip(statusChips.findViewWithTag("status_new"), currentStatus == PluginCatalogFilter.Status.NEW)
+            styleChip(statusChips.findViewWithTag("status_updates"), currentStatus == PluginCatalogFilter.Status.UPDATES)
+            styleChip(statusChips.findViewWithTag("status_installed"), currentStatus == PluginCatalogFilter.Status.INSTALLED)
+            styleChip(kindChips.findViewWithTag("kind_all"), currentKind == PluginCatalogFilter.Kind.ALL)
+            styleChip(kindChips.findViewWithTag("kind_madara"), currentKind == PluginCatalogFilter.Kind.MADARA)
+            styleChip(kindChips.findViewWithTag("kind_blogger"), currentKind == PluginCatalogFilter.Kind.BLOGGER)
+            styleChip(kindChips.findViewWithTag("kind_js"), currentKind == PluginCatalogFilter.Kind.JS)
+
+            cardsHost.removeAllViews()
+            checkBoxes.clear()
+            slice.forEach { item ->
+                val installed = installedById[item.id]
+                val canSelect = PluginSelectAll.isSelectable(item, installedById)
+                val hasUpdate = installed != null && PluginSelectAll.hasCatalogUpdate(installed, item)
+                val built = buildCatalogSelectCard(
+                    activity = activity,
+                    item = item,
+                    installed = installed,
+                    canSelect = canSelect,
+                    hasUpdate = hasUpdate,
+                    gap = gap,
+                    textColor = textColor,
+                    grayText = grayText,
+                    onToggle = { id, checked ->
+                        if (checked) selected.add(id) else selected.remove(id)
+                    },
+                    onUninstall = { plugin ->
+                        dialog?.dismiss()
+                        confirmUninstall(activity, plugin, onChanged) {
+                            selected.remove(plugin.id)
+                            reopenAfterExternalChange()
+                        }
+                    },
+                )
+                built.checkBox.isChecked = item.id in selected && canSelect
+                checkBoxes[item.id] = built.checkBox
+                cardsHost.addView(built.root)
+            }
+
+            prevBtn.isEnabled = currentPage > 0
+            nextBtn.isEnabled = currentPage < pageCount - 1
+            gotoBtn.isEnabled = pageCount > 1
+            if (scrollToTop) scroll.scrollTo(0, 0)
+        }
+
+        fun goTo(
+            nextPage: Int,
+            query: String = filterEdit.text?.toString().orEmpty(),
+            status: PluginCatalogFilter.Status = currentStatus,
+            kind: PluginCatalogFilter.Kind = currentKind,
+        ) {
+            currentQuery = query
+            currentStatus = status
+            currentKind = kind
+            currentPage = nextPage
+            if (filterEdit.text?.toString().orEmpty() != currentQuery) {
+                filterEdit.setText(currentQuery)
+            }
+            renderPage(scrollToTop = true)
+        }
 
         fun applySelectAll() {
-            val ids = PluginSelectAll.selectableIds(filtered, installedById)
+            val ids = PluginSelectAll.selectableIds(filteredList(), installedById)
             selected.clear()
             selected.addAll(ids)
             checkBoxes.forEach { (id, box) ->
@@ -804,31 +1008,30 @@ object PluginProviderDialogs {
             )
         }
 
-        val scroll = ScrollView(activity).apply {
-            addView(column)
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                (520 * density).toInt(),
-            )
-        }
-        val dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+        renderPage(scrollToTop = false)
+
+        prevBtn.setOnClickListener { goTo(currentPage - 1) }
+        nextBtn.setOnClickListener { goTo(currentPage + 1) }
+
+        dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.plugin_cards_title)
-            .setView(scroll)
+            .setView(root)
             .setNeutralButton(R.string.plugin_select_all, null)
             .setNegativeButton(R.string.close, null)
             .setPositiveButton(R.string.plugin_install_or_update, null)
             .create()
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+        dialog?.setOnShowListener {
+            val shown = dialog ?: return@setOnShowListener
+            shown.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
                 applySelectAll()
             }
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            shown.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val chosen = PluginSelectAll.filterSelectable(items, selected, installedById)
                 if (chosen.isEmpty()) {
                     showToast(activity, activity.getString(R.string.plugin_pick_one))
                     return@setOnClickListener
                 }
-                dialog.dismiss()
+                shown.dismiss()
                 installSelected(
                     activity = activity,
                     repoUrl = repoUrl,
@@ -836,97 +1039,87 @@ object PluginProviderDialogs {
                     installedById = installedById,
                     onChanged = onChanged,
                     catalogItems = items,
-                    filterQuery = filterQuery,
-                    page = safePage,
-                    statusFilter = statusFilter,
-                    kindFilter = kindFilter,
+                    filterQuery = currentQuery,
+                    page = currentPage,
+                    statusFilter = currentStatus,
+                    kindFilter = currentKind,
                 )
             }
-            fun reopen(
-                nextPage: Int,
-                query: String,
-                status: PluginCatalogFilter.Status = statusFilter,
-                kind: PluginCatalogFilter.Kind = kindFilter,
-            ) {
-                dialog.dismiss()
-                activity.postUi {
-                    showCards(
-                        activity,
-                        repoUrl,
-                        items,
-                        onChanged,
-                        query,
-                        nextPage,
-                        selected,
-                        status,
-                        kind,
-                    )
-                }
-            }
-            nav.findViewWithTag<Button>("prev")?.setOnClickListener {
-                reopen(safePage - 1, filterEdit.text?.toString().orEmpty())
-            }
-            nav.findViewWithTag<Button>("next")?.setOnClickListener {
-                reopen(safePage + 1, filterEdit.text?.toString().orEmpty())
-            }
             fun askGoToPage() {
+                val pageCount = PluginCatalogFilter.pageCount(filteredList().size, CARDS_PAGE_SIZE)
                 if (pageCount <= 1) return
+                // Empty field (not prefilled) so typing "3" cannot become "13" and jump to the last page.
                 val edit = EditText(activity).apply {
                     inputType = InputType.TYPE_CLASS_NUMBER
                     hint = activity.getString(R.string.plugin_cards_goto_hint, pageCount)
-                    setText((safePage + 1).toString())
+                    setText("")
                     setPadding(pad, pad, pad, pad)
                 }
-                AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+                val gotoDialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
                     .setTitle(R.string.plugin_cards_goto_page)
+                    .setMessage(
+                        activity.getString(
+                            R.string.plugin_cards_goto_current,
+                            currentPage + 1,
+                            pageCount,
+                        ),
+                    )
                     .setView(edit)
-                    .setPositiveButton(R.string.plugin_cards_goto_page) { _, _ ->
-                        val target = edit.text?.toString()?.toIntOrNull()
-                            ?.coerceIn(1, pageCount) ?: return@setPositiveButton
-                        reopen(target - 1, filterEdit.text?.toString().orEmpty())
+                    .setPositiveButton(R.string.ok) { _, _ ->
+                        val target = PluginCatalogFilter.parseGoToPage(
+                            edit.text?.toString(),
+                            pageCount,
+                        ) ?: return@setPositiveButton
+                        goTo(target)
                     }
                     .setNegativeButton(R.string.cancel, null)
-                    .show()
+                    .create()
+                gotoDialog.setOnShowListener {
+                    edit.requestFocus()
+                    val imm = activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE)
+                        as? android.view.inputmethod.InputMethodManager
+                    imm?.showSoftInput(edit, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+                }
+                gotoDialog.show()
             }
-            nav.findViewWithTag<Button>("goto")?.setOnClickListener { askGoToPage() }
+            gotoBtn.setOnClickListener { askGoToPage() }
             pageLabel.setOnClickListener { askGoToPage() }
-            val applyFilter = {
-                reopen(0, filterEdit.text?.toString().orEmpty())
+            filterRow.findViewWithTag<Button>("filter_go")?.setOnClickListener {
+                goTo(0, filterEdit.text?.toString().orEmpty())
             }
-            filterRow.findViewWithTag<Button>("filter_go")?.setOnClickListener { applyFilter() }
-            filterRow.findViewWithTag<Button>("filter_clear")?.setOnClickListener {
-                reopen(0, "", PluginCatalogFilter.Status.ALL, PluginCatalogFilter.Kind.ALL)
+            clearBtn.setOnClickListener {
+                goTo(0, "", PluginCatalogFilter.Status.ALL, PluginCatalogFilter.Kind.ALL)
             }
             filterEdit.setOnEditorActionListener { _, _, _ ->
-                applyFilter()
+                goTo(0, filterEdit.text?.toString().orEmpty())
                 true
             }
             statusChips.findViewWithTag<Button>("status_all")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.ALL)
+                goTo(0, status = PluginCatalogFilter.Status.ALL)
             }
             statusChips.findViewWithTag<Button>("status_new")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.NEW)
+                goTo(0, status = PluginCatalogFilter.Status.NEW)
             }
             statusChips.findViewWithTag<Button>("status_updates")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.UPDATES)
+                goTo(0, status = PluginCatalogFilter.Status.UPDATES)
             }
             statusChips.findViewWithTag<Button>("status_installed")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), PluginCatalogFilter.Status.INSTALLED)
+                goTo(0, status = PluginCatalogFilter.Status.INSTALLED)
             }
             kindChips.findViewWithTag<Button>("kind_all")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.ALL)
+                goTo(0, kind = PluginCatalogFilter.Kind.ALL)
             }
             kindChips.findViewWithTag<Button>("kind_madara")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.MADARA)
+                goTo(0, kind = PluginCatalogFilter.Kind.MADARA)
             }
             kindChips.findViewWithTag<Button>("kind_blogger")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.BLOGGER)
+                goTo(0, kind = PluginCatalogFilter.Kind.BLOGGER)
             }
             kindChips.findViewWithTag<Button>("kind_js")?.setOnClickListener {
-                reopen(0, filterEdit.text?.toString().orEmpty(), statusFilter, PluginCatalogFilter.Kind.JS)
+                goTo(0, kind = PluginCatalogFilter.Kind.JS)
             }
         }
-        if (activity.canShowDialog()) dialog.show()
+        if (activity.canShowDialog()) dialog?.show()
     }
 
     private data class CatalogSelectCard(val root: View, val checkBox: CheckBox)
@@ -941,6 +1134,7 @@ object PluginProviderDialogs {
         textColor: Int,
         grayText: Int,
         onToggle: (String, Boolean) -> Unit,
+        onUninstall: ((InstalledPlugin) -> Unit)? = null,
     ): CatalogSelectCard {
         val density = activity.resources.displayMetrics.density
         val primary = activity.colorFromAttribute(R.attr.colorPrimary)
@@ -1022,6 +1216,19 @@ object PluginProviderDialogs {
                     grayText,
                 ))
             }
+        }
+        if (installed != null && onUninstall != null) {
+            status.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+                text = activity.getString(R.string.plugin_action_uninstall)
+                setTextColor(activity.getColor(R.color.colorPrimaryRed))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                isAllCaps = false
+                minHeight = 0
+                minimumHeight = 0
+                setPadding((10 * density).toInt(), (4 * density).toInt(), (10 * density).toInt(), (4 * density).toInt())
+                tag = "uninstall_${item.id}"
+                setOnClickListener { onUninstall(installed) }
+            })
         }
         if (status.childCount > 0) body.addView(status)
 
@@ -1375,25 +1582,37 @@ object PluginProviderDialogs {
             .show()
     }
 
-    private fun confirmUninstall(activity: Activity, plugin: InstalledPlugin, onChanged: () -> Unit) {
+    private fun confirmUninstall(
+        activity: Activity,
+        plugin: InstalledPlugin,
+        onChanged: () -> Unit,
+        onStay: (() -> Unit)? = null,
+    ) {
         if (!activity.canShowDialog()) return
+        val stay = onStay ?: { showHub(activity, onChanged) }
         AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.plugin_action_uninstall)
             .setMessage(activity.getString(R.string.plugin_uninstall_confirm, plugin.localName))
             .setNegativeButton(R.string.close) { _, _ ->
-                activity.postUi { showHub(activity, onChanged) }
+                activity.postUi { stay() }
             }
             .setPositiveButton(R.string.plugin_action_uninstall) { _, _ ->
-                activity.postUi { uninstallOne(activity, plugin, onChanged) }
+                activity.postUi { uninstallOne(activity, plugin, onChanged, stay) }
             }
             .setOnCancelListener {
-                activity.postUi { showHub(activity, onChanged) }
+                activity.postUi { stay() }
             }
             .show()
     }
 
-    private fun uninstallOne(activity: Activity, plugin: InstalledPlugin, onChanged: () -> Unit) {
+    private fun uninstallOne(
+        activity: Activity,
+        plugin: InstalledPlugin,
+        onChanged: () -> Unit,
+        onStay: (() -> Unit)? = null,
+    ) {
         val scope = activity.pluginScope() ?: return
+        val stay = onStay ?: { showHub(activity, onChanged) }
         val status = showStatusDialog(
             activity,
             activity.getString(R.string.plugin_uninstalling),
@@ -1417,7 +1636,7 @@ object PluginProviderDialogs {
                     ),
                 )
             }
-            activity.postUi { showHub(activity, onChanged) }
+            activity.postUi { stay() }
         }
     }
 

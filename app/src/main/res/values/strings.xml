@@ -457,7 +457,8 @@
     <string name="plugin_langs_hint">English and Español are listed first (priority).</string>
     <string name="plugin_lang_priority">★ %1$s (%2$d)</string>
     <string name="plugin_langs_all">All</string>
-    <string name="plugin_langs_continue">Show providers</string>
+    <string name="plugin_langs_continue">Continue</string>
+    <string name="plugin_langs_sources">%1$d sources</string>
     <string name="plugin_langs_pick_one">Pick at least one language</string>
     <string name="plugin_cards_title">Choose providers</string>
     <string name="plugin_cards_hint">%1$d sources · %2$d new · %3$d updates · installed stay locked unless newer</string>
@@ -489,6 +490,7 @@
     <string name="plugin_cards_filter_hint">Filter name, site, lang…</string>
     <string name="plugin_cards_filter_clear">Clear</string>
     <string name="plugin_cards_filter_all">All</string>
+    <string name="plugin_cards_filter_kind_all">Any type</string>
     <string name="plugin_cards_filter_new">New</string>
     <string name="plugin_cards_filter_updates">Updates</string>
     <string name="plugin_cards_filter_installed">Installed</string>
@@ -496,7 +498,8 @@
     <string name="plugin_cards_filter_blogger">Blogger</string>
     <string name="plugin_cards_filter_js">JS</string>
     <string name="plugin_cards_goto_page">Go to page</string>
-    <string name="plugin_cards_goto_hint">Page 1–%1$d</string>
+    <string name="plugin_cards_goto_hint">Page number (1–%1$d)</string>
+    <string name="plugin_cards_goto_current">Now on page %1$d of %2$d. Type a page number:</string>
     <string name="plugin_cards_next">Next</string>
     <string name="plugin_cards_prev">Previous</string>
     <string name="plugin_action_reinstall">Reinstall</string>

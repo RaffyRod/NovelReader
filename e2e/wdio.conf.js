@@ -15,6 +15,11 @@ function resolveAppPath() {
     path.join(
       process.env.USERPROFILE || process.env.HOME || '',
       'Desktop',
+      'QuickNovel-Ultimate-2.0.0-universal.apk',
+    ),
+    path.join(
+      process.env.USERPROFILE || process.env.HOME || '',
+      'Desktop',
       'QuickNovel-Ultimate-1.2.3-universal.apk',
     ),
   ];
@@ -48,8 +53,10 @@ exports.config = {
         './test/specs/09-search-special-chars.e2e.js',
         './test/specs/10-plugins.e2e.js',
         './test/specs/11-download-translate.e2e.js',
+        './test/specs/14-sections-translations.e2e.js',
       ],
     ],
+    sections: [['./test/specs/14-sections-translations.e2e.js']],
     reader: [
       [
         './test/specs/07-reader-tts.e2e.js',

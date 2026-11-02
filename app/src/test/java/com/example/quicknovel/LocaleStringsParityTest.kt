@@ -27,6 +27,10 @@ class LocaleStringsParityTest {
             "search_providers",
             "show_english_providers",
             "allow_special_search_chars",
+            "plugin_langs_continue",
+            "plugin_cards_goto_page",
+            "translation_history_short",
+            "translation_history_title",
         )
         val missing = critical.filter { it in en && it !in es }
         assertTrue("ES missing critical keys: $missing", missing.isEmpty())

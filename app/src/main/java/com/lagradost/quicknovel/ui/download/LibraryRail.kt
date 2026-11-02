@@ -152,7 +152,7 @@ fun LibraryRail(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_baseline_language_24),
+                    painter = painterResource(R.drawable.ic_baseline_translate_24),
                     contentDescription = historyLabel,
                     modifier = Modifier.size(22.dp),
                     tint = if (translationCount > 0) core else idleFg,

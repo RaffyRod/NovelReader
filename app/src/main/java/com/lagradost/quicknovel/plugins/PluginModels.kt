@@ -16,7 +16,7 @@ data class PluginManifestItem(
     @JsonProperty("customJS") val customJS: String? = null,
     @JsonProperty("customCSS") val customCSS: String? = null,
 ) {
-    val displayLang: String get() = lang.trim().trimStart('\u200e')
+    val displayLang: String get() = PluginLangs.cleanLabel(lang)
 }
 
 /** A remote (or pasted) catalog the user added. */

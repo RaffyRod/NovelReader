@@ -80,4 +80,15 @@ object PluginCatalogFilter {
         val from = safe * pageSize
         return items.drop(from).take(pageSize)
     }
+
+    /**
+     * Parses the catalog "go to page" field. Returns a **0-based** page index, or null when
+     * blank/invalid (Aceptar must no-op). The dialog field starts empty so typing `3` cannot
+     * append onto a prefilled `1` and jump to page 13.
+     */
+    fun parseGoToPage(raw: String?, pageCount: Int): Int? {
+        if (pageCount <= 0) return null
+        val n = raw?.trim()?.toIntOrNull() ?: return null
+        return n.coerceIn(1, pageCount) - 1
+    }
 }

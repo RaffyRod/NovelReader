@@ -71,6 +71,27 @@ class PluginManifestClientTest {
     }
 
     @Test
+    fun cleanLabel_stripsBidiMarks_andListLabelUsesLatinForRtl() {
+        assertEquals("العربية", PluginLangs.cleanLabel("\u200eالعربية"))
+        assertEquals("ar", PluginLangs.codeFor("\u200eالعربية"))
+        assertEquals("Arabic", PluginLangs.listLabel("\u200eالعربية"))
+        assertEquals("Arabic", PluginLangs.listLabel("Arabic"))
+    }
+
+    @Test
+    fun ordered_keepsPriorityFirst_thenByCount() {
+        val counts = mapOf(
+            "العربية" to 40,
+            "Español" to 5,
+            "English" to 10,
+            "Français" to 20,
+        )
+        val ordered = PluginLangs.ordered(counts)
+        assertEquals(listOf("English", "Español", "العربية", "Français"), ordered.map { it.first })
+        assertEquals("Arabic", PluginLangs.listLabel(ordered[2].first))
+    }
+
+    @Test
     fun installedPlugin_hasUpdateWhenLatestDiffers() {
         val base = InstalledPlugin(
             id = "a",

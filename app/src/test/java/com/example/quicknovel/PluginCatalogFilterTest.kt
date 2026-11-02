@@ -105,4 +105,23 @@ class PluginCatalogFilterTest {
         assertEquals(10, PluginCatalogFilter.pageSlice(many, 4).size)
         assertEquals("Plugin 61", PluginCatalogFilter.pageSlice(many, 1).first().name)
     }
+
+    @Test
+    fun parseGoToPage_emptyOrInvalid_isNull() {
+        assertEquals(null, PluginCatalogFilter.parseGoToPage("", 5))
+        assertEquals(null, PluginCatalogFilter.parseGoToPage("   ", 5))
+        assertEquals(null, PluginCatalogFilter.parseGoToPage(null, 5))
+        assertEquals(null, PluginCatalogFilter.parseGoToPage("abc", 5))
+        assertEquals(null, PluginCatalogFilter.parseGoToPage("3", 0))
+    }
+
+    @Test
+    fun parseGoToPage_returnsZeroBased_andCoercesBounds() {
+        // Empty dialog + type "3" → page 3 (index 2), never "13" from a prefilled 1.
+        assertEquals(2, PluginCatalogFilter.parseGoToPage("3", 5))
+        assertEquals(0, PluginCatalogFilter.parseGoToPage("1", 5))
+        assertEquals(0, PluginCatalogFilter.parseGoToPage("0", 5))
+        assertEquals(4, PluginCatalogFilter.parseGoToPage("99", 5))
+        assertEquals(12, PluginCatalogFilter.parseGoToPage("13", 13))
+    }
 }
