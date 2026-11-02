@@ -129,6 +129,15 @@ jobs:
     timeout-minutes: 35
     continue-on-error: true
     steps:
+      # ~2GB system-image cache failed with "No space left on device" on stock runners.
+      - name: Free disk space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
+            /usr/local/.ghcup 2>/dev/null || true
+          sudo docker system prune -af 2>/dev/null || true
+          df -h
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -150,16 +159,18 @@ jobs:
           test -n "$SDK"
           test -d "$SDK"
           echo "dir=$SDK" >> "$GITHUB_OUTPUT"
-          mkdir -p "$SDK/system-images"
+          mkdir -p "$SDK/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}"
+          df -h
       - name: Emulator cache
         uses: actions/cache@v4
         id: emu-cache
         with:
+          # Only the API/target/arch image + AVD (not the whole system-images tree).
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-            ${{ steps.sdk.outputs.dir }}/system-images
-          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v3
+            ${{ steps.sdk.outputs.dir }}/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v4
       - name: Accept SDK licenses
         if: steps.emu-cache.outputs.cache-hit != 'true'
         run: yes | sdkmanager --licenses >/dev/null || true
@@ -211,6 +222,14 @@ jobs:
             timeout: 35
             soft: true
     steps:
+      - name: Free disk space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
+            /usr/local/.ghcup 2>/dev/null || true
+          sudo docker system prune -af 2>/dev/null || true
+          df -h
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
@@ -235,15 +254,16 @@ jobs:
           SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
           test -n "$SDK" && test -d "$SDK"
           echo "dir=$SDK" >> "$GITHUB_OUTPUT"
-          mkdir -p "$SDK/system-images"
+          mkdir -p "$SDK/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}"
+          df -h
       - name: Emulator cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-            ${{ steps.sdk.outputs.dir }}/system-images
-          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v3
+            ${{ steps.sdk.outputs.dir }}/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v4
       - name: Download APK
         uses: actions/download-artifact@v4
         with:
@@ -256,6 +276,7 @@ jobs:
           npx appium driver install uiautomator2 || npx appium driver update uiautomator2 || true
           test -f apps/QuickNovel-Ultimate.apk
           ls -lh apps/QuickNovel-Ultimate.apk
+          df -h
       - name: Run ${{ matrix.suite }} suite
         uses: reactivecircus/android-emulator-runner@v2
         with:

@@ -91,10 +91,10 @@ GitHub Actions workflow `.github/workflows/e2e-android.yml` runs on **every push
 | `allure-report` | Merges Allure shards → HTML artifact |
 
 Speed notes (target ~10m warm):
-- Cache includes `$ANDROID_HOME/system-images` + AVD (avoids ~10m `sdkmanager` reinstall per shard)
-- `google_apis` API 30 + snapshot boot (`-no-snapshot-save`)
+- Cache: AVD + **scoped** `system-images/android-30/google_apis/x86_64` (key v4)
+- Free disk on runners before restore (avoids `No space left on device` on ~2GB cache)
 - Plugin dialogs in **features-plugins**; download/sections in **features-flows**
-- First run after cache key change is still cold (~15–20m); later pushes reuse cache
+- First run after cache key change is cold; later pushes reuse cache
 
 **Smoke “canceled” after green:** WDIO can finish (`5 passing`) and then `android-emulator-runner` hits **Terminate Emulator** while a newer push cancels the workflow (`cancel-in-progress`). Concurrency now cancels **only on pull_request**, not on push, so a passed smoke is not flipped by teardown cancel.
 
