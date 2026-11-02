@@ -1,8 +1,8 @@
 # Changelog
 
 All notable changes to **QuickNovel Ultimate** are listed here.
-The Telegram release bot (style **D**) reads `### Added` / `### Fixed` under the section
-matching `versionName` from `app/build.gradle`.
+The Telegram release job auto-bumps `versionName` / `versionCode` when there are new
+commits since the last `v2.*` tag, then posts style **D** from `### Added` / `### Fixed`.
 
 ## 2.0.0
 

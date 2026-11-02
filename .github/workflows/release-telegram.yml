@@ -1,72 +1,249 @@
-# Build signed universal APK and post it to the private Telegram channel.
-# Secrets required: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
-# Optional (recommended later): KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+# Auto-bump Ultimate 2.x, build signed universal APK, post to private Telegram.
+# Runs only when there are new commits since the last Ultimate release tag (v2.*).
+# Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+# Optional: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
 name: Release → Telegram
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
   workflow_dispatch:
     inputs:
       note:
         description: 'Optional extra note (appended under changelog)'
         required: false
         default: ''
+      force:
+        description: 'Release even with no new commits (still bumps patch)'
+        type: boolean
+        required: false
+        default: false
+      bump:
+        description: 'Version bump kind'
+        type: choice
+        options: [patch, minor, major]
+        required: false
+        default: patch
 
 concurrency:
-  group: release-telegram-${{ github.ref }}
+  group: release-telegram-main
   cancel-in-progress: false
 
 jobs:
   release:
-    name: Build & send APK
+    name: Bump, build & send APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # Ignore the commit this job pushes after a release.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'push' &&
+        !contains(github.event.head_commit.message, '[skip ci]') &&
+        !startsWith(github.event.head_commit.message, 'chore(release):')
+      )
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
         with:
-          # Need full history for “since previous tag” fallback changelog.
           fetch-depth: 0
+          # Push bump commit + tag back to the branch that triggered the run.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Gate — new commits since last Ultimate release
+        id: gate
+        env:
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force || 'false' }}
+        run: |
+          set -euo pipefail
+
+          CURRENT_NAME=$(grep -E '^\s*versionName\s+"' app/build.gradle | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          CURRENT_CODE=$(grep -E '^\s*versionCode\s+' app/build.gradle | head -1 | sed -E 's/[^0-9]//g')
+          echo "current_name=$CURRENT_NAME" >> "$GITHUB_OUTPUT"
+          echo "current_code=$CURRENT_CODE" >> "$GITHUB_OUTPUT"
+
+          # Ultimate line only — ignore upstream QuickNovel v3.* tags.
+          LAST_TAG=$(git tag -l 'v2.*' --sort=-v:refname | head -n1 || true)
+          echo "last_tag=${LAST_TAG:-}" >> "$GITHUB_OUTPUT"
+
+          if [ -z "${LAST_TAG:-}" ]; then
+            echo "No Ultimate release tag (v2.*) yet — tagging baseline v${CURRENT_NAME} at HEAD (no APK)."
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "v${CURRENT_NAME}" -m "Baseline Ultimate ${CURRENT_NAME}"
+            git push origin "v${CURRENT_NAME}"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "reason=baseline_tag_created" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Commits since last Ultimate tag (exclude prior auto-release bumps).
+          mapfile -t SUBJECTS < <(
+            git log "${LAST_TAG}..HEAD" --pretty=format:%s --no-merges \
+              | grep -v -E '^chore\(release\):' || true
+          )
+          COUNT=${#SUBJECTS[@]}
+          echo "new_commits=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Commits since ${LAST_TAG}: ${COUNT}"
+
+          if [ "$COUNT" -eq 0 ] && [ "${FORCE}" != "true" ]; then
+            echo "No new commits since ${LAST_TAG} — skipping release."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no_new_commits" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+          echo "reason=ok" >> "$GITHUB_OUTPUT"
+          {
+            echo "subjects<<EOF"
+            printf '%s\n' "${SUBJECTS[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skip notice
+        if: steps.gate.outputs.should_release != 'true'
+        run: |
+          echo "::notice::Release skipped (${{ steps.gate.outputs.reason }}). last_tag=${{ steps.gate.outputs.last_tag || 'none' }}"
+
+      - name: Bump version + CHANGELOG
+        if: steps.gate.outputs.should_release == 'true'
+        id: bump
+        env:
+          BUMP: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.bump || 'patch' }}
+          CURRENT_NAME: ${{ steps.gate.outputs.current_name }}
+          CURRENT_CODE: ${{ steps.gate.outputs.current_code }}
+          LAST_TAG: ${{ steps.gate.outputs.last_tag }}
+          SUBJECTS: ${{ steps.gate.outputs.subjects }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import os, pathlib, re
+
+          name = os.environ["CURRENT_NAME"].strip()
+          code = int(os.environ["CURRENT_CODE"])
+          bump = os.environ.get("BUMP", "patch").strip().lower()
+          subjects = [s.strip() for s in os.environ.get("SUBJECTS", "").splitlines() if s.strip()]
+
+          maj, min_, pat = (int(x) for x in name.split("."))
+          if bump == "major":
+              maj, min_, pat = maj + 1, 0, 0
+          elif bump == "minor":
+              min_, pat = min_ + 1, 0
+          else:
+              pat += 1
+          new_name = f"{maj}.{min_}.{pat}"
+          new_code = code + 1
+
+          gradle = pathlib.Path("app/build.gradle")
+          text = gradle.read_text(encoding="utf-8")
+          text, n1 = re.subn(
+              r'(^\s*versionCode\s+)\d+',
+              rf"\g<1>{new_code}",
+              text,
+              count=1,
+              flags=re.M,
+          )
+          text, n2 = re.subn(
+              r'(^\s*versionName\s+")[^"]+(")',
+              rf"\g<1>{new_name}\2",
+              text,
+              count=1,
+              flags=re.M,
+          )
+          if n1 != 1 or n2 != 1:
+              raise SystemExit(f"Failed to patch build.gradle (code={n1}, name={n2})")
+          gradle.write_text(text, encoding="utf-8")
+
+          added, fixed = [], []
+          for s in subjects:
+              clean = re.sub(r"^(feat|fix|docs|ci|chore|refactor|test|perf)(\(.+?\))?:\s*", "", s, flags=re.I)
+              line = f"- {clean}"
+              if re.match(r"fix\b", s, re.I):
+                  fixed.append(line)
+              else:
+                  added.append(line)
+          if not added and not fixed:
+              added = ["- Maintenance release"]
+
+          # Cap CHANGELOG length; Telegram caption has its own limit later.
+          added, fixed = added[:12], fixed[:12]
+          block = [f"## {new_name}", ""]
+          if added:
+              block += ["### Added", *added, ""]
+          if fixed:
+              block += ["### Fixed", *fixed, ""]
+          block.append(f"### Notes\n- versionCode {new_code}\n")
+          section = "\n".join(block) + "\n"
+
+          cl = pathlib.Path("CHANGELOG.md")
+          if cl.is_file():
+              body = cl.read_text(encoding="utf-8")
+              # Insert after the title block (before first ## version section).
+              m = re.search(r"^##\s+", body, re.M)
+              if m:
+                  body = body[: m.start()] + section + body[m.start() :]
+              else:
+                  body = body.rstrip() + "\n\n" + section
+              cl.write_text(body, encoding="utf-8")
+          else:
+              cl.write_text(
+                  "# Changelog\n\n" + section,
+                  encoding="utf-8",
+              )
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"name={new_name}\n")
+              out.write(f"code={new_code}\n")
+          print(f"Bumped {name} ({code}) → {new_name} ({new_code})")
+          PY
+
+      - name: Commit release bump + tag
+        if: steps.gate.outputs.should_release == 'true'
+        env:
+          NEW_NAME: ${{ steps.bump.outputs.name }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle CHANGELOG.md
+          git commit -m "chore(release): v${NEW_NAME} [skip ci]"
+          git tag -a "v${NEW_NAME}" -m "QuickNovel Ultimate ${NEW_NAME}"
+          # Push branch tip + new tag (and only that tag).
+          git push origin HEAD
+          git push origin "v${NEW_NAME}"
 
       - uses: actions/setup-java@v4
+        if: steps.gate.outputs.should_release == 'true'
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
 
       - uses: android-actions/setup-android@v4
+        if: steps.gate.outputs.should_release == 'true'
         with:
           packages: platform-tools
 
       - name: Grant Gradle execute
+        if: steps.gate.outputs.should_release == 'true'
         run: chmod +x gradlew
 
-      - name: Read versionName / versionCode
-        id: ver
-        run: |
-          NAME=$(grep -E '^\s*versionName\s+"' app/build.gradle | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
-          CODE=$(grep -E '^\s*versionCode\s+' app/build.gradle | head -1 | sed -E 's/[^0-9]//g')
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          echo "code=$CODE" >> "$GITHUB_OUTPUT"
-          echo "Version $NAME ($CODE)"
-
-      - name: Build changelog (style D)
+      - name: Build changelog caption (style D)
+        if: steps.gate.outputs.should_release == 'true'
         id: notes
         env:
-          VER_NAME: ${{ steps.ver.outputs.name }}
-          NOTE: ${{ github.event.inputs.note || '' }}
+          VER_NAME: ${{ steps.bump.outputs.name }}
+          NOTE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.note || '' }}
           APP_NAME: QuickNovel Ultimate
         run: |
           set -euo pipefail
-          # e.g. Nov 2, 2026
           RELEASE_DATE=$(date -u +"%b %-d, %Y" 2>/dev/null || date -u +"%b %d, %Y" | sed 's/ 0/ /')
           export RELEASE_DATE
           python3 <<'PY'
-          import os, re, subprocess, pathlib
+          import os, re, pathlib
 
           ver = os.environ["VER_NAME"].strip()
           note = os.environ.get("NOTE", "").strip()
@@ -84,7 +261,6 @@ jobs:
               return m.group(1).strip() if m else ""
 
           def bullets_under(body: str, heading: str) -> list[str]:
-              # ### Added / ### Fixed blocks → bullet lines
               pat = re.compile(
                   rf"^###\s+{re.escape(heading)}\s*\n(.*?)(?=^###\s+|\Z)",
                   re.M | re.S,
@@ -110,34 +286,8 @@ jobs:
                   fixed = bullets_under(body, "Fixed")
 
           if not added and not fixed:
-              # Fallback: classify recent commits
-              try:
-                  tags = subprocess.check_output(
-                      ["git", "tag", "-l", "v*", "--sort=-v:refname"],
-                      text=True,
-                  ).splitlines()
-                  tags = [t for t in tags if t not in {f"v{ver}", ver}]
-                  prev = tags[0] if tags else ""
-              except Exception:
-                  prev = ""
-              rng = f"{prev}..HEAD" if prev else "-12"
-              args = ["git", "log", "--pretty=format:%s"]
-              args.extend([rng] if prev else ["-12"])
-              subjects = subprocess.check_output(args, text=True).splitlines()
-              for s in subjects:
-                  s = s.strip()
-                  if not s:
-                      continue
-                  line = "• " + re.sub(r"^(feat|fix|docs|ci|chore):\s*", "", s, flags=re.I)
-                  if re.match(r"fix\b", s, re.I):
-                      fixed.append(line)
-                  else:
-                      added.append(line)
-              added, fixed = added[:6], fixed[:6]
-              if not added and not fixed:
-                  added = ["• Maintenance release"]
+              added = ["• Maintenance release"]
 
-          # Style D caption (see docs/previews/telegram-release-message-preview.html)
           parts = [
               f"Hey, here's a new version of {app}.",
               "",
@@ -155,15 +305,18 @@ jobs:
           PY
 
       - name: Assemble release
+        if: steps.gate.outputs.should_release == 'true'
         run: ./gradlew :app:assembleRelease --no-daemon
 
       - name: Sign universal APK
+        if: steps.gate.outputs.should_release == 'true'
         id: sign
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          VER_NAME: ${{ steps.bump.outputs.name }}
         run: |
           set -euo pipefail
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
@@ -172,7 +325,7 @@ jobs:
             UNSIGNED=$(ls app/build/outputs/apk/release/*universal*unsigned*.apk 2>/dev/null | head -n1 || true)
           fi
           test -f "$UNSIGNED"
-          OUT="QuickNovel-Ultimate-${{ steps.ver.outputs.name }}-universal.apk"
+          OUT="QuickNovel-Ultimate-${VER_NAME}-universal.apk"
           mkdir -p dist
 
           if [ -n "${KEYSTORE_BASE64:-}" ] && [ -n "${KEYSTORE_PASSWORD:-}" ] && [ -n "${KEY_ALIAS:-}" ]; then
@@ -209,19 +362,20 @@ jobs:
           echo "apk=$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifact
+        if: steps.gate.outputs.should_release == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: QuickNovel-Ultimate-${{ steps.ver.outputs.name }}
+          name: QuickNovel-Ultimate-${{ steps.bump.outputs.name }}
           path: dist/${{ steps.sign.outputs.apk }}
           retention-days: 30
 
       - name: Send APK to Telegram
+        if: steps.gate.outputs.should_release == 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           APK: dist/${{ steps.sign.outputs.apk }}
-          APP_NAME: QuickNovel Ultimate
-          VER_NAME: ${{ steps.ver.outputs.name }}
+          VER_NAME: ${{ steps.bump.outputs.name }}
         run: |
           set -euo pipefail
           test -n "${TELEGRAM_BOT_TOKEN:-}"
@@ -235,7 +389,6 @@ jobs:
           token = os.environ["TELEGRAM_BOT_TOKEN"]
           chat_id = os.environ["TELEGRAM_CHAT_ID"]
           apk = os.environ["APK"]
-          # Style D full caption already built in dist/changelog.txt
           full = open("dist/changelog.txt", encoding="utf-8").read().strip()
           CAPTION_MAX = 1024
           MSG_MAX = 4096
@@ -251,9 +404,8 @@ jobs:
               caption = full
               follow_up = None
           else:
-              # Keep Style D header lines; put the rest in a follow-up.
               lines = full.splitlines()
-              header = "\n".join(lines[:4]).strip()  # hey + blank + 📦 Version …
+              header = "\n".join(lines[:4]).strip()
               caption = header + "\n\n(See next message for What's new.)"
               follow_up = full if len(full) <= MSG_MAX else full[: MSG_MAX - 20] + "\n…"
 
