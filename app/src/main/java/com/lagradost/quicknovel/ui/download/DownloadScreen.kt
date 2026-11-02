@@ -1,5 +1,6 @@
 package com.lagradost.quicknovel.ui.download
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -80,6 +81,7 @@ import com.lagradost.cloudstream4.theme.CloudStreamPreviewTheme
 import com.lagradost.quicknovel.MainActivity
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.compose.BaseSearchBar
+import com.lagradost.quicknovel.ui.settings.TranslationHistoryDialogs
 import com.lagradost.quicknovel.compose.IsScrolling
 import androidx.compose.ui.platform.LocalContext
 import com.lagradost.quicknovel.ui.AppearanceMode
@@ -297,10 +299,14 @@ fun DownloadScreen(
                 enter = expandHorizontally() + fadeIn(),
                 exit = shrinkHorizontally() + fadeOut()
             ) {
+                val activity = LocalContext.current as? Activity
                 LibraryRail(
                     items = railItems,
                     selected = currentPage,
-                    onSelect = { page -> scope.launch { pagerState.animateScrollToPage(page) } }
+                    onSelect = { page -> scope.launch { pagerState.animateScrollToPage(page) } },
+                    onTranslationHistory = {
+                        activity?.let { TranslationHistoryDialogs.show(it) }
+                    },
                 )
             }
             Column(Modifier.weight(1.0f)) {

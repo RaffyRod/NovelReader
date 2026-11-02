@@ -390,8 +390,15 @@ object UIHelper {
 
         //colorCallback: ((Palette) -> Unit)? = null,
     ): Boolean {
-        if (this == null || uiImage == null) {
-            this?.dispose()
+        if (this == null) return false
+        if (uiImage == null) {
+            dispose()
+            val posterLabel = context.getString(R.string.poster_descript)
+            val title = (getTag(R.id.cover_title_tag) as? String)
+                ?: contentDescription?.toString()?.takeIf {
+                    it.isNotBlank() && !it.equals(posterLabel, ignoreCase = true)
+                }
+            setImageDrawable(com.lagradost.quicknovel.ui.common.NoCoverDrawable(context, title))
             return false
         }
         val transformations = if (radius > 0) listOf(

@@ -275,14 +275,14 @@ data class ImmutableSearchResponse(
     val imageRequest
         get() = @Composable {
             val context = LocalContext.current
-            remember(context) {
+            remember(context, posterUrl, posterHeaders, name, apiName, author, isImported) {
                 ImageRequest(context)
             }
         }
     val blurImageRequest
         get() = @Composable {
             val context = LocalContext.current
-            remember(context) {
+            remember(context, posterUrl, posterHeaders, name, apiName, author, isImported) {
                 ImageRequest(context, radius = 100, sample = 3)
             }
         }

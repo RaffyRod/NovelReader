@@ -89,6 +89,7 @@ fun LibraryRail(
     selected: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onTranslationHistory: (() -> Unit)? = null,
 ) {
     val fire = UiIconTheme.fromKey(
         rememberAppSettings().ui.uiIconTheme.collectAsState().value
@@ -137,6 +138,23 @@ fun LibraryRail(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 3.dp),
                     color = if (isSelected) selectedFg else idleFg,
+                )
+            }
+        }
+        if (onTranslationHistory != null) {
+            val historyLabel = stringResource(R.string.translation_history_short)
+            Box(
+                modifier = Modifier
+                    .size(width = 42.dp, height = 48.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable(onClick = onTranslationHistory),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_baseline_language_24),
+                    contentDescription = historyLabel,
+                    modifier = Modifier.size(22.dp),
+                    tint = idleFg,
                 )
             }
         }

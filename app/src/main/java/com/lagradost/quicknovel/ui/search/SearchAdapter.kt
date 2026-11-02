@@ -52,6 +52,8 @@ class SearchAdapter(
                     coverHeight
                 )
                 setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                contentDescription = item.name
+                setTag(com.lagradost.quicknovel.R.id.cover_title_tag, item.name)
                 setImage(item.image)
 
                 setOnClickListener {

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Historial URL catálogo plugins — mock</title>
+  <style>
+    :root {
+      --bg: #070b14; --card: #152038; --line: rgba(140,180,255,.16);
+      --text: #e8f1ff; --muted: #8b97ab; --primary: #1a6cff; --danger: #f87171;
+      --font: system-ui, sans-serif;
+    }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px 18px 60px; }
+    h1 { font-size: 1.55rem; margin: 0 0 8px; }
+    .lead { color: var(--muted); max-width: 42rem; line-height: 1.45; margin-bottom: 20px; }
+    .dialog {
+      width: min(420px, 100%); background: var(--card); border: 1px solid var(--line);
+      border-radius: 18px; padding: 16px; box-shadow: 0 20px 40px rgba(0,0,0,.4);
+    }
+    label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    input {
+      width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line);
+      background: #0c1424; color: var(--text); padding: 10px 12px; margin-bottom: 12px;
+    }
+    .hist { font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+    .url {
+      color: var(--primary); padding: 8px 0; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 13px;
+    }
+    .row { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; }
+    button { border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    .ghost { background: transparent; color: var(--muted); }
+    .danger { background: transparent; color: var(--danger); }
+    .ok { background: var(--primary); color: #fff; }
+    .note { margin-top: 18px; max-width: 42rem; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(26,108,255,.35); background: rgba(26,108,255,.1); color: #bfdbfe; font-size: .92rem; }
+  </style>
+</head>
+<body>
+  <h1>URLs de catálogo (plugins)</h1>
+  <p class="lead">En vez de forzar siempre la URL oficial, se guarda el último catálogo usado. Toca para autocompletar; mantén pulsado para borrar; Limpiar borra el historial.</p>
+  <div class="dialog">
+    <label>URL del plugins.min.json</label>
+    <input id="url" value="" placeholder="https://…/plugins.min.json" />
+    <div class="hist">URLs recientes — toca para rellenar, mantén para borrar</div>
+    <div class="url" data-u="https://raw.githubusercontent.com/LNReader/lnreader-plugins/plugins/v3.0.0/.dist/plugins.min.json">LNReader official</div>
+    <div class="url" data-u="https://example.com/my-plugins.min.json">example.com</div>
+    <div class="row">
+      <button class="danger" type="button" id="clear">Limpiar historial</button>
+      <div>
+        <button class="ghost" type="button">Cerrar</button>
+        <button class="ok" type="button">Obtener</button>
+      </div>
+    </div>
+  </div>
+  <p class="note">Implementado en Añadir repo / Explorar catálogo. El input ya no queda “pegado” al último fetch sin control.</p>
+  <script>
+    const input = document.getElementById('url');
+    document.querySelectorAll('.url').forEach(el => {
+      el.addEventListener('click', () => { input.value = el.dataset.u; });
+    });
+    document.getElementById('clear').onclick = () => { input.value = ''; };
+  </script>
+</body>
+</html>

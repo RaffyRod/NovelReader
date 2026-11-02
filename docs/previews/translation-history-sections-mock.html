@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Historial de traducciones — Sections mock</title>
+  <style>
+    :root {
+      --bg: #070b14; --surface: #101a2c; --card: #152038; --line: rgba(140,180,255,.16);
+      --text: #e8f1ff; --muted: #8b97ab; --primary: #1a6cff; --ok: #34d399;
+      --font: system-ui, sans-serif;
+    }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px 18px 60px; }
+    h1 { font-size: 1.6rem; margin: 0 0 8px; }
+    .lead { color: var(--muted); max-width: 40rem; line-height: 1.45; margin-bottom: 22px; }
+    .phone {
+      width: 320px; height: 640px; border-radius: 28px; border: 1px solid var(--line);
+      background: linear-gradient(180deg, #0c1424, #070b14); overflow: hidden; display: flex;
+      box-shadow: 0 24px 50px rgba(0,0,0,.45);
+    }
+    .rail { width: 52px; background: #0e1628; padding: 10px 0; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+    .chip { width: 42px; height: 48px; border-radius: 12px; display: grid; place-items: center; color: var(--muted); font-size: 11px; }
+    .chip.on { background: radial-gradient(circle at 50% 70%, #4da3ff, #1a6cff 70%); color: #fff; }
+    .chip.tr { outline: 1px dashed var(--primary); color: var(--primary); }
+    .pane { flex: 1; padding: 14px 12px; overflow: auto; }
+    .title { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+    .card b { display: block; margin-bottom: 4px; }
+    .meta { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+    .actions button { background: transparent; border: 0; color: var(--primary); font-weight: 600; }
+    .note { margin-top: 18px; max-width: 40rem; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(52,211,153,.3); background: rgba(52,211,153,.08); color: #a7f3d0; font-size: .92rem; }
+  </style>
+</head>
+<body>
+  <h1>Historial de traducciones (Sections)</h1>
+  <p class="lead">Mock tema-aware. En la app: Biblioteca → Secciones (rail) → icono idioma al final. Lista con fecha, Abrir y Abrir archivo.</p>
+  <div class="phone">
+    <div class="rail">
+      <div class="chip on">↓</div>
+      <div class="chip">📖</div>
+      <div class="chip">⏸</div>
+      <div class="chip">☆</div>
+      <div class="chip">✓</div>
+      <div class="chip">🗑</div>
+      <div class="chip">❤</div>
+      <div class="chip tr">文</div>
+    </div>
+    <div class="pane">
+      <div class="title">Historial de traducciones</div>
+      <div class="card">
+        <b>Solo Leveling</b>
+        <div class="meta">Solo Leveling - 1-50 [ES].epub · ES<br/>1 nov 2026 · 18:42</div>
+        <div class="actions"><button>Abrir</button><button>Abrir archivo</button></div>
+      </div>
+      <div class="card">
+        <b>Omniscient Reader</b>
+        <div class="meta">Omniscient Reader - 1-20 [ES].pdf · ES<br/>31 oct 2026 · 21:10</div>
+        <div class="actions"><button>Abrir</button><button>Abrir archivo</button></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">Elegido para v1.2.9: rail de Sections + diálogo listado (fecha + abrir). Se ajusta al tema de la app.</p>
+</body>
+</html>

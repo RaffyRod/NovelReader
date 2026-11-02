@@ -49,9 +49,14 @@ object CustomProviders {
         return byName.values.sortedBy { it.name.lowercase() }
     }
 
-    /** Names that cannot be used because a provider already has them. */
-    fun takenNames(ignoring: String? = null): Set<String> =
-        Apis.apis.map { it.name }.filter { it != ignoring }.toSet()
+    /** Names that cannot be used because a built-in or custom provider already has them. */
+    fun takenNames(ignoring: String? = null): Set<String> {
+        val names = LinkedHashSet<String>()
+        Apis.apis.forEach { names.add(it.name) }
+        load().forEach { names.add(it.name) }
+        if (ignoring != null) names.remove(ignoring)
+        return names
+    }
 
     /** Adds or replaces a provider, [replacing] is the name it had before an edit. */
     fun save(context: Context, config: CustomProviderConfig, replacing: String? = null) {

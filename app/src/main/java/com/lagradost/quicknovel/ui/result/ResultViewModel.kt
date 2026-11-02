@@ -1472,6 +1472,15 @@ class ResultViewModel : ViewModel() {
             names.add("$fileName.$extension")
             uris.add(file.uri)
             ExportedFiles.record(meta.name, "$fileName.$extension", file.uri, storage.mimeType)
+            if (translate != null) {
+                com.lagradost.quicknovel.TranslationHistory.record(
+                    novelName = meta.name,
+                    fileName = "$fileName.$extension",
+                    uri = file.uri,
+                    mime = storage.mimeType,
+                    langCode = translate.lang.code,
+                )
+            }
         }
 
         publishSelectionTask(

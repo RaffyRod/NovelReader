@@ -9,6 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -20,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.lagradost.quicknovel.R
 
 /**
@@ -38,6 +43,8 @@ fun CoverImage(
     val onSurface = MaterialTheme.colorScheme.onSurface
     val hint = stringResource(R.string.no_cover)
     val displayTitle = title?.trim()?.takeIf { it.isNotEmpty() && !it.equals(hint, ignoreCase = true) }
+    val hasArt = remember(model) { coverModelHasArt(model) }
+    var artOk by remember(model) { mutableStateOf(hasArt) }
 
     Box(
         modifier = modifier.background(
@@ -47,6 +54,7 @@ fun CoverImage(
         ),
         contentAlignment = Alignment.Center,
     ) {
+        // Option J (chosen): title-as-cover always paints underneath; hide failed Coil layers.
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -77,11 +85,26 @@ fun CoverImage(
                 modifier = Modifier.padding(top = if (displayTitle != null) 10.dp else 0.dp),
             )
         }
-        AsyncImage(
-            contentScale = ContentScale.Crop,
-            model = model,
-            contentDescription = contentDescription,
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (hasArt && artOk) {
+            AsyncImage(
+                contentScale = ContentScale.Crop,
+                model = model,
+                contentDescription = contentDescription,
+                modifier = Modifier.fillMaxSize(),
+                onError = { artOk = false },
+                onSuccess = { artOk = true },
+            )
+        }
     }
+}
+
+private fun coverModelHasArt(model: Any?): Boolean {
+    if (model == null) return false
+    if (model is ImageRequest) {
+        val data = model.data ?: return false
+        if (data is String) return data.isNotBlank()
+        return data.toString().isNotBlank() && data.toString() != "null"
+    }
+    if (model is String) return model.isNotBlank()
+    return true
 }

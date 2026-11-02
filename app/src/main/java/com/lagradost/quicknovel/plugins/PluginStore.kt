@@ -30,15 +30,31 @@ object PluginStore {
 
     fun loadInstalled(): List<InstalledPlugin> {
         val keys = getKeys(INSTALLED_FOLDER) ?: return emptyList()
-        return keys.mapNotNull { key -> getKey<InstalledPlugin>(key) }
-            .sortedBy { it.localName.lowercase() }
+        val byId = linkedMapOf<String, InstalledPlugin>()
+        for (fullKey in keys) {
+            // getKeys returns prefs paths like "plugin_installed/<id>" — skip unrelated prefixes.
+            if (!fullKey.startsWith("$INSTALLED_FOLDER/")) continue
+            val plugin = getKey<InstalledPlugin>(fullKey) ?: continue
+            val id = plugin.id.ifBlank { fullKey.substringAfterLast('/') }
+            if (id.isBlank()) continue
+            byId[id] = plugin.copy(id = id)
+        }
+        // Newest installs first so bulk-adds stay visible at the top of the hub.
+        return byId.values.sortedWith(
+            compareByDescending<InstalledPlugin> { it.installedAt }
+                .thenBy { it.localName.lowercase() },
+        )
     }
 
     fun getInstalled(id: String): InstalledPlugin? =
         getKey(INSTALLED_FOLDER, id)
 
     fun saveInstalled(plugin: InstalledPlugin) {
-        setKey(INSTALLED_FOLDER, plugin.id, plugin)
+        val id = plugin.id.trim().ifBlank {
+            plugin.jsUrl.ifBlank { plugin.localName }.ifBlank { plugin.name }
+                .hashCode().toString()
+        }
+        setKey(INSTALLED_FOLDER, id, plugin.copy(id = id))
     }
 
     fun removeInstalled(id: String) {

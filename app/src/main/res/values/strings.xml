@@ -425,6 +425,17 @@
     <string name="plugin_hub_count">Installed: %1$d%2$s</string>
     <string name="plugin_hub_updates"> · %1$d updates</string>
     <string name="plugin_hub_title">Installed plugins</string>
+    <string name="plugin_hub_title_count">Installed plugins (%1$d)</string>
+    <string name="plugin_repo_history_title">Recent catalog URLs — tap to fill, long-press to remove</string>
+    <string name="plugin_repo_history_clear">Clear URL history</string>
+    <string name="plugin_repo_history_cleared">Catalog URL history cleared</string>
+    <string name="plugin_repo_history_removed">URL removed</string>
+    <string name="translation_history_title">Translation history</string>
+    <string name="translation_history_short">Translations</string>
+    <string name="translation_history_empty">No background translations yet. Export with translate to fill this list.</string>
+    <string name="translation_history_open">Open</string>
+    <string name="translation_history_folder">Open file</string>
+    <string name="translation_history_open_fail">Could not open that file</string>
     <string name="plugin_none">No plugins yet. Add a repository (JSON manifest) to browse sources.</string>
     <string name="plugin_none_simple">No plugins yet. Tap Browse catalog to pick sources (select → install). Madara CSS is only applied when a plugin is tagged Madara — never rewritten for every source.</string>
     <string name="plugin_browse_official">Browse catalog</string>

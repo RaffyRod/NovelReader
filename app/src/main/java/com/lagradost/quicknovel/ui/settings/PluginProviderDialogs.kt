@@ -32,6 +32,7 @@ import com.lagradost.quicknovel.plugins.PluginLangs
 import com.lagradost.quicknovel.plugins.PluginManifestClient
 import com.lagradost.quicknovel.plugins.PluginManifestItem
 import com.lagradost.quicknovel.plugins.PluginRepo
+import com.lagradost.quicknovel.plugins.PluginRepoUrlHistory
 import com.lagradost.quicknovel.plugins.PluginSelectAll
 import com.lagradost.quicknovel.plugins.PluginStore
 import com.lagradost.quicknovel.providers.CustomProviderConfig
@@ -69,17 +70,15 @@ object PluginProviderDialogs {
         val scroll = ScrollView(activity).apply {
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                (480 * density).toInt(),
+                (560 * density).toInt(),
             )
         }
 
         val builder = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
-            .setTitle(R.string.plugin_hub_title)
+            .setTitle(activity.getString(R.string.plugin_hub_title_count, installed.size))
             .setView(scroll)
             .setNegativeButton(R.string.close, null)
-            .setPositiveButton(R.string.plugin_browse_official) { _, _ ->
-                openOfficialCatalog(activity, onChanged)
-            }
+            .setPositiveButton(R.string.plugin_browse_official, null)
         if (updates > 0) {
             builder.setNeutralButton(activity.getString(R.string.plugin_update_all, updates)) { _, _ ->
                 updateAll(activity, onChanged)
@@ -123,6 +122,13 @@ object PluginProviderDialogs {
             }
         }
         scroll.addView(column)
+        dialog.setOnShowListener {
+            // Keep browse from auto-dismiss racing the hub — open catalog on next frame.
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+                dialog.dismiss()
+                activity.postUi { openOfficialCatalog(activity, onChanged) }
+            }
+        }
         if (activity.canShowDialog()) dialog.show()
     }
 
@@ -269,13 +275,13 @@ object PluginProviderDialogs {
 
     /** Fetches [PluginStore.OFFICIAL_MANIFEST_URL] and opens language → provider pickers. */
     private fun openOfficialCatalog(activity: Activity, onChanged: () -> Unit) {
-        val scope = (activity as? AppCompatActivity)?.lifecycleScope ?: return
+        val scope = activity.pluginScope() ?: return
         val progress = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.plugin_browse_official)
             .setMessage(R.string.plugin_fetching)
             .setCancelable(false)
             .create()
-        progress.show()
+        if (activity.canShowDialog()) progress.show()
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
@@ -284,11 +290,12 @@ object PluginProviderDialogs {
                     url to items
                 }
             }
-            progress.dismiss()
+            progress.dismissSafely()
             result.fold(
                 onSuccess = { (url, items) ->
                     if (items.isEmpty()) {
                         showToast(activity, activity.getString(R.string.plugin_fetch_empty))
+                        activity.postUi { showHub(activity, onChanged) }
                         return@fold
                     }
                     val repoId = "lnreader_official"
@@ -303,14 +310,15 @@ object PluginProviderDialogs {
                     )
                     PluginStore.cacheManifest(repoId, items)
                     PluginInstaller.markUpdatesFromCatalog(items, url)
-                    onChanged()
-                    showLanguages(activity, repoId, url, items, onChanged)
+                    PluginRepoUrlHistory.remember(url, "LNReader official")
+                    activity.postUi { showLanguages(activity, repoId, url, items, onChanged) }
                 },
                 onFailure = {
                     showToast(
                         activity,
                         activity.getString(R.string.plugin_fetch_fail, it.message ?: ""),
                     )
+                    activity.postUi { showHub(activity, onChanged) }
                 },
             )
         }
@@ -319,6 +327,8 @@ object PluginProviderDialogs {
     fun showAddRepo(activity: Activity, onChanged: () -> Unit) {
         val density = activity.resources.displayMetrics.density
         val pad = (16 * density).toInt()
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
+        val grayText = activity.colorFromAttribute(R.attr.grayTextColor)
         val column = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad / 2, pad, 0)
@@ -327,12 +337,43 @@ object PluginProviderDialogs {
             text = activity.getString(R.string.plugin_repo_hint)
             setPadding(0, 0, 0, (8 * density).toInt())
         })
+        val history = PluginRepoUrlHistory.load()
         val urlEdit = EditText(activity).apply {
             inputType = InputType.TYPE_TEXT_VARIATION_URI
             hint = activity.getString(R.string.plugin_repo_url_hint)
-            setText(PluginStore.OFFICIAL_MANIFEST_URL)
+            // Prefer last used catalog URL; leave blank so the official URL is not forced every time.
+            setText(history.firstOrNull()?.url.orEmpty())
         }
         column.addView(urlEdit)
+        if (history.isNotEmpty()) {
+            column.addView(TextView(activity).apply {
+                text = activity.getString(R.string.plugin_repo_history_title)
+                setTextColor(grayText)
+                setPadding(0, (10 * density).toInt(), 0, (4 * density).toInt())
+            })
+            history.take(6).forEach { entry ->
+                column.addView(TextView(activity).apply {
+                    text = entry.label.ifBlank { entry.url }
+                    setTextColor(primary)
+                    setPadding(0, (4 * density).toInt(), 0, (4 * density).toInt())
+                    setOnClickListener { urlEdit.setText(entry.url) }
+                    setOnLongClickListener {
+                        PluginRepoUrlHistory.remove(entry.url)
+                        showToast(activity, activity.getString(R.string.plugin_repo_history_removed))
+                        true
+                    }
+                })
+            }
+            column.addView(Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+                text = activity.getString(R.string.plugin_repo_history_clear)
+                setTextColor(activity.getColor(R.color.colorPrimaryRed))
+                setOnClickListener {
+                    PluginRepoUrlHistory.clear()
+                    urlEdit.setText("")
+                    showToast(activity, activity.getString(R.string.plugin_repo_history_cleared))
+                }
+            })
+        }
         column.addView(TextView(activity).apply {
             text = activity.getString(R.string.plugin_paste_json_label)
             setPadding(0, (12 * density).toInt(), 0, (4 * density).toInt())
@@ -403,14 +444,18 @@ object PluginProviderDialogs {
                             )
                             PluginStore.cacheManifest(repoId, items)
                             PluginInstaller.markUpdatesFromCatalog(items, repoUrl)
+                            if (source != "paste") {
+                                PluginRepoUrlHistory.remember(repoUrl, "LNReader")
+                            }
                             status.text = activity.getString(
                                 R.string.plugin_fetch_ok,
                                 items.size,
                                 PluginManifestClient.languageCounts(items).size,
                             )
                             dialog.dismiss()
-                            showLanguages(activity, repoId, repoUrl, items, onChanged)
-                            onChanged()
+                            activity.postUi {
+                                showLanguages(activity, repoId, repoUrl, items, onChanged)
+                            }
                         },
                         onFailure = {
                             status.text = activity.getString(R.string.plugin_fetch_fail, it.message ?: "")
@@ -768,7 +813,18 @@ object PluginProviderDialogs {
                     return@setOnClickListener
                 }
                 dialog.dismiss()
-                installSelected(activity, repoUrl, chosen, installedById, onChanged)
+                installSelected(
+                    activity = activity,
+                    repoUrl = repoUrl,
+                    items = chosen,
+                    installedById = installedById,
+                    onChanged = onChanged,
+                    catalogItems = items,
+                    filterQuery = filterQuery,
+                    page = safePage,
+                    statusFilter = statusFilter,
+                    kindFilter = kindFilter,
+                )
             }
             fun reopen(
                 nextPage: Int,
@@ -991,6 +1047,12 @@ object PluginProviderDialogs {
         items: List<PluginManifestItem>,
         installedById: Map<String, InstalledPlugin>,
         onChanged: () -> Unit,
+        /** Full filtered catalog list so we can reopen the picker after install. */
+        catalogItems: List<PluginManifestItem> = items,
+        filterQuery: String = "",
+        page: Int = 0,
+        statusFilter: PluginCatalogFilter.Status = PluginCatalogFilter.Status.ALL,
+        kindFilter: PluginCatalogFilter.Kind = PluginCatalogFilter.Kind.ALL,
     ) {
         val scope = activity.pluginScope() ?: return
         val status = showStatusDialog(
@@ -1031,7 +1093,20 @@ object PluginProviderDialogs {
                 },
             )
             onChanged()
-            activity.postUi { showHub(activity, onChanged) }
+            // Stay in the catalog so bulk installs remain visible; hub is one tap away via Close.
+            activity.postUi {
+                showCards(
+                    activity,
+                    repoUrl,
+                    catalogItems,
+                    onChanged,
+                    filterQuery,
+                    page,
+                    linkedSetOf(),
+                    statusFilter,
+                    kindFilter,
+                )
+            }
         }
     }
 
