@@ -10,12 +10,18 @@ class SettingsPage extends BasePage {
     return this.byText('Tutorial');
   }
 
+  /** Preference title includes "(TTS)" — avoids matching other "Lectura en voz alta" strings. */
   get tutorialTts() {
-    return this.byTextContains('Lectura en voz alta');
+    return this.byTextContains('(TTS)');
   }
 
   get tutorialDownload() {
-    return this.byText('Descargas');
+    // Subtitle of the download tutorial row (unique vs generic "Descargas" elsewhere).
+    return this.byTextContains('Cómo descargar novelas');
+  }
+
+  get tutorialProviders() {
+    return this.byTextContains('Cómo elegir y activar');
   }
 
   get pluginGroup() {
@@ -52,24 +58,41 @@ class SettingsPage extends BasePage {
     await expect(this.tabSettings).toBeDisplayed();
   }
 
+  /**
+   * True when the Tutorial preference group (under Información) is on screen.
+   * Do not treat bare "Descargas" as success — that label appears earlier in Settings.
+   */
+  async tutorialsVisible() {
+    return (
+      (await this.tutorialGroup.isDisplayed().catch(() => false)) ||
+      (await this.tutorialTts.isDisplayed().catch(() => false)) ||
+      (await this.tutorialDownload.isDisplayed().catch(() => false)) ||
+      (await this.tutorialProviders.isDisplayed().catch(() => false))
+    );
+  }
+
   async scrollToTutorials() {
-    // Tutorial sits under Información (near the bottom of Settings).
-    const markers = [
-      'Tutorial',
-      'Descargas',
-      'Lectura en voz alta',
-      'Información',
-      'Info',
-      'Proveedores',
-    ];
-    for (const marker of markers) {
+    // Tutorial is the last group — rewind then scroll past Información.
+    for (let i = 0; i < 6; i++) {
+      await driver.execute('mobile: scrollGesture', {
+        left: 80,
+        top: 400,
+        width: 600,
+        height: 1200,
+        direction: 'up',
+        percent: 0.9,
+      }).catch(() => {});
+      await driver.pause(150);
+    }
+
+    const anchors = ['Información', 'Tutorial', '(TTS)', 'Cómo descargar novelas', 'Cómo elegir y activar'];
+    for (const marker of anchors) {
       await this.scrollToText(marker);
       await driver.pause(250);
-      if (await this.tutorialGroup.isDisplayed().catch(() => false)) return true;
-      if (await this.tutorialDownload.isDisplayed().catch(() => false)) return true;
-      if (await this.tutorialTts.isDisplayed().catch(() => false)) return true;
+      if (await this.tutorialsVisible()) return true;
     }
-    for (let i = 0; i < 12; i++) {
+
+    for (let i = 0; i < 16; i++) {
       await driver.execute('mobile: scrollGesture', {
         left: 80,
         top: 500,
@@ -78,23 +101,34 @@ class SettingsPage extends BasePage {
         direction: 'down',
         percent: 0.9,
       });
-      await driver.pause(300);
-      if (
-        (await this.tutorialGroup.isDisplayed().catch(() => false)) ||
-        (await this.tutorialDownload.isDisplayed().catch(() => false)) ||
-        (await this.tutorialTts.isDisplayed().catch(() => false))
-      ) {
-        return true;
-      }
+      await driver.pause(280);
+      if (await this.tutorialsVisible()) return true;
     }
     return false;
   }
 
   async openTutorialTts() {
-    await this.scrollToTutorials();
-    const item = this.tutorialTts;
-    if (await item.isExisting().catch(() => false)) {
-      await item.click();
+    if (!(await this.scrollToTutorials())) return false;
+
+    // Prefer exact ES/EN titles; fall back to "(TTS)" marker.
+    const candidates = [
+      this.byText('Lectura en voz alta (TTS)'),
+      this.byText('Text to speech (TTS)'),
+      this.tutorialTts,
+    ];
+    for (const item of candidates) {
+      if (await item.isDisplayed().catch(() => false)) {
+        await item.click();
+        await driver.pause(800);
+        return true;
+      }
+    }
+
+    await this.scrollToText('(TTS)');
+    await driver.pause(300);
+    const tts = this.tutorialTts;
+    if (await tts.isDisplayed().catch(() => false)) {
+      await tts.click();
       await driver.pause(800);
       return true;
     }

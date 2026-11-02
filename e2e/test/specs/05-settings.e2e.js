@@ -15,25 +15,23 @@ describe('Settings', () => {
 
     const found = await settingsPage.scrollToTutorials();
     expect(found).toBe(true);
-
-    const tutorial = await settingsPage.tutorialGroup.isDisplayed().catch(() => false);
-    const download = await settingsPage.tutorialDownload.isDisplayed().catch(() => false);
-    const tts = await settingsPage.tutorialTts.isDisplayed().catch(() => false);
-    expect(tutorial || download || tts).toBe(true);
+    expect(await settingsPage.tutorialsVisible()).toBe(true);
   });
 
   it('opens TTS tutorial dialog when available', async () => {
     allure.addSeverity('normal');
     await settingsPage.open();
+    await settingsPage.expectLoaded();
     const opened = await settingsPage.openTutorialTts();
-    if (opened) {
-      const close = await settingsPage.byText('Cerrar');
-      if (await close.isExisting().catch(() => false)) {
-        await close.click();
-      } else {
-        await driver.back();
-      }
-    }
     expect(opened).toBe(true);
+    const closeEs = await settingsPage.byText('Cerrar');
+    const closeEn = await settingsPage.byText('Close');
+    if (await closeEs.isDisplayed().catch(() => false)) {
+      await closeEs.click();
+    } else if (await closeEn.isDisplayed().catch(() => false)) {
+      await closeEn.click();
+    } else {
+      await driver.back();
+    }
   });
 });
