@@ -1,0 +1,162 @@
+# Build signed universal APK and post it to the private Telegram channel.
+# Secrets required: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+# Optional (recommended later): KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+name: Release → Telegram
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'Optional caption note'
+        required: false
+        default: ''
+
+concurrency:
+  group: release-telegram-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build & send APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+
+      - name: Grant Gradle execute
+        run: chmod +x gradlew
+
+      - name: Read versionName / versionCode
+        id: ver
+        run: |
+          NAME=$(grep -E '^\s*versionName\s+"' app/build.gradle | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          CODE=$(grep -E '^\s*versionCode\s+' app/build.gradle | head -1 | sed -E 's/[^0-9]//g')
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Version $NAME ($CODE)"
+
+      - name: Assemble release
+        run: ./gradlew :app:assembleRelease --no-daemon
+
+      - name: Sign universal APK
+        id: sign
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
+          UNSIGNED=app/build/outputs/apk/release/app-universal-release-unsigned.apk
+          if [ ! -f "$UNSIGNED" ]; then
+            UNSIGNED=$(ls app/build/outputs/apk/release/*universal*unsigned*.apk 2>/dev/null | head -n1 || true)
+          fi
+          test -f "$UNSIGNED"
+          OUT="QuickNovel-Ultimate-${{ steps.ver.outputs.name }}-universal.apk"
+          mkdir -p dist
+
+          if [ -n "${KEYSTORE_BASE64:-}" ] && [ -n "${KEYSTORE_PASSWORD:-}" ] && [ -n "${KEY_ALIAS:-}" ]; then
+            echo "Using release keystore from secrets"
+            echo "$KEYSTORE_BASE64" | base64 -d > /tmp/release.jks
+            "$BUILD_TOOLS/apksigner" sign \
+              --ks /tmp/release.jks \
+              --ks-pass "pass:${KEYSTORE_PASSWORD}" \
+              --ks-key-alias "$KEY_ALIAS" \
+              --key-pass "pass:${KEY_PASSWORD:-$KEYSTORE_PASSWORD}" \
+              --out "dist/$OUT" \
+              "$UNSIGNED"
+            rm -f /tmp/release.jks
+            echo "signer=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "No KEYSTORE_* secrets — signing with Android debug keystore (CI)"
+            KEYSTORE=$HOME/.android/debug.keystore
+            mkdir -p "$HOME/.android"
+            if [ ! -f "$KEYSTORE" ]; then
+              keytool -genkeypair -v -keystore "$KEYSTORE" -storepass android -alias androiddebugkey \
+                -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+                -dname "CN=Android Debug,O=Android,C=US"
+            fi
+            "$BUILD_TOOLS/apksigner" sign \
+              --ks "$KEYSTORE" --ks-pass pass:android \
+              --key-pass pass:android --ks-key-alias androiddebugkey \
+              --out "dist/$OUT" \
+              "$UNSIGNED"
+            echo "signer=debug" >> "$GITHUB_OUTPUT"
+          fi
+
+          "$BUILD_TOOLS/apksigner" verify --verbose "dist/$OUT"
+          ls -lh "dist/$OUT"
+          echo "apk=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickNovel-Ultimate-${{ steps.ver.outputs.name }}
+          path: dist/${{ steps.sign.outputs.apk }}
+          retention-days: 30
+
+      - name: Send APK to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          APK: dist/${{ steps.sign.outputs.apk }}
+          VER_NAME: ${{ steps.ver.outputs.name }}
+          VER_CODE: ${{ steps.ver.outputs.code }}
+          SIGNER: ${{ steps.sign.outputs.signer }}
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          NOTE: ${{ github.event.inputs.note || '' }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "${TELEGRAM_BOT_TOKEN:-}"
+          test -n "${TELEGRAM_CHAT_ID:-}"
+          test -f "$APK"
+
+          CAPTION=$(printf '%s\n' \
+            "📦 QuickNovel Ultimate ${VER_NAME}" \
+            "versionCode ${VER_CODE}" \
+            "ref: ${REF}" \
+            "sha: ${SHA:0:7}" \
+            "sign: ${SIGNER}" \
+            "repo: https://github.com/${REPO}" \
+            )
+          if [ -n "${NOTE}" ]; then
+            CAPTION="${CAPTION}"$'\n'"${NOTE}"
+          fi
+          # Telegram caption max ~1024 chars
+          CAPTION=$(printf '%s' "$CAPTION" | head -c 1000)
+
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+            -F chat_id="${TELEGRAM_CHAT_ID}" \
+            -F document=@"${APK}" \
+            -F caption="${CAPTION}" \
+            -F disable_notification=false \
+            | tee /tmp/tg-response.json
+
+          # Fail the job if Telegram rejects the upload
+          python3 - <<'PY'
+          import json, sys
+          data = json.load(open("/tmp/tg-response.json", encoding="utf-8"))
+          if not data.get("ok"):
+              print(data, file=sys.stderr)
+              sys.exit(1)
+          print("Telegram ok: message_id=", data.get("result", {}).get("message_id"))
+          PY
