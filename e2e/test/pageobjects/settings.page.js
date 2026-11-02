@@ -21,7 +21,7 @@ class SettingsPage extends BasePage {
   }
 
   get tutorialProviders() {
-    return this.byTextContains('Cómo elegir y activar');
+    return this.byTextContains('Cómo agregar un Blog');
   }
 
   get pluginGroup() {
@@ -85,7 +85,7 @@ class SettingsPage extends BasePage {
       await driver.pause(150);
     }
 
-    const anchors = ['Información', 'Tutorial', '(TTS)', 'Cómo descargar novelas', 'Cómo elegir y activar'];
+    const anchors = ['Información', 'Tutorial', '(TTS)', 'Cómo descargar novelas', 'Cómo agregar un Blog'];
     for (const marker of anchors) {
       await this.scrollToText(marker);
       await driver.pause(250);
