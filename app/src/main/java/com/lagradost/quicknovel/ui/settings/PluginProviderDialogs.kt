@@ -5,15 +5,19 @@ import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.text.Editable
 import android.text.InputType
 import android.text.TextUtils
+import android.text.TextWatcher
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -62,22 +66,28 @@ object PluginProviderDialogs {
         val density = activity.resources.displayMetrics.density
         val pad = (14 * density).toInt()
         val gap = (10 * density).toInt()
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
+        val textColor = activity.colorFromAttribute(R.attr.textColor)
+        val grayText = activity.colorFromAttribute(R.attr.grayTextColor)
 
-        val column = LinearLayout(activity).apply {
+        val root = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad / 2, pad, pad)
         }
-
+        val listHost = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+        }
         val scroll = ScrollView(activity).apply {
-            layoutParams = ViewGroup.LayoutParams(
+            addView(listHost)
+            layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                (560 * density).toInt(),
+                (520 * density).toInt(),
             )
         }
 
         val builder = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(activity.getString(R.string.plugin_hub_title_count, installed.size))
-            .setView(scroll)
+            .setView(root)
             .setNegativeButton(R.string.close, null)
             .setPositiveButton(R.string.plugin_browse_official, null)
         if (updates > 0) {
@@ -91,21 +101,51 @@ object PluginProviderDialogs {
         }
         val dialog = builder.create()
 
-        val textColor = activity.colorFromAttribute(R.attr.textColor)
-        val grayText = activity.colorFromAttribute(R.attr.grayTextColor)
+        var currentQuery = ""
+        var applyingSearch = false
 
-        if (installed.isEmpty()) {
-            column.addView(TextView(activity).apply {
-                text = activity.getString(R.string.plugin_none_simple)
-                setTextColor(grayText)
-                setPadding(0, 0, 0, gap)
-            })
-        } else {
-            installed.forEach { plugin ->
-                column.addView(buildPluginCard(activity, plugin, gap, textColor, grayText) { action ->
+        val filterCount = TextView(activity).apply {
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setPadding(0, 0, 0, gap / 2)
+            visibility = View.GONE
+        }
+
+        fun renderList(query: String = currentQuery) {
+            currentQuery = query
+            listHost.removeAllViews()
+            if (installed.isEmpty()) {
+                filterCount.visibility = View.GONE
+                listHost.addView(TextView(activity).apply {
+                    text = activity.getString(R.string.plugin_none_simple)
+                    setTextColor(grayText)
+                    setPadding(0, 0, 0, gap)
+                })
+                return
+            }
+            val filtered = PluginHubUi.filterInstalled(installed, currentQuery)
+            if (currentQuery.isBlank()) {
+                filterCount.visibility = View.GONE
+            } else {
+                filterCount.visibility = View.VISIBLE
+                filterCount.text = activity.getString(
+                    R.string.plugin_hub_filter_count,
+                    filtered.size,
+                    installed.size,
+                )
+            }
+            if (filtered.isEmpty()) {
+                listHost.addView(TextView(activity).apply {
+                    text = activity.getString(R.string.plugin_hub_search_empty)
+                    setTextColor(grayText)
+                    setPadding(0, gap, 0, gap)
+                })
+                return
+            }
+            filtered.forEach { plugin ->
+                listHost.addView(buildPluginCard(activity, plugin, gap, textColor, grayText) { action ->
                     when (action) {
                         CardAction.Update -> {
-                            // Dismiss first, then run on next frame so the window token stays valid.
                             dialog.dismiss()
                             activity.postUi { updateOne(activity, plugin, onChanged) }
                         }
@@ -122,9 +162,62 @@ object PluginProviderDialogs {
                 })
             }
         }
-        scroll.addView(column)
+
+        if (installed.isNotEmpty()) {
+            val filterRow = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, 0, 0, gap / 2)
+            }
+            val filterEdit = EditText(activity).apply {
+                hint = activity.getString(R.string.plugin_cards_filter_hint)
+                setTextColor(textColor)
+                setHintTextColor(grayText)
+                inputType = InputType.TYPE_CLASS_TEXT
+                setPadding(pad / 2, pad / 2, pad / 2, pad / 2)
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                contentDescription = activity.getString(R.string.plugin_cards_filter_hint)
+            }
+            val clearBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+                text = activity.getString(R.string.plugin_cards_filter_clear)
+                setTextColor(activity.getColor(R.color.colorPrimaryRed))
+                visibility = View.GONE
+                isAllCaps = false
+            }
+            filterRow.addView(filterEdit)
+            filterRow.addView(clearBtn)
+            root.addView(filterRow)
+            root.addView(filterCount)
+
+            filterEdit.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+                override fun afterTextChanged(s: Editable?) {
+                    if (applyingSearch) return
+                    val q = s?.toString().orEmpty()
+                    clearBtn.visibility = if (q.isBlank()) View.GONE else View.VISIBLE
+                    renderList(q)
+                    scroll.scrollTo(0, 0)
+                }
+            })
+            clearBtn.setOnClickListener {
+                applyingSearch = true
+                filterEdit.setText("")
+                applyingSearch = false
+                clearBtn.visibility = View.GONE
+                renderList("")
+                scroll.scrollTo(0, 0)
+            }
+            filterEdit.setOnEditorActionListener { _, _, _ ->
+                renderList(filterEdit.text?.toString().orEmpty())
+                true
+            }
+        }
+
+        root.addView(scroll)
+        renderList("")
+
         dialog.setOnShowListener {
-            // Keep browse from auto-dismiss racing the hub — open catalog on next frame.
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
                 dialog.dismiss()
                 activity.postUi { openOfficialCatalog(activity, onChanged) }
@@ -991,6 +1084,8 @@ object PluginProviderDialogs {
             if (scrollToTop) scroll.scrollTo(0, 0)
         }
 
+        var applyingFilterText = false
+
         fun goTo(
             nextPage: Int,
             query: String = filterEdit.text?.toString().orEmpty(),
@@ -1002,10 +1097,23 @@ object PluginProviderDialogs {
             currentKind = kind
             currentPage = nextPage
             if (filterEdit.text?.toString().orEmpty() != currentQuery) {
+                applyingFilterText = true
                 filterEdit.setText(currentQuery)
+                applyingFilterText = false
             }
             renderPage(scrollToTop = true)
         }
+
+        filterEdit.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                if (applyingFilterText) return
+                val q = s?.toString().orEmpty()
+                if (q == currentQuery) return
+                goTo(0, q)
+            }
+        })
 
         fun applySelectAll() {
             installedById = PluginStore.loadInstalled().associateBy { it.id }
@@ -1282,17 +1390,20 @@ object PluginProviderDialogs {
         kindFilter: PluginCatalogFilter.Kind = PluginCatalogFilter.Kind.ALL,
     ) {
         val scope = activity.pluginScope() ?: return
-        val status = showStatusDialog(
-            activity,
-            activity.getString(R.string.plugin_installing),
-            activity.getString(R.string.plugin_installing_msg, items.size),
+        val total = items.size.coerceAtLeast(1)
+        val status = showGlyphPulseProgress(
+            activity = activity,
+            title = activity.getString(R.string.plugin_installing),
+            total = total,
         )
         scope.launch {
             var ok = 0
             var fail = 0
             var skipped = 0
+            var processed = 0
             withContext(Dispatchers.IO) {
                 for (item in items) {
+                    status.setProgress(processed, total, item.name)
                     runCatching {
                         val before = installedById[item.id] ?: PluginStore.getInstalled(item.id)
                         val isUpdate = before != null && PluginSelectAll.hasCatalogUpdate(before, item)
@@ -1308,9 +1419,11 @@ object PluginProviderDialogs {
                         )
                         ok++
                     }.onFailure { fail++ }
+                    processed++
+                    status.setProgress(processed, total, item.name)
                 }
             }
-            status.dismissSafely()
+            status.dismiss()
             showToast(
                 activity,
                 if (skipped > 0) {
@@ -1705,47 +1818,270 @@ object PluginProviderDialogs {
         val scope = activity.pluginScope() ?: return
         val pending = PluginStore.loadInstalled().filter { it.hasUpdate }
         if (pending.isEmpty()) return
-        val status = showStatusDialog(
-            activity,
-            activity.getString(R.string.plugin_updating),
-            activity.getString(R.string.plugin_updating_all_msg, pending.size),
+        val total = pending.size.coerceAtLeast(1)
+        val status = showGlyphPulseProgress(
+            activity = activity,
+            title = activity.getString(R.string.plugin_updating),
+            total = total,
         )
         scope.launch {
+            var processed = 0
             withContext(Dispatchers.IO) {
                 for (plugin in pending) {
+                    status.setProgress(processed, total, plugin.localName)
                     runCatching { PluginInstaller.update(activity, plugin) }
+                    processed++
+                    status.setProgress(processed, total, plugin.localName)
                 }
             }
-            status.dismissSafely()
+            status.dismiss()
             onChanged()
             showToast(activity, activity.getString(R.string.plugin_update_all_done, pending.size))
             activity.postUi { showHub(activity, onChanged) }
         }
     }
 
-    private fun showStatusDialog(activity: Activity, title: String, message: String): AlertDialog {
+    /**
+     * Bulk install/update progress: reader 本 glyph pulse + fraction + bar + current name (mock D).
+     */
+    private class GlyphPulseProgress(
+        private val activity: Activity,
+        private val dialog: AlertDialog,
+        private val glyphWrap: View,
+        private val fractionView: TextView,
+        private val bar: ProgressBar,
+        private val nameView: TextView,
+    ) {
+        fun setProgress(done: Int, total: Int, currentName: String) {
+            activity.postUi {
+                val safeTotal = total.coerceAtLeast(1)
+                val clamped = done.coerceIn(0, safeTotal)
+                fractionView.text =
+                    activity.getString(R.string.plugin_installing_fraction, clamped, safeTotal)
+                bar.max = safeTotal
+                bar.isIndeterminate = false
+                bar.progress = clamped
+                nameView.text = currentName
+                nameView.visibility =
+                    if (currentName.isBlank()) View.GONE else View.VISIBLE
+            }
+        }
+
+        fun dismiss() {
+            activity.postUi {
+                glyphWrap.clearAnimation()
+                dialog.dismissSafely()
+            }
+        }
+    }
+
+    private fun showGlyphPulseProgress(
+        activity: Activity,
+        title: String,
+        total: Int,
+    ): GlyphPulseProgress {
         val density = activity.resources.displayMetrics.density
-        val pad = (20 * density).toInt()
+        fun dp(v: Int) = (v * density).toInt()
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
+        val text = activity.colorFromAttribute(R.attr.textColor)
+        val muted = activity.colorFromAttribute(R.attr.grayTextColor)
+
         val column = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad, pad, pad / 2)
+            setPadding(dp(24), dp(20), dp(24), dp(16))
             gravity = Gravity.CENTER_HORIZONTAL
         }
-        column.addView(ProgressBar(activity).apply {
-            isIndeterminate = true
+
+        val glyphSize = dp(96)
+        val glyphWrap = FrameLayout(activity).apply {
+            layoutParams = LinearLayout.LayoutParams(glyphSize, glyphSize)
+        }
+        glyphWrap.addView(View(activity).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Gravity.CENTER,
+            )
+            alpha = 0.12f
+            scaleX = 1.18f
+            scaleY = 1.18f
+            background = activity.getDrawable(R.drawable.bg_reader_loading_glyph_halo)
+            backgroundTintList =
+                ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 55))
         })
-        column.addView(TextView(activity).apply {
-            text = message
-            setTextColor(activity.colorFromAttribute(R.attr.textColor))
-            setPadding(0, (14 * density).toInt(), 0, 0)
+        glyphWrap.addView(View(activity).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            background = activity.getDrawable(R.drawable.bg_reader_loading_glyph_ring)
+            backgroundTintList = ColorStateList.valueOf(primary)
+        })
+        glyphWrap.addView(TextView(activity).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
             gravity = Gravity.CENTER
+            includeFontPadding = false
+            setText(R.string.loading_glyph)
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 40f)
+            setTypeface(typeface, Typeface.BOLD)
         })
-        return AlertDialog.Builder(activity, R.style.AlertDialogCustom)
-            .setTitle(title)
+        column.addView(glyphWrap)
+
+        column.addView(TextView(activity).apply {
+            this.text = title
+            setTextColor(text)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(16), 0, 0)
+        })
+
+        val fractionView = TextView(activity).apply {
+            this.text = activity.getString(R.string.plugin_installing_fraction, 0, total.coerceAtLeast(1))
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            typeface = Typeface.MONOSPACE
+            gravity = Gravity.CENTER
+            setPadding(0, dp(6), 0, 0)
+        }
+        column.addView(fractionView)
+
+        val bar = ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(6),
+            ).apply {
+                topMargin = dp(12)
+            }
+            max = total.coerceAtLeast(1)
+            progress = 0
+            isIndeterminate = false
+            progressTintList = ColorStateList.valueOf(primary)
+            progressBackgroundTintList =
+                ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 48))
+        }
+        column.addView(bar)
+
+        val nameView = TextView(activity).apply {
+            setTextColor(muted)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            gravity = Gravity.CENTER
+            maxLines = 2
+            ellipsize = TextUtils.TruncateAt.END
+            setPadding(0, dp(10), 0, 0)
+            visibility = View.GONE
+        }
+        column.addView(nameView)
+
+        column.addView(TextView(activity).apply {
+            this.text = activity.getString(R.string.plugin_installing_hint)
+            setTextColor(ColorUtils.setAlphaComponent(muted, 180))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(8), 0, 0)
+        })
+
+        val dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setView(column)
             .setCancelable(false)
             .create()
-            .also { if (activity.canShowDialog()) it.show() }
+            .also {
+                if (activity.canShowDialog()) {
+                    it.show()
+                    glyphWrap.startAnimation(
+                        AnimationUtils.loadAnimation(activity, R.anim.reader_glyph_pulse),
+                    )
+                }
+            }
+
+        return GlyphPulseProgress(activity, dialog, glyphWrap, fractionView, bar, nameView)
+    }
+
+    private fun showStatusDialog(activity: Activity, title: String, message: String): AlertDialog {
+        val density = activity.resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
+        val text = activity.colorFromAttribute(R.attr.textColor)
+
+        val column = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), dp(20), dp(24), dp(16))
+            gravity = Gravity.CENTER_HORIZONTAL
+        }
+
+        val glyphSize = dp(72)
+        val glyphWrap = FrameLayout(activity).apply {
+            layoutParams = LinearLayout.LayoutParams(glyphSize, glyphSize)
+            tag = "glyph_wrap"
+        }
+        glyphWrap.addView(View(activity).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                Gravity.CENTER,
+            )
+            alpha = 0.12f
+            scaleX = 1.18f
+            scaleY = 1.18f
+            background = activity.getDrawable(R.drawable.bg_reader_loading_glyph_halo)
+            backgroundTintList =
+                ColorStateList.valueOf(ColorUtils.setAlphaComponent(primary, 55))
+        })
+        glyphWrap.addView(View(activity).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            background = activity.getDrawable(R.drawable.bg_reader_loading_glyph_ring)
+            backgroundTintList = ColorStateList.valueOf(primary)
+        })
+        glyphWrap.addView(TextView(activity).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            gravity = Gravity.CENTER
+            includeFontPadding = false
+            setText(R.string.loading_glyph)
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        column.addView(glyphWrap)
+
+        column.addView(TextView(activity).apply {
+            this.text = title
+            setTextColor(text)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(14), 0, 0)
+        })
+        column.addView(TextView(activity).apply {
+            this.text = message
+            setTextColor(activity.colorFromAttribute(R.attr.grayTextColor))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            gravity = Gravity.CENTER
+            setPadding(0, dp(8), 0, 0)
+        })
+
+        return AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+            .setView(column)
+            .setCancelable(false)
+            .create()
+            .also {
+                if (activity.canShowDialog()) {
+                    it.show()
+                    glyphWrap.startAnimation(
+                        AnimationUtils.loadAnimation(activity, R.anim.reader_glyph_pulse),
+                    )
+                    it.setOnDismissListener { glyphWrap.clearAnimation() }
+                }
+            }
     }
 
     private fun Activity.canShowDialog(): Boolean {

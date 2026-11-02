@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ajustes — headers de sección (mocks)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #03060f;
+      --text: #e8f1ff;
+      --muted: #8b97ab;
+      --primary: #1a6cff;
+      --primary-rgb: 26, 108, 255;
+      --glow: #4da3ff;
+      --surface: #0a1224;
+      --box: #101a30;
+      --line: rgba(140, 180, 255, 0.14);
+      --on-primary: #ffffff;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    html[data-surface="light"] {
+      --page: #dfe6f2;
+      --text: #0f1419;
+      --muted: #4a5568;
+      --surface: #f1f4fa;
+      --box: #ffffff;
+      --line: rgba(15, 20, 25, 0.1);
+      --on-primary: #ffffff;
+    }
+    html[data-accent="lava"] { --primary: #ff3b1c; --primary-rgb: 255, 59, 28; --glow: #ff7a62; }
+    html[data-accent="emerald"] { --primary: #00c853; --primary-rgb: 0, 200, 83; --glow: #5dff9c; }
+    html[data-accent="violet"] { --primary: #7c4dff; --primary-rgb: 124, 77, 255; --glow: #b388ff; }
+    html[data-accent="gold"] { --primary: #ffb300; --primary-rgb: 255, 179, 0; --glow: #ffd54f; }
+    html[data-accent="cyan"] { --primary: #00e5ff; --primary-rgb: 0, 229, 255; --glow: #84ffff; }
+    html[data-accent="soft"] { --primary: #90caf9; --primary-rgb: 144, 202, 249; --glow: #bbdefb; }
+    html[data-surface="light"][data-accent="soft"] { --primary: #1565c0; --primary-rgb: 21, 101, 192; --glow: #42a5f5; }
+    html[data-surface="light"][data-accent="gold"] { --primary: #c68400; --primary-rgb: 198, 132, 0; --glow: #ffb300; }
+    html[data-surface="light"][data-accent="cyan"] { --primary: #00838f; --primary-rgb: 0, 131, 143; --glow: #00bcd4; }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 480px at 12% -10%, rgba(var(--primary-rgb), 0.2), transparent 55%),
+        radial-gradient(700px 420px at 90% 0%, rgba(var(--primary-rgb), 0.08), transparent 50%),
+        var(--page);
+      padding: 28px 20px 90px;
+      transition: background 0.25s ease, color 0.2s ease;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(1.9rem, 4vw, 2.6rem);
+      font-weight: 400;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      color: var(--muted);
+      max-width: 68ch;
+      line-height: 1.55;
+      margin: 0 0 18px;
+    }
+    .lede strong { color: var(--text); font-weight: 600; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-bottom: 26px;
+    }
+    .toolbar label {
+      font-size: 12px; color: var(--muted); font-family: var(--mono);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .toolbar select, .toolbar button {
+      font: inherit; font-size: 13px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--box);
+      color: var(--text);
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .toolbar button.active {
+      border-color: rgba(var(--primary-rgb), 0.55);
+      background: rgba(var(--primary-rgb), 0.16);
+      color: var(--glow);
+    }
+    .note {
+      display: inline-flex; gap: 8px; align-items: center;
+      padding: 8px 12px; border-radius: 10px;
+      background: rgba(var(--primary-rgb), 0.12);
+      border: 1px solid var(--line);
+      color: var(--glow); font-size: 13px; margin-bottom: 22px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 22px;
+    }
+    .proposal {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .proposal header.meta {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .proposal header.meta .tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--glow);
+      letter-spacing: 0.04em;
+    }
+    .proposal header.meta h2 {
+      margin: 4px 0 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .proposal header.meta p {
+      margin: 6px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .phone {
+      margin: 14px;
+      border-radius: 16px;
+      background: var(--page);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      min-height: 320px;
+      padding: 10px 0 14px;
+    }
+    .phone .appbar {
+      padding: 8px 18px 12px;
+      font-weight: 600;
+      font-size: 17px;
+    }
+    .row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 18px;
+    }
+    .row .t { font-size: 14px; font-weight: 500; }
+    .row .s { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+    .row .widget {
+      width: 36px; height: 20px; border-radius: 99px;
+      background: rgba(var(--primary-rgb), 0.25);
+      position: relative; flex-shrink: 0; margin-top: 2px;
+    }
+    .row .widget::after {
+      content: "";
+      position: absolute; top: 2px; right: 2px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--primary);
+    }
+    .pick {
+      margin-top: auto;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .pick code {
+      font-family: var(--mono);
+      color: var(--glow);
+      font-size: 12px;
+    }
+
+    /* ——— Header variants ——— */
+    .h { margin: 10px 0 2px; }
+
+    /* A · left rail */
+    .h-a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px 6px;
+    }
+    .h-a .rail {
+      width: 3px; height: 16px; border-radius: 99px;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+    .h-a .label {
+      font-size: 13px; font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.02em;
+    }
+
+    /* B · caps tracking */
+    .h-b {
+      padding: 14px 18px 4px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+
+    /* C · soft pill */
+    .h-c { padding: 12px 18px 6px; }
+    .h-c span {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      color: var(--primary);
+      background: rgba(var(--primary-rgb), 0.14);
+      border: 1px solid rgba(var(--primary-rgb), 0.28);
+    }
+
+    /* D · glyph 本 */
+    .h-d {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px 6px;
+    }
+    .h-d .glyph {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 13px; font-weight: 700;
+      color: var(--primary);
+      background: rgba(var(--primary-rgb), 0.14);
+      border: 1px solid rgba(var(--primary-rgb), 0.35);
+    }
+    .h-d .label {
+      font-size: 13px; font-weight: 700; color: var(--text);
+    }
+
+    /* E · underline */
+    .h-e { padding: 14px 18px 8px; }
+    .h-e .label {
+      font-size: 13px; font-weight: 700; color: var(--text);
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--primary);
+      display: inline-block;
+    }
+
+    /* F · tinted band */
+    .h-f {
+      margin: 10px 0 4px;
+      padding: 10px 18px;
+      background: rgba(var(--primary-rgb), 0.1);
+      border-top: 1px solid rgba(var(--primary-rgb), 0.18);
+      border-bottom: 1px solid rgba(var(--primary-rgb), 0.18);
+      font-size: 13px; font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* G · index */
+    .h-g {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 14px 18px 6px;
+    }
+    .h-g .n {
+      font-family: var(--mono);
+      font-size: 11px; color: var(--primary); font-weight: 600;
+    }
+    .h-g .label { font-size: 13px; font-weight: 700; color: var(--text); }
+
+    /* H · icon tile */
+    .h-h {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px 6px;
+    }
+    .h-h .ico {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(var(--primary-rgb), 0.16);
+      display: grid; place-items: center;
+      color: var(--primary); font-size: 14px;
+    }
+    .h-h .label { font-size: 13px; font-weight: 700; color: var(--text); }
+
+    /* I · split rule */
+    .h-i {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 18px 6px;
+    }
+    .h-i::before, .h-i::after {
+      content: ""; flex: 1; height: 1px;
+      background: var(--line);
+    }
+    .h-i .label {
+      font-size: 12px; font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* J · L-bracket */
+    .h-j {
+      margin: 10px 14px 4px 18px;
+      padding: 6px 0 6px 12px;
+      border-left: 2px solid var(--primary);
+      border-top: 2px solid var(--primary);
+      border-radius: 0 0 0 2px;
+      font-size: 13px; font-weight: 700;
+      color: var(--text);
+    }
+
+    /* K · title + count chip */
+    .h-k {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+      padding: 12px 18px 6px;
+    }
+    .h-k .label { font-size: 13px; font-weight: 700; color: var(--primary); }
+    .h-k .count {
+      font-family: var(--mono); font-size: 10px;
+      padding: 2px 7px; border-radius: 6px;
+      color: var(--muted);
+      background: rgba(var(--primary-rgb), 0.1);
+      border: 1px solid var(--line);
+    }
+
+    /* L · soft card header */
+    .h-l {
+      margin: 10px 12px 4px;
+      padding: 10px 12px;
+      border-radius: 12px 12px 0 0;
+      background: var(--box);
+      border: 1px solid var(--line);
+      border-bottom: none;
+      font-size: 13px; font-weight: 700;
+      color: var(--primary);
+    }
+    .phone.carded .section-body {
+      margin: 0 12px 8px;
+      padding: 4px 0 8px;
+      border: 1px solid var(--line);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      background: var(--box);
+    }
+  </style>
+</head>
+<body>
+  <h1>Headers de sección · Ajustes</h1>
+  <p class="lede">
+    Hoy el título de grupo es solo texto <strong>bodyMedium</strong> del color del fondo — casi invisible.
+    Elige un distintivo que use <strong>colorPrimary</strong> / superficies Ultimate (oscuro, claro y cualquier acento).
+  </p>
+
+  <div class="toolbar">
+    <label>Superficie</label>
+    <button type="button" data-surface="dark" class="active">Oscuro</button>
+    <button type="button" data-surface="light">Claro</button>
+    <label>Acento</label>
+    <select id="accent">
+      <option value="blue">Ultimate Blue</option>
+      <option value="lava">Ultimate Lava</option>
+      <option value="emerald">Ultimate Emerald</option>
+      <option value="violet">Ultimate Violet</option>
+      <option value="gold">Ultimate Gold</option>
+      <option value="cyan">Ultimate Cyan</option>
+      <option value="soft">Ultimate Soft</option>
+    </select>
+  </div>
+  <div class="note">Compatibles con temas: solo tokens <code style="font-family:var(--mono)">primary / text / muted / box</code> — sin colores fijos de marca.</div>
+
+  <div class="grid">
+
+    <!-- A · elegido -->
+    <article class="proposal" style="outline:2px solid var(--glow); box-shadow:0 0 0 4px rgba(var(--primary-rgb),0.15)">
+      <header class="meta">
+        <div class="tag">A · Rail · elegido</div>
+        <h2>Barra vertical de acento</h2>
+        <p>Rail 3px en primary + título en primary. Implementado en PreferenceGroupHeader.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-a"><span class="rail"></span><span class="label">General</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="row"><div><div class="t">Caracteres especiales</div><div class="s">En búsqueda</div></div><div class="widget"></div></div>
+        <div class="h h-a"><span class="rail"></span><span class="label">Tema</span></div>
+        <div class="row"><div><div class="t">Modo oscuro</div><div class="s">Activo</div></div><div class="widget"></div></div>
+        <div class="h h-a"><span class="rail"></span><span class="label">Plugins (LNReader)</span></div>
+        <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+      </div>
+      <div class="pick" style="color:var(--glow)">Elegido · implementado</div>
+    </article>
+
+    <!-- B -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">B · Caps</div>
+        <h2>Mayúsculas + tracking</h2>
+        <p>Estilo Material Settings clásico, pero en primary (ahora es onBackground).</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-b">General</div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-b">Tema</div>
+        <div class="row"><div><div class="t">Ultimate theme</div><div class="s">Blue</div></div></div>
+        <div class="h h-b">Plugins (LNReader)</div>
+        <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>B</code></div>
+    </article>
+
+    <!-- C -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">C · Pill</div>
+        <h2>Chip / pastilla suave</h2>
+        <p>Título dentro de pill con fill primary al 14%. Fácil de escanear.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-c"><span>General</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-c"><span>Tema</span></div>
+        <div class="row"><div><div class="t">Modo oscuro</div><div class="s">Activo</div></div><div class="widget"></div></div>
+        <div class="h h-c"><span>Proveedores propios</span></div>
+        <div class="row"><div><div class="t">Administrar</div><div class="s">328 gestionables</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>C</code></div>
+    </article>
+
+    <!-- D -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">D · Glyph 本</div>
+        <h2>Marca Ultimate en cada sección</h2>
+        <p>El 本 del reader como viñeta. Brand-first, coherente con Glyph Pulse.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-d"><span class="glyph">本</span><span class="label">General</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-d"><span class="glyph">本</span><span class="label">Tema</span></div>
+        <div class="row"><div><div class="t">Ultimate theme</div><div class="s">Blue</div></div></div>
+        <div class="h h-d"><span class="glyph">本</span><span class="label">Plugins (LNReader)</span></div>
+        <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>D</code></div>
+    </article>
+
+    <!-- E -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">E · Underline</div>
+        <h2>Subrayado de acento</h2>
+        <p>Texto en color de superficie + underline primary de 2px. Minimal.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-e"><span class="label">General</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-e"><span class="label">Nuevos capítulos</span></div>
+        <div class="row"><div><div class="t">Notificaciones</div><div class="s">Cada 6 h</div></div><div class="widget"></div></div>
+        <div class="h h-e"><span class="label">Traducción (Gemini)</span></div>
+        <div class="row"><div><div class="t">API key</div><div class="s">Configurada</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>E</code></div>
+    </article>
+
+    <!-- F -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">F · Band</div>
+        <h2>Franja tintada full-bleed</h2>
+        <p>Banda horizontal con primary al 10%. Separa bloques como un divisor real.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-f">General</div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-f">Tema</div>
+        <div class="row"><div><div class="t">Estilo de iconos</div><div class="s">Outline</div></div></div>
+        <div class="h h-f">Plugins (LNReader)</div>
+        <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>F</code></div>
+    </article>
+
+    <!-- G -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">G · Index</div>
+        <h2>Índice mono 01 ·</h2>
+        <p>Número monoespacio + título. Orden visual claro sin iconos.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-g"><span class="n">01</span><span class="label">General</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-g"><span class="n">02</span><span class="label">Tema</span></div>
+        <div class="row"><div><div class="t">Modo oscuro</div><div class="s">Activo</div></div><div class="widget"></div></div>
+        <div class="h h-g"><span class="n">03</span><span class="label">App</span></div>
+        <div class="row"><div><div class="t">Buscar actualizaciones</div><div class="s">2.0.1</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>G</code></div>
+    </article>
+
+    <!-- H -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">H · Icon tile</div>
+        <h2>Tile de icono + título</h2>
+        <p>Cuadrado 28dp con símbolo simple. Distintivo fuerte (necesita mapa icon→sección).</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-h"><span class="ico">⚙</span><span class="label">General</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-h"><span class="ico">◐</span><span class="label">Tema</span></div>
+        <div class="row"><div><div class="t">Ultimate theme</div><div class="s">Blue</div></div></div>
+        <div class="h h-h"><span class="ico">◇</span><span class="label">Plugins (LNReader)</span></div>
+        <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>H</code></div>
+    </article>
+
+    <!-- I -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">I · Split rule</div>
+        <h2>Regla dividida centrada</h2>
+        <p>Líneas a ambos lados + caps primary. Muy “sección de documento”.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-i"><span class="label">General</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-i"><span class="label">Tema</span></div>
+        <div class="row"><div><div class="t">Modo oscuro</div><div class="s">Activo</div></div><div class="widget"></div></div>
+        <div class="h h-i"><span class="label">Lector</span></div>
+        <div class="row"><div><div class="t">Quitar relleno</div><div class="s">En capítulos</div></div><div class="widget"></div></div>
+      </div>
+      <div class="pick">Ref: <code>I</code></div>
+    </article>
+
+    <!-- J -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">J · Bracket</div>
+        <h2>Esquina L de acento</h2>
+        <p>Border top+left primary. Marca el inicio de bloque sin fill.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-j">General</div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-j">Tema</div>
+        <div class="row"><div><div class="t">Ultimate theme</div><div class="s">Blue</div></div></div>
+        <div class="h h-j">Plugins (LNReader)</div>
+        <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>J</code></div>
+    </article>
+
+    <!-- K -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">K · Count</div>
+        <h2>Título primary + chip conteo</h2>
+        <p>Primary bold + chip “n ítems”. Útil en Plugins / Proveedores.</p>
+      </header>
+      <div class="phone">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-k"><span class="label">General</span><span class="count">5</span></div>
+        <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+        <div class="h h-k"><span class="label">Tema</span><span class="count">4</span></div>
+        <div class="row"><div><div class="t">Modo oscuro</div><div class="s">Activo</div></div><div class="widget"></div></div>
+        <div class="h h-k"><span class="label">Plugins (LNReader)</span><span class="count">2</span></div>
+        <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+      </div>
+      <div class="pick">Ref: <code>K</code></div>
+    </article>
+
+    <!-- L -->
+    <article class="proposal">
+      <header class="meta">
+        <div class="tag">L · Card group</div>
+        <h2>Grupo en tarjeta</h2>
+        <p>Header + filas dentro de boxItemBackground. Separación máxima entre secciones.</p>
+      </header>
+      <div class="phone carded">
+        <div class="appbar">Ajustes</div>
+        <div class="h h-l">General</div>
+        <div class="section-body">
+          <div class="row"><div><div class="t">Idioma</div><div class="s">Español</div></div><div class="widget"></div></div>
+          <div class="row"><div><div class="t">Proveedores de búsqueda</div><div class="s">3 activos</div></div></div>
+        </div>
+        <div class="h h-l">Tema</div>
+        <div class="section-body">
+          <div class="row"><div><div class="t">Modo oscuro</div><div class="s">Activo</div></div><div class="widget"></div></div>
+        </div>
+        <div class="h h-l">Plugins (LNReader)</div>
+        <div class="section-body">
+          <div class="row"><div><div class="t">Administrar plugins</div><div class="s">Instalados: 42</div></div></div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>L</code></div>
+    </article>
+
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    document.querySelectorAll("[data-surface]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-surface]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        root.setAttribute("data-surface", btn.getAttribute("data-surface"));
+      });
+    });
+    root.setAttribute("data-surface", "dark");
+    const accent = document.getElementById("accent");
+    accent.addEventListener("change", () => {
+      const v = accent.value;
+      if (v === "blue") root.removeAttribute("data-accent");
+      else root.setAttribute("data-accent", v);
+    });
+  </script>
+</body>
+</html>

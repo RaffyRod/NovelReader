@@ -51,7 +51,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | 📖 **Reader** | **Glyph Pulse** (本) while loading — themed, UI language, no raw URL |
 | ⬇️ **Download** | Ranges, chapters/file, language via Gemini / Google / Original |
 | 🔊 **TTS** | Piper/Sherpa voices (Dave ES / Lessac EN) + notification |
-| 🧪 **QA** | Unit + Appium E2E (specs 01–14) + CI validate → unit → smoke / features / providers / reader |
+| 🧪 **QA** | Unit + Appium E2E (specs 01–15) + CI validate → unit → smoke / features* / providers / reader |
 
 ---
 
@@ -64,8 +64,11 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | Name-only filter | Catalog search matches **name** only · paging hint for all 300+ sources |
 | Proveedores propios | Scrollable manager — no ~56-item `setItems` cap |
 | Madara / Blog | No auto-CSS from catalog; add via **URL/JSON** as before |
+| Settings groups | Accent **rail** headers · **Tutorial** under Información |
+| Plugin install | **Glyph Pulse (本)** loading while fetching plugins |
+| Plugin search | Live filter in hub / catalog / proveedores |
 | CI → Telegram | Release builds/sends APK only after green **CI Android** (e2e) on main |
-| E2E | Bottom tabs by resource-id · catalog suite `15-plugin-catalog` |
+| E2E / CI | Specs 01–15 · features split (`features` / `features-plugins` / `features-flows`) + AVD cache |
 
 Full history → [`CHANGELOG.md`](CHANGELOG.md)
 
@@ -106,11 +109,11 @@ More shots → [`docs/manual-1.2.3/es/imagenes/`](docs/manual-1.2.3/es/imagenes/
 | 🇪🇸 | HTML + Word + bug template | [`docs/manual-1.2.3/es/`](docs/manual-1.2.3/es/) |
 | 🇬🇧 | HTML + Word + bug template | [`docs/manual-1.2.3/en/`](docs/manual-1.2.3/en/) |
 | 🗂️ | Docs index | [`docs/README.md`](docs/README.md) |
-| 🎨 | HTML mocks (themes, Glyph Pulse, plugins…) | [`docs/previews/`](docs/previews/) |
+| 🎨 | HTML mocks (themes, Glyph Pulse, settings headers, plugins…) | [`docs/previews/`](docs/previews/) |
 
-In-app: **Settings → Tutorial** (Providers · Downloads · TTS).
+In-app: **Settings → Información → Tutorial** (Providers · Downloads · TTS).
 
-Typical Desktop pack: `QuickNovel-Ultimate-2.0.0/` (APK on Desktop). Manuals folder remains `docs/manual-1.2.3/` until the next doc regen.
+Typical Desktop pack: `QuickNovel-Ultimate-2.0.1/` (APK on Desktop). Manuals folder remains `docs/manual-1.2.3/` until the next doc regen.
 
 ---
 
@@ -126,6 +129,8 @@ Typical Desktop pack: `QuickNovel-Ultimate-2.0.0/` (APK on Desktop). Manuals fol
 | `./gradlew :app:testDebugUnitTest` | Unit tests |
 | `cd e2e && npm test` | Full E2E suite |
 | `npm run test:smoke` (in `e2e/`) | Smoke 01–04 |
+| `npm run test:features-plugins` | Plugins + catalog (10, 15) |
+| `npm run test:features-flows` | Download translate + sections (11, 14) |
 | `python docs/manual-1.2.3/_generar_docs_en.py` | Regenerate EN manual |
 
 Sign the universal APK under `app/build/outputs/apk/release/` or use the Desktop build.  

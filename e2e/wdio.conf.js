@@ -44,15 +44,23 @@ exports.config = {
         './test/specs/04-history.e2e.js',
       ],
     ],
+    // Split for CI wall-clock: long plugin dialogs must not poison download/sections.
     features: [
       [
-        // Theme first: assert defaults before other specs scroll/deep-link Settings.
         './test/specs/13-theme-defaults.e2e.js',
         './test/specs/05-settings.e2e.js',
         './test/specs/06-import.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
+      ],
+    ],
+    'features-plugins': [
+      [
         './test/specs/10-plugins.e2e.js',
         './test/specs/15-plugin-catalog.e2e.js',
+      ],
+    ],
+    'features-flows': [
+      [
         './test/specs/11-download-translate.e2e.js',
         './test/specs/14-sections-translations.e2e.js',
       ],
@@ -145,9 +153,39 @@ exports.config = {
     });
     await driver.pause(2000);
   },
+  /**
+   * Between describe blocks in a nested worker: clear stuck dialogs from prior specs.
+   */
+  beforeSuite: async () => {
+    const { dismissBlockingDialogs } = require('./test/helpers/dialogs');
+    await dismissBlockingDialogs();
+    const chrome = await Promise.all(
+      [
+        `${APP_ID}:id/navigation_download`,
+        `${APP_ID}:id/navigation_search`,
+        `${APP_ID}:id/navigation_settings`,
+      ].map(async (id) =>
+        $(`android=new UiSelector().resourceId("${id}")`)
+          .isDisplayed()
+          .catch(() => false),
+      ),
+    );
+    if (chrome.some(Boolean)) return;
+    await driver.terminateApp(APP_ID).catch(() => {});
+    await driver.pause(500);
+    await driver.activateApp(APP_ID).catch(() => {});
+    await driver.pause(1200);
+    await driver.execute('mobile: startActivity', {
+      component: `${APP_ID}/${APP_ACTIVITY}`,
+    }).catch(() => {});
+    await driver.pause(1200);
+    await dismissBlockingDialogs();
+  },
   afterTest: async function (test, context, { error }) {
     if (error) {
       await driver.takeScreenshot();
     }
+    const { dismissBlockingDialogs } = require('./test/helpers/dialogs');
+    await dismissBlockingDialogs();
   },
 };

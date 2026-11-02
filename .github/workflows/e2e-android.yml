@@ -123,17 +123,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Split former monolithic "features" so plugin dialogs cannot poison download/sections,
+          # and wall-clock tracks the longest shard (~half of the old 10–12m suite).
           - suite: smoke
-            timeout: 60
+            timeout: 45
             soft: false
           - suite: features
-            timeout: 60
+            timeout: 40
+            soft: false
+          - suite: features-plugins
+            timeout: 45
+            soft: false
+          - suite: features-flows
+            timeout: 40
             soft: false
           - suite: reader
-            timeout: 60
+            timeout: 45
             soft: false
           - suite: providers
-            timeout: 75
+            timeout: 60
             soft: false
     steps:
       - uses: actions/checkout@v4
@@ -166,6 +174,26 @@ jobs:
           npx appium driver install uiautomator2 || npx appium driver update uiautomator2 || true
           test -f apps/QuickNovel-Ultimate.apk
           ls -lh apps/QuickNovel-Ultimate.apk
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-api30-google-x86_64-pixel4-v1
+      - name: Create AVD snapshot (cold cache)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_4
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: echo "AVD snapshot ready for cache"
       - name: Run ${{ matrix.suite }} suite
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -173,8 +201,8 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_4
-          force-avd-creation: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # emulator-runner runs EACH script line in a fresh /bin/sh — use one bash file
           script: bash e2e/scripts/ci-run-suite.sh ${{ matrix.suite }}

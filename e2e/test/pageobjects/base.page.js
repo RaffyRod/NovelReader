@@ -31,9 +31,24 @@ const MAIN_TAB_IDS = [
   TAB_IDS.Buscar,
   TAB_IDS.Historial,
   TAB_IDS.Ajustes,
+  TAB_IDS.Secciones,
 ];
 
 class BasePage {
+  /**
+   * Hard reset to MainActivity when bottom nav is gone (dialogs / stuck activities).
+   */
+  async recoverMainApp() {
+    await driver.terminateApp(APP_ID).catch(() => {});
+    await driver.pause(600);
+    await driver.activateApp(APP_ID).catch(() => {});
+    await driver.pause(1500);
+    await driver.execute('mobile: startActivity', {
+      component: `${APP_ID}/${APP_ACTIVITY}`,
+    }).catch(() => {});
+    await driver.pause(1500);
+    await dismissBlockingDialogs();
+  }
   /**
    * @param {string} accessibilityId
    */
@@ -86,7 +101,7 @@ class BasePage {
 
   /**
    * Leaves reader / pickers / dialogs until bottom navigation is back.
-   * Restarts MainActivity if back presses are not enough.
+   * Restarts / relaunches the app if back presses are not enough.
    */
   async ensureMainChrome(timeoutMs = 25000) {
     const deadline = Date.now() + timeoutMs;
@@ -94,13 +109,16 @@ class BasePage {
       await dismissBlockingDialogs();
       if (await this.isMainChromeVisible()) return;
       await driver.back().catch(() => {});
-      await driver.pause(450);
+      await driver.pause(400);
     }
-    await driver.execute('mobile: startActivity', {
-      component: `${APP_ID}/${APP_ACTIVITY}`,
-    });
-    await driver.pause(2000);
-    await dismissBlockingDialogs();
+    await this.recoverMainApp();
+    const verifyUntil = Date.now() + 12000;
+    while (Date.now() < verifyUntil) {
+      if (await this.isMainChromeVisible()) return;
+      await dismissBlockingDialogs();
+      await driver.pause(500);
+    }
+    throw new Error('Main bottom navigation not visible after app recovery');
   }
 
   /**
@@ -137,70 +155,68 @@ class BasePage {
    * @param {string} tabName Spanish label used by page objects (Biblioteca, Buscar, …)
    */
   async openTab(tabName) {
-    await this.ensureMainChrome();
-    await dismissBlockingDialogs();
-
-    const resId = TAB_IDS[tabName];
-    if (resId) {
-      const byRes = this.byId(resId);
-      if (await byRes.isDisplayed().catch(() => false)) {
-        const selected = await byRes.getAttribute('selected').catch(() => 'false');
-        if (selected === 'true') {
-          await driver.pause(300);
-          return;
-        }
-        await byRes.click();
-        await driver.pause(1000);
-        await dismissBlockingDialogs();
-        return;
-      }
-    }
-
-    const aliases = TAB_ALIASES[tabName] || [tabName];
-    for (const label of aliases) {
-      const selected = $(`android=new UiSelector().description("${label}").selected(true)`);
-      if (await selected.isExisting().catch(() => false)) {
-        await driver.pause(300);
-        return;
-      }
-    }
-    for (const label of aliases) {
-      const clickable = $(`android=new UiSelector().description("${label}").clickable(true)`);
-      if (await clickable.isDisplayed().catch(() => false)) {
-        await clickable.click();
-        await driver.pause(1000);
-        await dismissBlockingDialogs();
-        return;
-      }
-    }
-    for (const label of aliases) {
-      const any = $(`android=new UiSelector().description("${label}")`);
-      if (await any.isDisplayed().catch(() => false)) {
-        await any.click();
-        await driver.pause(1000);
-        await dismissBlockingDialogs();
-        return;
-      }
-    }
-
-    // Last resort: wait on resource-id (locale-independent), then description aliases.
-    if (resId) {
-      const byRes = this.byId(resId);
-      await byRes.waitForDisplayed({ timeout: 20000 });
-      await byRes.click();
-      await driver.pause(1000);
+    const tryOpen = async () => {
+      await this.ensureMainChrome();
       await dismissBlockingDialogs();
-      return;
-    }
-    for (const label of aliases) {
-      const any = $(`android=new UiSelector().description("${label}")`);
-      if (await any.waitForDisplayed({ timeout: 5000 }).then(() => true).catch(() => false)) {
-        await any.click();
-        await driver.pause(1000);
-        await dismissBlockingDialogs();
-        return;
+
+      const resId = TAB_IDS[tabName];
+      if (resId) {
+        const byRes = this.byId(resId);
+        if (await byRes.isDisplayed().catch(() => false)) {
+          const selected = await byRes.getAttribute('selected').catch(() => 'false');
+          if (selected === 'true') {
+            await driver.pause(300);
+            return true;
+          }
+          await byRes.click();
+          await driver.pause(800);
+          await dismissBlockingDialogs();
+          return true;
+        }
       }
-    }
+
+      const aliases = TAB_ALIASES[tabName] || [tabName];
+      for (const label of aliases) {
+        const selected = $(`android=new UiSelector().description("${label}").selected(true)`);
+        if (await selected.isExisting().catch(() => false)) {
+          await driver.pause(300);
+          return true;
+        }
+      }
+      for (const label of aliases) {
+        const clickable = $(`android=new UiSelector().description("${label}").clickable(true)`);
+        if (await clickable.isDisplayed().catch(() => false)) {
+          await clickable.click();
+          await driver.pause(800);
+          await dismissBlockingDialogs();
+          return true;
+        }
+      }
+      for (const label of aliases) {
+        const any = $(`android=new UiSelector().description("${label}")`);
+        if (await any.isDisplayed().catch(() => false)) {
+          await any.click();
+          await driver.pause(800);
+          await dismissBlockingDialogs();
+          return true;
+        }
+      }
+
+      if (resId) {
+        const byRes = this.byId(resId);
+        if (await byRes.waitForDisplayed({ timeout: 8000 }).then(() => true).catch(() => false)) {
+          await byRes.click();
+          await driver.pause(800);
+          await dismissBlockingDialogs();
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (await tryOpen()) return;
+    await this.recoverMainApp();
+    if (await tryOpen()) return;
     throw new Error(`Bottom nav tab not found: ${tabName}`);
   }
 }

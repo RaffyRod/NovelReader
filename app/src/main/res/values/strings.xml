@@ -470,8 +470,10 @@
     <string name="plugin_install">Install</string>
     <string name="plugin_install_done_skip">Installed %1$d · failed %2$d · skipped %3$d (already there)</string>
     <string name="plugin_pick_one">Pick at least one provider</string>
-    <string name="plugin_installing">Installing…</string>
+    <string name="plugin_installing">Installing</string>
     <string name="plugin_installing_msg">Installing %1$d plugin(s)</string>
+    <string name="plugin_installing_fraction">%1$d / %2$d</string>
+    <string name="plugin_installing_hint">Don’t close the app</string>
     <string name="plugin_install_done">Installed %1$d · failed %2$d</string>
     <string name="plugin_options_msg">Language: %1$s\nVersion: %2$s · latest: %3$s\n%4$s</string>
     <string name="plugin_action_update">Update</string>
@@ -487,7 +489,9 @@
     <string name="plugin_add_to_search_title">Add to Search</string>
     <string name="plugin_meta_not_in_search">not in Search</string>
     <string name="plugin_cards_page">Page %1$d/%2$d · showing %3$d–%4$d of %5$d</string>
-    <string name="plugin_cards_filter_hint">Filter by name…</string>
+    <string name="plugin_cards_filter_hint">Search by name…</string>
+    <string name="plugin_hub_filter_count">Showing %1$d of %2$d</string>
+    <string name="plugin_hub_search_empty">No plugins match</string>
     <string name="plugin_select_none">Select none</string>
     <string name="plugin_cards_page_hint">Use Previous / Next / Go to page to see every source</string>
     <string name="cp_manage_count">Manage providers (%1$d)</string>

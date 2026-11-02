@@ -56,9 +56,15 @@ describe('Plugin catalog (Elegir proveedores)', () => {
       'android=new UiSelector().textContains("Select all")',
     );
     const filterHint = await $(
+      'android=new UiSelector().textContains("Buscar por nombre")',
+    );
+    const filterHintLegacy = await $(
       'android=new UiSelector().textContains("Filtrar por nombre")',
     );
     const filterHintEn = await $(
+      'android=new UiSelector().textContains("Search by name")',
+    );
+    const filterHintEnLegacy = await $(
       'android=new UiSelector().textContains("Filter by name")',
     );
     const pageHint = await $(
@@ -91,7 +97,9 @@ describe('Plugin catalog (Elegir proveedores)', () => {
 
     const hasNameFilter =
       (await filterHint.isDisplayed().catch(() => false)) ||
-      (await filterHintEn.isDisplayed().catch(() => false));
+      (await filterHintLegacy.isDisplayed().catch(() => false)) ||
+      (await filterHintEn.isDisplayed().catch(() => false)) ||
+      (await filterHintEnLegacy.isDisplayed().catch(() => false));
     expect(hasNameFilter).toBe(true);
 
     const hasPaging =

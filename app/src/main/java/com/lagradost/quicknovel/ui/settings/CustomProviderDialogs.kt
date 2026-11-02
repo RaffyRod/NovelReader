@@ -3,8 +3,10 @@ package com.lagradost.quicknovel.ui.settings
 import android.app.Activity
 import android.content.DialogInterface
 import android.graphics.Typeface
+import android.text.Editable
 import android.text.InputType
 import android.text.TextUtils
+import android.text.TextWatcher
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -290,14 +292,29 @@ object CustomProviderDialogs {
             if (scrollToTop) scroll.scrollTo(0, 0)
         }
 
+        var applyingFilterText = false
+
         fun goTo(page: Int, query: String = filterEdit.text?.toString().orEmpty()) {
             currentQuery = query
             currentPage = page
             if (filterEdit.text?.toString().orEmpty() != currentQuery) {
+                applyingFilterText = true
                 filterEdit.setText(currentQuery)
+                applyingFilterText = false
             }
             renderPage(scrollToTop = true)
         }
+
+        filterEdit.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                if (applyingFilterText) return
+                val q = s?.toString().orEmpty()
+                if (q == currentQuery) return
+                goTo(0, q)
+            }
+        })
 
         selectAllBtn.setOnClickListener {
             selected.clear()

@@ -503,53 +503,6 @@ object SettingScreen : SearchableSettings {
                 )
             ),
             Preference.PreferenceGroup(
-                title = stringResource(R.string.tutorial_group),
-                preferenceItems = persistentListOf(
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.info_24px),
-                        title = stringResource(R.string.tutorial_providers),
-                        subtitle = stringResource(R.string.tutorial_providers_desc),
-                        onClick = {
-                            activity?.let { act ->
-                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
-                                    .setTitle(R.string.tutorial_providers)
-                                    .setMessage(R.string.tutorial_providers_body)
-                                    .setPositiveButton(R.string.close, null)
-                                    .show()
-                            }
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.ic_baseline_menu_book_24),
-                        title = stringResource(R.string.tutorial_download),
-                        subtitle = stringResource(R.string.tutorial_download_desc),
-                        onClick = {
-                            activity?.let { act ->
-                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
-                                    .setTitle(R.string.tutorial_download)
-                                    .setMessage(R.string.tutorial_download_body)
-                                    .setPositiveButton(R.string.close, null)
-                                    .show()
-                            }
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.ic_baseline_volume_up_24),
-                        title = stringResource(R.string.tutorial_tts),
-                        subtitle = stringResource(R.string.tutorial_tts_desc),
-                        onClick = {
-                            activity?.let { act ->
-                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
-                                    .setTitle(R.string.tutorial_tts)
-                                    .setMessage(R.string.tutorial_tts_body)
-                                    .setPositiveButton(R.string.close, null)
-                                    .show()
-                            }
-                        }
-                    ),
-                )
-            ),
-            Preference.PreferenceGroup(
                 title = stringResource(R.string.cp_group),
                 preferenceItems = persistentListOf(
                     Preference.PreferenceItem.TextPreference(
@@ -672,7 +625,55 @@ object SettingScreen : SearchableSettings {
                     ),
                     logcat,
                 )
-            ))
+            ),
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.tutorial_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.info_24px),
+                        title = stringResource(R.string.tutorial_providers),
+                        subtitle = stringResource(R.string.tutorial_providers_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
+                                    .setTitle(R.string.tutorial_providers)
+                                    .setMessage(R.string.tutorial_providers_body)
+                                    .setPositiveButton(R.string.close, null)
+                                    .show()
+                            }
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.ic_baseline_menu_book_24),
+                        title = stringResource(R.string.tutorial_download),
+                        subtitle = stringResource(R.string.tutorial_download_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
+                                    .setTitle(R.string.tutorial_download)
+                                    .setMessage(R.string.tutorial_download_body)
+                                    .setPositiveButton(R.string.close, null)
+                                    .show()
+                            }
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.ic_baseline_volume_up_24),
+                        title = stringResource(R.string.tutorial_tts),
+                        subtitle = stringResource(R.string.tutorial_tts_desc),
+                        onClick = {
+                            activity?.let { act ->
+                                androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
+                                    .setTitle(R.string.tutorial_tts)
+                                    .setMessage(R.string.tutorial_tts_body)
+                                    .setPositiveButton(R.string.close, null)
+                                    .show()
+                            }
+                        }
+                    ),
+                )
+            ),
+            )
     }
 }
 

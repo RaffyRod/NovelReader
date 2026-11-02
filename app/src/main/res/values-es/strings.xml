@@ -432,8 +432,10 @@
     <string name="plugin_install">Instalar</string>
     <string name="plugin_pick_one">Elige al menos un proveedor</string>
     <string name="plugin_meta_not_in_search">sin búsqueda</string>
-    <string name="plugin_installing">Instalando…</string>
+    <string name="plugin_installing">Instalando</string>
     <string name="plugin_installing_msg">Instalando %1$d plugin(s)</string>
+    <string name="plugin_installing_fraction">%1$d / %2$d</string>
+    <string name="plugin_installing_hint">No cierres la app</string>
     <string name="plugin_install_done">Instalados %1$d · fallidos %2$d</string>
     <string name="plugin_options_msg">Idioma: %1$s\nVersión: %2$s · última: %3$s\n%4$s</string>
     <string name="plugin_action_update">Actualizar</string>
@@ -448,7 +450,9 @@
     <string name="plugin_configure_url_hint">Elige cómo mapear el sitio. Madara sirve en la mayoría de novelas WordPress; si no, edita los selectores tú.</string>
     <string name="plugin_add_to_search_title">Añadir a Buscar</string>
     <string name="plugin_cards_page">Página %1$d/%2$d · mostrando %3$d–%4$d de %5$d</string>
-    <string name="plugin_cards_filter_hint">Filtrar por nombre…</string>
+    <string name="plugin_cards_filter_hint">Buscar por nombre…</string>
+    <string name="plugin_hub_filter_count">Mostrando %1$d de %2$d</string>
+    <string name="plugin_hub_search_empty">Ningún plugin coincide</string>
     <string name="plugin_select_none">Seleccionar ninguno</string>
     <string name="plugin_cards_page_hint">Usa Anterior / Siguiente / Ir a página para ver todas las fuentes</string>
     <string name="cp_manage_count">Administrar proveedores (%1$d)</string>

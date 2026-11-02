@@ -2,7 +2,7 @@
 
 Android automation with **WebdriverIO**, **Appium UiAutomator2**, **Mocha**, and **Allure**.
 
-**App under test:** `2.0.0` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`) · English providers ON.  
+**App under test:** `2.0.1` · defaults **dark mode** + **Ultimate Blue** (`BlueFire`) · English providers ON.  
 Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 
 ## Scenarios
@@ -23,6 +23,7 @@ Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 | `12-reader-loading` | Reader **Glyph Pulse (F)**: 本 overlay, no raw URL as title (cache may skip flash) |
 | `13-theme-defaults` | Fresh install: **Modo oscuro** ON + **Ultimate Blue** |
 | `14-sections-translations` | Secciones → **Traducciones** opens translation history dialog |
+| `15-plugin-catalog` | Elegir proveedores: select-all, name filter, paging |
 
 ### Reader seed
 
@@ -42,7 +43,7 @@ Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 # from repo root
 ./gradlew :app:assembleRelease
 # copy signed APK to e2e/apps/QuickNovel-Ultimate.apk
-# or Desktop: QuickNovel-Ultimate-2.0.0-universal.apk
+# or Desktop: QuickNovel-Ultimate-2.0.1-universal.apk
 ```
 
 4. Install and run:
@@ -54,12 +55,14 @@ npx appium driver install uiautomator2
 npm run providers:generate   # refresh list from Apis.kt
 npm test                     # full suite
 npm run test:smoke           # 01–04
-npm run test:features        # 05, 13, 06, 09–11, 14
+npm run test:features        # 13, 05, 06, 09
+npm run test:features-plugins # 10 + 15 (isolated from nav-heavy flows)
+npm run test:features-flows  # 11 + 14
 npm run test:reader          # 07 + 12
 npm run test:theme           # 13 only
 npm run test:reader-loading  # 12 only
 npm run test:providers       # 08 (long / network)
-npm run test:plugins         # 10
+npm run test:plugins         # alias → features-plugins
 npm run test:download-translate  # 11
 npm run test:sections        # 14 Secciones → Traducciones
 npm run allure:report
@@ -82,10 +85,11 @@ GitHub Actions workflow `.github/workflows/e2e-android.yml` runs on **every push
 |-----|----------------|
 | `unit` | Gradle `:app:testDebugUnitTest` (incl. Glyph Pulse + theme defaults) |
 | `build-apk` | Assemble + sign APK → artifact |
-| `e2e` (matrix) | Parallel emulator jobs: **smoke**, **features**, **reader**, **providers** |
+| `e2e` (matrix) | Parallel emulator jobs: **smoke**, **features**, **features-plugins**, **features-flows**, **reader**, **providers** |
 | `allure-report` | Merges Allure shards → HTML artifact |
 
-`providers` uses `continue-on-error` so Cloudflare / site flakes do not fail the whole gate.
+AVD is **cached** (`force-avd-creation: false`) so cold SDK/AVD setup is not repeated every run.  
+Plugin dialogs run in **features-plugins**; download/sections in **features-flows** to avoid bottom-nav state leak.
 
 **Smoke “canceled” after green:** WDIO can finish (`5 passing`) and then `android-emulator-runner` hits **Terminate Emulator** while a newer push cancels the workflow (`cancel-in-progress`). Concurrency now cancels **only on pull_request**, not on push, so a passed smoke is not flipped by teardown cancel.
 

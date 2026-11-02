@@ -60,4 +60,16 @@ object PluginHubUi {
             .removePrefix("http://")
             .trimEnd('/')
     }
+
+    /** Name / local name / host match for the installed-plugins hub search box. */
+    fun matchesQuery(plugin: InstalledPlugin, query: String): Boolean {
+        if (query.isBlank()) return true
+        val q = query.trim()
+        return plugin.localName.contains(q, ignoreCase = true) ||
+            plugin.name.contains(q, ignoreCase = true) ||
+            siteHost(plugin).contains(q, ignoreCase = true)
+    }
+
+    fun filterInstalled(plugins: List<InstalledPlugin>, query: String): List<InstalledPlugin> =
+        plugins.filter { matchesQuery(it, query) }
 }

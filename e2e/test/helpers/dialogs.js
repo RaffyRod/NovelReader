@@ -30,9 +30,14 @@ async function dismissBlockingDialogs() {
         await driver.pause(600);
       }
     }
-    const hasNav = await $(
-      'android=new UiSelector().description("Biblioteca")',
-    ).isExisting().catch(() => false);
+    const pkg = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+    const hasNav =
+      (await $(
+        `android=new UiSelector().resourceId("${pkg}:id/navigation_download")`,
+      ).isDisplayed().catch(() => false)) ||
+      (await $(
+        'android=new UiSelector().descriptionMatches("(?i)(Biblioteca|Library)")',
+      ).isExisting().catch(() => false));
     if (hasNav && !dismissed) break;
     if (!dismissed && !hasNav) {
       await driver.back().catch(() => {});

@@ -53,24 +53,32 @@ class SettingsPage extends BasePage {
   }
 
   async scrollToTutorials() {
-    const markers = ['Tutorial', 'Descargas', 'Lectura en voz alta', 'Proveedores'];
+    // Tutorial sits under Información (near the bottom of Settings).
+    const markers = [
+      'Tutorial',
+      'Descargas',
+      'Lectura en voz alta',
+      'Información',
+      'Info',
+      'Proveedores',
+    ];
     for (const marker of markers) {
       await this.scrollToText(marker);
-      await driver.pause(300);
+      await driver.pause(250);
       if (await this.tutorialGroup.isDisplayed().catch(() => false)) return true;
       if (await this.tutorialDownload.isDisplayed().catch(() => false)) return true;
       if (await this.tutorialTts.isDisplayed().catch(() => false)) return true;
     }
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 12; i++) {
       await driver.execute('mobile: scrollGesture', {
         left: 80,
         top: 500,
         width: 600,
         height: 1400,
         direction: 'down',
-        percent: 0.85,
+        percent: 0.9,
       });
-      await driver.pause(400);
+      await driver.pause(300);
       if (
         (await this.tutorialGroup.isDisplayed().catch(() => false)) ||
         (await this.tutorialDownload.isDisplayed().catch(() => false)) ||

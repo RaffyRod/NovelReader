@@ -124,4 +124,18 @@ class PluginHubUiTest {
         assertEquals("allnovelread.com", PluginHubUi.siteHost("http://allnovelread.com"))
         assertEquals("", PluginHubUi.siteHost("   "))
     }
+
+    @Test
+    fun filterInstalled_matchesNameOrHost() {
+        val plugins = listOf(
+            InstalledPlugin(id = "1", name = "Bright Novel", localName = "Bright Novel", site = "https://bright.test/"),
+            InstalledPlugin(id = "2", name = "Asian", localName = "Asian Novel", site = "https://asian.example/"),
+            InstalledPlugin(id = "3", name = "Other", localName = "Other", site = "https://novelfull.com/"),
+        )
+        assertEquals(1, PluginHubUi.filterInstalled(plugins, "bright").size)
+        assertEquals(1, PluginHubUi.filterInstalled(plugins, "asian.example").size)
+        assertEquals(1, PluginHubUi.filterInstalled(plugins, "NovelFull").size)
+        assertEquals(3, PluginHubUi.filterInstalled(plugins, "").size)
+        assertEquals(0, PluginHubUi.filterInstalled(plugins, "zzz").size)
+    }
 }

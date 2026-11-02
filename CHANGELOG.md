@@ -10,7 +10,10 @@ new commits since the last `v2.*` tag, then posts style **D** from `### Added` /
 - Catalog **Seleccionar todos / ninguno** inside the dialog (was a hidden Neutral button)
 - Name-only catalog filter + paging hint
 - Scrollable **Administrar proveedores** (no ~56 setItems cap)
+- Settings group **accent rail** headers · Tutorial under Información
+- Plugin install **Glyph Pulse (本)** + live search in hub/catalog/proveedores
 - E2E catalog suite (`15-plugin-catalog`) · reader tabs via resource-id
+- CI features split (`features` / `features-plugins` / `features-flows`) + AVD cache
 - Release → Telegram requires green **CI Android** (e2e) on main
 
 ### Fixed
@@ -18,6 +21,7 @@ new commits since the last `v2.*` tag, then posts style **D** from `### Added` /
 - Duplicate Search provider names in Settings
 - SharedPreferences StringSet copies for custom providers
 - Catalog no longer auto-applies Madara/Blogger CSS (add via URL/JSON)
+- E2E main-chrome recovery after plugin dialogs (nav tabs missing)
 
 ### Notes
 - Package: `com.lagradost.quicknovel.ultimate` · versionCode 201

@@ -49,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           # Telegram APK must not ship if the latest CI Android on main failed
-          # (includes reader / smoke / features / providers e2e).
+          # (includes smoke / features* / reader / providers e2e).
           ROW=$(gh run list --repo "${{ github.repository }}" \
             --workflow "CI Android" --branch main --limit 1 \
             --json conclusion,status,headSha,displayTitle,url \

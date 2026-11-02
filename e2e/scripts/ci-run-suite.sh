@@ -2,7 +2,7 @@
 # Invoked as a single command by android-emulator-runner (it runs each script: line in a fresh shell).
 set -euo pipefail
 
-SUITE="${1:?suite name required (smoke|features|reader|providers)}"
+SUITE="${1:?suite name required (smoke|features|features-plugins|features-flows|reader|providers)}"
 ROOT="${GITHUB_WORKSPACE:-$(cd "$(dirname "$0")/../.." && pwd)}"
 E2E_DIR="$ROOT/e2e"
 APK="$E2E_DIR/apps/QuickNovel-Ultimate.apk"
