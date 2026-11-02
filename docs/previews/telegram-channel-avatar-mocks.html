@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultimate Soft — avatar volcán</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #07080c;
+      --text: #eef2f8;
+      --muted: #8e97a8;
+      --line: rgba(120, 160, 255, 0.14);
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(720px 400px at 12% -8%, rgba(255, 90, 30, 0.16), transparent 55%),
+        radial-gradient(560px 340px at 88% 0%, rgba(26, 108, 255, 0.12), transparent 50%),
+        var(--page);
+      padding: 32px 22px 80px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(2rem, 4vw, 2.7rem);
+      font-weight: 400;
+      margin: 0 0 8px;
+    }
+    .lead { color: var(--muted); max-width: 46rem; line-height: 1.5; margin: 0 0 10px; }
+    .note {
+      max-width: 46rem; margin: 0 0 28px; padding: 12px 14px; border-radius: 12px;
+      border: 1px solid rgba(255, 140, 60, 0.28); background: rgba(255, 80, 20, 0.07);
+      color: #ffd2a8; font-size: 0.92rem; line-height: 1.45;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(16, 18, 28, 0.96), rgba(8, 10, 16, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px 16px 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+    .head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+    .tag {
+      font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.04em;
+      padding: 3px 8px; border-radius: 999px;
+      background: rgba(26, 108, 255, 0.16); color: #9ec5ff;
+      border: 1px solid rgba(77, 163, 255, 0.35);
+    }
+    .title { font-size: 1.05rem; font-weight: 600; margin: 0; }
+    .desc { color: var(--muted); font-size: 0.86rem; line-height: 1.4; margin: 0 0 16px; min-height: 2.5em; }
+    .stage {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 18px 12px 14px; border-radius: 16px;
+      background: #05060a; border: 1px solid rgba(140, 180, 255, 0.08);
+    }
+    .sizes { display: flex; align-items: flex-end; justify-content: center; gap: 16px; width: 100%; }
+    .size-wrap { text-align: center; }
+    .size-label { display: block; margin-top: 6px; font-family: var(--mono); font-size: 0.62rem; color: var(--muted); }
+    .tg-row {
+      display: flex; align-items: center; gap: 12px; width: 100%; max-width: 260px;
+      padding: 10px 12px; border-radius: 14px; background: #0e121c;
+    }
+    .tg-name { font-size: 0.92rem; font-weight: 600; }
+    .tg-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .avatar {
+      width: 128px; height: 128px; border-radius: 50%; position: relative;
+      overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 12px 28px rgba(0,0,0,0.45);
+    }
+    .avatar.sm { width: 48px; height: 48px; box-shadow: 0 0 0 1px rgba(255,255,255,0.08); }
+    .avatar.md { width: 80px; height: 80px; }
+    .avatar svg { width: 100%; height: 100%; display: block; }
+
+    @keyframes plume {
+      0%, 100% { transform: translateY(0) scaleY(1); opacity: 1; }
+      50% { transform: translateY(-2%) scaleY(1.04); opacity: 0.92; }
+    }
+    .plume { animation: plume 2.2s ease-in-out infinite; transform-origin: 50% 100%; }
+  </style>
+</head>
+<body>
+  <h1>Ultimate Soft — volcán</h1>
+  <p class="lead">Avatar del canal: volcán erupcionando. Seis looks; elige letra y exportamos PNG 512×512.</p>
+  <p class="note">A Night Summit · B Magma Peak · C Soft Dawn · D Flat Icon · E Blue Ember (Ultimate) · F Island Cone</p>
+
+  <div class="grid">
+    <article class="card">
+      <div class="head"><span class="tag">A</span><h2 class="title">Night Summit</h2></div>
+      <p class="desc">Cielo nocturno, silueta nítida, lava y humo. Clásico y limpio.</p>
+      <div class="stage">
+        <div class="sizes">
+          <div class="size-wrap"><div class="avatar" data-v="a"></div><span class="size-label">128</span></div>
+          <div class="size-wrap"><div class="avatar md" data-v="a"></div><span class="size-label">80</span></div>
+          <div class="size-wrap"><div class="avatar sm" data-v="a"></div><span class="size-label">48</span></div>
+        </div>
+        <div class="tg-row">
+          <div class="avatar sm" data-v="a"></div>
+          <div><div class="tg-name">Ultimate Soft</div><div class="tg-sub">canal privado</div></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="tag">B</span><h2 class="title">Magma Peak</h2></div>
+      <p class="desc">Erupción grande, cielo rojo. El más dramático.</p>
+      <div class="stage">
+        <div class="sizes">
+          <div class="size-wrap"><div class="avatar" data-v="b"></div><span class="size-label">128</span></div>
+          <div class="size-wrap"><div class="avatar md" data-v="b"></div><span class="size-label">80</span></div>
+          <div class="size-wrap"><div class="avatar sm" data-v="b"></div><span class="size-label">48</span></div>
+        </div>
+        <div class="tg-row">
+          <div class="avatar sm" data-v="b"></div>
+          <div><div class="tg-name">Ultimate Soft</div><div class="tg-sub">canal privado</div></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="tag">C</span><h2 class="title">Soft Dawn</h2></div>
+      <p class="desc">Amanecer suave + cono. Encaja con el nombre Soft.</p>
+      <div class="stage">
+        <div class="sizes">
+          <div class="size-wrap"><div class="avatar" data-v="c"></div><span class="size-label">128</span></div>
+          <div class="size-wrap"><div class="avatar md" data-v="c"></div><span class="size-label">80</span></div>
+          <div class="size-wrap"><div class="avatar sm" data-v="c"></div><span class="size-label">48</span></div>
+        </div>
+        <div class="tg-row">
+          <div class="avatar sm" data-v="c"></div>
+          <div><div class="tg-name">Ultimate Soft</div><div class="tg-sub">canal privado</div></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="tag">D</span><h2 class="title">Flat Icon</h2></div>
+      <p class="desc">Estilo app icon: formas simples, alto contraste a 48px.</p>
+      <div class="stage">
+        <div class="sizes">
+          <div class="size-wrap"><div class="avatar" data-v="d"></div><span class="size-label">128</span></div>
+          <div class="size-wrap"><div class="avatar md" data-v="d"></div><span class="size-label">80</span></div>
+          <div class="size-wrap"><div class="avatar sm" data-v="d"></div><span class="size-label">48</span></div>
+        </div>
+        <div class="tg-row">
+          <div class="avatar sm" data-v="d"></div>
+          <div><div class="tg-name">Ultimate Soft</div><div class="tg-sub">canal privado</div></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="tag">E</span><h2 class="title">Blue Ember</h2></div>
+      <p class="desc">Fondo Ultimate Blue + lava. Marca QuickNovel + volcán.</p>
+      <div class="stage">
+        <div class="sizes">
+          <div class="size-wrap"><div class="avatar" data-v="e"></div><span class="size-label">128</span></div>
+          <div class="size-wrap"><div class="avatar md" data-v="e"></div><span class="size-label">80</span></div>
+          <div class="size-wrap"><div class="avatar sm" data-v="e"></div><span class="size-label">48</span></div>
+        </div>
+        <div class="tg-row">
+          <div class="avatar sm" data-v="e"></div>
+          <div><div class="tg-name">Ultimate Soft</div><div class="tg-sub">canal privado</div></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="tag">F</span><h2 class="title">Island Cone</h2></div>
+      <p class="desc">Volcán isla, agua y cielo. Más “poster”, menos agresivo.</p>
+      <div class="stage">
+        <div class="sizes">
+          <div class="size-wrap"><div class="avatar" data-v="f"></div><span class="size-label">128</span></div>
+          <div class="size-wrap"><div class="avatar md" data-v="f"></div><span class="size-label">80</span></div>
+          <div class="size-wrap"><div class="avatar sm" data-v="f"></div><span class="size-label">48</span></div>
+        </div>
+        <div class="tg-row">
+          <div class="avatar sm" data-v="f"></div>
+          <div><div class="tg-name">Ultimate Soft</div><div class="tg-sub">canal privado</div></div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <template id="svg-a">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="skyA" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0b1220"/>
+          <stop offset="100%" stop-color="#1a1020"/>
+        </linearGradient>
+        <linearGradient id="mtA" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4a5568"/>
+          <stop offset="100%" stop-color="#1e2430"/>
+        </linearGradient>
+        <linearGradient id="lavaA" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stop-color="#fff0a0"/>
+          <stop offset="40%" stop-color="#ff8a1a"/>
+          <stop offset="100%" stop-color="#ff2a00"/>
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="64" fill="url(#skyA)"/>
+      <circle cx="96" cy="28" r="3" fill="#c8d4ff" opacity="0.7"/>
+      <circle cx="30" cy="36" r="1.5" fill="#c8d4ff" opacity="0.5"/>
+      <circle cx="78" cy="22" r="1.2" fill="#fff" opacity="0.45"/>
+      <g class="plume">
+        <ellipse cx="64" cy="34" rx="18" ry="14" fill="#6a7080" opacity="0.55"/>
+        <ellipse cx="58" cy="26" rx="12" ry="10" fill="#8a90a0" opacity="0.45"/>
+        <ellipse cx="72" cy="24" rx="10" ry="9" fill="#9aa0b0" opacity="0.4"/>
+        <path fill="url(#lavaA)" d="M58 48 L64 18 L70 48 Z"/>
+      </g>
+      <path fill="url(#mtA)" d="M8 110 L40 58 L52 72 L64 42 L78 70 L88 56 L120 110 Z"/>
+      <path fill="#2a3344" d="M40 58 L52 72 L64 42 L52 78 Z" opacity="0.35"/>
+      <path fill="url(#lavaA)" d="M60 48 L64 42 L68 48 L66 90 L62 90 Z"/>
+      <path fill="#ff6a20" opacity="0.85" d="M50 100 Q64 86 78 100 L74 110 L54 110 Z"/>
+      <ellipse cx="64" cy="112" rx="48" ry="8" fill="#0a0c12" opacity="0.5"/>
+    </svg>
+  </template>
+
+  <template id="svg-b">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="skyB" cx="50%" cy="30%" r="80%">
+          <stop offset="0%" stop-color="#6a1810"/>
+          <stop offset="55%" stop-color="#2a0a08"/>
+          <stop offset="100%" stop-color="#0a0404"/>
+        </radialGradient>
+        <linearGradient id="mtB" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3a3030"/>
+          <stop offset="100%" stop-color="#141018"/>
+        </linearGradient>
+        <linearGradient id="blastB" x1="0.5" y1="1" x2="0.5" y2="0">
+          <stop offset="0%" stop-color="#ff2200"/>
+          <stop offset="50%" stop-color="#ff8800"/>
+          <stop offset="100%" stop-color="#ffe080"/>
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="64" fill="url(#skyB)"/>
+      <g class="plume">
+        <path fill="url(#blastB)" d="M48 62 C50 40 56 28 64 10 C72 28 78 40 80 62 C92 58 100 70 96 86 C84 78 72 82 64 78 C56 82 44 78 32 86 C28 70 36 58 48 62 Z"/>
+        <circle cx="52" cy="48" r="5" fill="#ffcc44"/>
+        <circle cx="74" cy="42" r="4" fill="#ffaa22"/>
+        <circle cx="64" cy="30" r="3.5" fill="#fff0a0"/>
+      </g>
+      <path fill="url(#mtB)" d="M6 118 L38 70 L50 84 L64 50 L76 82 L90 66 L122 118 Z"/>
+      <path fill="#ff4400" d="M58 58 L64 50 L70 58 L68 100 L60 100 Z"/>
+      <path fill="#ff8800" d="M44 108 Q64 92 84 108 L80 118 L48 118 Z"/>
+    </svg>
+  </template>
+
+  <template id="svg-c">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="skyC" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f0c8a8"/>
+          <stop offset="45%" stop-color="#c8a0c8"/>
+          <stop offset="100%" stop-color="#6878a8"/>
+        </linearGradient>
+        <linearGradient id="mtC" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7a6a68"/>
+          <stop offset="100%" stop-color="#3a3438"/>
+        </linearGradient>
+        <linearGradient id="lavaC" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stop-color="#ffe8b0"/>
+          <stop offset="100%" stop-color="#ff6a30"/>
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="64" fill="url(#skyC)"/>
+      <circle cx="92" cy="36" r="14" fill="#ffe0c0" opacity="0.85"/>
+      <g class="plume">
+        <ellipse cx="64" cy="38" rx="16" ry="12" fill="#e8e0e8" opacity="0.7"/>
+        <ellipse cx="56" cy="30" rx="10" ry="8" fill="#f4f0f4" opacity="0.65"/>
+        <path fill="url(#lavaC)" d="M60 52 L64 28 L68 52 Z" opacity="0.9"/>
+      </g>
+      <path fill="url(#mtC)" d="M10 112 L42 62 L54 74 L64 48 L76 72 L86 60 L118 112 Z"/>
+      <path fill="url(#lavaC)" d="M60 52 L64 48 L68 52 L66 88 L62 88 Z"/>
+      <path fill="#5a8a68" opacity="0.55" d="M20 112 L36 88 L48 112 Z"/>
+      <path fill="#5a8a68" opacity="0.45" d="M90 112 L100 92 L112 112 Z"/>
+    </svg>
+  </template>
+
+  <template id="svg-d">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="64" cy="64" r="64" fill="#12151c"/>
+      <g class="plume">
+        <path fill="#ff5a1a" d="M50 58 L64 22 L78 58 Z"/>
+        <path fill="#ffcc33" d="M56 58 L64 34 L72 58 Z"/>
+        <circle cx="48" cy="40" r="6" fill="#ff7a30"/>
+        <circle cx="80" cy="36" r="5" fill="#ff9a40"/>
+        <circle cx="64" cy="28" r="4" fill="#ffe080"/>
+      </g>
+      <path fill="#3a4558" d="M16 108 L46 64 L58 76 L64 52 L72 74 L84 62 L112 108 Z"/>
+      <path fill="#ff4a10" d="M58 58 L64 52 L70 58 L68 96 L60 96 Z"/>
+      <path fill="#ff8a20" d="M40 104 Q64 88 88 104 Z"/>
+    </svg>
+  </template>
+
+  <template id="svg-e">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="skyE" cx="45%" cy="35%" r="75%">
+          <stop offset="0%" stop-color="#1a4fd6"/>
+          <stop offset="55%" stop-color="#0c1e4a"/>
+          <stop offset="100%" stop-color="#060b18"/>
+        </radialGradient>
+        <linearGradient id="mtE" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5a6478"/>
+          <stop offset="100%" stop-color="#1c2438"/>
+        </linearGradient>
+        <linearGradient id="lavaE" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stop-color="#ffe566"/>
+          <stop offset="50%" stop-color="#ff8a1a"/>
+          <stop offset="100%" stop-color="#ff3b00"/>
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="64" fill="url(#skyE)"/>
+      <g class="plume">
+        <ellipse cx="64" cy="32" rx="20" ry="14" fill="#4a6088" opacity="0.5"/>
+        <ellipse cx="58" cy="24" rx="12" ry="9" fill="#6a80a8" opacity="0.4"/>
+        <path fill="url(#lavaE)" d="M58 50 L64 16 L70 50 Z"/>
+      </g>
+      <path fill="url(#mtE)" d="M8 112 L40 60 L52 72 L64 44 L78 70 L90 58 L120 112 Z"/>
+      <path fill="url(#lavaE)" d="M60 50 L64 44 L68 50 L66 92 L62 92 Z"/>
+      <path fill="#ff6a20" opacity="0.9" d="M48 102 Q64 88 80 102 L76 112 L52 112 Z"/>
+      <circle cx="64" cy="64" r="61" fill="none" stroke="#4da3ff" stroke-width="1.5" opacity="0.25"/>
+    </svg>
+  </template>
+
+  <template id="svg-f">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="skyF" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6ab0e8"/>
+          <stop offset="55%" stop-color="#b8d8f0"/>
+          <stop offset="100%" stop-color="#2a6a9a"/>
+        </linearGradient>
+        <linearGradient id="mtF" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6a5a52"/>
+          <stop offset="100%" stop-color="#2e2824"/>
+        </linearGradient>
+        <linearGradient id="waterF" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2a7ab8"/>
+          <stop offset="100%" stop-color="#0e3a5a"/>
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="64" fill="url(#skyF)"/>
+      <circle cx="98" cy="30" r="12" fill="#fff0c8"/>
+      <g class="plume">
+        <ellipse cx="64" cy="40" rx="14" ry="11" fill="#e8eef4" opacity="0.75"/>
+        <ellipse cx="58" cy="32" rx="9" ry="7" fill="#fff" opacity="0.65"/>
+        <path fill="#ff8a30" d="M60 54 L64 34 L68 54 Z"/>
+      </g>
+      <path fill="url(#mtF)" d="M28 96 L48 64 L56 72 L64 52 L74 70 L82 62 L100 96 Z"/>
+      <path fill="#ff6a18" d="M60 56 L64 52 L68 56 L66 78 L62 78 Z"/>
+      <path fill="url(#waterF)" d="M0 96 Q32 88 64 96 Q96 104 128 96 L128 128 L0 128 Z"/>
+      <path fill="#3a9a58" opacity="0.7" d="M34 96 L42 84 L50 96 Z"/>
+      <path fill="#3a9a58" opacity="0.55" d="M86 96 L92 86 L100 96 Z"/>
+    </svg>
+  </template>
+
+  <script>
+    document.querySelectorAll(".avatar[data-v]").forEach((el) => {
+      const tpl = document.getElementById("svg-" + el.getAttribute("data-v"));
+      if (!tpl) return;
+      el.innerHTML = "";
+      el.appendChild(tpl.content.cloneNode(true));
+    });
+  </script>
+</body>
+</html>

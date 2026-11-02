@@ -1,21 +1,22 @@
 # Changelog
 
 All notable changes to **QuickNovel Ultimate** are listed here.
-The Telegram release bot reads the section matching `versionName` from `app/build.gradle`.
+The Telegram release bot (style **D**) reads `### Added` / `### Fixed` under the section
+matching `versionName` from `app/build.gradle`.
 
 ## 2.0.0
 
 ### Added
-- LNReader plugin hub: language cards with **Continuar**, Arabic shown as “Arabic”
-- Catalog paging **in-place** (next/prev without closing) + empty **Ir a página** field
-- Sections → **Traducciones** with Material Translate icon
-- Search: new providers show real icon / favicon / initials + **NEW** pill (corner)
-- CI: Release → Telegram (APK + release notes)
+- Plugin language picker (Continuar)
+- In-place catalog paging
+- NEW pill on new Search providers
+- Sections Traducciones (Translate icon)
+- CI Release → Telegram
 
 ### Fixed
-- Catalog “go to page” no longer jumps to page 13 when typing `3`
-- Translation history no longer uses the misleading globe icon
-- New providers no longer use the full-tile `fiber_new` glyph as a fake logo
+- Go-to-page typo jump
+- Translation history icon
+- Fake NEW cover glyph
 
 ### Notes
 - Defaults: dark mode + Ultimate Blue · English providers ON

@@ -54,75 +54,99 @@ jobs:
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
           echo "Version $NAME ($CODE)"
 
-      - name: Build changelog
+      - name: Build changelog (style D)
         id: notes
         env:
           VER_NAME: ${{ steps.ver.outputs.name }}
           NOTE: ${{ github.event.inputs.note || '' }}
+          APP_NAME: QuickNovel Ultimate
         run: |
           set -euo pipefail
+          # e.g. Nov 2, 2026
+          RELEASE_DATE=$(date -u +"%b %-d, %Y" 2>/dev/null || date -u +"%b %d, %Y" | sed 's/ 0/ /')
+          export RELEASE_DATE
           python3 <<'PY'
           import os, re, subprocess, pathlib
 
           ver = os.environ["VER_NAME"].strip()
           note = os.environ.get("NOTE", "").strip()
+          app = os.environ.get("APP_NAME", "QuickNovel Ultimate").strip()
+          release_date = os.environ["RELEASE_DATE"].strip()
           out = pathlib.Path("dist")
           out.mkdir(parents=True, exist_ok=True)
 
-          def section_from_changelog(text: str, version: str) -> str:
-              # ## 2.0.0 ... until next ## 
+          def version_body(text: str, version: str) -> str:
               pat = re.compile(
                   rf"^##\s+{re.escape(version)}\s*\n(.*?)(?=^##\s+|\Z)",
                   re.M | re.S,
               )
               m = pat.search(text)
-              if not m:
-                  return ""
-              body = m.group(1).strip()
-              # Keep it readable for Telegram (drop empty lines excess)
-              lines = [ln.rstrip() for ln in body.splitlines()]
-              while lines and not lines[0].strip():
-                  lines.pop(0)
-              while lines and not lines[-1].strip():
-                  lines.pop()
-              return "\n".join(lines).strip()
+              return m.group(1).strip() if m else ""
 
-          changelog = ""
+          def bullets_under(body: str, heading: str) -> list[str]:
+              # ### Added / ### Fixed blocks → bullet lines
+              pat = re.compile(
+                  rf"^###\s+{re.escape(heading)}\s*\n(.*?)(?=^###\s+|\Z)",
+                  re.M | re.S,
+              )
+              m = pat.search(body)
+              if not m:
+                  return []
+              items = []
+              for ln in m.group(1).splitlines():
+                  s = ln.strip()
+                  if s.startswith("- "):
+                      items.append("• " + s[2:].strip())
+                  elif s.startswith("* "):
+                      items.append("• " + s[2:].strip())
+              return items
+
+          added, fixed = [], []
           path = pathlib.Path("CHANGELOG.md")
           if path.is_file():
-              changelog = section_from_changelog(path.read_text(encoding="utf-8"), ver)
+              body = version_body(path.read_text(encoding="utf-8"), ver)
+              if body:
+                  added = bullets_under(body, "Added")
+                  fixed = bullets_under(body, "Fixed")
 
-          if not changelog:
-              # Fallback: commits since previous version tag (vX.Y.Z) or last 12 commits
-              prev = ""
+          if not added and not fixed:
+              # Fallback: classify recent commits
               try:
                   tags = subprocess.check_output(
                       ["git", "tag", "-l", "v*", "--sort=-v:refname"],
                       text=True,
                   ).splitlines()
-                  # Skip current tag if we are on it
-                  current_refs = {f"v{ver}", ver}
-                  tags = [t for t in tags if t not in current_refs]
+                  tags = [t for t in tags if t not in {f"v{ver}", ver}]
                   prev = tags[0] if tags else ""
               except Exception:
                   prev = ""
-              if prev:
-                  log = subprocess.check_output(
-                      ["git", "log", f"{prev}..HEAD", "--pretty=format:- %s"],
-                      text=True,
-                  )
-              else:
-                  log = subprocess.check_output(
-                      ["git", "log", "-12", "--pretty=format:- %s"],
-                      text=True,
-                  )
-              # Prefer feat/fix lines; keep order
-              lines = [ln for ln in log.splitlines() if ln.strip()]
-              prefer = [ln for ln in lines if re.search(r"\b(feat|fix|docs|ci)\b", ln, re.I)]
-              pick = prefer[:12] if prefer else lines[:12]
-              changelog = "\n".join(pick) if pick else "- Maintenance release"
+              rng = f"{prev}..HEAD" if prev else "-12"
+              args = ["git", "log", "--pretty=format:%s"]
+              args.extend([rng] if prev else ["-12"])
+              subjects = subprocess.check_output(args, text=True).splitlines()
+              for s in subjects:
+                  s = s.strip()
+                  if not s:
+                      continue
+                  line = "• " + re.sub(r"^(feat|fix|docs|ci|chore):\s*", "", s, flags=re.I)
+                  if re.match(r"fix\b", s, re.I):
+                      fixed.append(line)
+                  else:
+                      added.append(line)
+              added, fixed = added[:6], fixed[:6]
+              if not added and not fixed:
+                  added = ["• Maintenance release"]
 
-          parts = ["What's new", "", changelog]
+          # Style D caption (see docs/previews/telegram-release-message-preview.html)
+          parts = [
+              f"Hey, here's a new version of {app}.",
+              "",
+              f"📦 Version {ver} · {release_date}",
+          ]
+          if added:
+              parts.extend(["", "✨ Added", *added])
+          if fixed:
+              parts.extend(["", "🛠 Fixed", *fixed])
           if note:
               parts.extend(["", note])
           text = "\n".join(parts).strip() + "\n"
@@ -205,28 +229,14 @@ jobs:
           test -f "$APK"
           test -f dist/changelog.txt
 
-          # UTC release date, e.g. November 2, 2026
-          export RELEASE_DATE
-          RELEASE_DATE=$(date -u +"%B %-d, %Y" 2>/dev/null || date -u +"%B %d, %Y" | sed 's/ 0/ /')
-
           python3 <<'PY'
           import json, os, subprocess, sys, urllib.parse, urllib.request
 
           token = os.environ["TELEGRAM_BOT_TOKEN"]
           chat_id = os.environ["TELEGRAM_CHAT_ID"]
           apk = os.environ["APK"]
-          app = os.environ["APP_NAME"]
-          ver = os.environ["VER_NAME"]
-          release_date = os.environ["RELEASE_DATE"]
-          changelog = open("dist/changelog.txt", encoding="utf-8").read().strip()
-
-          header = (
-              f"Hey, here's a new version of {app}.\n\n"
-              f"Version: {ver}\n"
-              f"Release date: {release_date}"
-          )
-          # Prefer one caption with changelog; Telegram document caption max = 1024.
-          combined = header + "\n\n" + changelog
+          # Style D full caption already built in dist/changelog.txt
+          full = open("dist/changelog.txt", encoding="utf-8").read().strip()
           CAPTION_MAX = 1024
           MSG_MAX = 4096
 
@@ -237,12 +247,15 @@ jobs:
                   sys.exit(1)
               return data
 
-          if len(combined) <= CAPTION_MAX:
-              caption = combined
+          if len(full) <= CAPTION_MAX:
+              caption = full
               follow_up = None
           else:
+              # Keep Style D header lines; put the rest in a follow-up.
+              lines = full.splitlines()
+              header = "\n".join(lines[:4]).strip()  # hey + blank + 📦 Version …
               caption = header + "\n\n(See next message for What's new.)"
-              follow_up = changelog if len(changelog) <= MSG_MAX else changelog[: MSG_MAX - 20] + "\n…"
+              follow_up = full if len(full) <= MSG_MAX else full[: MSG_MAX - 20] + "\n…"
 
           cmd = [
               "curl", "-sS", "-X", "POST",

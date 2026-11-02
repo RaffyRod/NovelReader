@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Telegram release — message mocks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080b12;
+      --tg-bg: #0e1621;
+      --tg-header: #17212b;
+      --tg-bubble: #182533;
+      --tg-meta: #6d7f8f;
+      --text: #e8eef6;
+      --muted: #8b97ab;
+      --line: rgba(140, 180, 255, 0.14);
+      --blue: #1a6cff;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(800px 420px at 8% -10%, rgba(26, 108, 255, 0.18), transparent 55%),
+        var(--bg);
+      padding: 28px 18px 72px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-weight: 400;
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+      margin: 0 0 8px;
+    }
+    .lead { color: var(--muted); max-width: 48rem; line-height: 1.5; margin: 0 0 10px; }
+    .note {
+      max-width: 48rem; margin: 0 0 26px; padding: 11px 13px; border-radius: 12px;
+      border: 1px solid rgba(126, 182, 255, 0.28); background: rgba(26, 108, 255, 0.08);
+      color: #c5dcff; font-size: 0.9rem; line-height: 1.4;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(14, 20, 32, 0.95), rgba(8, 12, 20, 0.98));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px 14px 16px;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.35);
+    }
+    .head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+    .tag {
+      font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em;
+      padding: 3px 8px; border-radius: 999px;
+      background: rgba(26, 108, 255, 0.18); color: #9ec5ff;
+      border: 1px solid rgba(77, 163, 255, 0.35);
+    }
+    .title { margin: 0; font-size: 1rem; font-weight: 650; }
+    .desc { color: var(--muted); font-size: 0.84rem; line-height: 1.4; margin: 0 0 12px; min-height: 2.6em; }
+    .phone {
+      background: var(--tg-bg);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.07);
+      overflow: hidden;
+    }
+    .phone-top {
+      padding: 12px 14px;
+      background: var(--tg-header);
+      display: flex; gap: 10px; align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: radial-gradient(circle at 40% 30%, #ff8a1a, #5a1208 72%);
+    }
+    .ch-name { font-weight: 650; font-size: 0.9rem; }
+    .ch-sub { color: var(--tg-meta); font-size: 0.7rem; margin-top: 2px; }
+    .feed { padding: 12px 10px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .bubble {
+      background: var(--tg-bubble);
+      border-radius: 14px 14px 14px 4px;
+      padding: 10px 11px 7px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+    }
+    .file {
+      display: flex; gap: 10px; align-items: center;
+      background: rgba(0,0,0,0.22);
+      border-radius: 11px;
+      padding: 9px;
+      margin-bottom: 9px;
+    }
+    .file-ico {
+      width: 38px; height: 38px; border-radius: 9px;
+      background: #2b5278;
+      display: grid; place-items: center;
+      font-size: 0.65rem; font-weight: 700; color: #d7ebff;
+      font-family: var(--mono);
+    }
+    .file-name { font-size: 0.8rem; font-weight: 600; word-break: break-all; }
+    .file-meta { font-size: 0.68rem; color: var(--tg-meta); margin-top: 2px; }
+    .caption {
+      white-space: pre-wrap;
+      font-size: 0.84rem;
+      line-height: 1.42;
+      color: var(--text);
+    }
+    .caption .h { font-weight: 650; }
+    .caption .muted { color: #9aa8b8; }
+    .caption .bullet { color: #c5d4e4; }
+    .time { text-align: right; color: var(--tg-meta); font-size: 0.66rem; margin-top: 6px; }
+    .pick {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .pick strong { color: #9ec5ff; }
+  </style>
+</head>
+<body>
+  <h1>Telegram — cómo se vería el release</h1>
+  <p class="lead">
+    Seis estilos de caption para el APK en el canal <strong>Ultimate Soft</strong>.
+    El bot puede usar cualquiera; elige letra.
+  </p>
+  <p class="note">
+    Fuente de cambios: <code>CHANGELOG.md</code> → sección <code>## 2.0.0</code>.
+    Si el texto pasa 1024 chars, el bot parte en 2 mensajes (ver opción F).
+  </p>
+
+  <div class="grid">
+    <!-- A -->
+    <article class="card">
+      <div class="head"><span class="tag">A</span><h2 class="title">Actual + changelog</h2></div>
+      <p class="desc">Header en inglés + What’s new completo (Added / Fixed / Notes). El más informativo.</p>
+      <div class="phone">
+        <div class="phone-top">
+          <div class="avatar"></div>
+          <div><div class="ch-name">Ultimate Soft</div><div class="ch-sub">canal privado</div></div>
+        </div>
+        <div class="feed">
+          <div class="bubble">
+            <div class="file">
+              <div class="file-ico">APK</div>
+              <div>
+                <div class="file-name">QuickNovel-Ultimate-2.0.0-universal.apk</div>
+                <div class="file-meta">~41 MB · Android</div>
+              </div>
+            </div>
+            <div class="caption"><span class="h">Hey, here's a new version of QuickNovel Ultimate.</span>
+
+Version: 2.0.0
+Release date: November 2, 2026
+
+<span class="h">What's new</span>
+
+<span class="muted">### Added</span>
+<span class="bullet">•</span> Plugin hub: language cards + Continuar
+<span class="bullet">•</span> Catalog paging in-place + Ir a página
+<span class="bullet">•</span> Sections → Traducciones (Translate icon)
+<span class="bullet">•</span> Search NEW pill + real icons
+<span class="bullet">•</span> CI → Telegram releases
+
+<span class="muted">### Fixed</span>
+<span class="bullet">•</span> Go-to-page “3” → no more jump to 13
+<span class="bullet">•</span> Globe icon → Translate
+<span class="bullet">•</span> No more fiber_new as fake logo</div>
+            <div class="time">12:40</div>
+          </div>
+        </div>
+      </div>
+      <p class="pick"><strong>Recomendado</strong> si quieres detalle en un solo bubble.</p>
+    </article>
+
+    <!-- B -->
+    <article class="card">
+      <div class="head"><span class="tag">B</span><h2 class="title">Corto + bullets</h2></div>
+      <p class="desc">Mismo tono, changelog condensado a 6 bullets. Más fácil de leer en el móvil.</p>
+      <div class="phone">
+        <div class="phone-top">
+          <div class="avatar"></div>
+          <div><div class="ch-name">Ultimate Soft</div><div class="ch-sub">canal privado</div></div>
+        </div>
+        <div class="feed">
+          <div class="bubble">
+            <div class="file">
+              <div class="file-ico">APK</div>
+              <div>
+                <div class="file-name">QuickNovel-Ultimate-2.0.0-universal.apk</div>
+                <div class="file-meta">~41 MB · Android</div>
+              </div>
+            </div>
+            <div class="caption"><span class="h">Hey, here's a new version of QuickNovel Ultimate.</span>
+
+Version: <span class="h">2.0.0</span>
+Release date: November 2, 2026
+
+<span class="h">What's new</span>
+<span class="bullet">•</span> Plugins: Continuar + Arabic label
+<span class="bullet">•</span> Catalog pages without closing
+<span class="bullet">•</span> Translation history icon fixed
+<span class="bullet">•</span> NEW badge on new providers
+<span class="bullet">•</span> Go-to-page typing fix
+<span class="bullet">•</span> Telegram release channel</div>
+            <div class="time">12:40</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- C -->
+    <article class="card">
+      <div class="head"><span class="tag">C</span><h2 class="title">Español</h2></div>
+      <p class="desc">Mismo contenido en español (canal ES). Header + cambios / fixes.</p>
+      <div class="phone">
+        <div class="phone-top">
+          <div class="avatar"></div>
+          <div><div class="ch-name">Ultimate Soft</div><div class="ch-sub">canal privado</div></div>
+        </div>
+        <div class="feed">
+          <div class="bubble">
+            <div class="file">
+              <div class="file-ico">APK</div>
+              <div>
+                <div class="file-name">QuickNovel-Ultimate-2.0.0-universal.apk</div>
+                <div class="file-meta">~41 MB · Android</div>
+              </div>
+            </div>
+            <div class="caption"><span class="h">Hey, aquí va una nueva versión de QuickNovel Ultimate.</span>
+
+Versión: <span class="h">2.0.0</span>
+Fecha: 2 de noviembre de 2026
+
+<span class="h">Novedades</span>
+<span class="bullet">•</span> Hub plugins: Continuar + idiomas
+<span class="bullet">•</span> Catálogo con páginas sin cerrar
+<span class="bullet">•</span> Historial de traducciones (icono Translate)
+<span class="bullet">•</span> Proveedores nuevos: portada + pastilla NEW
+
+<span class="h">Correcciones</span>
+<span class="bullet">•</span> Ir a página ya no salta a la 13
+<span class="bullet">•</span> Sin icono “NEW” falso de portada</div>
+            <div class="time">12:40</div>
+          </div>
+        </div>
+      </div>
+      <p class="pick">Útil si el canal es mayormente en español.</p>
+    </article>
+
+    <!-- D -->
+    <article class="card">
+      <div class="head"><span class="tag">D · ELEGIDO</span><h2 class="title">Added / Fixed blocks</h2></div>
+      <p class="desc">Estilo del bot (activo). Release notes con ✨ Added / 🛠 Fixed.</p>
+      <div class="phone">
+        <div class="phone-top">
+          <div class="avatar"></div>
+          <div><div class="ch-name">Ultimate Soft</div><div class="ch-sub">canal privado</div></div>
+        </div>
+        <div class="feed">
+          <div class="bubble">
+            <div class="file">
+              <div class="file-ico">APK</div>
+              <div>
+                <div class="file-name">QuickNovel-Ultimate-2.0.0-universal.apk</div>
+                <div class="file-meta">~41 MB · Android</div>
+              </div>
+            </div>
+            <div class="caption"><span class="h">Hey, here's a new version of QuickNovel Ultimate.</span>
+
+📦 Version <span class="h">2.0.0</span> · Nov 2, 2026
+
+<span class="h">✨ Added</span>
+<span class="bullet">•</span> Plugin language picker (Continuar)
+<span class="bullet">•</span> In-place catalog paging
+<span class="bullet">•</span> NEW pill on new Search providers
+
+<span class="h">🛠 Fixed</span>
+<span class="bullet">•</span> Go-to-page typo jump
+<span class="bullet">•</span> Translation history icon
+<span class="bullet">•</span> Fake NEW cover glyph</div>
+            <div class="time">12:40</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- E -->
+    <article class="card">
+      <div class="head"><span class="tag">E</span><h2 class="title">Minimal</h2></div>
+      <p class="desc">Solo versión + 3 highlights. El changelog largo vive en CHANGELOG.md / GitHub.</p>
+      <div class="phone">
+        <div class="phone-top">
+          <div class="avatar"></div>
+          <div><div class="ch-name">Ultimate Soft</div><div class="ch-sub">canal privado</div></div>
+        </div>
+        <div class="feed">
+          <div class="bubble">
+            <div class="file">
+              <div class="file-ico">APK</div>
+              <div>
+                <div class="file-name">QuickNovel-Ultimate-2.0.0-universal.apk</div>
+                <div class="file-meta">~41 MB · Android</div>
+              </div>
+            </div>
+            <div class="caption"><span class="h">Hey, here's a new version of QuickNovel Ultimate.</span>
+
+Version: <span class="h">2.0.0</span>
+Release date: November 2, 2026
+
+Highlights:
+<span class="bullet">•</span> Plugins + catalog UX
+<span class="bullet">•</span> NEW provider badges
+<span class="bullet">•</span> Translation history icon</div>
+            <div class="time">12:40</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- F -->
+    <article class="card">
+      <div class="head"><span class="tag">F</span><h2 class="title">2 mensajes (si es largo)</h2></div>
+      <p class="desc">APK con caption corto + mensaje siguiente con el changelog completo.</p>
+      <div class="phone">
+        <div class="phone-top">
+          <div class="avatar"></div>
+          <div><div class="ch-name">Ultimate Soft</div><div class="ch-sub">canal privado</div></div>
+        </div>
+        <div class="feed">
+          <div class="bubble">
+            <div class="file">
+              <div class="file-ico">APK</div>
+              <div>
+                <div class="file-name">QuickNovel-Ultimate-2.0.0-universal.apk</div>
+                <div class="file-meta">~41 MB · Android</div>
+              </div>
+            </div>
+            <div class="caption"><span class="h">Hey, here's a new version of QuickNovel Ultimate.</span>
+
+Version: 2.0.0
+Release date: November 2, 2026
+
+<span class="muted">(See next message for What's new.)</span></div>
+            <div class="time">12:40</div>
+          </div>
+          <div class="bubble">
+            <div class="caption"><span class="h">What's new — 2.0.0</span>
+
+<span class="muted">Added</span>
+<span class="bullet">•</span> Plugin Continuar / Arabic label
+<span class="bullet">•</span> Catalog in-place paging
+<span class="bullet">•</span> Translate icon in Sections
+<span class="bullet">•</span> NEW pill + provider icons
+<span class="bullet">•</span> Telegram release bot
+
+<span class="muted">Fixed</span>
+<span class="bullet">•</span> Go-to-page “3” bug
+<span class="bullet">•</span> Globe → Translate
+<span class="bullet">•</span> fiber_new fake logo</div>
+            <div class="time">12:40</div>
+          </div>
+        </div>
+      </div>
+      <p class="pick">Automático si el caption supera 1024 caracteres.</p>
+    </article>
+  </div>
+</body>
+</html>
