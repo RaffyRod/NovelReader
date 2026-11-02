@@ -117,29 +117,26 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           APK: dist/${{ steps.sign.outputs.apk }}
+          APP_NAME: QuickNovel Ultimate
           VER_NAME: ${{ steps.ver.outputs.name }}
-          VER_CODE: ${{ steps.ver.outputs.code }}
-          SIGNER: ${{ steps.sign.outputs.signer }}
-          REF: ${{ github.ref_name }}
-          SHA: ${{ github.sha }}
           NOTE: ${{ github.event.inputs.note || '' }}
-          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           test -n "${TELEGRAM_BOT_TOKEN:-}"
           test -n "${TELEGRAM_CHAT_ID:-}"
           test -f "$APK"
 
+          # UTC release date, e.g. November 2, 2026
+          RELEASE_DATE=$(date -u +"%B %-d, %Y" 2>/dev/null || date -u +"%B %d, %Y" | sed 's/ 0/ /')
+
           CAPTION=$(printf '%s\n' \
-            "📦 QuickNovel Ultimate ${VER_NAME}" \
-            "versionCode ${VER_CODE}" \
-            "ref: ${REF}" \
-            "sha: ${SHA:0:7}" \
-            "sign: ${SIGNER}" \
-            "repo: https://github.com/${REPO}" \
+            "Hey, here's a new version of ${APP_NAME}." \
+            "" \
+            "Version: ${VER_NAME}" \
+            "Release date: ${RELEASE_DATE}" \
             )
           if [ -n "${NOTE}" ]; then
-            CAPTION="${CAPTION}"$'\n'"${NOTE}"
+            CAPTION="${CAPTION}"$'\n\n'"${NOTE}"
           fi
           # Telegram caption max ~1024 chars
           CAPTION=$(printf '%s' "$CAPTION" | head -c 1000)
