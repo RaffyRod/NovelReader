@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       note:
-        description: 'Optional caption note'
+        description: 'Optional extra note (appended under changelog)'
         required: false
         default: ''
 
@@ -28,6 +28,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Need full history for “since previous tag” fallback changelog.
+          fetch-depth: 0
 
       - uses: actions/setup-java@v4
         with:
@@ -50,6 +53,82 @@ jobs:
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
           echo "Version $NAME ($CODE)"
+
+      - name: Build changelog
+        id: notes
+        env:
+          VER_NAME: ${{ steps.ver.outputs.name }}
+          NOTE: ${{ github.event.inputs.note || '' }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import os, re, subprocess, pathlib
+
+          ver = os.environ["VER_NAME"].strip()
+          note = os.environ.get("NOTE", "").strip()
+          out = pathlib.Path("dist")
+          out.mkdir(parents=True, exist_ok=True)
+
+          def section_from_changelog(text: str, version: str) -> str:
+              # ## 2.0.0 ... until next ## 
+              pat = re.compile(
+                  rf"^##\s+{re.escape(version)}\s*\n(.*?)(?=^##\s+|\Z)",
+                  re.M | re.S,
+              )
+              m = pat.search(text)
+              if not m:
+                  return ""
+              body = m.group(1).strip()
+              # Keep it readable for Telegram (drop empty lines excess)
+              lines = [ln.rstrip() for ln in body.splitlines()]
+              while lines and not lines[0].strip():
+                  lines.pop(0)
+              while lines and not lines[-1].strip():
+                  lines.pop()
+              return "\n".join(lines).strip()
+
+          changelog = ""
+          path = pathlib.Path("CHANGELOG.md")
+          if path.is_file():
+              changelog = section_from_changelog(path.read_text(encoding="utf-8"), ver)
+
+          if not changelog:
+              # Fallback: commits since previous version tag (vX.Y.Z) or last 12 commits
+              prev = ""
+              try:
+                  tags = subprocess.check_output(
+                      ["git", "tag", "-l", "v*", "--sort=-v:refname"],
+                      text=True,
+                  ).splitlines()
+                  # Skip current tag if we are on it
+                  current_refs = {f"v{ver}", ver}
+                  tags = [t for t in tags if t not in current_refs]
+                  prev = tags[0] if tags else ""
+              except Exception:
+                  prev = ""
+              if prev:
+                  log = subprocess.check_output(
+                      ["git", "log", f"{prev}..HEAD", "--pretty=format:- %s"],
+                      text=True,
+                  )
+              else:
+                  log = subprocess.check_output(
+                      ["git", "log", "-12", "--pretty=format:- %s"],
+                      text=True,
+                  )
+              # Prefer feat/fix lines; keep order
+              lines = [ln for ln in log.splitlines() if ln.strip()]
+              prefer = [ln for ln in lines if re.search(r"\b(feat|fix|docs|ci)\b", ln, re.I)]
+              pick = prefer[:12] if prefer else lines[:12]
+              changelog = "\n".join(pick) if pick else "- Maintenance release"
+
+          parts = ["What's new", "", changelog]
+          if note:
+              parts.extend(["", note])
+          text = "\n".join(parts).strip() + "\n"
+          (out / "changelog.txt").write_text(text, encoding="utf-8")
+          print(text)
+          PY
 
       - name: Assemble release
         run: ./gradlew :app:assembleRelease --no-daemon
@@ -119,41 +198,81 @@ jobs:
           APK: dist/${{ steps.sign.outputs.apk }}
           APP_NAME: QuickNovel Ultimate
           VER_NAME: ${{ steps.ver.outputs.name }}
-          NOTE: ${{ github.event.inputs.note || '' }}
         run: |
           set -euo pipefail
           test -n "${TELEGRAM_BOT_TOKEN:-}"
           test -n "${TELEGRAM_CHAT_ID:-}"
           test -f "$APK"
+          test -f dist/changelog.txt
 
           # UTC release date, e.g. November 2, 2026
+          export RELEASE_DATE
           RELEASE_DATE=$(date -u +"%B %-d, %Y" 2>/dev/null || date -u +"%B %d, %Y" | sed 's/ 0/ /')
 
-          CAPTION=$(printf '%s\n' \
-            "Hey, here's a new version of ${APP_NAME}." \
-            "" \
-            "Version: ${VER_NAME}" \
-            "Release date: ${RELEASE_DATE}" \
-            )
-          if [ -n "${NOTE}" ]; then
-            CAPTION="${CAPTION}"$'\n\n'"${NOTE}"
-          fi
-          # Telegram caption max ~1024 chars
-          CAPTION=$(printf '%s' "$CAPTION" | head -c 1000)
+          python3 <<'PY'
+          import json, os, subprocess, sys, urllib.parse, urllib.request
 
-          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
-            -F chat_id="${TELEGRAM_CHAT_ID}" \
-            -F document=@"${APK}" \
-            -F caption="${CAPTION}" \
-            -F disable_notification=false \
-            | tee /tmp/tg-response.json
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          chat_id = os.environ["TELEGRAM_CHAT_ID"]
+          apk = os.environ["APK"]
+          app = os.environ["APP_NAME"]
+          ver = os.environ["VER_NAME"]
+          release_date = os.environ["RELEASE_DATE"]
+          changelog = open("dist/changelog.txt", encoding="utf-8").read().strip()
 
-          # Fail the job if Telegram rejects the upload
-          python3 - <<'PY'
-          import json, sys
-          data = json.load(open("/tmp/tg-response.json", encoding="utf-8"))
-          if not data.get("ok"):
-              print(data, file=sys.stderr)
-              sys.exit(1)
-          print("Telegram ok: message_id=", data.get("result", {}).get("message_id"))
+          header = (
+              f"Hey, here's a new version of {app}.\n\n"
+              f"Version: {ver}\n"
+              f"Release date: {release_date}"
+          )
+          # Prefer one caption with changelog; Telegram document caption max = 1024.
+          combined = header + "\n\n" + changelog
+          CAPTION_MAX = 1024
+          MSG_MAX = 4096
+
+          def api_ok(path: str) -> dict:
+              data = json.load(open(path, encoding="utf-8"))
+              if not data.get("ok"):
+                  print(data, file=sys.stderr)
+                  sys.exit(1)
+              return data
+
+          if len(combined) <= CAPTION_MAX:
+              caption = combined
+              follow_up = None
+          else:
+              caption = header + "\n\n(See next message for What's new.)"
+              follow_up = changelog if len(changelog) <= MSG_MAX else changelog[: MSG_MAX - 20] + "\n…"
+
+          cmd = [
+              "curl", "-sS", "-X", "POST",
+              f"https://api.telegram.org/bot{token}/sendDocument",
+              "-F", f"chat_id={chat_id}",
+              "-F", f"document=@{apk}",
+              "-F", f"caption={caption}",
+              "-F", "disable_notification=false",
+          ]
+          with open("/tmp/tg-doc.json", "w", encoding="utf-8") as f:
+              subprocess.run(cmd, check=True, stdout=f)
+          doc = api_ok("/tmp/tg-doc.json")
+          print("Telegram document ok: message_id=", doc.get("result", {}).get("message_id"))
+
+          if follow_up:
+              payload = urllib.parse.urlencode(
+                  {
+                      "chat_id": chat_id,
+                      "text": follow_up,
+                      "disable_web_page_preview": "true",
+                  }
+              ).encode()
+              req = urllib.request.Request(
+                  f"https://api.telegram.org/bot{token}/sendMessage",
+                  data=payload,
+                  method="POST",
+              )
+              with urllib.request.urlopen(req) as resp:
+                  raw = resp.read().decode()
+              open("/tmp/tg-msg.json", "w", encoding="utf-8").write(raw)
+              msg = api_ok("/tmp/tg-msg.json")
+              print("Telegram changelog ok: message_id=", msg.get("result", {}).get("message_id"))
           PY
