@@ -34,6 +34,7 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write
+      actions: read
 
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +42,30 @@ jobs:
           fetch-depth: 0
           # Push bump commit + tag back to the branch that triggered the run.
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Require green CI Android (e2e) on main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Telegram APK must not ship if the latest CI Android on main failed
+          # (includes reader / smoke / features / providers e2e).
+          ROW=$(gh run list --repo "${{ github.repository }}" \
+            --workflow "CI Android" --branch main --limit 1 \
+            --json conclusion,status,headSha,displayTitle,url \
+            --jq '.[0] // empty')
+          if [ -z "$ROW" ]; then
+            echo "::error::No CI Android runs found on main. Push first and wait for green e2e."
+            exit 1
+          fi
+          echo "$ROW" | tee /tmp/ci-android-latest.json
+          CONCLUSION=$(echo "$ROW" | python3 -c "import json,sys; print(json.load(sys.stdin).get('conclusion') or '')")
+          STATUS=$(echo "$ROW" | python3 -c "import json,sys; print(json.load(sys.stdin).get('status') or '')")
+          if [ "$STATUS" != "completed" ] || [ "$CONCLUSION" != "success" ]; then
+            echo "::error::Latest CI Android on main is status=$STATUS conclusion=$CONCLUSION — fix e2e before releasing."
+            exit 1
+          fi
+          echo "CI Android green — proceeding with release."
 
       - name: Gate — new commits since last Ultimate release
         id: gate

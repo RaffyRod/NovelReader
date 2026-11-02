@@ -21,15 +21,11 @@ object PluginCatalogFilter {
         JS,
     }
 
+    /** Name-only match (UI filter no longer searches site / lang / id). */
     fun matchesQuery(item: PluginManifestItem, query: String): Boolean {
         if (query.isBlank()) return true
         val q = query.trim()
-        return item.name.contains(q, ignoreCase = true) ||
-            item.site.contains(q, ignoreCase = true) ||
-            item.id.contains(q, ignoreCase = true) ||
-            item.lang.contains(q, ignoreCase = true) ||
-            item.displayLang.contains(q, ignoreCase = true) ||
-            PluginHubUi.siteHost(item.site).contains(q, ignoreCase = true)
+        return item.name.contains(q, ignoreCase = true)
     }
 
     fun matchesStatus(

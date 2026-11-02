@@ -3,6 +3,7 @@ package com.lagradost.quicknovel.ui.settings
 import android.app.Activity
 import android.content.DialogInterface
 import android.text.InputType
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
@@ -29,6 +30,7 @@ import com.lagradost.quicknovel.providers.CustomProviderPresets
 import com.lagradost.quicknovel.providers.ProviderTestReport
 import com.lagradost.quicknovel.providers.TestStep
 import com.lagradost.quicknovel.util.CustomProviders
+import com.lagradost.quicknovel.util.UIHelper.colorFromAttribute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,11 +62,90 @@ object CustomProviderDialogs {
         "content" to Field(R.string.cp_content, { it.content }),
     )
 
-    /** Lists the custom providers, with a button to add another one. */
+    /**
+     * Lists **every** custom provider in a scrollable dialog (no AlertDialog.setItems
+     * truncation — that capped the list around ~50–60 on some devices).
+     */
     fun showManager(activity: Activity, onChanged: () -> Unit) {
         val providers = CustomProviders.load()
-        val builder = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+        val density = activity.resources.displayMetrics.density
+        val pad = (14 * density).toInt()
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
+        val gray = activity.colorFromAttribute(R.attr.grayTextColor)
+        val textColor = activity.colorFromAttribute(R.attr.textColor)
+        val holder = object {
+            var dialog: AlertDialog? = null
+        }
+
+        val root = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad / 2, pad, pad / 2)
+        }
+        root.addView(
+            TextView(activity).apply {
+                text = activity.getString(R.string.cp_manage_count, providers.size)
+                setTextColor(primary)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                setPadding(0, 0, 0, pad / 2)
+            },
+        )
+
+        if (providers.isEmpty()) {
+            root.addView(
+                TextView(activity).apply {
+                    text = activity.getString(R.string.cp_manage_empty_hint)
+                    setTextColor(gray)
+                },
+            )
+        } else {
+            val host = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
+            providers.forEach { config ->
+                val row = LinearLayout(activity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(pad / 2, pad / 2, pad / 2, pad / 2)
+                    isClickable = true
+                    isFocusable = true
+                    setOnClickListener {
+                        holder.dialog?.dismiss()
+                        showOptions(activity, config) {
+                            onChanged()
+                            showManager(activity, onChanged)
+                        }
+                    }
+                }
+                row.addView(
+                    TextView(activity).apply {
+                        text = config.name
+                        setTextColor(textColor)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+                        typeface = android.graphics.Typeface.DEFAULT_BOLD
+                    },
+                )
+                row.addView(
+                    TextView(activity).apply {
+                        text = config.baseUrl.ifBlank { config.kind }
+                        setTextColor(gray)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                        maxLines = 1
+                        ellipsize = android.text.TextUtils.TruncateAt.END
+                    },
+                )
+                host.addView(row)
+            }
+            root.addView(
+                ScrollView(activity).apply {
+                    addView(host)
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (480 * density).toInt(),
+                    )
+                },
+            )
+        }
+
+        holder.dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.cp_manage)
+            .setView(root)
             .setPositiveButton(R.string.cp_add) { _, _ ->
                 showSimpleAdd(activity) {
                     onChanged()
@@ -72,14 +153,8 @@ object CustomProviderDialogs {
                 }
             }
             .setNegativeButton(R.string.close, null)
-        if (providers.isEmpty()) {
-            builder.setMessage(R.string.cp_none)
-        } else {
-            builder.setItems(providers.map { it.name }.toTypedArray()) { _, which ->
-                showOptions(activity, providers[which], onChanged)
-            }
-        }
-        builder.show()
+            .create()
+        holder.dialog?.show()
     }
 
     /**

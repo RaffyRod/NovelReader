@@ -2,7 +2,8 @@ const BasePage = require('./base.page');
 
 class LibraryPage extends BasePage {
   get tabLibrary() {
-    return this.byA11y('Biblioteca');
+    const pkg = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+    return this.byId(`${pkg}:id/navigation_download`);
   }
 
   get searchField() {

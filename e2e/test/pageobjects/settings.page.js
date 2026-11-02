@@ -2,7 +2,8 @@ const BasePage = require('./base.page');
 
 class SettingsPage extends BasePage {
   get tabSettings() {
-    return this.byA11y('Ajustes');
+    const pkg = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+    return this.byId(`${pkg}:id/navigation_settings`);
   }
 
   get tutorialGroup() {

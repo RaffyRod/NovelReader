@@ -16,7 +16,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 
 | | |
 |---|---|
-| 🏷️ **Version** | **2.0.0** (`versionCode` 200) |
+| 🏷️ **Version** | **2.0.1** (`versionCode` 201) |
 | 📦 **Package** | `com.lagradost.quicknovel.ultimate` |
 | 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** · English providers **ON** |
 | 📥 **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK · or run **Release → Telegram** (manual) |
@@ -28,7 +28,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | Step | What to do |
 |------|------------|
 | 1️⃣ | Uninstall older Ultimate / stock QuickNovel if present |
-| 2️⃣ | Install `QuickNovel-Ultimate-2.0.0-universal.apk` |
+| 2️⃣ | Install `QuickNovel-Ultimate-2.0.1-universal.apk` |
 | 3️⃣ | If prompted to update to LagradOst 3.x → **Cancel / Skip** |
 | 4️⃣ | Open **QuickNovel Ultimate** (orb + 本) |
 | 5️⃣ | App language defaults to **Español** (change in Settings) |
@@ -55,24 +55,17 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 
 ---
 
-## 🚀 What’s new in 2.0.0
+## 🚀 What’s new in 2.0.1
 
-### Added
+### Added / fixed
 | | |
 |---|---|
-| Plugin language picker | Cards with **Continuar** before opening the catalog |
-| Catalog paging | In-place page changes; empty **Ir a página** no longer jumps away |
-| **NEW** pill | New Search providers keep real icon/favicon + NEW badge (not a fake cover glyph) |
-| Sections · Traducciones | Translate icon on the library rail (not a globe) |
-| Release → Telegram | Manual Actions job: auto-bump next `v2.*` only if there are new commits, then post style **D** |
-
-### Improved / fixed
-| | |
-|---|---|
-| Go-to-page | Typo / bad page no longer dumps you out of the catalog |
-| Translation history | Correct Translate icon in Sections |
-| Defaults | Dark mode, Ultimate Blue, English providers ON out of the box |
-| Package | `com.lagradost.quicknovel.ultimate` · `versionCode` 200 |
+| Catalog select-all | Visible **Seleccionar todos / ninguno** (was a hidden dialog button) |
+| Name-only filter | Catalog search matches **name** only · paging hint for all 300+ sources |
+| Proveedores propios | Scrollable manager — no ~56-item `setItems` cap |
+| Madara / Blog | No auto-CSS from catalog; add via **URL/JSON** as before |
+| CI → Telegram | Release builds/sends APK only after green **CI Android** (e2e) on main |
+| E2E | Bottom tabs by resource-id · catalog suite `15-plugin-catalog` |
 
 Full history → [`CHANGELOG.md`](CHANGELOG.md)
 

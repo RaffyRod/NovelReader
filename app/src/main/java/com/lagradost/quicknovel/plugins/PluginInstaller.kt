@@ -25,17 +25,11 @@ object PluginInstaller {
         localName: String? = null,
         jsSource: String = "",
     ): CustomProviderConfig? {
-        val name = (localName ?: item.name).trim().ifBlank { item.id }
-        val base = CustomProviderPresets.normalizeBaseUrl(item.site)
-            ?: item.site.trim().trimEnd('/')
-        val lang = PluginLangs.codeFor(item.displayLang)
-        return when (PluginTemplateHints.detect(item, jsSource)) {
-            PluginTemplateKind.BLOGGER ->
-                CustomProviderConfig.bloggerTemplate(name, base).copy(lang = lang)
-            PluginTemplateKind.MADARA ->
-                CustomProviderConfig.madaraTemplate(name, base).copy(lang = lang)
-            PluginTemplateKind.UNSUPPORTED_JS -> null
-        }
+        // Catalog install does not auto-apply Madara/Blogger CSS (flooded custom
+        // providers / Search). Map CSS from the hub, or add Madara/Blog via URL/JSON.
+        @Suppress("UNUSED_PARAMETER")
+        val ignored = Triple(item, localName, jsSource)
+        return null
     }
 
     suspend fun downloadJs(context: Context, item: PluginManifestItem): Pair<String, String> {

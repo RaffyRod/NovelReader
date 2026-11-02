@@ -487,7 +487,11 @@
     <string name="plugin_add_to_search_title">Add to Search</string>
     <string name="plugin_meta_not_in_search">not in Search</string>
     <string name="plugin_cards_page">Page %1$d/%2$d · showing %3$d–%4$d of %5$d</string>
-    <string name="plugin_cards_filter_hint">Filter name, site, lang…</string>
+    <string name="plugin_cards_filter_hint">Filter by name…</string>
+    <string name="plugin_select_none">Select none</string>
+    <string name="plugin_cards_page_hint">Use Previous / Next / Go to page to see every source</string>
+    <string name="cp_manage_count">Manage providers (%1$d)</string>
+    <string name="cp_manage_empty_hint">No custom providers yet. Add one with URL/JSON, or map a plugin from the hub.</string>
     <string name="plugin_cards_filter_clear">Clear</string>
     <string name="plugin_cards_filter_all">All</string>
     <string name="plugin_cards_filter_kind_all">Any type</string>

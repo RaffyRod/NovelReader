@@ -4,6 +4,24 @@ All notable changes to **QuickNovel Ultimate** are listed here.
 Manual **Release → Telegram** auto-bumps `versionName` / `versionCode` when there are
 new commits since the last `v2.*` tag, then posts style **D** from `### Added` / `### Fixed`.
 
+## 2.0.1
+
+### Added
+- Catalog **Seleccionar todos / ninguno** inside the dialog (was a hidden Neutral button)
+- Name-only catalog filter + paging hint
+- Scrollable **Administrar proveedores** (no ~56 setItems cap)
+- E2E catalog suite (`15-plugin-catalog`) · reader tabs via resource-id
+- Release → Telegram requires green **CI Android** (e2e) on main
+
+### Fixed
+- Select-all / full catalog paging UX
+- Duplicate Search provider names in Settings
+- SharedPreferences StringSet copies for custom providers
+- Catalog no longer auto-applies Madara/Blogger CSS (add via URL/JSON)
+
+### Notes
+- Package: `com.lagradost.quicknovel.ultimate` · versionCode 201
+
 ## 2.0.0
 
 ### Added

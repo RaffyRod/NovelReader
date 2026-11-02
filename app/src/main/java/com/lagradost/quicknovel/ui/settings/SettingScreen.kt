@@ -235,7 +235,9 @@ object SettingScreen : SearchableSettings {
                         icon = painterResource(R.drawable.extension_24px),
                         title = stringResource(R.string.search_providers),
                         preference = settings.provider.searchProvidersList,
-                        entries = apis.associate { it.name to "${SubtitleHelper.getFlagFromIso(it.lang) ?: "🌐"} ${it.name}" }
+                        // distinctBy avoids duplicated names (built-in + custom clash).
+                        entries = apis.distinctBy { it.name }
+                            .associate { it.name to "${SubtitleHelper.getFlagFromIso(it.lang) ?: "🌐"} ${it.name}" }
                             .toPersistentMap(),
                         subtitleProvider = { v, _ ->
                             stringResource(R.string.active_providers, v.size)

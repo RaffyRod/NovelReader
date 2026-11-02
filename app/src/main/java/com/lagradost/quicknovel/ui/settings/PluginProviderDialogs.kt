@@ -819,20 +819,38 @@ object PluginProviderDialogs {
         statusRow.addView(statusChips)
         header.addView(statusRow)
 
-        val kindRow = HorizontalScrollView(activity).apply {
-            isHorizontalScrollBarEnabled = false
-            setPadding(0, (4 * density).toInt(), 0, gap)
-        }
-        val kindChips = LinearLayout(activity).apply {
+        // Madara/Blogger/JS kind chips removed — Madara/Blog are added via URL/JSON
+        // (Proveedores propios). Keep status chips + name filter only.
+        val selectRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, (4 * density).toInt(), 0, gap / 2)
+            tag = "select_row"
         }
-        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_kind_all), "kind_all"))
-        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_madara), "kind_madara"))
-        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_blogger), "kind_blogger"))
-        kindChips.addView(chipButton(activity.getString(R.string.plugin_cards_filter_js), "kind_js"))
-        kindRow.addView(kindChips)
-        header.addView(kindRow)
+        val selectAllBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_select_all)
+            isAllCaps = false
+            setTextColor(primary)
+            tag = "select_all"
+        }
+        val selectNoneBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_select_none)
+            isAllCaps = false
+            setTextColor(grayText)
+            tag = "select_none"
+        }
+        selectRow.addView(selectAllBtn)
+        selectRow.addView(selectNoneBtn)
+        header.addView(selectRow)
+
+        val pageHint = TextView(activity).apply {
+            text = activity.getString(R.string.plugin_cards_page_hint)
+            setTextColor(grayText)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setPadding(0, 0, 0, gap / 2)
+            tag = "page_hint"
+        }
+        header.addView(pageHint)
         root.addView(header)
 
         val cardsHost = LinearLayout(activity).apply {
@@ -879,7 +897,7 @@ object PluginProviderDialogs {
             items = items,
             query = currentQuery,
             status = currentStatus,
-            kind = currentKind,
+            kind = PluginCatalogFilter.Kind.ALL,
             installedById = installedById,
         )
 
@@ -928,18 +946,13 @@ object PluginProviderDialogs {
             pageLabel.isFocusable = pageCount > 1
 
             val filtersActive = currentQuery.isNotBlank() ||
-                currentStatus != PluginCatalogFilter.Status.ALL ||
-                currentKind != PluginCatalogFilter.Kind.ALL
+                currentStatus != PluginCatalogFilter.Status.ALL
             clearBtn.visibility = if (filtersActive) View.VISIBLE else View.GONE
 
             styleChip(statusChips.findViewWithTag("status_all"), currentStatus == PluginCatalogFilter.Status.ALL)
             styleChip(statusChips.findViewWithTag("status_new"), currentStatus == PluginCatalogFilter.Status.NEW)
             styleChip(statusChips.findViewWithTag("status_updates"), currentStatus == PluginCatalogFilter.Status.UPDATES)
             styleChip(statusChips.findViewWithTag("status_installed"), currentStatus == PluginCatalogFilter.Status.INSTALLED)
-            styleChip(kindChips.findViewWithTag("kind_all"), currentKind == PluginCatalogFilter.Kind.ALL)
-            styleChip(kindChips.findViewWithTag("kind_madara"), currentKind == PluginCatalogFilter.Kind.MADARA)
-            styleChip(kindChips.findViewWithTag("kind_blogger"), currentKind == PluginCatalogFilter.Kind.BLOGGER)
-            styleChip(kindChips.findViewWithTag("kind_js"), currentKind == PluginCatalogFilter.Kind.JS)
 
             cardsHost.removeAllViews()
             checkBoxes.clear()
@@ -995,18 +1008,25 @@ object PluginProviderDialogs {
         }
 
         fun applySelectAll() {
+            installedById = PluginStore.loadInstalled().associateBy { it.id }
             val ids = PluginSelectAll.selectableIds(filteredList(), installedById)
             selected.clear()
             selected.addAll(ids)
-            checkBoxes.forEach { (id, box) ->
-                if (!box.isEnabled) return@forEach
-                box.isChecked = id in ids
-            }
+            // Re-render so every visible checkbox reflects selection (listener-safe).
+            renderPage(scrollToTop = false)
             showToast(
                 activity,
                 activity.getString(R.string.plugin_select_all_applied, ids.size),
             )
         }
+
+        fun applySelectNone() {
+            selected.clear()
+            renderPage(scrollToTop = false)
+        }
+
+        selectAllBtn.setOnClickListener { applySelectAll() }
+        selectNoneBtn.setOnClickListener { applySelectNone() }
 
         renderPage(scrollToTop = false)
 
@@ -1016,15 +1036,11 @@ object PluginProviderDialogs {
         dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.plugin_cards_title)
             .setView(root)
-            .setNeutralButton(R.string.plugin_select_all, null)
             .setNegativeButton(R.string.close, null)
             .setPositiveButton(R.string.plugin_install_or_update, null)
             .create()
         dialog?.setOnShowListener {
             val shown = dialog ?: return@setOnShowListener
-            shown.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                applySelectAll()
-            }
             shown.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val chosen = PluginSelectAll.filterSelectable(items, selected, installedById)
                 if (chosen.isEmpty()) {
@@ -1105,18 +1121,6 @@ object PluginProviderDialogs {
             }
             statusChips.findViewWithTag<Button>("status_installed")?.setOnClickListener {
                 goTo(0, status = PluginCatalogFilter.Status.INSTALLED)
-            }
-            kindChips.findViewWithTag<Button>("kind_all")?.setOnClickListener {
-                goTo(0, kind = PluginCatalogFilter.Kind.ALL)
-            }
-            kindChips.findViewWithTag<Button>("kind_madara")?.setOnClickListener {
-                goTo(0, kind = PluginCatalogFilter.Kind.MADARA)
-            }
-            kindChips.findViewWithTag<Button>("kind_blogger")?.setOnClickListener {
-                goTo(0, kind = PluginCatalogFilter.Kind.BLOGGER)
-            }
-            kindChips.findViewWithTag<Button>("kind_js")?.setOnClickListener {
-                goTo(0, kind = PluginCatalogFilter.Kind.JS)
             }
         }
         if (activity.canShowDialog()) dialog?.show()

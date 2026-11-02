@@ -95,25 +95,26 @@ object CustomProviders {
         val customs = load()
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
         val providersKey = context.getString(R.string.search_providers_list_key)
-        val savedProviders = settings.getStringSet(providersKey, null)?.toMutableSet()
-            ?: Apis.apis.map { it.name }.toMutableSet()
+        val savedProviders = HashSet(
+            settings.getStringSet(providersKey, null) ?: Apis.apis.map { it.name },
+        )
         var providersChanged = false
         for (config in customs) {
             if (savedProviders.add(config.name)) providersChanged = true
         }
         if (providersChanged) {
-            settings.edit().putStringSet(providersKey, savedProviders).apply()
+            settings.edit().putStringSet(providersKey, HashSet(savedProviders)).apply()
         }
 
         val langKey = context.getString(R.string.provider_lang_key)
-        val savedLangs = settings.getStringSet(langKey, null)?.toMutableSet()
+        val savedLangs = settings.getStringSet(langKey, null)?.let { HashSet(it) }
         if (savedLangs != null) {
             var langsChanged = false
             for (config in customs) {
                 if (config.lang.isNotBlank() && savedLangs.add(config.lang)) langsChanged = true
             }
             if (langsChanged) {
-                settings.edit().putStringSet(langKey, savedLangs).apply()
+                settings.edit().putStringSet(langKey, HashSet(savedLangs)).apply()
             }
         }
         return savedProviders.toSet()
@@ -124,25 +125,28 @@ object CustomProviders {
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
 
         val providersKey = context.getString(R.string.search_providers_list_key)
-        val savedProviders = settings.getStringSet(providersKey, null)
-            ?: Apis.apis.map { it.name }.toSet()
-        val updatedProviders = savedProviders.toMutableSet()
+        // Always copy — Android SharedPreferences StringSet must not be mutated in place.
+        val updatedProviders = HashSet(
+            settings.getStringSet(providersKey, null) ?: Apis.apis.map { it.name },
+        )
         replacing?.let { updatedProviders.remove(it) }
         updatedProviders.add(config.name)
-        settings.edit().putStringSet(providersKey, updatedProviders).apply()
+        settings.edit().putStringSet(providersKey, HashSet(updatedProviders)).apply()
 
         val langKey = context.getString(R.string.provider_lang_key)
         settings.getStringSet(langKey, null)?.let { saved ->
-            settings.edit().putStringSet(langKey, saved.toMutableSet().apply { add(config.lang) }).apply()
+            val langs = HashSet(saved).apply { add(config.lang) }
+            settings.edit().putStringSet(langKey, HashSet(langs)).apply()
         }
     }
 
     private fun disableInSearch(context: Context, name: String) {
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
         val providersKey = context.getString(R.string.search_providers_list_key)
-        val saved = settings.getStringSet(providersKey, null)?.toMutableSet() ?: return
-        if (saved.remove(name)) {
-            settings.edit().putStringSet(providersKey, saved).apply()
+        val saved = settings.getStringSet(providersKey, null) ?: return
+        val updated = HashSet(saved)
+        if (updated.remove(name)) {
+            settings.edit().putStringSet(providersKey, HashSet(updated)).apply()
         }
     }
 }

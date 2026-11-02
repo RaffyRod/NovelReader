@@ -2,7 +2,36 @@ const { dismissBlockingDialogs } = require('../helpers/dialogs');
 
 const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
 const APP_ACTIVITY = 'com.lagradost.quicknovel.MainActivity';
-const MAIN_TABS = ['Biblioteca', 'Buscar', 'Historial', 'Ajustes'];
+
+/** Bottom-nav resource-ids (locale-independent). */
+const TAB_IDS = {
+  Biblioteca: `${APP_ID}:id/navigation_download`,
+  Library: `${APP_ID}:id/navigation_download`,
+  Buscar: `${APP_ID}:id/navigation_search`,
+  Search: `${APP_ID}:id/navigation_search`,
+  Historial: `${APP_ID}:id/navigation_history`,
+  History: `${APP_ID}:id/navigation_history`,
+  Ajustes: `${APP_ID}:id/navigation_settings`,
+  Settings: `${APP_ID}:id/navigation_settings`,
+  Secciones: `${APP_ID}:id/navigation_sections`,
+  Sections: `${APP_ID}:id/navigation_sections`,
+};
+
+/** Labels that may appear depending on app / system locale. */
+const TAB_ALIASES = {
+  Biblioteca: ['Biblioteca', 'Library'],
+  Buscar: ['Buscar', 'Search'],
+  Historial: ['Historial', 'History'],
+  Ajustes: ['Ajustes', 'Settings'],
+  Secciones: ['Secciones', 'Sections'],
+};
+
+const MAIN_TAB_IDS = [
+  TAB_IDS.Biblioteca,
+  TAB_IDS.Buscar,
+  TAB_IDS.Historial,
+  TAB_IDS.Ajustes,
+];
 
 class BasePage {
   /**
@@ -39,12 +68,18 @@ class BasePage {
   }
 
   /**
-   * True when any main bottom-nav tab is visible.
+   * True when any main bottom-nav tab is visible (resource-id first).
    */
   async isMainChromeVisible() {
-    for (const tab of MAIN_TABS) {
-      const el = $(`android=new UiSelector().description("${tab}")`);
+    for (const id of MAIN_TAB_IDS) {
+      const el = this.byId(id);
       if (await el.isDisplayed().catch(() => false)) return true;
+    }
+    for (const labels of Object.values(TAB_ALIASES)) {
+      for (const label of labels) {
+        const el = $(`android=new UiSelector().description("${label}")`);
+        if (await el.isDisplayed().catch(() => false)) return true;
+      }
     }
     return false;
   }
@@ -98,28 +133,60 @@ class BasePage {
   }
 
   /**
-   * Opens a bottom-nav tab. Prefer clickable nodes so we do not hit duplicate
-   * content-desc labels in the page chrome (e.g. library search also says "Buscar").
-   * Selected tabs often become non-clickable — treat that as already open.
-   * @param {string} tabName accessibility / content-desc of bottom nav
+   * Opens a bottom-nav tab via resource-id (locale-safe), with description fallbacks.
+   * @param {string} tabName Spanish label used by page objects (Biblioteca, Buscar, …)
    */
   async openTab(tabName) {
     await this.ensureMainChrome();
     await dismissBlockingDialogs();
-    const selected = $(`android=new UiSelector().description("${tabName}").selected(true)`);
-    if (await selected.isExisting().catch(() => false)) {
-      await driver.pause(300);
-      return;
+
+    const resId = TAB_IDS[tabName];
+    if (resId) {
+      const byRes = this.byId(resId);
+      if (await byRes.isDisplayed().catch(() => false)) {
+        const selected = await byRes.getAttribute('selected').catch(() => 'false');
+        if (selected === 'true') {
+          await driver.pause(300);
+          return;
+        }
+        await byRes.click();
+        await driver.pause(1000);
+        await dismissBlockingDialogs();
+        return;
+      }
     }
-    const clickable = $(`android=new UiSelector().description("${tabName}").clickable(true)`);
-    if (await clickable.isDisplayed().catch(() => false)) {
-      await clickable.click();
-    } else {
-      // Selected tabs can be non-clickable; other labels may still be tappable without clickable=true.
-      const any = $(`android=new UiSelector().description("${tabName}")`);
-      await any.waitForDisplayed({ timeout: 15000 });
-      await any.click();
+
+    const aliases = TAB_ALIASES[tabName] || [tabName];
+    for (const label of aliases) {
+      const selected = $(`android=new UiSelector().description("${label}").selected(true)`);
+      if (await selected.isExisting().catch(() => false)) {
+        await driver.pause(300);
+        return;
+      }
     }
+    for (const label of aliases) {
+      const clickable = $(`android=new UiSelector().description("${label}").clickable(true)`);
+      if (await clickable.isDisplayed().catch(() => false)) {
+        await clickable.click();
+        await driver.pause(1000);
+        await dismissBlockingDialogs();
+        return;
+      }
+    }
+    for (const label of aliases) {
+      const any = $(`android=new UiSelector().description("${label}")`);
+      if (await any.isDisplayed().catch(() => false)) {
+        await any.click();
+        await driver.pause(1000);
+        await dismissBlockingDialogs();
+        return;
+      }
+    }
+
+    const fallback = aliases[0];
+    const any = $(`android=new UiSelector().description("${fallback}")`);
+    await any.waitForDisplayed({ timeout: 15000 });
+    await any.click();
     await driver.pause(1000);
     await dismissBlockingDialogs();
   }
