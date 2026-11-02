@@ -392,10 +392,13 @@
     <string name="plugin_repo_history_cleared">Historial de URLs borrado</string>
     <string name="plugin_repo_history_removed">URL eliminada</string>
     <string name="translation_history_title">Historial de traducciones</string>
+    <string name="translation_history_title_count">Historial de traducciones (%1$d)</string>
     <string name="translation_history_short">Traducciones</string>
     <string name="translation_history_empty">Aún no hay traducciones en segundo plano. Exporta con traducción para llenar esta lista.</string>
     <string name="translation_history_open">Abrir</string>
-    <string name="translation_history_folder">Abrir archivo</string>
+    <string name="translation_history_folder">Abrir ruta</string>
+    <string name="translation_history_delete">Quitar</string>
+    <string name="translation_history_removed">Quitado del historial</string>
     <string name="translation_history_open_fail">No se pudo abrir ese archivo</string>
     <string name="plugin_none">Aún no hay plugins. Añade un repositorio (manifest JSON) para explorar fuentes.</string>
     <string name="plugin_none_simple">Aún no hay plugins. Pulsa Explorar catálogo, elige idiomas y fuentes, e Instalar. Los selectores Madara solo se aplican si el plugin viene etiquetado — no se reescriben todos.</string>

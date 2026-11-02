@@ -1286,6 +1286,23 @@ class ResultViewModel : ViewModel() {
                 )
             )
         }
+        if (translate != null && failed < selected.size) {
+            val chapterFile = java.io.File(appContext.getFilePath(meta, selected.first().first))
+            val folder = chapterFile.parentFile
+            val folderUri = folder?.let { android.net.Uri.fromFile(it) }
+            val marker = folder?.let { java.io.File(it, ".translated_${translate.lang.code}") }
+            if (marker != null) {
+                marker.writeText(System.currentTimeMillis().toString())
+                com.lagradost.quicknovel.TranslationHistory.record(
+                    novelName = meta.name,
+                    fileName = "${meta.name} [${translate.lang.code.uppercase()}]",
+                    uri = android.net.Uri.fromFile(marker),
+                    mime = "text/plain",
+                    langCode = translate.lang.code,
+                    folderUri = folderUri,
+                )
+            }
+        }
         publishSelectionTask(
             SelectionTaskState(
                 kind = SelectionTaskKind.Download,
@@ -1479,6 +1496,7 @@ class ResultViewModel : ViewModel() {
                     uri = file.uri,
                     mime = storage.mimeType,
                     langCode = translate.lang.code,
+                    folderUri = storage.getLocation(appContext),
                 )
             }
         }

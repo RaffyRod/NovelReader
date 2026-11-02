@@ -300,6 +300,10 @@ fun DownloadScreen(
                 exit = shrinkHorizontally() + fadeOut()
             ) {
                 val activity = LocalContext.current as? Activity
+                val context = LocalContext.current
+                val translationCount = remember(railOpen) {
+                    com.lagradost.quicknovel.TranslationHistory.available(context).size
+                }
                 LibraryRail(
                     items = railItems,
                     selected = currentPage,
@@ -307,6 +311,7 @@ fun DownloadScreen(
                     onTranslationHistory = {
                         activity?.let { TranslationHistoryDialogs.show(it) }
                     },
+                    translationCount = translationCount,
                 )
             }
             Column(Modifier.weight(1.0f)) {

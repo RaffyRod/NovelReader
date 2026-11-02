@@ -22,4 +22,14 @@ class TranslationHistoryLogicTest {
         val b = TranslationHistoryEntry(uri = "content://b")
         assertEquals(listOf(b), TranslationHistoryLogic.remove(listOf(a, b), "content://a"))
     }
+
+    @Test
+    fun keepExisting_dropsMissing() {
+        val a = TranslationHistoryEntry(uri = "content://a", folderUri = "content://folder")
+        val b = TranslationHistoryEntry(uri = "content://b")
+        assertEquals(
+            listOf(a),
+            TranslationHistoryLogic.keepExisting(listOf(a, b)) { it.uri == "content://a" },
+        )
+    }
 }

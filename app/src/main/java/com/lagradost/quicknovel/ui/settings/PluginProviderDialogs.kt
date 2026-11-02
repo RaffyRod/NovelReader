@@ -345,6 +345,11 @@ object PluginProviderDialogs {
             setText(history.firstOrNull()?.url.orEmpty())
         }
         column.addView(urlEdit)
+        var dialog: AlertDialog? = null
+        fun rebuildAddRepo() {
+            dialog?.dismiss()
+            activity.postUi { showAddRepo(activity, onChanged) }
+        }
         if (history.isNotEmpty()) {
             column.addView(TextView(activity).apply {
                 text = activity.getString(R.string.plugin_repo_history_title)
@@ -360,6 +365,7 @@ object PluginProviderDialogs {
                     setOnLongClickListener {
                         PluginRepoUrlHistory.remove(entry.url)
                         showToast(activity, activity.getString(R.string.plugin_repo_history_removed))
+                        rebuildAddRepo()
                         true
                     }
                 })
@@ -371,6 +377,7 @@ object PluginProviderDialogs {
                     PluginRepoUrlHistory.clear()
                     urlEdit.setText("")
                     showToast(activity, activity.getString(R.string.plugin_repo_history_cleared))
+                    rebuildAddRepo()
                 }
             })
         }
@@ -395,19 +402,28 @@ object PluginProviderDialogs {
         }
         column.addView(progress)
 
-        val dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+        dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.plugin_add_repo)
-            .setView(column)
+            .setView(
+                ScrollView(activity).apply {
+                    addView(column)
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (520 * density).toInt(),
+                    )
+                },
+            )
             .setNegativeButton(R.string.close, null)
             .setPositiveButton(R.string.plugin_fetch, null)
             .create()
 
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val scope = (activity as? AppCompatActivity)?.lifecycleScope ?: return@setOnClickListener
+        val shown = dialog ?: return
+        shown.setOnShowListener {
+            shown.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val scope = activity.pluginScope() ?: return@setOnClickListener
                 progress.visibility = View.VISIBLE
                 status.text = activity.getString(R.string.plugin_fetching)
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                shown.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
                 scope.launch {
                     val paste = pasteEdit.text?.toString().orEmpty().trim()
                     val result = withContext(Dispatchers.IO) {
@@ -424,7 +440,7 @@ object PluginProviderDialogs {
                         }
                     }
                     progress.visibility = View.GONE
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                    shown.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                     result.fold(
                         onSuccess = { (source, items) ->
                             if (items.isEmpty()) {
@@ -452,7 +468,7 @@ object PluginProviderDialogs {
                                 items.size,
                                 PluginManifestClient.languageCounts(items).size,
                             )
-                            dialog.dismiss()
+                            shown.dismiss()
                             activity.postUi {
                                 showLanguages(activity, repoId, repoUrl, items, onChanged)
                             }
@@ -464,7 +480,7 @@ object PluginProviderDialogs {
                 }
             }
         }
-        dialog.show()
+        if (activity.canShowDialog()) shown.show()
     }
 
     private fun showLanguages(

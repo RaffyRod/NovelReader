@@ -90,6 +90,7 @@ fun LibraryRail(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
     onTranslationHistory: (() -> Unit)? = null,
+    translationCount: Int = 0,
 ) {
     val fire = UiIconTheme.fromKey(
         rememberAppSettings().ui.uiIconTheme.collectAsState().value
@@ -154,8 +155,18 @@ fun LibraryRail(
                     painter = painterResource(R.drawable.ic_baseline_language_24),
                     contentDescription = historyLabel,
                     modifier = Modifier.size(22.dp),
-                    tint = idleFg,
+                    tint = if (translationCount > 0) core else idleFg,
                 )
+                if (translationCount > 0) {
+                    Text(
+                        text = translationCount.coerceAtMost(99).toString(),
+                        fontSize = 9.sp,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 3.dp),
+                        color = core,
+                    )
+                }
             }
         }
     }

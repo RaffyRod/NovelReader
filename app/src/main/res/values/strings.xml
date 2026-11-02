@@ -431,10 +431,13 @@
     <string name="plugin_repo_history_cleared">Catalog URL history cleared</string>
     <string name="plugin_repo_history_removed">URL removed</string>
     <string name="translation_history_title">Translation history</string>
+    <string name="translation_history_title_count">Translation history (%1$d)</string>
     <string name="translation_history_short">Translations</string>
     <string name="translation_history_empty">No background translations yet. Export with translate to fill this list.</string>
     <string name="translation_history_open">Open</string>
-    <string name="translation_history_folder">Open file</string>
+    <string name="translation_history_folder">Open path</string>
+    <string name="translation_history_delete">Remove</string>
+    <string name="translation_history_removed">Removed from history</string>
     <string name="translation_history_open_fail">Could not open that file</string>
     <string name="plugin_none">No plugins yet. Add a repository (JSON manifest) to browse sources.</string>
     <string name="plugin_none_simple">No plugins yet. Tap Browse catalog to pick sources (select → install). Madara CSS is only applied when a plugin is tagged Madara — never rewritten for every source.</string>
