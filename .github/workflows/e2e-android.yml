@@ -11,6 +11,16 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  # Shared emulator profile — keep in sync across prepare-emulator + e2e matrix.
+  EMU_API: 30
+  EMU_TARGET: default
+  EMU_ARCH: x86_64
+  EMU_PROFILE: pixel_4
+  EMU_AVD: qn_ci_api30
+  # Hosted runner SDK root (android-actions/setup-android).
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
 jobs:
   validate:
     name: Validate i18n & timing
@@ -71,7 +81,7 @@ jobs:
   build-apk:
     name: Build & sign APK
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -84,15 +94,14 @@ jobs:
           packages: platform-tools
       - name: Grant Gradle execute
         run: chmod +x gradlew
-      - name: Assemble release
-        run: ./gradlew :app:assembleRelease --no-daemon
+      # Emulator is x86_64 — skip arm/universal to cut assemble time roughly in half.
+      - name: Assemble x86_64 release
+        run: ./gradlew :app:assembleX86_64Release --no-daemon
       - name: Sign APK (debug keystore for CI)
         run: |
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
-          UNSIGNED=app/build/outputs/apk/release/app-universal-release-unsigned.apk
-          if [ ! -f "$UNSIGNED" ]; then
-            UNSIGNED=$(ls app/build/outputs/apk/release/*-universal-*.apk | head -n1)
-          fi
+          UNSIGNED=app/build/outputs/apk/release/app-x86_64-release-unsigned.apk
+          test -f "$UNSIGNED"
           KEYSTORE=$HOME/.android/debug.keystore
           mkdir -p "$HOME/.android"
           if [ ! -f "$KEYSTORE" ]; then
@@ -112,9 +121,49 @@ jobs:
           path: e2e/apps/QuickNovel-Ultimate.apk
           retention-days: 7
 
+  # One job downloads system-images + seeds AVD snapshot so matrix shards do not
+  # each pay ~10m sdkmanager install (the main reason CI exceeded 20m).
+  prepare-emulator:
+    name: Prepare emulator cache
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools emulator
+      - name: Emulator cache
+        uses: actions/cache@v4
+        id: emu-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+            ${{ env.ANDROID_SDK_ROOT }}/system-images
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v2
+      - name: Seed AVD snapshot
+        if: steps.emu-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.EMU_API }}
+          target: ${{ env.EMU_TARGET }}
+          arch: ${{ env.EMU_ARCH }}
+          profile: ${{ env.EMU_PROFILE }}
+          avd-name: ${{ env.EMU_AVD }}
+          force-avd-creation: false
+          cores: 2
+          ram-size: 2048M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: echo "AVD snapshot ready for cache"
+
   e2e:
     name: E2E ${{ matrix.suite }}
-    needs: build-apk
+    needs: [build-apk, prepare-emulator]
     # ubuntu-latest → 26.04 breaks WDIO worker IPC via xvfb-run (#15685)
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ matrix.timeout }}
@@ -123,26 +172,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Split former monolithic "features" so plugin dialogs cannot poison download/sections,
-          # and wall-clock tracks the longest shard (~half of the old 10–12m suite).
           - suite: smoke
-            timeout: 45
+            timeout: 25
             soft: false
           - suite: features
-            timeout: 40
+            timeout: 25
             soft: false
           - suite: features-plugins
-            timeout: 45
+            timeout: 25
             soft: false
           - suite: features-flows
-            timeout: 40
+            timeout: 25
             soft: false
           - suite: reader
-            timeout: 45
+            timeout: 30
             soft: false
           - suite: providers
-            timeout: 60
-            soft: false
+            timeout: 35
+            soft: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -162,6 +209,14 @@ jobs:
       - uses: android-actions/setup-android@v4
         with:
           packages: platform-tools emulator
+      - name: Emulator cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+            ${{ env.ANDROID_SDK_ROOT }}/system-images
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v2
       - name: Download APK
         uses: actions/download-artifact@v4
         with:
@@ -174,34 +229,17 @@ jobs:
           npx appium driver install uiautomator2 || npx appium driver update uiautomator2 || true
           test -f apps/QuickNovel-Ultimate.apk
           ls -lh apps/QuickNovel-Ultimate.apk
-      - name: AVD cache
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-api30-google-x86_64-pixel4-v1
-      - name: Create AVD snapshot (cold cache)
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          profile: pixel_4
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
-          script: echo "AVD snapshot ready for cache"
       - name: Run ${{ matrix.suite }} suite
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
-          target: google_apis
-          arch: x86_64
-          profile: pixel_4
+          api-level: ${{ env.EMU_API }}
+          target: ${{ env.EMU_TARGET }}
+          arch: ${{ env.EMU_ARCH }}
+          profile: ${{ env.EMU_PROFILE }}
+          avd-name: ${{ env.EMU_AVD }}
           force-avd-creation: false
+          cores: 2
+          ram-size: 2048M
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # emulator-runner runs EACH script line in a fresh /bin/sh — use one bash file

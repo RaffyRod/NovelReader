@@ -52,6 +52,7 @@ curl -sf "http://${APPIUM_HOST}:${APPIUM_PORT}/status" >/dev/null
 
 export APP_PATH="$APK"
 export CI=true
+export CI_FAST="${CI_FAST:-1}"
 export WDIO_LOG_LEVEL="${WDIO_LOG_LEVEL:-warn}"
 export APPIUM_EXTERNAL=1
 export APPIUM_HOST

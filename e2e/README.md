@@ -85,11 +85,16 @@ GitHub Actions workflow `.github/workflows/e2e-android.yml` runs on **every push
 |-----|----------------|
 | `unit` | Gradle `:app:testDebugUnitTest` (incl. Glyph Pulse + theme defaults) |
 | `build-apk` | Assemble + sign APK → artifact |
-| `e2e` (matrix) | Parallel emulator jobs: **smoke**, **features**, **features-plugins**, **features-flows**, **reader**, **providers** |
+| `prepare-emulator` | Seeds **system-images + AVD snapshot** cache (once) |
+| `build-apk` | **x86_64-only** release APK (emulator ABI) |
+| `e2e` (matrix) | Parallel: **smoke**, **features**, **features-plugins**, **features-flows**, **reader**, **providers** (soft) |
 | `allure-report` | Merges Allure shards → HTML artifact |
 
-AVD is **cached** (`force-avd-creation: false`) so cold SDK/AVD setup is not repeated every run.  
-Plugin dialogs run in **features-plugins**; download/sections in **features-flows** to avoid bottom-nav state leak.
+Speed notes (target ~10m warm):
+- Cache includes `$ANDROID_SDK_ROOT/system-images` (avoids ~10m `sdkmanager` reinstall per shard)
+- AOSP `default` image (smaller than `google_apis`) + snapshot boot (`-no-snapshot-save`)
+- Plugin dialogs in **features-plugins**; download/sections in **features-flows**
+- First run after cache key change is still cold (~15–20m); later pushes reuse cache
 
 **Smoke “canceled” after green:** WDIO can finish (`5 passing`) and then `android-emulator-runner` hits **Terminate Emulator** while a newer push cancels the workflow (`cancel-in-progress`). Concurrency now cancels **only on pull_request**, not on push, so a passed smoke is not flipped by teardown cancel.
 

@@ -68,7 +68,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | Plugin install | **Glyph Pulse (本)** loading while fetching plugins |
 | Plugin search | Live filter in hub / catalog / proveedores |
 | CI → Telegram | Release builds/sends APK only after green **CI Android** (e2e) on main |
-| E2E / CI | Specs 01–15 · features split (`features` / `features-plugins` / `features-flows`) + AVD cache |
+| E2E / CI | Specs 01–15 · features split + system-image/AVD cache + x86_64 APK (~10m warm) |
 
 Full history → [`CHANGELOG.md`](CHANGELOG.md)
 

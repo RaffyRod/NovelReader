@@ -108,9 +108,9 @@ exports.config = {
   ],
   logLevel: process.env.WDIO_LOG_LEVEL || 'info',
   bail: 0,
-  waitforTimeout: 15000,
-  connectionRetryTimeout: 180000,
-  connectionRetryCount: 2,
+  waitforTimeout: process.env.CI_FAST === '1' ? 12000 : 15000,
+  connectionRetryTimeout: process.env.CI_FAST === '1' ? 90000 : 180000,
+  connectionRetryCount: process.env.CI_FAST === '1' ? 1 : 2,
   specFileRetries: 0,
   services: useExternalAppium
     ? []
@@ -143,7 +143,8 @@ exports.config = {
   ],
   mochaOpts: {
     ui: 'bdd',
-    timeout: 180000,
+    timeout: process.env.CI_FAST === '1' ? 120000 : 180000,
+    // CI_FAST keeps one retry for flakes without doubling every suite wall-clock.
     retries: process.env.CI ? 1 : 0,
   },
   before: async () => {
