@@ -130,12 +130,16 @@ jobs:
     continue-on-error: true
     steps:
       # ~2GB system-image cache failed with "No space left on device" on stock runners.
+      # Must recreate /usr/local/lib/android owned by runner — setup-android cannot mkdir there (EACCES).
       - name: Free disk space
         run: |
           df -h
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+          sudo rm -rf /usr/share/dotnet /opt/ghc \
             /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
             /usr/local/.ghcup 2>/dev/null || true
+          sudo rm -rf /usr/local/lib/android
+          sudo mkdir -p /usr/local/lib/android
+          sudo chown -R "$USER:$USER" /usr/local/lib/android
           sudo docker system prune -af 2>/dev/null || true
           df -h
       - name: Enable KVM
@@ -225,9 +229,12 @@ jobs:
       - name: Free disk space
         run: |
           df -h
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+          sudo rm -rf /usr/share/dotnet /opt/ghc \
             /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
             /usr/local/.ghcup 2>/dev/null || true
+          sudo rm -rf /usr/local/lib/android
+          sudo mkdir -p /usr/local/lib/android
+          sudo chown -R "$USER:$USER" /usr/local/lib/android
           sudo docker system prune -af 2>/dev/null || true
           df -h
       - uses: actions/checkout@v4
