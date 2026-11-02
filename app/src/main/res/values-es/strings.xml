@@ -452,7 +452,11 @@
     <string name="plugin_select_none">Seleccionar ninguno</string>
     <string name="plugin_cards_page_hint">Usa Anterior / Siguiente / Ir a página para ver todas las fuentes</string>
     <string name="cp_manage_count">Administrar proveedores (%1$d)</string>
-    <string name="cp_manage_empty_hint">Aún no hay proveedores propios. Añade uno con URL/JSON, o mapea un plugin desde el hub.</string>
+    <string name="cp_manage_empty_hint">Nada que administrar aún. Añade con URL/JSON o instala plugins desde el catálogo.</string>
+    <string name="cp_delete_selected">Eliminar seleccionados</string>
+    <string name="cp_delete_selected_msg">¿Quitar %1$d proveedor(es) seleccionado(s)?</string>
+    <string name="cp_delete_selected_done">Eliminados: %1$d</string>
+    <string name="cp_count_manageable">Gestionables: %1$d</string>
     <string name="plugin_cards_filter_clear">Limpiar</string>
     <string name="plugin_cards_filter_all">Todos</string>
     <string name="plugin_cards_filter_kind_all">Cualquier tipo</string>

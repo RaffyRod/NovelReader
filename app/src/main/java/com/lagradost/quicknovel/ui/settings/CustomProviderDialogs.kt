@@ -2,11 +2,16 @@ package com.lagradost.quicknovel.ui.settings
 
 import android.app.Activity
 import android.content.DialogInterface
+import android.graphics.Typeface
 import android.text.InputType
+import android.text.TextUtils
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
@@ -21,6 +26,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.lagradost.quicknovel.CommonActivity.showToast
 import com.lagradost.quicknovel.R
+import com.lagradost.quicknovel.plugins.PluginInstaller
 import com.lagradost.quicknovel.providers.BloggerValidation
 import com.lagradost.quicknovel.providers.ConfigProblem
 import com.lagradost.quicknovel.providers.CustomProvider
@@ -30,6 +36,7 @@ import com.lagradost.quicknovel.providers.CustomProviderPresets
 import com.lagradost.quicknovel.providers.ProviderTestReport
 import com.lagradost.quicknovel.providers.TestStep
 import com.lagradost.quicknovel.util.CustomProviders
+import com.lagradost.quicknovel.util.ProviderManage
 import com.lagradost.quicknovel.util.UIHelper.colorFromAttribute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -63,89 +70,262 @@ object CustomProviderDialogs {
     )
 
     /**
-     * Lists **every** custom provider in a scrollable dialog (no AlertDialog.setItems
-     * truncation — that capped the list around ~50–60 on some devices).
+     * Unified manager: URL/JSON customs **and** installed LNReader plugins, paged like the
+     * catalog (name filter + select all). No AlertDialog.setItems ~56 cap.
      */
     fun showManager(activity: Activity, onChanged: () -> Unit) {
-        val providers = CustomProviders.load()
         val density = activity.resources.displayMetrics.density
         val pad = (14 * density).toInt()
+        val gap = (8 * density).toInt()
         val primary = activity.colorFromAttribute(R.attr.colorPrimary)
         val gray = activity.colorFromAttribute(R.attr.grayTextColor)
         val textColor = activity.colorFromAttribute(R.attr.textColor)
-        val holder = object {
-            var dialog: AlertDialog? = null
-        }
+
+        var allRows = ProviderManage.loadRows()
+        var currentQuery = ""
+        var currentPage = 0
+        val selected = linkedSetOf<String>()
+        val checkBoxes = linkedMapOf<String, CheckBox>()
+        var dialog: AlertDialog? = null
 
         val root = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad / 2, pad, pad / 2)
         }
+        val countLabel = TextView(activity).apply {
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setPadding(0, 0, 0, gap / 2)
+        }
+        root.addView(countLabel)
+
+        val pageLabel = TextView(activity).apply {
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setPadding(0, 0, 0, gap)
+        }
+        root.addView(pageLabel)
+
+        val filterRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val filterEdit = EditText(activity).apply {
+            hint = activity.getString(R.string.plugin_cards_filter_hint)
+            setTextColor(textColor)
+            setHintTextColor(gray)
+            inputType = InputType.TYPE_CLASS_TEXT
+            setPadding(pad / 2, pad / 2, pad / 2, pad / 2)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        filterRow.addView(filterEdit)
+        val filterGo = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(android.R.string.search_go)
+            setTextColor(primary)
+        }
+        filterRow.addView(filterGo)
+        root.addView(filterRow)
+
+        val selectRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, gap / 2, 0, gap / 2)
+        }
+        val selectAllBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_select_all)
+            isAllCaps = false
+            setTextColor(primary)
+        }
+        val selectNoneBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_select_none)
+            isAllCaps = false
+            setTextColor(gray)
+        }
+        selectRow.addView(selectAllBtn)
+        selectRow.addView(selectNoneBtn)
+        root.addView(selectRow)
+
         root.addView(
             TextView(activity).apply {
-                text = activity.getString(R.string.cp_manage_count, providers.size)
-                setTextColor(primary)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                setPadding(0, 0, 0, pad / 2)
+                text = activity.getString(R.string.plugin_cards_page_hint)
+                setTextColor(gray)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setPadding(0, 0, 0, gap / 2)
             },
         )
 
-        if (providers.isEmpty()) {
-            root.addView(
-                TextView(activity).apply {
-                    text = activity.getString(R.string.cp_manage_empty_hint)
-                    setTextColor(gray)
-                },
-            )
-        } else {
-            val host = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
-            providers.forEach { config ->
-                val row = LinearLayout(activity).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(pad / 2, pad / 2, pad / 2, pad / 2)
-                    isClickable = true
-                    isFocusable = true
-                    setOnClickListener {
-                        holder.dialog?.dismiss()
-                        showOptions(activity, config) {
-                            onChanged()
-                            showManager(activity, onChanged)
-                        }
-                    }
-                }
-                row.addView(
-                    TextView(activity).apply {
-                        text = config.name
-                        setTextColor(textColor)
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-                        typeface = android.graphics.Typeface.DEFAULT_BOLD
-                    },
-                )
-                row.addView(
-                    TextView(activity).apply {
-                        text = config.baseUrl.ifBlank { config.kind }
-                        setTextColor(gray)
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                        maxLines = 1
-                        ellipsize = android.text.TextUtils.TruncateAt.END
-                    },
-                )
-                host.addView(row)
-            }
-            root.addView(
-                ScrollView(activity).apply {
-                    addView(host)
-                    layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        (480 * density).toInt(),
-                    )
-                },
+        val cardsHost = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
+        val scroll = ScrollView(activity).apply {
+            addView(cardsHost)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (420 * density).toInt(),
             )
         }
+        root.addView(scroll)
 
-        holder.dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+        val nav = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, gap, 0, 0)
+        }
+        val prevBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_cards_prev)
+            isAllCaps = false
+        }
+        val gotoBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_cards_goto_page)
+            isAllCaps = false
+            setTextColor(primary)
+        }
+        val nextBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.plugin_cards_next)
+            isAllCaps = false
+        }
+        nav.addView(prevBtn)
+        nav.addView(gotoBtn)
+        nav.addView(nextBtn)
+        root.addView(nav)
+
+        fun filtered(): List<ProviderManage.Row> =
+            ProviderManage.filter(allRows, currentQuery)
+
+        fun reopen() {
+            dialog?.dismiss()
+            activity.runOnUiThread {
+                onChanged()
+                showManager(activity, onChanged)
+            }
+        }
+
+        fun openRow(row: ProviderManage.Row) {
+            dialog?.dismiss()
+            when (row.kind) {
+                ProviderManage.Kind.CUSTOM -> {
+                    val cfg = row.config ?: return
+                    showOptions(activity, cfg) { reopen() }
+                }
+                ProviderManage.Kind.PLUGIN -> {
+                    val plugin = row.plugin ?: return
+                    PluginProviderDialogs.showOptionsForManage(activity, plugin) { reopen() }
+                }
+            }
+        }
+
+        fun renderPage(scrollToTop: Boolean = true) {
+            allRows = ProviderManage.loadRows()
+            val list = filtered()
+            val pageCount = ProviderManage.pageCount(list.size)
+            currentPage = currentPage.coerceIn(0, pageCount - 1)
+            val slice = ProviderManage.pageSlice(list, currentPage)
+            val from = currentPage * ProviderManage.PAGE_SIZE
+
+            countLabel.text = activity.getString(R.string.cp_manage_count, list.size)
+            pageLabel.text = activity.getString(
+                R.string.plugin_cards_page,
+                currentPage + 1,
+                pageCount,
+                if (slice.isEmpty()) 0 else from + 1,
+                from + slice.size,
+                list.size,
+            )
+
+            cardsHost.removeAllViews()
+            checkBoxes.clear()
+            if (list.isEmpty()) {
+                cardsHost.addView(
+                    TextView(activity).apply {
+                        text = activity.getString(R.string.cp_manage_empty_hint)
+                        setTextColor(gray)
+                    },
+                )
+            } else {
+                slice.forEach { row ->
+                    val check = CheckBox(activity).apply {
+                        isChecked = row.key in selected
+                        setOnCheckedChangeListener { _, checked ->
+                            if (checked) selected.add(row.key) else selected.remove(row.key)
+                        }
+                    }
+                    checkBoxes[row.key] = check
+                    val body = LinearLayout(activity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                        isClickable = true
+                        isFocusable = true
+                        setOnClickListener { openRow(row) }
+                    }
+                    body.addView(
+                        TextView(activity).apply {
+                            text = row.title
+                            setTextColor(textColor)
+                            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                            typeface = Typeface.DEFAULT_BOLD
+                            maxLines = 2
+                            ellipsize = TextUtils.TruncateAt.END
+                        },
+                    )
+                    body.addView(
+                        TextView(activity).apply {
+                            text = row.subtitle
+                            setTextColor(gray)
+                            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                            maxLines = 1
+                            ellipsize = TextUtils.TruncateAt.END
+                        },
+                    )
+                    val line = LinearLayout(activity).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        gravity = Gravity.CENTER_VERTICAL
+                        setPadding(0, gap / 2, 0, gap / 2)
+                    }
+                    line.addView(check)
+                    line.addView(body)
+                    cardsHost.addView(line)
+                }
+            }
+            prevBtn.isEnabled = currentPage > 0
+            nextBtn.isEnabled = currentPage < pageCount - 1
+            gotoBtn.isEnabled = pageCount > 1
+            if (scrollToTop) scroll.scrollTo(0, 0)
+        }
+
+        fun goTo(page: Int, query: String = filterEdit.text?.toString().orEmpty()) {
+            currentQuery = query
+            currentPage = page
+            if (filterEdit.text?.toString().orEmpty() != currentQuery) {
+                filterEdit.setText(currentQuery)
+            }
+            renderPage(scrollToTop = true)
+        }
+
+        selectAllBtn.setOnClickListener {
+            selected.clear()
+            selected.addAll(filtered().map { it.key })
+            renderPage(scrollToTop = false)
+            showToast(
+                activity,
+                activity.getString(R.string.plugin_select_all_applied, selected.size),
+            )
+        }
+        selectNoneBtn.setOnClickListener {
+            selected.clear()
+            renderPage(scrollToTop = false)
+        }
+        filterGo.setOnClickListener { goTo(0) }
+        filterEdit.setOnEditorActionListener { _, _, _ ->
+            goTo(0)
+            true
+        }
+        prevBtn.setOnClickListener { goTo(currentPage - 1) }
+        nextBtn.setOnClickListener { goTo(currentPage + 1) }
+
+        renderPage(scrollToTop = false)
+
+        dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.cp_manage)
             .setView(root)
+            .setNeutralButton(R.string.cp_delete_selected, null)
             .setPositiveButton(R.string.cp_add) { _, _ ->
                 showSimpleAdd(activity) {
                     onChanged()
@@ -154,7 +334,62 @@ object CustomProviderDialogs {
             }
             .setNegativeButton(R.string.close, null)
             .create()
-        holder.dialog?.show()
+
+        dialog?.setOnShowListener {
+            val shown = dialog ?: return@setOnShowListener
+            gotoBtn.setOnClickListener {
+                val pageCount = ProviderManage.pageCount(filtered().size)
+                if (pageCount <= 1) return@setOnClickListener
+                val edit = EditText(activity).apply {
+                    inputType = InputType.TYPE_CLASS_NUMBER
+                    hint = activity.getString(R.string.plugin_cards_goto_hint, pageCount)
+                    setText("")
+                    setPadding(pad, pad, pad, pad)
+                }
+                AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+                    .setTitle(R.string.plugin_cards_goto_page)
+                    .setView(edit)
+                    .setPositiveButton(R.string.ok) { _, _ ->
+                        val target = ProviderManage.parseGoToPage(
+                            edit.text?.toString(),
+                            pageCount,
+                        ) ?: return@setPositiveButton
+                        goTo(target)
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
+            pageLabel.setOnClickListener { gotoBtn.performClick() }
+            shown.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                if (selected.isEmpty()) {
+                    showToast(activity, activity.getString(R.string.plugin_pick_one))
+                    return@setOnClickListener
+                }
+                val doomed = filtered().filter { it.key in selected }
+                AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+                    .setTitle(R.string.cp_delete_selected)
+                    .setMessage(activity.getString(R.string.cp_delete_selected_msg, doomed.size))
+                    .setPositiveButton(R.string.ok) { _, _ ->
+                        for (row in doomed) {
+                            when (row.kind) {
+                                ProviderManage.Kind.CUSTOM ->
+                                    row.config?.name?.let { CustomProviders.remove(activity, it) }
+                                ProviderManage.Kind.PLUGIN ->
+                                    row.plugin?.let { PluginInstaller.uninstall(activity, it) }
+                            }
+                        }
+                        selected.clear()
+                        showToast(
+                            activity,
+                            activity.getString(R.string.cp_delete_selected_done, doomed.size),
+                        )
+                        reopen()
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
+        }
+        dialog?.show()
     }
 
     /**

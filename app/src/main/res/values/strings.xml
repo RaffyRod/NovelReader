@@ -491,7 +491,11 @@
     <string name="plugin_select_none">Select none</string>
     <string name="plugin_cards_page_hint">Use Previous / Next / Go to page to see every source</string>
     <string name="cp_manage_count">Manage providers (%1$d)</string>
-    <string name="cp_manage_empty_hint">No custom providers yet. Add one with URL/JSON, or map a plugin from the hub.</string>
+    <string name="cp_manage_empty_hint">Nothing to manage yet. Add via URL/JSON or install plugins from the catalog.</string>
+    <string name="cp_delete_selected">Delete selected</string>
+    <string name="cp_delete_selected_msg">Remove %1$d selected provider(s)?</string>
+    <string name="cp_delete_selected_done">Removed %1$d</string>
+    <string name="cp_count_manageable">Manageable: %1$d</string>
     <string name="plugin_cards_filter_clear">Clear</string>
     <string name="plugin_cards_filter_all">All</string>
     <string name="plugin_cards_filter_kind_all">Any type</string>

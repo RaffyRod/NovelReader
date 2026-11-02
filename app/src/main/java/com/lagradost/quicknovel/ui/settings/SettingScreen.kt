@@ -68,7 +68,6 @@ import com.lagradost.quicknovel.mvvm.logError
 import com.lagradost.quicknovel.ui.txt
 import com.lagradost.quicknovel.util.Apis.Companion.apis
 import com.lagradost.quicknovel.plugins.PluginStore
-import com.lagradost.quicknovel.util.CustomProviders
 import com.lagradost.quicknovel.util.BackupUtils
 import com.lagradost.quicknovel.util.SubtitleHelper
 import com.lagradost.quicknovel.util.UIHelper.clipboardHelper
@@ -152,7 +151,9 @@ object SettingScreen : SearchableSettings {
         val scope = rememberCoroutineScope()
         val settings = rememberAppSettings()
         val geminiKey by settings.translation.geminiApiKey.collectAsState()
-        var customProviderCount by remember { mutableStateOf(CustomProviders.load().size) }
+        var customProviderCount by remember {
+            mutableStateOf(com.lagradost.quicknovel.util.ProviderManage.count())
+        }
         var pluginInstalledCount by remember {
             mutableStateOf(PluginStore.loadInstalled().size)
         }
@@ -558,7 +559,8 @@ object SettingScreen : SearchableSettings {
                         onClick = {
                             activity?.let { act ->
                                 CustomProviderDialogs.showSimpleAdd(act) {
-                                    customProviderCount = CustomProviders.load().size
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
                                 }
                             }
                         }
@@ -566,11 +568,12 @@ object SettingScreen : SearchableSettings {
                     Preference.PreferenceItem.TextPreference(
                         icon = painterResource(R.drawable.plugin_lang),
                         title = stringResource(R.string.cp_manage),
-                        subtitle = stringResource(R.string.cp_count, customProviderCount),
+                        subtitle = stringResource(R.string.cp_count_manageable, customProviderCount),
                         onClick = {
                             activity?.let { act ->
                                 CustomProviderDialogs.showManager(act) {
-                                    customProviderCount = CustomProviders.load().size
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
                                 }
                             }
                         }
@@ -598,7 +601,8 @@ object SettingScreen : SearchableSettings {
                                     val installed = PluginStore.loadInstalled()
                                     pluginInstalledCount = installed.size
                                     pluginUpdateCount = installed.count { it.hasUpdate }
-                                    customProviderCount = CustomProviders.load().size
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
                                 }
                             }
                         }
@@ -613,7 +617,8 @@ object SettingScreen : SearchableSettings {
                                     val installed = PluginStore.loadInstalled()
                                     pluginInstalledCount = installed.size
                                     pluginUpdateCount = installed.count { it.hasUpdate }
-                                    customProviderCount = CustomProviders.load().size
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
                                 }
                             }
                         }

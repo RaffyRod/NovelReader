@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Instalación de plugins — mocks de carga</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #03060f;
+      --text: #e8f1ff;
+      --muted: #8b97ab;
+      --primary: #1a6cff;
+      --glow: #4da3ff;
+      --surface: #101a30;
+      --card: #0a1224;
+      --line: rgba(140, 180, 255, 0.14);
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --danger: #fb7185;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Instrument Serif", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 480px at 12% -10%, rgba(26, 108, 255, 0.22), transparent 55%),
+        radial-gradient(700px 420px at 90% 0%, rgba(77, 163, 255, 0.1), transparent 50%),
+        var(--page);
+      padding: 32px 22px 80px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 400;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .lede { color: var(--muted); max-width: 62ch; line-height: 1.55; margin: 0 0 28px; }
+    .lede strong { color: var(--text); font-weight: 600; }
+    .note {
+      display: inline-flex; gap: 8px; align-items: center;
+      padding: 8px 12px; border-radius: 10px;
+      background: rgba(26, 108, 255, 0.12);
+      border: 1px solid var(--line);
+      color: var(--glow); font-size: 13px; margin-bottom: 28px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 22px;
+    }
+    .proposal {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .proposal header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .proposal header .tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--glow);
+      letter-spacing: 0.04em;
+    }
+    .proposal header h2 {
+      margin: 4px 0 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .proposal header p {
+      margin: 6px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .phone {
+      position: relative;
+      margin: 16px;
+      aspect-ratio: 9 / 16;
+      max-height: 420px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, #0c1428 0%, #060a14 100%);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(26, 108, 255, 0.08), transparent 55%);
+      pointer-events: none;
+    }
+    .scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 6, 15, 0.55);
+    }
+    .dialog {
+      position: relative;
+      z-index: 1;
+      width: min(86%, 260px);
+      background: #121c34;
+      border: 1px solid rgba(140, 180, 255, 0.2);
+      border-radius: 16px;
+      padding: 18px 16px 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .dialog h3 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .muted { color: var(--muted); font-size: 12px; }
+    .mono { font-family: var(--mono); }
+    .bar {
+      height: 6px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin: 10px 0 8px;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      width: 42%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--glow));
+    }
+    .ring {
+      width: 72px; height: 72px; margin: 8px auto 12px;
+      border-radius: 50%;
+      background:
+        conic-gradient(var(--primary) 0 151deg, rgba(255,255,255,0.1) 151deg 360deg);
+      display: grid; place-items: center;
+      position: relative;
+    }
+    .ring::after {
+      content: "";
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: #121c34;
+      position: absolute;
+    }
+    .ring span {
+      position: relative; z-index: 1;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--glow);
+    }
+    .spin {
+      width: 48px; height: 48px; margin: 10px auto 14px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.55; transform: scale(0.96); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    .glyph {
+      width: 64px; height: 64px; margin: 6px auto 12px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 28px;
+      color: var(--glow);
+      background: rgba(26, 108, 255, 0.15);
+      border: 1px solid rgba(77, 163, 255, 0.35);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .chip {
+      font-size: 11px; padding: 3px 8px; border-radius: 99px;
+      background: rgba(255,255,255,0.06); color: var(--muted);
+      border: 1px solid var(--line);
+    }
+    .chip.ok { color: var(--ok); border-color: rgba(52, 211, 153, 0.35); }
+    .chip.bad { color: var(--danger); border-color: rgba(251, 113, 133, 0.35); }
+    .chip.warn { color: var(--warn); border-color: rgba(251, 191, 36, 0.35); }
+    .name {
+      margin-top: 8px;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mini-list {
+      margin-top: 10px;
+      max-height: 88px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mini-list div {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex; gap: 6px; align-items: center;
+    }
+    .mini-list .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--ok); flex-shrink: 0;
+    }
+    .mini-list .dot.cur { background: var(--glow); box-shadow: 0 0 0 3px rgba(26,108,255,0.25); }
+    .sheet {
+      position: absolute;
+      left: 10px; right: 10px; bottom: 14px;
+      z-index: 1;
+      background: #121c34;
+      border: 1px solid rgba(140, 180, 255, 0.2);
+      border-radius: 16px 16px 18px 18px;
+      padding: 14px 14px 12px;
+    }
+    .steps {
+      display: flex; gap: 6px; margin: 10px 0 8px;
+    }
+    .steps span {
+      flex: 1; height: 4px; border-radius: 99px;
+      background: rgba(255,255,255,0.08);
+    }
+    .steps span.on { background: var(--primary); }
+    .steps span.done { background: var(--ok); }
+    .pick {
+      margin-top: auto;
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pick code {
+      font-family: var(--mono);
+      color: var(--glow);
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Instalación masiva — 10 mocks</h1>
+  <p class="lede">
+    Hoy el diálogo muestra solo un spinner y <strong>“Instalando 328 plugin(s)”</strong>.
+    En código <strong>sí recorre los 328</strong> en serie (descarga JS + guarda metadata por ítem);
+    por eso tarda. El cuello de botella es real; lo que falta es <strong>progreso visible</strong>
+    (n/total, nombre actual, OK/fallos).
+  </p>
+  <div class="note">Tema: Ultimate Blue · dark · tipografía DM Sans / Instrument Serif · elige una letra (A–J)</div>
+
+  <div class="grid">
+
+    <!-- A -->
+    <article class="proposal">
+      <header>
+        <div class="tag">A · Anillo fraccionario</div>
+        <h2>42 / 328 en el anillo</h2>
+        <p>Progreso determinado + nombre del plugin actual. Claro y cercano a Material.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog">
+          <h3>Instalando…</h3>
+          <div class="ring"><span>42</span></div>
+          <div class="row muted"><span>de 328</span><span class="mono">13%</span></div>
+          <div class="name">AllNovelFull</div>
+          <div class="muted" style="margin-top:4px">novgo.net · JS</div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>A</code></div>
+    </article>
+
+    <!-- B -->
+    <article class="proposal">
+      <header>
+        <div class="tag">B · Barra + ETA</div>
+        <h2>Barra lineal con tiempo</h2>
+        <p>Barra gruesa, fracción y ETA estimada a partir del ritmo.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog">
+          <h3>Instalando plugins</h3>
+          <div class="row"><span class="mono">42 / 328</span><span class="muted">~6 min</span></div>
+          <div class="bar"><i style="width:13%"></i></div>
+          <div class="name">Ahora: Agitoon</div>
+          <div class="muted">Descargando JS…</div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>B</code></div>
+    </article>
+
+    <!-- C -->
+    <article class="proposal">
+      <header>
+        <div class="tag">C · Métricas OK / fail</div>
+        <h2>Contadores en vivo</h2>
+        <p>OK · fallos · restantes mientras avanza. Útil en installs masivos.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog">
+          <h3>Instalando…</h3>
+          <div class="spin"></div>
+          <div class="chips">
+            <span class="chip ok">OK 39</span>
+            <span class="chip bad">Fallos 1</span>
+            <span class="chip warn">Restan 288</span>
+          </div>
+          <div class="name" style="margin-top:12px">Asian Novel</div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>C</code></div>
+    </article>
+
+    <!-- D -->
+    <article class="proposal">
+      <header>
+        <div class="tag">D · Glyph Pulse 本</div>
+        <h2>Marca Ultimate + progreso</h2>
+        <p>El 本 pulsante del reader, con fracción debajo. Brand-first.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog" style="text-align:center">
+          <div class="glyph">本</div>
+          <h3 style="margin-bottom:6px">Instalando</h3>
+          <div class="mono" style="color:var(--glow)">42 / 328</div>
+          <div class="bar"><i></i></div>
+          <div class="muted name">Bright Novel</div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>D</code></div>
+    </article>
+
+    <!-- E -->
+    <article class="proposal">
+      <header>
+        <div class="tag">E · Bottom sheet</div>
+        <h2>Hoja inferior compacta</h2>
+        <p>No tapa todo Settings; progreso anclado abajo. Menos “bloqueo”.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim" style="opacity:0.35"></div>
+        <div class="sheet">
+          <div class="row"><strong>Instalando plugins</strong><span class="mono muted">13%</span></div>
+          <div class="bar"><i></i></div>
+          <div class="row muted"><span>42 de 328</span><span>AllNovel</span></div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>E</code></div>
+    </article>
+
+    <!-- F -->
+    <article class="proposal">
+      <header>
+        <div class="tag">F · Pasos por plugin</div>
+        <h2>Descargar → Guardar → Siguiente</h2>
+        <p>Micro-pasos del ítem actual. Educa qué está haciendo la app.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog">
+          <h3>AllNovelRead</h3>
+          <div class="steps">
+            <span class="done"></span>
+            <span class="on"></span>
+            <span></span>
+          </div>
+          <div class="muted">1 Descargar JS · <strong style="color:var(--glow)">2 Guardar</strong> · 3 Siguiente</div>
+          <div class="row" style="margin-top:12px"><span class="mono">42 / 328</span><span class="muted">plugin actual</span></div>
+          <div class="bar"><i></i></div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>F</code></div>
+    </article>
+
+    <!-- G -->
+    <article class="proposal">
+      <header>
+        <div class="tag">G · Lista viva</div>
+        <h2>Últimos instalados + actual</h2>
+        <p>Feed corto de checkmarks; el actual con punto azul. Sensación de avance.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog">
+          <div class="row"><h3 style="margin:0">Instalando</h3><span class="mono muted">42/328</span></div>
+          <div class="bar"><i></i></div>
+          <div class="mini-list">
+            <div><span class="dot"></span> 69书吧</div>
+            <div><span class="dot"></span> Agitoon</div>
+            <div><span class="dot"></span> AllNovel</div>
+            <div><span class="dot cur"></span> AllNovelFull…</div>
+          </div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>G</code></div>
+    </article>
+
+    <!-- H -->
+    <article class="proposal">
+      <header>
+        <div class="tag">H · Mínimo Material</div>
+        <h2>Solo fracción + barra fina</h2>
+        <p>Casi el diálogo actual, pero con progreso real. Cambio pequeño, alto impacto.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog" style="text-align:center">
+          <h3>Instalando…</h3>
+          <div class="spin"></div>
+          <div class="mono" style="margin-bottom:6px">42 / 328</div>
+          <div class="bar"><i></i></div>
+          <div class="muted">No cierres la app</div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>H</code></div>
+    </article>
+
+    <!-- I -->
+    <article class="proposal">
+      <header>
+        <div class="tag">I · Porcentaje hero</div>
+        <h2>13% grande + detalle</h2>
+        <p>Porcentaje tipográfico grande; debajo el nombre y la cola.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog" style="text-align:center">
+          <div style="font-family:var(--display);font-size:3rem;line-height:1;color:var(--glow)">13%</div>
+          <div class="muted mono" style="margin:6px 0 10px">42 · 328</div>
+          <div class="bar"><i></i></div>
+          <div class="name">Chikari</div>
+          <div class="chips" style="justify-content:center">
+            <span class="chip ok">39 ok</span>
+            <span class="chip">288 cola</span>
+          </div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>I</code></div>
+    </article>
+
+    <!-- J -->
+    <article class="proposal">
+      <header>
+        <div class="tag">J · Dual track</div>
+        <h2>Descarga + cola</h2>
+        <p>Dos barras: progreso del archivo actual y del lote completo.</p>
+      </header>
+      <div class="phone">
+        <div class="scrim"></div>
+        <div class="dialog">
+          <h3>Instalando…</h3>
+          <div class="muted">Archivo actual</div>
+          <div class="bar"><i style="width:68%"></i></div>
+          <div class="name" style="margin-top:0">FenrirRealm.js</div>
+          <div class="muted" style="margin-top:12px">Lote completo</div>
+          <div class="bar"><i style="width:13%"></i></div>
+          <div class="row muted"><span>42 / 328</span><span class="mono">13%</span></div>
+        </div>
+      </div>
+      <div class="pick">Ref: <code>J</code></div>
+    </article>
+
+  </div>
+</body>
+</html>

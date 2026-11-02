@@ -1337,6 +1337,11 @@ object PluginProviderDialogs {
         }
     }
 
+    /** Public entry for Proveedores propios manager → same actions as the plugin hub. */
+    fun showOptionsForManage(activity: Activity, plugin: InstalledPlugin, onChanged: () -> Unit) {
+        showOptions(activity, plugin, onChanged)
+    }
+
     private fun showOptions(activity: Activity, plugin: InstalledPlugin, onChanged: () -> Unit) {
         val actions = mutableListOf<String>()
         val run = mutableListOf<() -> Unit>()
