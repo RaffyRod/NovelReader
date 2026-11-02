@@ -7,19 +7,25 @@ class LibraryPage extends BasePage {
   }
 
   get searchField() {
-    return this.byTextContains('Buscar mis novelas');
+    return $(
+      'android=new UiSelector().textMatches("(?i).*(Buscar mis novelas|Search my novels).*")',
+    );
   }
 
   get importDropZone() {
-    return this.byText('Importar un libro');
+    return $(
+      'android=new UiSelector().textMatches("(?i).*(Importar un libro|Import a book).*")',
+    );
   }
 
   get importHint() {
-    return this.byTextContains('EPUB o PDF');
+    return this.byTextContains('EPUB');
   }
 
   get continueReading() {
-    return this.byTextContains('Continuar leyendo');
+    return $(
+      'android=new UiSelector().textMatches("(?i).*(Continuar leyendo|Continue reading).*")',
+    );
   }
 
   get sortFab() {

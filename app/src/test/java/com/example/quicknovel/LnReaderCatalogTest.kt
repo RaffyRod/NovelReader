@@ -6,7 +6,6 @@ import com.lagradost.quicknovel.plugins.PluginManifestItem
 import com.lagradost.quicknovel.plugins.PluginTemplateHints
 import com.lagradost.quicknovel.plugins.PluginTemplateKind
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -51,46 +50,29 @@ class LnReaderCatalogTest {
     }
 
     @Test
-    fun madaraTagged_getMadaraConfig_andWpMangaQuery() {
+    fun madaraTagged_detectsMadara_butCatalogInstallDoesNotAutoApplyCss() {
         val madara = catalog.filter {
             PluginTemplateHints.detect(it) == PluginTemplateKind.MADARA
         }
         assertTrue(madara.isNotEmpty())
         madara.take(20).forEach { item ->
-            val config = PluginInstaller.configFromManifest(item)
-            assertNotNull("${item.id} should map to Madara CSS", config)
-            assertTrue(
-                "${item.id} should use wp-manga search",
-                config!!.searchUrl.contains("wp-manga"),
+            assertEquals(PluginTemplateKind.MADARA, PluginTemplateHints.detect(item))
+            // Catalog install no longer floods Custom providers with Madara CSS.
+            assertNull(
+                "${item.id} must not auto-apply Madara CSS on catalog install",
+                PluginInstaller.configFromManifest(item),
             )
         }
     }
 
     @Test
-    fun nonMadara_neverGetWpMangaQuery() {
-        val nonMadara = catalog.filter {
-            PluginTemplateHints.detect(it) != PluginTemplateKind.MADARA
-        }
-        assertTrue(nonMadara.size > 100)
-        nonMadara.forEach { item ->
-            val kind = PluginTemplateHints.detect(item)
-            val config = PluginInstaller.configFromManifest(item)
-            when (kind) {
-                PluginTemplateKind.BLOGGER -> {
-                    assertNotNull(config)
-                    assertFalse(
-                        "${item.id} blogger must not use wp-manga",
-                        config!!.searchUrl.contains("wp-manga"),
-                    )
-                }
-                PluginTemplateKind.UNSUPPORTED_JS -> {
-                    assertNull(
-                        "${item.id} must not invent Madara selectors",
-                        config,
-                    )
-                }
-                PluginTemplateKind.MADARA -> error("filtered out")
-            }
+    fun catalogInstall_neverAutoAppliesCss_forAnyKind() {
+        assertTrue(catalog.size > 100)
+        catalog.forEach { item ->
+            assertNull(
+                "${item.id} (${PluginTemplateHints.detect(item)}) must not auto-map CSS",
+                PluginInstaller.configFromManifest(item),
+            )
         }
     }
 

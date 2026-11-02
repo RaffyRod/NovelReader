@@ -5,10 +5,7 @@ import com.lagradost.quicknovel.plugins.PluginManifestClient
 import com.lagradost.quicknovel.plugins.PluginManifestItem
 import com.lagradost.quicknovel.plugins.PluginTemplateHints
 import com.lagradost.quicknovel.plugins.PluginTemplateKind
-import com.lagradost.quicknovel.providers.CustomProviderConfig
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -76,39 +73,27 @@ class LnReaderCatalogIntegrityTest {
     }
 
     @Test
-    fun untaggedPlugins_neverGetWpMangaSearchUrl() {
+    fun catalogInstall_neverAutoAppliesCss_evenForTaggedMadara() {
         val items = loadCatalog()
         for (item in items) {
-            val taggedMadara =
-                item.url.contains("[madara]", ignoreCase = true) ||
-                    item.iconUrl.contains("multisrc/madara", ignoreCase = true) ||
-                    item.id.contains("[madara]", ignoreCase = true)
-            val config = PluginInstaller.configFromManifest(item)
-            if (!taggedMadara && PluginTemplateHints.detect(item) != PluginTemplateKind.BLOGGER) {
-                assertNull("${item.id} must not invent CSS", config)
-            }
-            if (config != null && config.kind == CustomProviderConfig.KIND_CSS) {
-                assertTrue(
-                    "${item.id} CSS only when Madara tagged",
-                    taggedMadara,
-                )
-                assertTrue(config.searchUrl.contains("wp-manga") || config.searchUrl.contains("{query}"))
-            }
+            assertNull(
+                "${item.id} must not auto-map CSS on catalog install",
+                PluginInstaller.configFromManifest(item),
+            )
         }
     }
 
     @Test
-    fun taggedMadara_getsMadaraTemplate_notBlank() {
+    fun taggedMadara_isDetected_butCatalogInstallDoesNotAutoApplyCss() {
         val items = loadCatalog()
         val sample = items.first {
             it.url.contains("[madara]", ignoreCase = true)
         }
-        val config = PluginInstaller.configFromManifest(sample)
-        assertNotNull(config)
-        assertEquals(CustomProviderConfig.KIND_CSS, config!!.kind)
-        assertTrue(config.searchUrl.contains("wp-manga"))
-        assertFalse(config.baseUrl.isBlank())
-        assertEquals(sample.name, config.name)
+        assertEquals(PluginTemplateKind.MADARA, PluginTemplateHints.detect(sample))
+        assertNull(
+            "Madara CSS is added via URL/JSON (Proveedores propios), not catalog install",
+            PluginInstaller.configFromManifest(sample),
+        )
     }
 
     @Test

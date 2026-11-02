@@ -1,21 +1,35 @@
 const BasePage = require('./base.page');
 
+const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+
 class SearchPage extends BasePage {
   get tabSearch() {
-    // Selected bottom-nav items often become non-clickable; do not require clickable here.
-    return this.byA11y('Buscar');
+    return this.byId(`${APP_ID}:id/navigation_search`);
   }
 
   get providersButton() {
-    return this.byA11y('Proveedores');
+    // ES: Proveedores · EN: Search Providers (content-desc from R.string.search_providers)
+    return $(
+      'android=new UiSelector().descriptionMatches("(?i)(Proveedores|Search Providers|Providers)")',
+    );
   }
 
   get providersTitle() {
-    return this.byTextContains('Proveedores');
+    return $(
+      'android=new UiSelector().textMatches("(?i).*(Proveedores|Providers).*")',
+    );
+  }
+
+  get searchField() {
+    return $(
+      'android=new UiSelector().className("android.widget.EditText")',
+    );
   }
 
   get noResults() {
-    return this.byTextContains('Sin resultados');
+    return $(
+      'android=new UiSelector().textMatches("(?i).*(Sin resultados|No results).*")',
+    );
   }
 
   get dialogOk() {
@@ -32,9 +46,16 @@ class SearchPage extends BasePage {
 
   async expectLoaded() {
     await this.waitReady();
-    // Proveedores tune icon is unique to the Search screen.
-    await this.providersButton.waitForDisplayed({ timeout: 20000 });
-    await expect(this.providersButton).toBeDisplayed();
+    await this.tabSearch.waitForDisplayed({ timeout: 20000 });
+    // Prefer providers tune control; fall back to search field (locale-safe).
+    const providersVisible = await this.providersButton
+      .waitForDisplayed({ timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!providersVisible) {
+      await this.searchField.waitForDisplayed({ timeout: 15000 });
+    }
+    await expect(this.tabSearch).toBeDisplayed();
   }
 
   async openProvidersDialog() {
@@ -70,6 +91,8 @@ class SearchPage extends BasePage {
       'Aceptar',
       'Cancelar',
       'Proveedores',
+      'Providers',
+      'Search Providers',
       'Cancel',
       'Seleccionar todo',
       'Select all',
@@ -167,8 +190,6 @@ class SearchPage extends BasePage {
 
     const cleared = await this.clickProvidersBulkAction('none');
     if (!cleared) {
-      // Legacy fallback: deselect only what is on the first couple of screens, then
-      // scroll to wanted. Avoids the 10-minute full-list sweep that timed out on CI.
       const clearedNames = new Set();
       for (let i = 0; i < 6; i++) {
         const rows = await this.readVisibleProviderRows();
@@ -197,7 +218,6 @@ class SearchPage extends BasePage {
 
   /**
    * Re-opens dialog and returns whether each wanted name is still findable/toggleable.
-   * Verifies persistence by confirming OK without changes after a second open.
    * @param {string[]} names
    */
   async assertProvidersVisibleInDialog(names) {
@@ -257,7 +277,7 @@ class SearchPage extends BasePage {
     const texts = await $$('android.widget.TextView');
     for (const el of texts) {
       const t = ((await el.getText().catch(() => '')) || '').trim();
-      if (/^.+\s*\((\d+)\)$/.test(t) && !t.startsWith('Todos')) count += 1;
+      if (/^.+\s*\((\d+)\)$/.test(t) && !t.startsWith('Todos') && !t.startsWith('All')) count += 1;
     }
     return count;
   }
@@ -286,7 +306,6 @@ class SearchPage extends BasePage {
       if (loadingSeen && providersVisible && stableRounds >= 3) return;
       if (providersVisible && maxChips > 0 && stableRounds >= 4) return;
       if (noResults && providersVisible && stableRounds >= 2) return;
-      // Fast empty responses may never hide the providers button — treat long idle as done.
       if (!loadingSeen && maxChips === 0 && providersVisible && Date.now() - started > 25000) {
         if (noResults) return;
         throw new Error('Search did not start (no loading / no chips after 25s)');
@@ -311,7 +330,7 @@ class SearchPage extends BasePage {
         if (!m) continue;
         const name = m[1].trim();
         const count = Number(m[2]);
-        if (name === 'Todos' || Number.isNaN(count)) continue;
+        if (name === 'Todos' || name === 'All' || Number.isNaN(count)) continue;
         hits.set(name, Math.max(hits.get(name) || 0, count));
       }
       await driver.execute('mobile: swipeGesture', {

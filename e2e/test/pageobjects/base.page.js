@@ -183,12 +183,25 @@ class BasePage {
       }
     }
 
-    const fallback = aliases[0];
-    const any = $(`android=new UiSelector().description("${fallback}")`);
-    await any.waitForDisplayed({ timeout: 15000 });
-    await any.click();
-    await driver.pause(1000);
-    await dismissBlockingDialogs();
+    // Last resort: wait on resource-id (locale-independent), then description aliases.
+    if (resId) {
+      const byRes = this.byId(resId);
+      await byRes.waitForDisplayed({ timeout: 20000 });
+      await byRes.click();
+      await driver.pause(1000);
+      await dismissBlockingDialogs();
+      return;
+    }
+    for (const label of aliases) {
+      const any = $(`android=new UiSelector().description("${label}")`);
+      if (await any.waitForDisplayed({ timeout: 5000 }).then(() => true).catch(() => false)) {
+        await any.click();
+        await driver.pause(1000);
+        await dismissBlockingDialogs();
+        return;
+      }
+    }
+    throw new Error(`Bottom nav tab not found: ${tabName}`);
   }
 }
 

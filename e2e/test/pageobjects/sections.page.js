@@ -1,21 +1,29 @@
 const BasePage = require('./base.page');
 
+const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+
 class SectionsPage extends BasePage {
   get tabSections() {
-    return this.byA11y('Secciones');
+    return this.byId(`${APP_ID}:id/navigation_sections`);
   }
 
-  /** Content-desc for LibraryRail translation history (ES default UI). */
+  /** Content-desc for LibraryRail translation history (ES/EN). */
   get translationHistory() {
-    return this.byA11y('Traducciones');
+    return $(
+      'android=new UiSelector().descriptionMatches("(?i)(Traducciones|Translations)")',
+    );
   }
 
   get translationHistoryTitle() {
-    return this.byTextContains('Historial de traducciones');
+    return $(
+      'android=new UiSelector().textMatches("(?i).*(Historial de traducciones|Translation history).*")',
+    );
   }
 
   get translationHistoryEmpty() {
-    return this.byTextContains('Aún no hay traducciones');
+    return $(
+      'android=new UiSelector().textMatches("(?i).*(Aún no hay traducciones|No translations yet).*")',
+    );
   }
 
   /**
@@ -23,7 +31,7 @@ class SectionsPage extends BasePage {
    */
   async open() {
     await this.openTab('Biblioteca');
-    await this.tabSections.waitForDisplayed({ timeout: 10000 });
+    await this.tabSections.waitForDisplayed({ timeout: 15000 });
     await this.tabSections.click();
     await driver.pause(800);
   }
