@@ -100,17 +100,21 @@ exports.config = {
       'appium:forceAppLaunch': true,
       'appium:shouldTerminateApp': true,
       'appium:autoGrantPermissions': true,
-      'appium:newCommandTimeout': 240,
-      'appium:adbExecTimeout': 120000,
-      'appium:uiautomator2ServerInstallTimeout': 120000,
+      'appium:newCommandTimeout': 300,
+      'appium:adbExecTimeout': 180000,
+      'appium:androidInstallTimeout': 180000,
+      'appium:uiautomator2ServerInstallTimeout': 180000,
+      'appium:uiautomator2ServerLaunchTimeout': 120000,
       'appium:disableWindowAnimation': true,
     },
   ],
   logLevel: process.env.WDIO_LOG_LEVEL || 'info',
   bail: 0,
-  waitforTimeout: process.env.CI_FAST === '1' ? 12000 : 15000,
-  connectionRetryTimeout: process.env.CI_FAST === '1' ? 90000 : 180000,
-  connectionRetryCount: process.env.CI_FAST === '1' ? 1 : 2,
+  waitforTimeout: 15000,
+  // Session create installs APK + UiAutomator2; CI_FAST used to set 90s and caused
+  // UND_ERR_HEADERS_TIMEOUT (~95s) on GH runners. Keep retries for that path only.
+  connectionRetryTimeout: 240000,
+  connectionRetryCount: 2,
   specFileRetries: 0,
   services: useExternalAppium
     ? []
@@ -143,8 +147,7 @@ exports.config = {
   ],
   mochaOpts: {
     ui: 'bdd',
-    timeout: process.env.CI_FAST === '1' ? 120000 : 180000,
-    // CI_FAST keeps one retry for flakes without doubling every suite wall-clock.
+    timeout: 180000,
     retries: process.env.CI ? 1 : 0,
   },
   before: async () => {

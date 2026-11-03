@@ -20,19 +20,46 @@ cleanup() {
 trap cleanup EXIT
 
 adb wait-for-device
+
+echo "Waiting for emulator boot..."
+for _ in $(seq 1 90); do
+  BOOT="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+  if [ "$BOOT" = "1" ]; then
+    echo "boot_completed=1"
+    break
+  fi
+  sleep 2
+done
+if [ "${BOOT:-}" != "1" ]; then
+  echo "Emulator did not report boot_completed=1"
+  adb shell getprop | grep -E 'boot|init' || true
+  exit 1
+fi
+
+# Unlock + settle package manager before Appium session (install + uia2).
+adb shell input keyevent 82 >/dev/null 2>&1 || true
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
+adb shell pm path android >/dev/null
+sleep 3
 
 test -f "$APK"
 test -f "$E2E_DIR/package.json"
-test -f "$APK" && ls -lh "$APK"
+ls -lh "$APK"
+
+# Pre-install so session create is not the first APK push (still may reinstall with noReset:false).
+echo "Pre-installing APK..."
+adb uninstall com.lagradost.quicknovel.ultimate >/dev/null 2>&1 || true
+adb uninstall com.lagradost.quicknovel.ultimate.debug >/dev/null 2>&1 || true
+adb install -r -g "$APK"
+adb shell pm path com.lagradost.quicknovel.ultimate
 
 cd "$E2E_DIR"
 
 # External Appium avoids WDIO appium-service + worker IPC races on GH runners
 npx appium --address "$APPIUM_HOST" --port "$APPIUM_PORT" --relaxed-security \
-  --allow-insecure adb_shell --log-level warn >"$APPIUM_LOG" 2>&1 &
+  --allow-insecure adb_shell --log-level info >"$APPIUM_LOG" 2>&1 &
 APPIUM_PID=$!
 
 echo "Waiting for Appium on ${APPIUM_HOST}:${APPIUM_PORT} (pid ${APPIUM_PID})..."
@@ -52,7 +79,6 @@ curl -sf "http://${APPIUM_HOST}:${APPIUM_PORT}/status" >/dev/null
 
 export APP_PATH="$APK"
 export CI=true
-export CI_FAST="${CI_FAST:-1}"
 export WDIO_LOG_LEVEL="${WDIO_LOG_LEVEL:-warn}"
 export APPIUM_EXTERNAL=1
 export APPIUM_HOST
@@ -62,5 +88,16 @@ export APPIUM_PORT
 # Appium/Android does not need X11 — any non-empty DISPLAY forces plain fork.
 export DISPLAY="${DISPLAY:-:99}"
 
-# One worker for the whole suite (see nested arrays in wdio.conf suites)
+set +e
 ./node_modules/.bin/wdio run ./wdio.conf.js --suite "$SUITE"
+WDIO_EXIT=$?
+set -e
+
+if [ "$WDIO_EXIT" -ne 0 ]; then
+  echo "===== appium-ci.log (tail) ====="
+  tail -n 120 "$APPIUM_LOG" || true
+  echo "===== adb devices ====="
+  adb devices -l || true
+fi
+
+exit "$WDIO_EXIT"
