@@ -174,11 +174,12 @@ jobs:
             ~/.android/avd/*
             ~/.android/adb*
             ${{ steps.sdk.outputs.dir }}/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}
-          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v4
+          # v5: e2e cold-boots (-no-snapshot-load); drop stale default_boot that caused DeadSystemException.
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v5
       - name: Accept SDK licenses
         if: steps.emu-cache.outputs.cache-hit != 'true'
         run: yes | sdkmanager --licenses >/dev/null || true
-      - name: Seed AVD snapshot
+      - name: Seed AVD + system image
         if: steps.emu-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -190,9 +191,10 @@ jobs:
           force-avd-creation: false
           cores: 2
           ram-size: 2048M
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          # Cold boot only — do not bake a default_boot snapshot for e2e to load.
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: echo "AVD snapshot ready for cache"
+          script: echo "AVD + system image ready for cache"
 
   e2e:
     name: E2E ${{ matrix.suite }}
@@ -270,7 +272,7 @@ jobs:
             ~/.android/avd/*
             ~/.android/adb*
             ${{ steps.sdk.outputs.dir }}/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}
-          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v4
+          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v5
       - name: Download APK
         uses: actions/download-artifact@v4
         with:
@@ -295,7 +297,9 @@ jobs:
           force-avd-creation: false
           cores: 2
           ram-size: 2048M
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          # Cold boot: -no-snapshot-save alone still LOADS default_boot → DeadSystemException
+          # on unlock (adb keyevent 82) after a bad/partial snapshot. Skip load entirely.
+          emulator-options: -no-snapshot-load -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # emulator-runner runs EACH script line in a fresh /bin/sh — use one bash file
           script: bash e2e/scripts/ci-run-suite.sh ${{ matrix.suite }}

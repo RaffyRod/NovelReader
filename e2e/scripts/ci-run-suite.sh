@@ -22,8 +22,9 @@ trap cleanup EXIT
 adb wait-for-device
 
 echo "Waiting for emulator boot..."
-for _ in $(seq 1 90); do
-  BOOT="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+BOOT=""
+for _ in $(seq 1 120); do
+  BOOT="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
   if [ "$BOOT" = "1" ]; then
     echo "boot_completed=1"
     break
@@ -32,16 +33,33 @@ for _ in $(seq 1 90); do
 done
 if [ "${BOOT:-}" != "1" ]; then
   echo "Emulator did not report boot_completed=1"
-  adb shell getprop | grep -E 'boot|init' || true
+  adb shell getprop 2>/dev/null | grep -E 'boot|init' || true
   exit 1
 fi
 
-# Unlock + settle package manager before Appium session (install + uia2).
+# Wait until package manager answers (avoids racing a half-dead system after snapshot load).
+echo "Waiting for package manager..."
+PM_OK=0
+for _ in $(seq 1 60); do
+  if adb shell pm path android >/dev/null 2>&1; then
+    PM_OK=1
+    echo "pm path android OK"
+    break
+  fi
+  sleep 2
+done
+if [ "$PM_OK" != "1" ]; then
+  echo "Package manager never became ready"
+  adb devices -l || true
+  exit 1
+fi
+
+# Unlock + settle — never fail the suite on input inject flakes (DeadSystemException).
 adb shell input keyevent 82 >/dev/null 2>&1 || true
-adb shell settings put global window_animation_scale 0
-adb shell settings put global transition_animation_scale 0
-adb shell settings put global animator_duration_scale 0
-adb shell pm path android >/dev/null
+adb shell input keyevent 3 >/dev/null 2>&1 || true
+adb shell settings put global window_animation_scale 0 >/dev/null 2>&1 || true
+adb shell settings put global transition_animation_scale 0 >/dev/null 2>&1 || true
+adb shell settings put global animator_duration_scale 0 >/dev/null 2>&1 || true
 sleep 3
 
 test -f "$APK"
@@ -52,7 +70,19 @@ ls -lh "$APK"
 echo "Pre-installing APK..."
 adb uninstall com.lagradost.quicknovel.ultimate >/dev/null 2>&1 || true
 adb uninstall com.lagradost.quicknovel.ultimate.debug >/dev/null 2>&1 || true
-adb install -r -g "$APK"
+INSTALL_OK=0
+for attempt in 1 2 3; do
+  if adb install -r -g "$APK"; then
+    INSTALL_OK=1
+    break
+  fi
+  echo "adb install attempt $attempt failed; retrying..."
+  sleep 5
+done
+if [ "$INSTALL_OK" != "1" ]; then
+  echo "adb install failed after retries"
+  exit 1
+fi
 adb shell pm path com.lagradost.quicknovel.ultimate
 
 cd "$E2E_DIR"
