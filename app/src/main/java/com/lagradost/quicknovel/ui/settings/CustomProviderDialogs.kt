@@ -220,24 +220,43 @@ object CustomProviderDialogs {
         root.addView(filterEdit)
 
         val selectRow = LinearLayout(activity).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            orientation = LinearLayout.VERTICAL
             setPadding(0, 0, 0, gap / 2)
             visibility = View.GONE
+        }
+        val selectPickRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
         }
         val selectAllBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_select_all)
             isAllCaps = false
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setTextColor(primary)
             background = pillBg(ColorUtils.setAlphaComponent(primary, 28))
         }
         val selectNoneBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_select_none)
             isAllCaps = false
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setTextColor(gray)
         }
-        selectRow.addView(selectAllBtn)
-        selectRow.addView(selectNoneBtn)
+        // In-content delete: AlertDialog Neutral was clipped on CI under Agregar/Hecho.
+        val deleteSelectedBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+            text = activity.getString(R.string.cp_delete_selected)
+            isAllCaps = false
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setTextColor(danger)
+            background = pillBg(ColorUtils.setAlphaComponent(danger, 36))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).also { it.topMargin = gap / 2 }
+        }
+        selectPickRow.addView(selectAllBtn)
+        selectPickRow.addView(selectNoneBtn)
+        selectRow.addView(selectPickRow)
+        selectRow.addView(deleteSelectedBtn)
         root.addView(selectRow)
 
         val cardsHost = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
@@ -377,13 +396,18 @@ object CustomProviderDialogs {
             val neutral = shown.getButton(AlertDialog.BUTTON_NEUTRAL) ?: return@chrome
             val negative = shown.getButton(AlertDialog.BUTTON_NEGATIVE) ?: return@chrome
             val positive = shown.getButton(AlertDialog.BUTTON_POSITIVE) ?: return@chrome
-            positive.setTextColor(primary)
             if (editing) {
-                neutral.text = activity.getString(R.string.cp_delete_selected)
-                neutral.setTextColor(danger)
+                // Footer: only Hecho — delete lives in selectRow (avoids Neutral clip on narrow CI).
+                positive.visibility = View.GONE
+                neutral.visibility = View.GONE
+                negative.visibility = View.VISIBLE
                 negative.text = activity.getString(R.string.done)
                 negative.setTextColor(accent)
             } else {
+                positive.visibility = View.VISIBLE
+                neutral.visibility = View.VISIBLE
+                negative.visibility = View.VISIBLE
+                positive.setTextColor(primary)
                 neutral.text = activity.getString(R.string.cp_edit)
                 neutral.setTextColor(primary)
                 negative.text = activity.getString(R.string.close)
@@ -584,6 +608,7 @@ object CustomProviderDialogs {
             selected.clear()
             renderPage(false)
         }
+        deleteSelectedBtn.setOnClickListener { confirmDeleteSelected() }
         prevBtn.setOnClickListener { goTo(currentPage - 1) }
         nextBtn.setOnClickListener { goTo(currentPage + 1) }
 
@@ -624,9 +649,8 @@ object CustomProviderDialogs {
             pageLabel.setOnClickListener { gotoBtn.performClick() }
 
             shown.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                if (editing) {
-                    confirmDeleteSelected()
-                } else {
+                // Edit mode only — delete is on the in-dialog toolbar (selectRow).
+                if (!editing) {
                     editing = true
                     selected.clear()
                     renderPage(false)
