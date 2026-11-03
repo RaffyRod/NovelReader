@@ -3,6 +3,7 @@ package com.lagradost.quicknovel.ui.mainpage
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -145,20 +146,46 @@ fun MainPageScreen(state: MainPageState, action: (MainPageAction) -> Unit) {
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { innerPadding ->
-        SearchList(
-            lazyGridState = listState,
-            isRow = searchIsRowState,
-            items = if (state.openQuery) state.query.items else state.filter.items,
-            modifier = Modifier
-                .fillMaxSize()
-                // This fixes the double padding from the bottom nav bar
-                .padding(
-                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                    top = innerPadding.calculateTopPadding()
-                ),
-            searchAction = searchAction,
-        )
+        val items = if (state.openQuery) state.query.items else state.filter.items
+        val loading = if (state.openQuery) state.query.loading else state.filter.loading
+        val error = if (state.openQuery) state.query.error else state.filter.error
+        val listPad = Modifier
+            .fillMaxSize()
+            // This fixes the double padding from the bottom nav bar
+            .padding(
+                start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                top = innerPadding.calculateTopPadding()
+            )
+        Box(modifier = listPad) {
+            SearchList(
+                lazyGridState = listState,
+                isRow = searchIsRowState,
+                items = items,
+                modifier = Modifier.fillMaxSize(),
+                searchAction = searchAction,
+            )
+            when {
+                loading && items.isEmpty() -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .align(Alignment.Center),
+                    )
+                }
+                !loading && items.isEmpty() -> {
+                    Text(
+                        text = error?.message?.takeIf { it.isNotBlank() }
+                            ?: stringResource(R.string.search_no_results),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(24.dp),
+                    )
+                }
+            }
+        }
 
         LaunchedEffect(shouldLoadMore.value) {
             if (shouldLoadMore.value && state.filter.error == null && !state.filter.loading) {

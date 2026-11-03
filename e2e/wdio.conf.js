@@ -44,7 +44,23 @@ exports.config = {
         './test/specs/04-history.e2e.js',
       ],
     ],
-    // Split for CI wall-clock: long plugin dialogs must not poison download/sections.
+    // One CI job / one emulator boot for everything after smoke (saves ~4× cold-boot tax).
+    general: [
+      [
+        './test/specs/13-theme-defaults.e2e.js',
+        './test/specs/05-settings.e2e.js',
+        './test/specs/06-import.e2e.js',
+        './test/specs/09-search-special-chars.e2e.js',
+        './test/specs/10-plugins.e2e.js',
+        './test/specs/15-plugin-catalog.e2e.js',
+        './test/specs/11-download-translate.e2e.js',
+        './test/specs/14-sections-translations.e2e.js',
+        './test/specs/07-reader-tts.e2e.js',
+        './test/specs/12-reader-loading.e2e.js',
+        './test/specs/08-providers.e2e.js',
+      ],
+    ],
+    // Kept for local/debug runs (`npm run test:features`, etc.).
     features: [
       [
         './test/specs/13-theme-defaults.e2e.js',

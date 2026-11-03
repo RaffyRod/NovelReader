@@ -209,24 +209,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Fast gate — stays its own emulator job.
           - suite: smoke
             timeout: 25
             soft: false
-          - suite: features
-            timeout: 25
+          # All non-smoke specs in one WDIO run / one emulator cold boot.
+          # (Was 5 parallel jobs × ~10 min boot+setup each.)
+          - suite: general
+            timeout: 55
             soft: false
-          - suite: features-plugins
-            timeout: 25
-            soft: false
-          - suite: features-flows
-            timeout: 25
-            soft: false
-          - suite: reader
-            timeout: 30
-            soft: false
-          - suite: providers
-            timeout: 35
-            soft: true
     steps:
       - name: Free disk space
         run: |

@@ -56,7 +56,8 @@ npm run providers:generate   # refresh list from Apis.kt
 npm test                     # full suite
 npm run test:smoke           # 01–04
 npm run test:features        # 13, 05, 06, 09
-npm run test:features-plugins # 10 + 15 (isolated from nav-heavy flows)
+npm run test:general         # CI non-smoke bundle (one emulator session)
+npm run test:features-plugins # 10 + 15 (local/debug)
 npm run test:features-flows  # 11 + 14
 npm run test:reader          # 07 + 12
 npm run test:theme           # 13 only
@@ -87,14 +88,14 @@ GitHub Actions workflow `.github/workflows/e2e-android.yml` runs on **every push
 | `build-apk` | Assemble + sign APK → artifact |
 | `prepare-emulator` | Seeds **system-images + AVD snapshot** cache (once) |
 | `build-apk` | **x86_64-only** release APK (emulator ABI) |
-| `e2e` (matrix) | Parallel: **smoke**, **features**, **features-plugins**, **features-flows**, **reader**, **providers** (soft) |
+| `e2e` (matrix) | Parallel: **smoke** + **general** (all other specs, one emulator boot) |
 | `allure-report` | Merges Allure shards → HTML artifact |
 
-Speed / reliability notes (target ~10m warm):
-- Cache: AVD + scoped system-image (key v4) + free disk before restore
+Speed / reliability notes:
+- Cache: AVD + scoped system-image + free disk before restore
 - `ci-run-suite.sh` waits `boot_completed`, pre-installs APK, Appium external
 - Session create timeout **240s** (90s `CI_FAST` caused `UND_ERR_HEADERS_TIMEOUT`)
-- Plugin dialogs in **features-plugins**; download/sections in **features-flows**
+- **general** = former features + plugins + flows + reader + providers (avoids 5× cold-boot tax)
 
 **Smoke “canceled” after green:** WDIO can finish (`5 passing`) and then `android-emulator-runner` hits **Terminate Emulator** while a newer push cancels the workflow (`cancel-in-progress`). Concurrency now cancels **only on pull_request**, not on push, so a passed smoke is not flipped by teardown cancel.
 

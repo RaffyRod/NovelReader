@@ -1,6 +1,6 @@
 # Local mirror of .github/workflows/e2e-android.yml matrix suites.
 param(
-    [string[]]$Suites = @("smoke", "features", "features-plugins", "features-flows", "reader", "providers")
+    [string[]]$Suites = @("smoke", "general")
 )
 
 $ErrorActionPreference = "Stop"

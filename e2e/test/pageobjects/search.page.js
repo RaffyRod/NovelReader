@@ -335,17 +335,73 @@ class SearchPage extends BasePage {
   }
 
   /**
-   * True when MainPage / provider browse UI is showing (back affordance or result grid).
+   * True when MainPage / provider browse UI is showing (back affordance, filter row, or no home tune).
+   * Annas Archive keeps an EditText ("Búsqueda …") on MainPage — do not treat that as home.
    */
   async isProviderMainPageOpen() {
     const back = await $(
       'android=new UiSelector().descriptionMatches("(?i)(Navigate up|Atrás|Back|Volver)")',
     );
     if (await back.isDisplayed().catch(() => false)) return true;
-    // Main page often keeps a toolbar title matching the provider; search field may be gone.
-    const field = await this.searchField.isDisplayed().catch(() => false);
+    const filterHint =
+      (await $('android=new UiSelector().textContains("Z-Library")').isDisplayed().catch(() => false)) ||
+      (await $('android=new UiSelector().textContains("Fiction")').isDisplayed().catch(() => false)) ||
+      (await $('android=new UiSelector().textContains("English")').isDisplayed().catch(() => false));
+    if (filterHint) return true;
     const providers = await this.providersButton.isDisplayed().catch(() => false);
-    return !field && !providers;
+    if (providers) return false;
+    const busqueda = await $(
+      'android=new UiSelector().textContains("Búsqueda")',
+    ).isDisplayed().catch(() => false);
+    if (busqueda) return true;
+    const field = await this.searchField.isDisplayed().catch(() => false);
+    return !field;
+  }
+
+  /**
+   * After opening a provider tile: wait until spinner settles, then require cards or an error/empty label.
+   * Soft-passes only when host is clearly blocked (DDoS / Cloudflare message).
+   * @param {number} timeoutMs
+   * @returns {Promise<{ok:boolean, blocked:boolean, hasCards:boolean, emptyOrError:boolean}>}
+   */
+  async waitProviderMainPageSettled(timeoutMs = 90000) {
+    const started = Date.now();
+    let hasCards = false;
+    let emptyOrError = false;
+    let blocked = false;
+    while (Date.now() - started < timeoutMs) {
+      const progress = await $('android=new UiSelector().className("android.widget.ProgressBar")')
+        .isDisplayed()
+        .catch(() => false);
+      const noResults =
+        (await this.noResults.isDisplayed().catch(() => false)) ||
+        (await $('android=new UiSelector().textContains("blocked")').isDisplayed().catch(() => false)) ||
+        (await $('android=new UiSelector().textContains("no books")').isDisplayed().catch(() => false)) ||
+        (await $('android=new UiSelector().textContains("Sin resultados")').isDisplayed().catch(() => false));
+      const ddos =
+        (await $('android=new UiSelector().textContains("DDoS")').isDisplayed().catch(() => false)) ||
+        (await $('android=new UiSelector().textContains("Cloudflare")').isDisplayed().catch(() => false)) ||
+        (await $('android=new UiSelector().textContains("Checking your browser")').isDisplayed().catch(() => false));
+      // Rough card signal: several TextViews below the filter row once ProgressBar is gone.
+      const texts = await $$('android.widget.TextView');
+      let titleish = 0;
+      for (const el of texts.slice(0, 40)) {
+        const t = ((await el.getText().catch(() => '')) || '').trim();
+        if (t.length >= 8 && !/^(English|Spanish|Fiction|Z-Library|Buscar|Search)/i.test(t)) {
+          titleish += 1;
+        }
+      }
+      hasCards = titleish >= 3;
+      emptyOrError = noResults;
+      blocked = ddos || /blocked|DDoS|Cloudflare/i.test(
+        (await $('android=new UiSelector().textContains("Annas")').getText().catch(() => '')) || '',
+      );
+      if (!progress && (hasCards || emptyOrError || blocked)) {
+        return { ok: hasCards || emptyOrError || blocked, blocked, hasCards, emptyOrError };
+      }
+      await driver.pause(1500);
+    }
+    return { ok: hasCards || emptyOrError || blocked, blocked, hasCards, emptyOrError };
   }
 
   /**

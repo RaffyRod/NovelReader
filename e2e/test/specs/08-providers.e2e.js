@@ -110,13 +110,19 @@ describe('Providers', function () {
       return;
     }
 
-    // MainPage chrome varies (Compose toolbar / host down). Grid listing is the hard gate.
     const onMain = await searchPage.isProviderMainPageOpen();
+    const settled = await searchPage.waitProviderMainPageSettled(90000);
     allure.addAttachment(
       'buscar-tile-navigation',
-      Buffer.from(JSON.stringify({ opened: true, onMain }, null, 2)),
+      Buffer.from(JSON.stringify({ opened: true, onMain, settled }, null, 2)),
       'application/json',
     );
+    // Must leave the home grid. Content may be cards, explicit empty/error, or soft-blocked host.
+    expect(onMain || settled.ok).toBe(true);
+    if (!settled.hasCards && !settled.emptyOrError && !settled.blocked) {
+      // Blank forever (spinner→void) is a regression — Annas DDoS used to do this.
+      expect(settled.ok).toBe(true);
+    }
     await driver.back().catch(() => {});
     await driver.pause(800);
     await searchPage.open();
