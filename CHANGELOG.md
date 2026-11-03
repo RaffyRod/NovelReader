@@ -4,6 +4,30 @@ All notable changes to **QuickNovel Ultimate** are listed here.
 Manual **Release → Telegram** auto-bumps `versionName` / `versionCode` when there are
 new commits since the last `v2.*` tag, then posts style **D** from `### Added` / `### Fixed`.
 
+## 2.0.2
+
+### Added
+- cut e2e to ~10m
+- README 2.0.0 shots
+- manual release only
+
+### Fixed
+- Appium session timeout
+- android dir ownership
+- CI disk for emu cache
+- e2e ignore prep fail
+- emulator cache prep
+- CI abiFilter x86_64
+- tutorial provider hint
+- TTS tutorial e2e
+- UI + CI e2e split
+- manage proveedores
+- ci catalog e2e
+- catalog 2.0.1
+
+### Notes
+- versionCode 202
+
 ## 2.0.1
 
 ### Added
