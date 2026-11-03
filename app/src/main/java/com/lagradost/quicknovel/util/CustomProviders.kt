@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets
 /** Saves the providers the user created and keeps the provider lists up to date. */
 object CustomProviders {
     private const val FOLDER = "custom_provider"
+    /** Names of customs we have already auto-seeded into Search (survives user toggles). */
+    private const val KNOWN_CUSTOMS_KEY = "custom_providers_known_for_search"
 
     /**
      * Stable, collision-free preference key for any Unicode [name].
@@ -87,23 +89,42 @@ object CustomProviders {
     }
 
     /**
-     * Ensures every saved custom provider is enabled for search and its language is allowed.
-     * Call before a novel search so newly added providers are queried even if the UI still
-     * holds a stale provider snapshot.
+     * Returns the current Search multi-select set and ensures languages for **enabled**
+     * customs are allowed.
+     *
+     * Does **not** re-enable customs the user turned off in Proveedores / Fuentes — new
+     * installs already call [enableInSearch] via [save]. Re-adding every custom on each
+     * search was forcing “others” to appear after scoping to one site (e.g. Wattpad).
      */
     fun syncEnabledInSearch(context: Context): Set<String> {
         val customs = load()
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
         val providersKey = context.getString(R.string.search_providers_list_key)
-        val savedProviders = HashSet(
-            settings.getStringSet(providersKey, null) ?: Apis.apis.map { it.name },
-        )
+        val raw = settings.getStringSet(providersKey, null)
+        val savedProviders = HashSet(raw ?: Apis.apis.map { it.name })
+        // Auto-enable only customs never seen before — never re-enable user-disabled ones.
+        val known = HashSet(settings.getStringSet(KNOWN_CUSTOMS_KEY, emptySet()) ?: emptySet())
         var providersChanged = false
+        var knownChanged = false
         for (config in customs) {
-            if (savedProviders.add(config.name)) providersChanged = true
+            val name = config.name.trim()
+            if (name.isEmpty()) continue
+            if (known.add(name)) {
+                knownChanged = true
+                if (savedProviders.add(name)) providersChanged = true
+            }
         }
-        if (providersChanged) {
-            settings.edit().putStringSet(providersKey, HashSet(savedProviders)).apply()
+        if (raw == null && customs.isNotEmpty()) {
+            for (config in customs) {
+                val name = config.name.trim()
+                if (name.isNotEmpty() && savedProviders.add(name)) providersChanged = true
+            }
+        }
+        if (providersChanged || knownChanged) {
+            val edit = settings.edit()
+            if (providersChanged) edit.putStringSet(providersKey, HashSet(savedProviders))
+            if (knownChanged) edit.putStringSet(KNOWN_CUSTOMS_KEY, HashSet(known))
+            edit.apply()
         }
 
         val langKey = context.getString(R.string.provider_lang_key)
@@ -111,6 +132,7 @@ object CustomProviders {
         if (savedLangs != null) {
             var langsChanged = false
             for (config in customs) {
+                if (config.name !in savedProviders) continue
                 if (config.lang.isNotBlank() && savedLangs.add(config.lang)) langsChanged = true
             }
             if (langsChanged) {
@@ -123,8 +145,12 @@ object CustomProviders {
     /** New providers start enabled for search, otherwise they would not show up in the results. */
     private fun enableInSearch(context: Context, config: CustomProviderConfig, replacing: String?) {
         setSearchEnabled(context, config.name, enabled = true, replacing = replacing)
-        val langKey = context.getString(R.string.provider_lang_key)
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
+        val known = HashSet(settings.getStringSet(KNOWN_CUSTOMS_KEY, emptySet()) ?: emptySet())
+        if (known.add(config.name.trim())) {
+            settings.edit().putStringSet(KNOWN_CUSTOMS_KEY, HashSet(known)).apply()
+        }
+        val langKey = context.getString(R.string.provider_lang_key)
         settings.getStringSet(langKey, null)?.let { saved ->
             val langs = HashSet(saved).apply { add(config.lang) }
             settings.edit().putStringSet(langKey, HashSet(langs)).apply()

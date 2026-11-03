@@ -84,9 +84,17 @@ class LnReaderCatalogIntegrityTest {
                 when (PluginTemplateHints.detect(item)) {
                     PluginTemplateKind.BLOGGER ->
                         assertEquals(item.id, CustomProviderConfig.KIND_BLOGGER, cfg!!.kind)
-                    else -> {
+                    PluginTemplateKind.MADARA -> {
                         assertEquals(item.id, CustomProviderConfig.KIND_CSS, cfg!!.kind)
-                        assertTrue(item.id, cfg.searchUrl.contains("wp-manga"))
+                        assertEquals(item.id, CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, cfg.searchUrl)
+                        assertTrue(item.id, cfg.chaptersViaAjax)
+                        assertTrue(item.id, !cfg.searchUrl.contains("wp-manga"))
+                    }
+                    PluginTemplateKind.UNSUPPORTED_JS -> {
+                        assertEquals(item.id, CustomProviderConfig.KIND_CSS, cfg!!.kind)
+                        assertEquals(item.id, "/?s={query}", cfg.searchUrl)
+                        assertTrue(item.id, !cfg.searchUrl.contains("wp-manga"))
+                        assertTrue(item.id, !cfg.chaptersViaAjax)
                     }
                 }
             }
@@ -103,7 +111,10 @@ class LnReaderCatalogIntegrityTest {
         items.forEach { item ->
             assertEquals(item.id, PluginTemplateKind.UNSUPPORTED_JS, PluginTemplateHints.detect(item))
             if (item.site.isNotBlank()) {
-                assertNotNull(item.id, PluginInstaller.configFromManifest(item))
+                val cfg = PluginInstaller.configFromManifest(item)
+                assertNotNull(item.id, cfg)
+                assertTrue(item.id, !cfg!!.searchUrl.contains("wp-manga"))
+                assertTrue(item.id, !cfg.chaptersViaAjax)
             }
         }
     }

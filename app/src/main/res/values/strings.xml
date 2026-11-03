@@ -491,7 +491,7 @@
     <string name="plugin_meta_in_search">Search ON</string>
     <string name="plugin_hub_smart_banner">Like LNReader: installing a plugin adds it to Search. · %1$d in Search · %2$d pending</string>
     <string name="plugin_cards_page">Page %1$d/%2$d · showing %3$d–%4$d of %5$d</string>
-    <string name="plugin_cards_filter_hint">Search by name…</string>
+    <string name="plugin_cards_filter_hint">Search by name or site…</string>
     <string name="plugin_hub_filter_count">Showing %1$d of %2$d</string>
     <string name="plugin_hub_search_empty">No plugins match</string>
     <string name="plugin_select_none">Select none</string>
@@ -536,6 +536,7 @@
     <string name="plugin_update_all_done">Updated %1$d plugin(s)</string>
     <string name="cp_none">No custom providers yet</string>
     <string name="cp_edit">Edit</string>
+    <string name="cp_select">Select</string>
     <string name="cp_delete">Delete</string>
     <string name="cp_save">Save</string>
     <string name="cp_delete_confirm">Delete this provider? The novels you already downloaded are kept.</string>

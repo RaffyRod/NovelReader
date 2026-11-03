@@ -11,8 +11,10 @@ import java.io.File
  * Installs a catalog plugin into Ultimate.
  *
  * LNReader-like: any install with a site URL is mapped into **Search** immediately.
- * Tagged Madara / Blogger use that template; other JS plugins get Madara as the default
- * CSS bridge (Ultimate has no JS plugin runtime). No site URL → cannot join Search.
+ * Tagged Madara / Blogger use that template; other JS plugins get a generic site bridge
+ * Madara stores plain `/?s={query}`; runtime browse tries LN `post_type=wp-manga` then home.
+ * Untagged JS never invents Madara/`wp-manga` in saved searchUrl.
+ * No site URL → cannot join Search.
  */
 object PluginInstaller {
 
@@ -35,9 +37,12 @@ object PluginInstaller {
                 lang = lang,
                 iconUrl = item.iconUrl,
             )
-            // Madara tag OR untagged JS: Madara CSS bridge so Search works like LN auto-add.
-            PluginTemplateKind.MADARA,
-            PluginTemplateKind.UNSUPPORTED_JS -> CustomProviderConfig.madaraTemplate(name, base).copy(
+            PluginTemplateKind.MADARA -> CustomProviderConfig.madaraTemplate(name, base).copy(
+                lang = lang,
+                iconUrl = item.iconUrl,
+            )
+            // Untagged JS: generic bridge — no Madara ajax / wp-manga.
+            PluginTemplateKind.UNSUPPORTED_JS -> CustomProviderConfig.siteBridgeTemplate(name, base).copy(
                 lang = lang,
                 iconUrl = item.iconUrl,
             )
@@ -110,9 +115,9 @@ object PluginInstaller {
 
         val kind = when {
             config == null -> "js"
-            config.isBlogger -> "blogger"
-            detected == PluginTemplateKind.BLOGGER -> "blogger"
-            else -> "madara"
+            config.isBlogger || detected == PluginTemplateKind.BLOGGER -> "blogger"
+            detected == PluginTemplateKind.MADARA -> "madara"
+            else -> "css"
         }
         val installed = InstalledPlugin(
             id = item.id,

@@ -35,7 +35,7 @@ data class PluginRepo(
  * (Madara/Blogger only when the catalog tags that template). Otherwise only the JS file is kept
  * until the user configures selectors manually — we never invent Madara fields for every plugin.
  *
- * [templateKind] is one of: `madara`, `blogger`, `js` (empty treated as js for older installs).
+ * [templateKind] is one of: `madara`, `blogger`, `css`, `js` (empty treated as js for older installs).
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class InstalledPlugin(
@@ -54,7 +54,7 @@ data class InstalledPlugin(
     val installedAt: Long = System.currentTimeMillis(),
     val jsPath: String = "",
     val cssMapped: Boolean = providerName.isNotBlank(),
-    val templateKind: String = if (cssMapped) "madara" else "js",
+    val templateKind: String = if (cssMapped) "css" else "js",
 ) {
     val hasUpdate: Boolean
         get() = latestVersion.isNotBlank() && latestVersion != version

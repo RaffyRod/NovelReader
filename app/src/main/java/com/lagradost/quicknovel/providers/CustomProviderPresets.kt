@@ -38,9 +38,11 @@ object CustomProviderPresets {
         lang: String,
         kind: String? = null,
     ): List<CustomProviderConfig> {
+        // Generic bridge first — never default every new site to Madara/wp-manga.
+        val bridge = CustomProviderConfig.siteBridgeTemplate(name, baseUrl).copy(lang = lang)
         val madara = CustomProviderConfig.madaraTemplate(name, baseUrl).copy(lang = lang)
         val blogger = CustomProviderConfig.bloggerTemplate(name, baseUrl).copy(lang = lang)
-        val sites = listOf(madara, madara.copy(chaptersViaAjax = false))
+        val sites = listOf(bridge, madara, madara.copy(chaptersViaAjax = false))
         return when (kind) {
             CustomProviderConfig.KIND_BLOGGER -> listOf(blogger)
             CustomProviderConfig.KIND_CSS -> sites

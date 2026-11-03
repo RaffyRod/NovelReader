@@ -59,10 +59,17 @@ class LnReaderCatalogTest {
             when (PluginTemplateHints.detect(item)) {
                 PluginTemplateKind.BLOGGER ->
                     assertEquals(item.id, CustomProviderConfig.KIND_BLOGGER, cfg!!.kind)
-                PluginTemplateKind.MADARA,
+                PluginTemplateKind.MADARA -> {
+                    assertEquals(item.id, CustomProviderConfig.KIND_CSS, cfg!!.kind)
+                    assertEquals(item.id, CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, cfg.searchUrl)
+                    assertTrue(item.id, cfg.chaptersViaAjax)
+                    assertTrue(item.id, !cfg.searchUrl.contains("wp-manga"))
+                }
                 PluginTemplateKind.UNSUPPORTED_JS -> {
                     assertEquals(item.id, CustomProviderConfig.KIND_CSS, cfg!!.kind)
-                    assertTrue(item.id, cfg.searchUrl.contains("wp-manga"))
+                    assertEquals(item.id, "/?s={query}", cfg.searchUrl)
+                    assertTrue(item.id, !cfg.searchUrl.contains("wp-manga"))
+                    assertTrue(item.id, !cfg.chaptersViaAjax)
                 }
             }
         }

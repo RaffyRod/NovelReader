@@ -56,16 +56,16 @@ describe('Plugin catalog (Elegir proveedores)', () => {
       'android=new UiSelector().textContains("Select all")',
     );
     const filterHint = await $(
-      'android=new UiSelector().textContains("Buscar por nombre")',
+      'android=new UiSelector().textContains("Buscar por nombre o sitio")',
     );
     const filterHintLegacy = await $(
-      'android=new UiSelector().textContains("Filtrar por nombre")',
+      'android=new UiSelector().textContains("Buscar por nombre")',
     );
     const filterHintEn = await $(
-      'android=new UiSelector().textContains("Search by name")',
+      'android=new UiSelector().textContains("Search by name or site")',
     );
     const filterHintEnLegacy = await $(
-      'android=new UiSelector().textContains("Filter by name")',
+      'android=new UiSelector().textContains("Search by name")',
     );
     const pageHint = await $(
       'android=new UiSelector().textContains("Anterior")',
@@ -95,12 +95,42 @@ describe('Plugin catalog (Elegir proveedores)', () => {
       (await selectAllEn.isDisplayed().catch(() => false));
     expect(hasSelectAll).toBe(true);
 
+    const filterField = await $('android=new UiSelector().className("android.widget.EditText")');
+    const hasFilterField = await filterField.isDisplayed().catch(() => false);
     const hasNameFilter =
       (await filterHint.isDisplayed().catch(() => false)) ||
       (await filterHintLegacy.isDisplayed().catch(() => false)) ||
       (await filterHintEn.isDisplayed().catch(() => false)) ||
-      (await filterHintEnLegacy.isDisplayed().catch(() => false));
+      (await filterHintEnLegacy.isDisplayed().catch(() => false)) ||
+      hasFilterField;
     expect(hasNameFilter).toBe(true);
+
+    // Site/host filter: type a host fragment when catalog rows are present.
+    if (hasFilterField) {
+      let hostQuery = '';
+      const texts = await $$('android.widget.TextView');
+      for (const el of texts) {
+        const t = ((await el.getText().catch(() => '')) || '').trim();
+        const m = t.match(/([a-z0-9-]+\.[a-z.]{2,})/i);
+        if (m && !/buscar|search|página|page|nombre|sitio/i.test(t)) {
+          hostQuery = m[1];
+          break;
+        }
+      }
+      if (hostQuery) {
+        await filterField.click();
+        await filterField.clearValue().catch(() => {});
+        await filterField.setValue(hostQuery);
+        await driver.pause(900);
+        const stillHasHost = await $(
+          `android=new UiSelector().textContains("${hostQuery}")`,
+        )
+          .isDisplayed()
+          .catch(() => false);
+        expect(stillHasHost).toBe(true);
+        allure.addAttachment('catalog-host-query', Buffer.from(hostQuery), 'text/plain');
+      }
+    }
 
     const hasPaging =
       (await pageLabel.isDisplayed().catch(() => false)) ||

@@ -10,8 +10,17 @@ class SearchPage extends BasePage {
   get providersButton() {
     // ES: Proveedores · EN: Search Providers (content-desc from R.string.search_providers)
     return $(
-      'android=new UiSelector().descriptionMatches("(?i)(Proveedores|Search Providers|Providers)")',
+      'android=new UiSelector().descriptionMatches("(?i).*(Proveedores|Search Providers|Providers).*")',
     );
+  }
+
+  /** Fallback when content-desc is missing on Compose IconButton. */
+  get providersButtonByDescContains() {
+    return $('android=new UiSelector().descriptionContains("Proveedor")');
+  }
+
+  get providersButtonEn() {
+    return $('android=new UiSelector().descriptionContains("Provider")');
   }
 
   get providersTitle() {
@@ -58,9 +67,41 @@ class SearchPage extends BasePage {
     await expect(this.tabSearch).toBeDisplayed();
   }
 
+  /**
+   * Resolves the Search tune / providers IconButton with locale fallbacks.
+   * @returns {Promise<WebdriverIO.Element|null>}
+   */
+  async findProvidersButton() {
+    const candidates = [
+      this.providersButton,
+      this.providersButtonByDescContains,
+      this.providersButtonEn,
+      $(`~Proveedores`),
+      $(`~Search Providers`),
+      $(`~Providers`),
+    ];
+    for (const el of candidates) {
+      if (await el.isDisplayed().catch(() => false)) return el;
+    }
+    for (const el of candidates) {
+      const ok = await el
+        .waitForDisplayed({ timeout: 4000 })
+        .then(() => true)
+        .catch(() => false);
+      if (ok) return el;
+    }
+    return null;
+  }
+
   async openProvidersDialog() {
-    await this.providersButton.waitForDisplayed({ timeout: 15000 });
-    await this.providersButton.click();
+    // Ensure home Search (not results) so the tune IconButton is visible.
+    await this.open();
+    await this.expectLoaded();
+    const btn = await this.findProvidersButton();
+    if (!btn) {
+      throw new Error('Providers multi-select button not found on Buscar');
+    }
+    await btn.click();
     await driver.pause(1000);
     const ok = await this.dialogOk.isExisting().catch(() => false);
     const aceptar = await this.dialogAceptar.isExisting().catch(() => false);
@@ -240,6 +281,71 @@ class SearchPage extends BasePage {
       found: [...found],
       missing: names.filter((n) => !found.has(n)),
     };
+  }
+
+  /**
+   * Counts TextViews that look like provider tiles on the Buscar grid (excludes chrome).
+   * @returns {Promise<number>}
+   */
+  async countVisibleProviderTiles() {
+    const skip = /^(buscar|search|proveedores|providers|recientes|recent|popular|todos|all|sin resultados|no results)$/i;
+    const texts = await $$('android.widget.TextView');
+    let count = 0;
+    for (const el of texts) {
+      const label = ((await el.getText().catch(() => '')) || '').trim();
+      if (!label || label.length < 2 || label.length > 48) continue;
+      if (skip.test(label)) continue;
+      if (/^\d+$/.test(label)) continue;
+      if (/\(\d+\)$/.test(label)) continue;
+      count += 1;
+    }
+    return count;
+  }
+
+  /**
+   * Opens a provider tile from the Buscar grid by visible name (scrolls a few times).
+   * @param {string} name
+   * @returns {Promise<boolean>}
+   */
+  async openProviderTileByName(name) {
+    const needle = name.trim().toLowerCase();
+    for (let pass = 0; pass < 8; pass++) {
+      const texts = await $$('android.widget.TextView');
+      for (const el of texts) {
+        const label = ((await el.getText().catch(() => '')) || '').trim();
+        if (!label) continue;
+        const plain = label.toLowerCase();
+        if (plain === needle || plain.includes(needle)) {
+          await el.click();
+          await driver.pause(1500);
+          return true;
+        }
+      }
+      await driver.execute('mobile: scrollGesture', {
+        left: 80,
+        top: 500,
+        width: 500,
+        height: 1100,
+        direction: 'down',
+        percent: 0.7,
+      });
+      await driver.pause(400);
+    }
+    return false;
+  }
+
+  /**
+   * True when MainPage / provider browse UI is showing (back affordance or result grid).
+   */
+  async isProviderMainPageOpen() {
+    const back = await $(
+      'android=new UiSelector().descriptionMatches("(?i)(Navigate up|Atrás|Back|Volver)")',
+    );
+    if (await back.isDisplayed().catch(() => false)) return true;
+    // Main page often keeps a toolbar title matching the provider; search field may be gone.
+    const field = await this.searchField.isDisplayed().catch(() => false);
+    const providers = await this.providersButton.isDisplayed().catch(() => false);
+    return !field && !providers;
   }
 
   /**

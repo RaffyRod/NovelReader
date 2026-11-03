@@ -12,10 +12,11 @@ class SearchCustomProvidersFilterTest {
     private class FakeApi(
         override val name: String,
         override val lang: String,
+        override val hasMainPage: Boolean = true,
     ) : MainAPI()
 
     @Test
-    fun filterApis_includesCustomWhenNameAndLangAllowed() {
+    fun filterApis_selectedNamesWinOverLanguage() {
         val vm = HomeViewModel2()
         val apis = listOf(
             FakeApi("Royal Road", "en"),
@@ -29,15 +30,29 @@ class SearchCustomProvidersFilterTest {
             languages = persistentSetOf("es"),
         )
 
-        assertEquals(listOf("SkyNovels Custom"), filtered.map { it.name })
+        // Buscar grid must list every Fuentes-enabled name, including English when ES-only.
+        assertEquals(
+            listOf("Royal Road", "SkyNovels Custom", "AllNovel"),
+            filtered.map { it.name },
+        )
     }
 
     @Test
-    fun filterApis_emptyFilters_returnsNone() {
+    fun filterApis_emptyNames_filtersByLanguageOnly() {
         val vm = HomeViewModel2()
-        val apis = listOf(FakeApi("X", "es")).toImmutableList()
-        assertTrue(vm.filterApis(apis, persistentSetOf(), persistentSetOf("es")).isEmpty())
-        assertTrue(vm.filterApis(apis, persistentSetOf("X"), persistentSetOf()).isEmpty())
+        val apis = listOf(
+            FakeApi("Royal Road", "en"),
+            FakeApi("SkyNovels", "es"),
+        ).toImmutableList()
+        assertEquals(
+            listOf("SkyNovels"),
+            vm.filterApis(apis, persistentSetOf(), persistentSetOf("es")).map { it.name },
+        )
+        assertEquals(
+            listOf("Royal Road"),
+            vm.filterApis(apis, persistentSetOf("Royal Road"), persistentSetOf()).map { it.name },
+        )
+        assertTrue(vm.filterApis(apis, persistentSetOf(), persistentSetOf()).isEmpty())
     }
 
     @Test
@@ -53,6 +68,23 @@ class SearchCustomProvidersFilterTest {
             languages = persistentSetOf("es", "en"),
         )
         assertEquals(listOf("Royal Road", "Mi Blog Custom"), filtered.map { it.name })
+    }
+
+    @Test
+    fun filterApis_and_apisForSearch_agreeWhenNamesSelected() {
+        val vm = HomeViewModel2()
+        val apis = listOf(
+            FakeApi("Royal Road", "en"),
+            FakeApi("AllNovel", "en"),
+            FakeApi("SkyNovels", "es"),
+            FakeApi("Hidden", "zh"),
+        ).toImmutableList()
+        val names = persistentSetOf("Royal Road", "AllNovel", "SkyNovels")
+        val languages = persistentSetOf("es")
+        assertEquals(
+            vm.apisForSearch(apis, names, languages).map { it.name },
+            vm.filterApis(apis, names, languages).map { it.name },
+        )
     }
 
     @Test

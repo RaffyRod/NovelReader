@@ -24,7 +24,7 @@
       "mainUrl": "https://allnovel.org",
       "ok": false,
       "status": 403,
-      "bytes": 5585,
+      "bytes": 5542,
       "error": null
     },
     {
@@ -60,7 +60,7 @@
       "mainUrl": "https://brightnovels.com",
       "ok": true,
       "status": 200,
-      "bytes": 81230,
+      "bytes": 81020,
       "error": null
     },
     {
@@ -69,7 +69,7 @@
       "mainUrl": "https://chrysanthemumgarden.com",
       "ok": true,
       "status": 200,
-      "bytes": 7849,
+      "bytes": 7848,
       "error": null
     },
     {
@@ -87,7 +87,7 @@
       "mainUrl": "https://devilnovels.com",
       "ok": true,
       "status": 200,
-      "bytes": 162070,
+      "bytes": 161591,
       "error": null
     },
     {
@@ -96,7 +96,7 @@
       "mainUrl": "https://www.fanmtl.com",
       "ok": true,
       "status": 200,
-      "bytes": 65493,
+      "bytes": 65022,
       "error": null
     },
     {
@@ -105,7 +105,7 @@
       "mainUrl": "https://faqwiki.us/novel",
       "ok": true,
       "status": 200,
-      "bytes": 540130,
+      "bytes": 540126,
       "error": null
     },
     {
@@ -114,7 +114,7 @@
       "mainUrl": "https://fenrirealm.com",
       "ok": true,
       "status": 200,
-      "bytes": 421079,
+      "bytes": 419980,
       "error": null
     },
     {
@@ -141,7 +141,7 @@
       "mainUrl": "https://galaxynovels.com",
       "ok": true,
       "status": 200,
-      "bytes": 709892,
+      "bytes": 706589,
       "error": null
     },
     {
@@ -150,7 +150,7 @@
       "mainUrl": "https://hiraethtranslation.com",
       "ok": true,
       "status": 200,
-      "bytes": 347834,
+      "bytes": 347890,
       "error": null
     },
     {
@@ -159,7 +159,7 @@
       "mainUrl": "https://indowebnovel.id",
       "ok": true,
       "status": 200,
-      "bytes": 63373,
+      "bytes": 63391,
       "error": null
     },
     {
@@ -168,7 +168,7 @@
       "mainUrl": "https://free.kolnovel.com",
       "ok": true,
       "status": 200,
-      "bytes": 381757,
+      "bytes": 343010,
       "error": null
     },
     {
@@ -177,7 +177,7 @@
       "mainUrl": "https://libread.com",
       "ok": true,
       "status": 200,
-      "bytes": 171808,
+      "bytes": 171787,
       "error": null
     },
     {
@@ -186,7 +186,7 @@
       "mainUrl": "https://lightnovelstranslations.com",
       "ok": true,
       "status": 200,
-      "bytes": 267392,
+      "bytes": 268867,
       "error": null
     },
     {
@@ -204,7 +204,7 @@
       "mainUrl": "https://lnmtl.com",
       "ok": true,
       "status": 200,
-      "bytes": 48116,
+      "bytes": 47991,
       "error": null
     },
     {
@@ -213,7 +213,7 @@
       "mainUrl": "https://lunoxscans.com",
       "ok": true,
       "status": 200,
-      "bytes": 954222,
+      "bytes": 954393,
       "error": null
     },
     {
@@ -240,7 +240,7 @@
       "mainUrl": "https://www.nobadnovel.com",
       "ok": true,
       "status": 200,
-      "bytes": 34691,
+      "bytes": 34737,
       "error": null
     },
     {
@@ -249,7 +249,7 @@
       "mainUrl": "https://novelasligeras.net",
       "ok": false,
       "status": 403,
-      "bytes": 313588,
+      "bytes": 313567,
       "error": null
     },
     {
@@ -258,7 +258,7 @@
       "mainUrl": "https://novelping.com",
       "ok": true,
       "status": 200,
-      "bytes": 138073,
+      "bytes": 133281,
       "error": null
     },
     {
@@ -294,7 +294,7 @@
       "mainUrl": "https://novelfull.com",
       "ok": false,
       "status": 403,
-      "bytes": 5606,
+      "bytes": 5585,
       "error": null
     },
     {
@@ -303,7 +303,7 @@
       "mainUrl": "https://novelight.net",
       "ok": true,
       "status": 200,
-      "bytes": 65897,
+      "bytes": 66084,
       "error": null
     },
     {
@@ -312,7 +312,7 @@
       "mainUrl": "https://novelmania.com.br",
       "ok": true,
       "status": 200,
-      "bytes": 380604,
+      "bytes": 380171,
       "error": null
     },
     {
@@ -321,7 +321,7 @@
       "mainUrl": "https://novelfrance.fr",
       "ok": false,
       "status": 403,
-      "bytes": 6316,
+      "bytes": 6342,
       "error": null
     },
     {
@@ -339,7 +339,7 @@
       "mainUrl": "https://novelphoenix.com",
       "ok": true,
       "status": 200,
-      "bytes": 110563,
+      "bytes": 109753,
       "error": null
     },
     {
@@ -348,7 +348,7 @@
       "mainUrl": "https://pawread.com",
       "ok": true,
       "status": 200,
-      "bytes": 74569,
+      "bytes": 74716,
       "error": null
     },
     {
@@ -366,7 +366,7 @@
       "mainUrl": "https://ranobes.net",
       "ok": false,
       "status": 503,
-      "bytes": 18139,
+      "bytes": 17359,
       "error": null
     },
     {
@@ -384,7 +384,7 @@
       "mainUrl": "https://ranobehub.org",
       "ok": true,
       "status": 200,
-      "bytes": 272798,
+      "bytes": 268286,
       "error": null
     },
     {
@@ -402,7 +402,7 @@
       "mainUrl": "https://readhive.org",
       "ok": true,
       "status": 200,
-      "bytes": 118604,
+      "bytes": 118584,
       "error": null
     },
     {
@@ -411,7 +411,7 @@
       "mainUrl": "https://readnovelfull.com",
       "ok": true,
       "status": 200,
-      "bytes": 58152,
+      "bytes": 57350,
       "error": null
     },
     {
@@ -429,7 +429,7 @@
       "mainUrl": "https://rewayat.club",
       "ok": true,
       "status": 200,
-      "bytes": 320134,
+      "bytes": 320232,
       "error": null
     },
     {
@@ -447,7 +447,7 @@
       "mainUrl": "https://sakuranovel.id",
       "ok": false,
       "status": 403,
-      "bytes": 5437,
+      "bytes": 5479,
       "error": null
     },
     {
@@ -456,7 +456,7 @@
       "mainUrl": "https://www.scribblehub.com",
       "ok": false,
       "status": 403,
-      "bytes": 5616,
+      "bytes": 5595,
       "error": null
     },
     {
@@ -474,7 +474,7 @@
       "mainUrl": "https://yomou.syosetu.com",
       "ok": true,
       "status": 200,
-      "bytes": 91468,
+      "bytes": 88316,
       "error": null
     },
     {
@@ -492,7 +492,7 @@
       "mainUrl": "https://www.sonicmtl.com",
       "ok": true,
       "status": 200,
-      "bytes": 264370,
+      "bytes": 264378,
       "error": null
     },
     {
@@ -519,7 +519,7 @@
       "mainUrl": "https://www.wuxiabox.com",
       "ok": true,
       "status": 200,
-      "bytes": 65661,
+      "bytes": 65056,
       "error": null
     },
     {
@@ -528,7 +528,7 @@
       "mainUrl": "https://wuxia.click",
       "ok": true,
       "status": 200,
-      "bytes": 174294,
+      "bytes": 174355,
       "error": null
     },
     {

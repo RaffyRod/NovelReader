@@ -112,9 +112,21 @@ object ProviderManage {
             Tab.INSTALLED -> rows.filter { it.kind == Kind.CUSTOM || it.kind == Kind.PLUGIN }
         }
 
+    /**
+     * Match by display name, Search name, or site/host (page URL).
+     * Host matching is token-aware so `a.test` does not hit `beta.test`.
+     */
     fun matchesName(row: Row, query: String): Boolean {
         if (query.isBlank()) return true
-        return row.title.contains(query.trim(), ignoreCase = true)
+        val q = query.trim()
+        if (row.title.contains(q, ignoreCase = true)) return true
+        if (row.searchName.contains(q, ignoreCase = true)) return true
+        val site = row.config?.baseUrl.orEmpty().ifBlank { row.plugin?.site.orEmpty() }
+        if (PluginHubUi.siteMatches(site, q)) return true
+        val subtitleHost = row.subtitle.substringBefore('·').trim()
+        if (PluginHubUi.siteMatches(subtitleHost, q)) return true
+        // Plain-text subtitle (e.g. "Built-in · es") — skip dotted host queries.
+        return !q.contains('.') && row.subtitle.contains(q, ignoreCase = true)
     }
 
     fun filter(rows: List<Row>, query: String): List<Row> =

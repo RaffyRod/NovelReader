@@ -452,7 +452,7 @@
     <string name="plugin_configure_url_hint">Elige cómo mapear el sitio. Madara sirve en la mayoría de novelas WordPress; si no, edita los selectores tú.</string>
     <string name="plugin_add_to_search_title">Añadir a Buscar</string>
     <string name="plugin_cards_page">Página %1$d/%2$d · mostrando %3$d–%4$d de %5$d</string>
-    <string name="plugin_cards_filter_hint">Buscar por nombre…</string>
+    <string name="plugin_cards_filter_hint">Buscar por nombre o sitio…</string>
     <string name="plugin_hub_filter_count">Mostrando %1$d de %2$d</string>
     <string name="plugin_hub_search_empty">Ningún plugin coincide</string>
     <string name="plugin_select_none">Seleccionar ninguno</string>
@@ -497,6 +497,7 @@
     <string name="plugin_update_all_done">Actualizados %1$d plugin(s)</string>
     <string name="cp_none">Aún no hay proveedores propios</string>
     <string name="cp_edit">Editar</string>
+    <string name="cp_select">Seleccionar</string>
     <string name="cp_delete">Eliminar</string>
     <string name="cp_save">Guardar</string>
     <string name="cp_delete_confirm">¿Eliminar este proveedor? Las novelas que ya descargaste se conservan.</string>

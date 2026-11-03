@@ -42,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
@@ -120,6 +124,18 @@ object SearchScreen : Screen {
             viewModel.onAction(HomeAction.ConfigureApisLanguages(languages.toPersistentSet()))
         }
 
+        // After installing plugins in Settings, Buscar must re-sync prefs + Apis on resume.
+        val lifecycleOwner = LocalLifecycleOwner.current
+        DisposableEffect(lifecycleOwner) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    viewModel.onAction(HomeAction.RefreshProviders)
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+
         ObserveEffect(viewModel.effect) { effect ->
             when (effect) {
                 is HomeEffect.NavigateToMainPage -> {
@@ -167,7 +183,9 @@ fun SearchScreen(state: HomeViewModelState, action: (HomeAction) -> Unit) {
                 content = {
                     Spacer(modifier = Modifier.height(5.dp))
                 },
-                onQueryChange = { _ ->
+                onQueryChange = { query ->
+                    // Live-filter tiles by provider / page name while typing.
+                    action(HomeAction.FilterGrid(query))
                 },
                 onSearch = { query ->
                     action(HomeAction.Search(query))
@@ -377,13 +395,14 @@ fun ShowDialog(
 ) {
     if (!isDialogShown) return
 
+    // List every API (not only current language) so Fuentes-enabled sites like Wattpad stay selectable.
     val entries = remember(filterLanguages) {
-        apis.filter { api -> filterLanguages.contains(api.lang) }.associate {
-            it.name to
-                    if (filterLanguages.size > 1) {
-                        "${SubtitleHelper.getFlagFromIso(it.lang) ?: "🌐"} ${it.name}"
+        apis.associate { api ->
+            api.name to
+                    if (filterLanguages.size > 1 || apis.map { it.lang }.distinct().size > 1) {
+                        "${SubtitleHelper.getFlagFromIso(api.lang) ?: "🌐"} ${api.name}"
                     } else {
-                        it.name
+                        api.name
                     }
         }.toPersistentMap()
     }

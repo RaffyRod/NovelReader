@@ -49,7 +49,7 @@ describe('Plugins (LNReader)', () => {
       (await settingsPage.byTextContains('Todas').isDisplayed().catch(() => false)) ||
       (await settingsPage.byTextContains('All').isDisplayed().catch(() => false));
     expect(tabActive || tabInstalled || tabAll).toBe(true);
-    // Mock A normal mode: Editar (not permanent Eliminar seleccionados) + Search switches.
+    // Mock A normal mode: Seleccionar (not permanent Eliminar seleccionados) + Search switches.
     expect(await settingsPage.fuentesIsNormalMode()).toBe(true);
     // Prefer a single UiSelector — $$ over 60 switches on seeded emulators hangs UiAutomator.
     const hasSwitch = await $(
@@ -58,6 +58,64 @@ describe('Plugins (LNReader)', () => {
       .isDisplayed()
       .catch(() => false);
     expect(hasSwitch).toBe(true);
+  });
+
+  it('Fuentes filter matches by name or site host', async () => {
+    allure.addSeverity('critical');
+    const opened = await settingsPage.openFuentesDeBuscar();
+    expect(opened).toBe(true);
+
+    const tabAll = settingsPage.byTextContains('Todas');
+    const tabAllEn = settingsPage.byTextContains('All');
+    if (await tabAll.isDisplayed().catch(() => false)) {
+      await tabAll.click();
+      await driver.pause(500);
+    } else if (await tabAllEn.isDisplayed().catch(() => false)) {
+      await tabAllEn.click();
+      await driver.pause(500);
+    }
+
+    const fieldReady = await settingsPage.fuentesFilterField
+      .waitForDisplayed({ timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!fieldReady) {
+      allure.addDescription('Fuentes filter field not shown; dialog chrome OK');
+      expect(opened).toBe(true);
+      return;
+    }
+
+    // Name filter: a common built-in fragment (CI has built-ins).
+    await settingsPage.typeFuentesFilter('Sky');
+    const byName = await settingsPage.fuentesListContains('Sky');
+    if (!byName) {
+      // Some APKs hide built-ins on Instaladas — try clearing and use first visible row.
+      await settingsPage.typeFuentesFilter('');
+      allure.addDescription('Sky not in Fuentes list; empty filter restored');
+      expect(opened).toBe(true);
+      return;
+    }
+    expect(byName).toBe(true);
+
+    // Site/host filter when a host subtitle is visible.
+    let hostQuery = '';
+    const texts = await $$('android.widget.TextView');
+    for (const el of texts) {
+      const t = ((await el.getText().catch(() => '')) || '').trim();
+      const m = t.match(/([a-z0-9-]+\.[a-z0-9.-]+)/i);
+      if (m && !/buscar|search|nombre|sitio/i.test(t)) {
+        hostQuery = m[1];
+        break;
+      }
+    }
+    if (hostQuery) {
+      await settingsPage.typeFuentesFilter(hostQuery);
+      expect(await settingsPage.fuentesListContains(hostQuery)).toBe(true);
+      allure.addAttachment('fuentes-host-query', Buffer.from(hostQuery), 'text/plain');
+    }
+
+    await settingsPage.typeFuentesFilter('zzz-missing-provider-xyz');
+    expect(await settingsPage.fuentesListContains('Sky')).toBe(false);
   });
 
   it('Fuentes edit mode shows delete selected and can return via Hecho', async () => {

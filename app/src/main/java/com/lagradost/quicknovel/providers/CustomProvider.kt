@@ -64,14 +64,19 @@ data class CustomProviderConfig(
             kind = KIND_BLOGGER,
         )
 
-        /** Selectors of the WordPress Madara theme, used by a large number of novel sites. */
+        /**
+         * WordPress Madara theme. Stored search is plain `/?s={query}` — never persist
+         * `post_type=wp-manga` (that was applied to every new site). Runtime [browseUrls]
+         * tries the LNReader Madara URL when [chaptersViaAjax] is true, then plain search,
+         * then the homepage.
+         */
         fun madaraTemplate(name: String = "", baseUrl: String = "") = CustomProviderConfig(
             name = name,
             baseUrl = baseUrl,
-            searchUrl = "/?s={query}&post_type=wp-manga",
-            resultItem = "div.c-tabs-item__content",
-            resultLink = "div.post-title a",
-            resultImage = "div.tab-thumb img",
+            searchUrl = DEFAULT_SITE_SEARCH_URL,
+            resultItem = "div.c-tabs-item__content, div.page-item-detail",
+            resultLink = "div.post-title a, div.item-thumb a, h3 a",
+            resultImage = "div.tab-thumb img, div.item-thumb img",
             novelTitle = "div.post-title h1",
             novelAuthor = ".author-content a",
             novelCover = "div.summary_image img",
@@ -81,6 +86,80 @@ data class CustomProviderConfig(
             chaptersViaAjax = true,
             content = "div.reading-content",
         )
+
+        /** Plain WordPress search — the only search path stored for website CSS providers. */
+        const val DEFAULT_SITE_SEARCH_URL = "/?s={query}"
+
+        /** LNReader Madara search shape — used only as a runtime browse candidate. */
+        const val MADARA_SEARCH_URL = "/?s={query}&post_type=wp-manga"
+
+        /**
+         * Generic CSS bridge for catalog JS plugins that are not Madara/Blogger-tagged.
+         * Prefers plain WordPress search + homepage cards; never invents `post_type=wp-manga`.
+         */
+        fun siteBridgeTemplate(name: String = "", baseUrl: String = "") = CustomProviderConfig(
+            name = name,
+            baseUrl = baseUrl,
+            searchUrl = DEFAULT_SITE_SEARCH_URL,
+            resultItem = "div.c-tabs-item__content, div.page-item-detail, article, .post",
+            resultLink = "div.post-title a, div.item-thumb a, h3 a, h2 a, a",
+            resultImage = "img",
+            novelTitle = "div.post-title h1, h1.entry-title, h1",
+            novelAuthor = ".author-content a, .author a",
+            novelCover = "div.summary_image img, .post-thumbnail img, img.wp-post-image",
+            novelSynopsis = "div.summary__content, .entry-content, .description",
+            chapterLink = ".wp-manga-chapter > a[href], .eplister a, ul.chapter-list a, .listing-chapters_wrap a",
+            chaptersNewestFirst = true,
+            chaptersViaAjax = false,
+            content = "div.reading-content, div.text-left, .entry-content, article",
+        )
+
+        /**
+         * Soft-fix: never keep `post_type=wp-manga` in saved searchUrl (runtime adds it for
+         * Madara). Expand Madara homepage grid selectors when needed.
+         */
+        fun migrateBrowseConfig(config: CustomProviderConfig): CustomProviderConfig {
+            if (config.isBlogger) return config
+            val expandMadaraHomeGrid = config.chaptersViaAjax ||
+                "c-tabs-item" in config.resultItem ||
+                "page-item-detail" in config.resultItem
+            var search = config.searchUrl
+            if ("post_type=wp-manga" in search) {
+                search = search
+                    .replace("&post_type=wp-manga", "")
+                    .replace("?post_type=wp-manga&", "?")
+                    .replace("?post_type=wp-manga", "")
+                    .trimEnd('?', '&')
+                if (search.isBlank() || "{query}" !in search) search = DEFAULT_SITE_SEARCH_URL
+            }
+            if (search.isBlank()) search = DEFAULT_SITE_SEARCH_URL
+            var resultItem = config.resultItem
+            var resultLink = config.resultLink
+            var resultImage = config.resultImage
+            if (expandMadaraHomeGrid && "page-item-detail" !in resultItem) {
+                resultItem = listOf(resultItem, "div.page-item-detail")
+                    .filter { it.isNotBlank() }.joinToString(", ")
+                resultLink = listOf(resultLink, "div.item-thumb a", "h3 a")
+                    .filter { it.isNotBlank() }.distinct().joinToString(", ")
+                if (resultImage.isNotBlank() && "item-thumb" !in resultImage) {
+                    resultImage = "$resultImage, div.item-thumb img"
+                }
+            }
+            return if (search == config.searchUrl &&
+                resultItem == config.resultItem &&
+                resultLink == config.resultLink &&
+                resultImage == config.resultImage
+            ) {
+                config
+            } else {
+                config.copy(
+                    searchUrl = search,
+                    resultItem = resultItem,
+                    resultLink = resultLink,
+                    resultImage = resultImage,
+                )
+            }
+        }
     }
 }
 
@@ -144,6 +223,77 @@ object CustomProviderParser {
     fun searchUrl(config: CustomProviderConfig, query: String): String {
         val encoded = URLEncoder.encode(query, "UTF-8")
         return absolute(config.baseUrl, config.searchUrl.replace("{query}", encoded))
+    }
+
+    /**
+     * Removes `post_type=wp-manga` for fallback candidates after the LN Madara primary URL fails.
+     */
+    fun stripWpMangaPostType(url: String): String {
+        val cleaned = url
+            .replace("&post_type=wp-manga", "")
+            .replace("?post_type=wp-manga&", "?")
+            .replace("?post_type=wp-manga", "")
+            .replace("?&", "?")
+            .trimEnd('?', '&')
+        return cleaned.ifBlank { url.substringBefore('?').ifBlank { url } }
+    }
+
+    /**
+     * True when a fetched document looks usable (has a body with content). Empty / blocked
+     * responses must not stop the browse fallback chain.
+     */
+    fun isUsableBrowsePage(doc: org.jsoup.nodes.Document): Boolean {
+        val body = doc.body()
+        if (body.childrenSize() == 0) return false
+        return body.text().isNotBlank() || body.select("img, a[href]").isNotEmpty()
+    }
+
+    /**
+     * Candidate URLs for search / browse:
+     * 1) LNReader Madara (`/?s=…&post_type=wp-manga`) when [CustomProviderConfig.chaptersViaAjax]
+     * 2) configured / plain `/?s=`
+     * 3) site homepage with no search query (last resort)
+     * Saved configs never store `post_type=wp-manga`.
+     */
+    fun browseUrls(config: CustomProviderConfig, query: String, page: Int = 1): List<String> {
+        val home = absolute(config.baseUrl, "/")
+        val homeNorm = home.trimEnd('/')
+        val encoded = URLEncoder.encode(query, "UTF-8")
+        val primary = searchUrl(config, query)
+        val withoutManga = stripWpMangaPostType(primary)
+        val plainSearch = absolute(config.baseUrl, "/?s=$encoded")
+        val madaraLn = absolute(config.baseUrl, "/?s=$encoded&post_type=wp-manga")
+        fun withPage(url: String): String {
+            if (page <= 1) return url
+            val trimmed = url.trimEnd('/')
+            if (trimmed == homeNorm || url == home) {
+                return "$homeNorm/page/$page/"
+            }
+            // LN Madara: `/page/N/?s=…&post_type=wp-manga`
+            val qIndex = url.indexOf('?')
+            if (qIndex >= 0 && ("post_type=wp-manga" in url || Regex("""[?&]s=""").containsMatchIn(url))) {
+                val path = url.substring(0, qIndex).trimEnd('/')
+                val qs = url.substring(qIndex)
+                val pagedPath = if (Regex("""/page/\d+$""").containsMatchIn(path)) {
+                    path.replace(Regex("""/page/\d+$"""), "/page/$page")
+                } else {
+                    "$path/page/$page"
+                }
+                return "$pagedPath/$qs"
+            }
+            return "$url${if (url.contains('?')) "&" else "?"}paged=$page"
+        }
+        val ordered = linkedSetOf<String>()
+        if (config.chaptersViaAjax) {
+            ordered += withPage(madaraLn)
+        }
+        ordered += withPage(primary)
+        if (withoutManga != primary) ordered += withPage(withoutManga)
+        if (plainSearch != primary && plainSearch != withoutManga) {
+            ordered += withPage(plainSearch)
+        }
+        ordered += withPage(home)
+        return ordered.toList()
     }
 
     /** Resolves [url] against the site root, accepting absolute, protocol relative and root relative urls. */
@@ -385,7 +535,8 @@ data class BloggerValidation(
 )
 
 /** A provider created by the user from a [CustomProviderConfig]. */
-class CustomProvider(val config: CustomProviderConfig) : MainAPI() {
+class CustomProvider(rawConfig: CustomProviderConfig) : MainAPI() {
+    val config: CustomProviderConfig = CustomProviderConfig.migrateBrowseConfig(rawConfig)
     override val name = config.name
     override val mainUrl = config.baseUrl.trim().trimEnd('/')
     override val lang = config.lang
@@ -397,7 +548,7 @@ class CustomProvider(val config: CustomProviderConfig) : MainAPI() {
 
     override val hasMainPage = true
 
-    /** The provider list shows every site; opening it lists the newest novels, or what an empty search gives. */
+    /** The provider list shows every site; opening it lists homepage novels, with search-URL fallbacks. */
     override suspend fun loadMainPage(
         page: Int,
         mainCategory: String?,
@@ -419,13 +570,33 @@ class CustomProvider(val config: CustomProviderConfig) : MainAPI() {
             }
             return HeadMainPageResponse(mainUrl, list)
         }
-        val url = CustomProviderParser.searchUrl(config, "").let {
-            if (page > 1) "$it${if (it.contains('?')) "&" else "?"}paged=$page" else it
-        }
-        val results = CustomProviderParser.parseSearch(fetch(url), config).map { result ->
-            newSearchResponse(name = result.name, url = result.url) { posterUrl = result.poster }
-        }
+        val (url, results) = fetchFirstResults(query = "", page = page)
         return HeadMainPageResponse(url, results)
+    }
+
+    /**
+     * Tries [CustomProviderParser.browseUrls] in order until a usable page yields cards.
+     * Madara: LN primary (`post_type=wp-manga`) → plain `/?s=` → homepage. Skips dead/empty HTML.
+     */
+    private suspend fun fetchFirstResults(query: String, page: Int = 1): Pair<String, List<SearchResponse>> {
+        val candidates = CustomProviderParser.browseUrls(config, query, page)
+        var lastUrl = candidates.firstOrNull() ?: mainUrl
+        var lastError: Exception? = null
+        for (url in candidates) {
+            lastUrl = url
+            try {
+                val doc = fetch(url)
+                if (!CustomProviderParser.isUsableBrowsePage(doc)) continue
+                val parsed = CustomProviderParser.parseSearch(doc, config).map { result ->
+                    newSearchResponse(name = result.name, url = result.url) { posterUrl = result.poster }
+                }
+                if (parsed.isNotEmpty()) return url to parsed
+            } catch (e: Exception) {
+                lastError = e
+            }
+        }
+        if (lastError != null && candidates.size == 1) throw lastError
+        return lastUrl to emptyList()
     }
 
     private var bloggerIndex: List<BloggerNovel>? = null
@@ -510,12 +681,7 @@ class CustomProvider(val config: CustomProviderConfig) : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         if (config.isBlogger) return bloggerSearch(query)
-        val doc = fetch(CustomProviderParser.searchUrl(config, query))
-        return CustomProviderParser.parseSearch(doc, config).map { result ->
-            newSearchResponse(name = result.name, url = result.url) {
-                posterUrl = result.poster
-            }
-        }
+        return fetchFirstResults(query).second
     }
 
     override suspend fun load(url: String): LoadResponse {

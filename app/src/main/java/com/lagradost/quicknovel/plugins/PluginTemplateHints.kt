@@ -17,8 +17,8 @@ object PluginTemplateHints {
 
     /**
      * Only catalog metadata (url / icon / id / name / site) is used.
-     * Never scan the JS body: shared LNReader helpers mention Madara and would force the same
-     * `/?s={query}&post_type=wp-manga` search path onto every plugin.
+     * Never scan the JS body: shared LNReader helpers mention Madara and would force Madara
+     * CSS / search paths onto every plugin.
      */
     fun detect(item: PluginManifestItem, jsSource: String = ""): PluginTemplateKind {
         // jsSource intentionally unused for detection (kept for call-site compatibility).

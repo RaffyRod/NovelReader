@@ -67,13 +67,33 @@ object PluginHubUi {
             .trimEnd('/')
     }
 
+    /**
+     * Host / URL match: exact host, subdomain, or full URL contains when [query] has a scheme.
+     * Token-aware so `a.test` does not match `beta.test`.
+     */
+    fun siteMatches(siteOrHost: String, query: String): Boolean {
+        if (siteOrHost.isBlank() || query.isBlank()) return false
+        val q = query.trim()
+        if ("://" in q && siteOrHost.contains(q, ignoreCase = true)) return true
+        val host = siteHost(siteOrHost).lowercase().removePrefix("www.")
+        val needle = siteHost(q).ifBlank { q }
+            .lowercase()
+            .removePrefix("www.")
+            .trimEnd('/')
+        if (host.isBlank() || needle.isBlank()) return false
+        return host == needle ||
+            host.endsWith(".$needle") ||
+            host.startsWith("$needle.")
+    }
+
     /** Name / local name / host match for the installed-plugins hub search box. */
     fun matchesQuery(plugin: InstalledPlugin, query: String): Boolean {
         if (query.isBlank()) return true
         val q = query.trim()
         return plugin.localName.contains(q, ignoreCase = true) ||
             plugin.name.contains(q, ignoreCase = true) ||
-            siteHost(plugin).contains(q, ignoreCase = true)
+            siteMatches(plugin.site, q) ||
+            siteMatches(siteHost(plugin), q)
     }
 
     fun filterInstalled(plugins: List<InstalledPlugin>, query: String): List<InstalledPlugin> =

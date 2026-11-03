@@ -132,6 +132,145 @@ class CustomProviderParserTest {
         assertNull(CustomProviderParser.validate(template))
         assertTrue(template.chaptersViaAjax)
         assertTrue(template.chaptersNewestFirst)
+        assertEquals(CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, template.searchUrl)
+        assertFalse(template.searchUrl.contains("wp-manga"))
+        assertTrue(template.resultItem.contains("page-item-detail"))
+    }
+
+    @Test
+    fun `site bridge template never invents wp-manga or madara ajax`() {
+        val template = CustomProviderConfig.siteBridgeTemplate("JS site", "https://js.test")
+        assertNull(CustomProviderParser.validate(template))
+        assertEquals("/?s={query}", template.searchUrl)
+        assertFalse(template.searchUrl.contains("wp-manga"))
+        assertFalse(template.chaptersViaAjax)
+    }
+
+    @Test
+    fun `stripWpMangaPostType removes manga query param for fallbacks`() {
+        assertEquals(
+            "https://site.test/?s=hero",
+            CustomProviderParser.stripWpMangaPostType("https://site.test/?s=hero&post_type=wp-manga"),
+        )
+        assertEquals(
+            "https://site.test/",
+            CustomProviderParser.stripWpMangaPostType("https://site.test/?post_type=wp-manga"),
+        )
+        assertEquals(
+            "https://site.test/?s=a&order=desc",
+            CustomProviderParser.stripWpMangaPostType("https://site.test/?s=a&post_type=wp-manga&order=desc"),
+        )
+    }
+
+    @Test
+    fun `browseUrls Madara search is LN primary then plain s then homepage`() {
+        val madara = CustomProviderConfig.madaraTemplate("Madara", "https://site.test")
+        val search = CustomProviderParser.browseUrls(madara, "hero")
+        assertEquals(
+            listOf(
+                "https://site.test/?s=hero&post_type=wp-manga",
+                "https://site.test/?s=hero",
+                "https://site.test/",
+            ),
+            search,
+        )
+        assertEquals(3, search.size)
+        assertEquals("https://site.test/", search.last())
+        assertFalse(search.dropLast(1).any { it.trimEnd('/') == "https://site.test" })
+    }
+
+    @Test
+    fun `browseUrls Madara empty query keeps LN s empty then homepage`() {
+        val madara = CustomProviderConfig.madaraTemplate("Madara", "https://site.test")
+        val browse = CustomProviderParser.browseUrls(madara, "")
+        assertEquals("https://site.test/?s=&post_type=wp-manga", browse[0])
+        assertEquals("https://site.test/?s=", browse[1])
+        assertEquals("https://site.test/", browse.last())
+        assertTrue(browse.distinct().size == browse.size)
+    }
+
+    @Test
+    fun `browseUrls Madara page 2 uses LN page path before query`() {
+        val madara = CustomProviderConfig.madaraTemplate("Madara", "https://site.test")
+        val page2 = CustomProviderParser.browseUrls(madara, "hero", page = 2)
+        assertEquals("https://site.test/page/2/?s=hero&post_type=wp-manga", page2[0])
+        assertEquals("https://site.test/page/2/?s=hero", page2[1])
+        assertEquals("https://site.test/page/2/", page2.last())
+    }
+
+    @Test
+    fun `browseUrls siteBridge never invents wp-manga and still ends at homepage`() {
+        val bridge = CustomProviderConfig.siteBridgeTemplate("Bridge", "https://js.test")
+        val search = CustomProviderParser.browseUrls(bridge, "hero")
+        assertEquals("https://js.test/?s=hero", search.first())
+        assertFalse(search.any { it.contains("wp-manga") })
+        assertEquals("https://js.test/", search.last())
+    }
+
+    @Test
+    fun `isUsableBrowsePage rejects empty bodies and accepts madara cards`() {
+        assertFalse(CustomProviderParser.isUsableBrowsePage(Jsoup.parse("<html><body></body></html>")))
+        assertFalse(CustomProviderParser.isUsableBrowsePage(Jsoup.parse("<html></html>")))
+        val madaraHome = Jsoup.parse(
+            """
+            <html><body>
+              <div class="page-item-detail">
+                <div class="item-thumb"><a href="/novel/one" title="One"><img src="/c.jpg"></a></div>
+                <div class="post-title"><a href="/novel/one">One</a></div>
+              </div>
+            </body></html>
+            """.trimIndent(),
+            "https://site.test/",
+        )
+        assertTrue(CustomProviderParser.isUsableBrowsePage(madaraHome))
+        val madara = CustomProviderConfig.madaraTemplate("Madara", "https://site.test")
+        val parsed = CustomProviderParser.parseSearch(madaraHome, madara)
+        assertEquals(1, parsed.size)
+        assertEquals("One", parsed[0].name)
+    }
+
+    @Test
+    fun `migrateBrowseConfig strips stored wp-manga and expands madara homepage selectors`() {
+        val plain = CustomProviderConfig.madaraTemplate("Old", "https://old.test").copy(
+            searchUrl = "/?s={query}&post_type=wp-manga",
+            resultItem = "div.c-tabs-item__content",
+            resultLink = "div.post-title a",
+        )
+        val fixed = CustomProviderConfig.migrateBrowseConfig(plain)
+        assertEquals(CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, fixed.searchUrl)
+        assertFalse(fixed.searchUrl.contains("wp-manga"))
+        assertTrue(fixed.resultItem.contains("page-item-detail"))
+        assertTrue(fixed.resultLink.contains("item-thumb"))
+    }
+
+    @Test
+    fun `migrateBrowseConfig never keeps wp-manga on Madara or bridge`() {
+        val madara = CustomProviderConfig.migrateBrowseConfig(
+            CustomProviderConfig.madaraTemplate("M", "https://m.test"),
+        )
+        assertEquals(CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, madara.searchUrl)
+
+        val bridgeWrong = CustomProviderConfig.siteBridgeTemplate("B", "https://b.test").copy(
+            searchUrl = "/?s={query}&post_type=wp-manga",
+        )
+        val fixedBridge = CustomProviderConfig.migrateBrowseConfig(bridgeWrong)
+        assertEquals(CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, fixedBridge.searchUrl)
+        assertFalse(fixedBridge.searchUrl.contains("wp-manga"))
+    }
+
+    @Test
+    fun `CSS candidates try siteBridge before Madara so new sites are not wp-manga by default`() {
+        val candidates = com.lagradost.quicknovel.providers.CustomProviderPresets.candidates(
+            "Asianfanfics",
+            "https://www.asianfanfics.com",
+            "en",
+            com.lagradost.quicknovel.providers.CustomProviderConfig.KIND_CSS,
+        )
+        assertTrue(candidates.isNotEmpty())
+        assertEquals(CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, candidates.first().searchUrl)
+        assertFalse(candidates.first().chaptersViaAjax)
+        assertFalse(candidates.any { it.searchUrl.contains("wp-manga") })
+        assertTrue(candidates.any { it.chaptersViaAjax })
     }
 
     @Test

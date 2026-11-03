@@ -66,7 +66,7 @@ object CustomProviderDialogs {
         "name" to Field(R.string.cp_name, { it.name }),
         "url" to Field(R.string.cp_url, { it.baseUrl }, InputType.TYPE_TEXT_VARIATION_URI),
         "lang" to Field(R.string.cp_lang, { it.lang }),
-        "searchUrl" to Field(R.string.cp_search_url, { it.searchUrl }),
+        // searchUrl is not shown — derived from site URL (+ Madara ajax at browse time).
         "resultItem" to Field(R.string.cp_result_item, { it.resultItem }),
         "resultLink" to Field(R.string.cp_result_link, { it.resultLink }),
         "resultImage" to Field(R.string.cp_result_image, { it.resultImage }),
@@ -79,8 +79,8 @@ object CustomProviderDialogs {
     )
 
     /**
-     * Fuentes de Buscar (mock A + D polish): switch-only soft cards with accent rail;
-     * **Editar** → checkboxes + delete. Theme attrs for Ultimate / Light / Amoled.
+     * Fuentes de Buscar: tap a row → Editar / Eliminar. Footer **Seleccionar** →
+     * checkboxes + bulk delete. Theme attrs for Ultimate / Light / Amoled.
      */
     fun showManager(activity: Activity, onChanged: () -> Unit) {
         val density = activity.resources.displayMetrics.density
@@ -335,7 +335,8 @@ object CustomProviderDialogs {
                 }
                 ProviderManage.Kind.CUSTOM -> {
                     val cfg = row.config ?: return
-                    showOptions(activity, cfg) { reopen() }
+                    // Tap opens edit directly (Eliminar stays in Seleccionar / options).
+                    showEditor(activity, cfg) { reopen() }
                 }
                 ProviderManage.Kind.PLUGIN -> {
                     val plugin = row.plugin ?: return
@@ -408,7 +409,7 @@ object CustomProviderDialogs {
                 neutral.visibility = View.VISIBLE
                 negative.visibility = View.VISIBLE
                 positive.setTextColor(primary)
-                neutral.text = activity.getString(R.string.cp_edit)
+                neutral.text = activity.getString(R.string.cp_select)
                 neutral.setTextColor(primary)
                 negative.text = activity.getString(R.string.close)
                 negative.setTextColor(gray)
@@ -615,7 +616,7 @@ object CustomProviderDialogs {
         dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.cp_manage)
             .setView(root)
-            .setNeutralButton(R.string.cp_edit, null)
+            .setNeutralButton(R.string.cp_select, null)
             .setPositiveButton(R.string.cp_add) { _, _ ->
                 showSimpleAdd(activity) {
                     onChanged()
@@ -649,7 +650,7 @@ object CustomProviderDialogs {
             pageLabel.setOnClickListener { gotoBtn.performClick() }
 
             shown.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                // Edit mode only — delete is on the in-dialog toolbar (selectRow).
+                // Select mode for bulk delete — per-source edit is via tapping a row.
                 if (!editing) {
                     editing = true
                     selected.clear()
@@ -1005,11 +1006,18 @@ object CustomProviderDialogs {
 
         fun text(key: String) = inputs.getValue(key).text?.toString().orEmpty().trim()
 
+        fun resolvedSearchUrl(): String = when {
+            initial.isBlogger -> initial.searchUrl.ifBlank {
+                CustomProviderConfig.bloggerTemplate().searchUrl
+            }
+            else -> CustomProviderConfig.DEFAULT_SITE_SEARCH_URL
+        }
+
         fun read() = CustomProviderConfig(
             name = text("name"),
             baseUrl = text("url"),
             lang = text("lang").lowercase().ifBlank { "en" },
-            searchUrl = text("searchUrl"),
+            searchUrl = resolvedSearchUrl(),
             resultItem = text("resultItem"),
             resultLink = text("resultLink"),
             resultImage = text("resultImage"),

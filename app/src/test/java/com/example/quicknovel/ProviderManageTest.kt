@@ -1,5 +1,7 @@
 package com.example.quicknovel
 
+import com.lagradost.quicknovel.plugins.InstalledPlugin
+import com.lagradost.quicknovel.providers.CustomProviderConfig
 import com.lagradost.quicknovel.util.ProviderManage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -7,6 +9,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProviderManageTest {
+    private val alphaConfig = CustomProviderConfig(
+        name = "Alpha Site",
+        baseUrl = "https://a.test",
+        searchUrl = "/?s={query}",
+        resultItem = "a",
+        novelTitle = "h1",
+        chapterLink = "a",
+        content = "div",
+    )
+    private val betaPlugin = InstalledPlugin(
+        id = "b",
+        name = "Beta Novel",
+        site = "https://beta.test/novels",
+        templateKind = "css",
+    )
     private val rows = listOf(
         ProviderManage.Row(
             key = "builtin:Sky",
@@ -20,20 +37,22 @@ class ProviderManageTest {
         ProviderManage.Row(
             key = "custom:A",
             title = "Alpha Site",
-            subtitle = "https://a.test",
+            subtitle = "a.test · Proveedor",
             kind = ProviderManage.Kind.CUSTOM,
             searchName = "Alpha Site",
             activeInSearch = false,
             canToggleSearch = true,
+            config = alphaConfig,
         ),
         ProviderManage.Row(
             key = "plugin:b",
             title = "Beta Novel",
-            subtitle = "beta.test · JS",
+            subtitle = "beta.test · Plugin",
             kind = ProviderManage.Kind.PLUGIN,
             searchName = "",
             activeInSearch = false,
             canToggleSearch = false,
+            plugin = betaPlugin,
         ),
         ProviderManage.Row(
             key = "plugin:c",
@@ -47,11 +66,16 @@ class ProviderManageTest {
     )
 
     @Test
-    fun filter_matchesNameOnly() {
+    fun filter_matchesNameOrSiteHost() {
         assertEquals(1, ProviderManage.filter(rows, "alpha").size)
         assertEquals(1, ProviderManage.filter(rows, "Beta").size)
-        assertTrue(ProviderManage.filter(rows, "https://a.test").isEmpty())
+        assertEquals(listOf("Alpha Site"), ProviderManage.filter(rows, "a.test").map { it.title })
+        assertEquals(listOf("Alpha Site"), ProviderManage.filter(rows, "https://a.test").map { it.title })
+        assertEquals(listOf("Beta Novel"), ProviderManage.filter(rows, "beta.test").map { it.title })
+        // Substring trap: a.test must not match beta.test
+        assertFalse(com.lagradost.quicknovel.plugins.PluginHubUi.siteMatches("beta.test", "a.test"))
         assertEquals(4, ProviderManage.filter(rows, "").size)
+        assertTrue(ProviderManage.filter(rows, "zzz-missing").isEmpty())
     }
 
     @Test

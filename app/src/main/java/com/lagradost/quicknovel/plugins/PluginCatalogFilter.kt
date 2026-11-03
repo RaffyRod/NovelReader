@@ -21,11 +21,15 @@ object PluginCatalogFilter {
         JS,
     }
 
-    /** Name-only match (UI filter no longer searches site / lang / id). */
+    /**
+     * Match by plugin name or site/page host (e.g. `skynovels.net`).
+     * Does not match language labels or Madara tags in the JS URL.
+     */
     fun matchesQuery(item: PluginManifestItem, query: String): Boolean {
         if (query.isBlank()) return true
         val q = query.trim()
-        return item.name.contains(q, ignoreCase = true)
+        if (item.name.contains(q, ignoreCase = true)) return true
+        return PluginHubUi.siteMatches(item.site, q)
     }
 
     fun matchesStatus(

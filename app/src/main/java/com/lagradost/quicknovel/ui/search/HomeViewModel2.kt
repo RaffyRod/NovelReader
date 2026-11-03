@@ -38,7 +38,11 @@ data class HomeViewModelState(
     val allApis: ImmutableList<MainAPI> = Apis.apis.toImmutableList(),
     val mainPageApis: ImmutableList<MainAPI> = allApis.filter { api -> api.hasMainPage }
         .toImmutableList(),
+    /** Enabled Fuentes ∩ hasMainPage (before the live grid text filter). */
+    val enabledMainPageApis: ImmutableList<MainAPI> = mainPageApis,
     val shownMainPageApis: ImmutableList<MainAPI> = mainPageApis,
+    /** Live text in the Buscar field used to shrink the provider tile grid. */
+    val gridFilterQuery: String = "",
     val filterNames: ImmutableSet<String> = persistentSetOf(),
     val filterLanguages: ImmutableSet<String> = persistentSetOf(),
     val isConfigureShow: Boolean = false,
@@ -61,11 +65,15 @@ data class SearchRow(
 @Immutable
 sealed class HomeAction {
     data class Search(val query: String) : HomeAction()
+    /** Live-filter provider tiles by name / site while typing (does not run novel search). */
+    data class FilterGrid(val query: String) : HomeAction()
     object ConfigureApis : HomeAction()
     object DismissConfigureApis : HomeAction()
     data class Open(val item: MainAPI) : HomeAction()
     data class ConfigureApisNames(val names: ImmutableSet<String>) : HomeAction()
     data class ConfigureApisLanguages(val languages: ImmutableSet<String>) : HomeAction()
+    /** Re-read Apis + prefs so newly installed Fuentes show on the Buscar grid. */
+    object RefreshProviders : HomeAction()
     object CloseQuery : HomeAction()
     data class ResultAction(val action: SearchResponseAction) : HomeAction()
     data class OpenRow(val row: SearchRow) : HomeAction()
@@ -102,18 +110,22 @@ class HomeViewModel2 : ViewModel(),
         }
     }*/
 
+    /**
+     * Providers shown on the Buscar grid (and used when names are selected).
+     * **Selected names win** — same rule as [apisForSearch] — so a provider toggled on in
+     * Fuentes always appears even if its language is off in Settings (e.g. English plugins
+     * with "show English" disabled). Language filter only applies when no names are selected.
+     */
     fun filterApis(
         apis: ImmutableList<MainAPI>,
         names: ImmutableSet<String>,
         languages: ImmutableSet<String>
     ): ImmutableList<MainAPI> {
-        if (names.isEmpty() || languages.isEmpty()) return persistentListOf()
-
-        return apis.filter { api ->
-            languages.contains(api.lang) && names.contains(
-                api.name
-            )
-        }.toPersistentList()
+        if (names.isEmpty() && languages.isEmpty()) return persistentListOf()
+        if (names.isNotEmpty()) {
+            return apis.filter { names.contains(it.name) }.toPersistentList()
+        }
+        return apis.filter { languages.contains(it.lang) }.toPersistentList()
     }
 
     /**
@@ -128,10 +140,24 @@ class HomeViewModel2 : ViewModel(),
         names.isNotEmpty() -> apis.filter { names.contains(it.name) }.toPersistentList()
         languages.isNotEmpty() -> filterApis(
             apis,
-            apis.map { it.name }.toPersistentSet(),
+            persistentSetOf(),
             languages,
         )
         else -> persistentListOf()
+    }
+
+    /**
+     * Applies [SearchProviderScope] on top of [apisForSearch] so typing "Wattpad" /
+     * "wattpad.com" (or a close prefix) only queries that site.
+     */
+    fun resolveNovelSearch(
+        query: String,
+        apis: ImmutableList<MainAPI>,
+        names: ImmutableSet<String>,
+        languages: ImmutableSet<String>,
+    ): SearchProviderScope.Resolution {
+        val base = apisForSearch(apis, names, languages)
+        return SearchProviderScope.resolve(query, base)
     }
 
     override fun onAction(action: HomeAction) {
@@ -154,6 +180,19 @@ class HomeViewModel2 : ViewModel(),
                 search(action.query)
             }
 
+            is HomeAction.FilterGrid -> {
+                val q = action.query
+                updateState {
+                    val enabled = enabledMainPageApis.ifEmpty {
+                        filterApis(mainPageApis, filterNames, filterLanguages)
+                    }
+                    copy(
+                        gridFilterQuery = q,
+                        shownMainPageApis = SearchProviderScope.filterGrid(enabled, q).toPersistentList(),
+                    )
+                }
+            }
+
             HomeAction.DismissConfigureApis -> {
                 updateState {
                     copy(isConfigureShow = false)
@@ -161,41 +200,24 @@ class HomeViewModel2 : ViewModel(),
             }
 
             is HomeAction.ConfigureApisNames -> {
-                val refreshed = refreshedApis()
-                updateState {
-                    copy(
-                        allApis = refreshed.all,
-                        mainPageApis = refreshed.mainPage,
-                        filterNames = action.names,
-                        shownMainPageApis = filterApis(
-                            refreshed.mainPage,
-                            action.names,
-                            filterLanguages
-                        )
-                    )
-                }
-                loadPopular()
+                applyProviderFilters(names = action.names, languages = state.value.filterLanguages)
             }
 
             is HomeAction.ConfigureApisLanguages -> {
-                val refreshed = refreshedApis()
-                updateState {
-                    copy(
-                        allApis = refreshed.all,
-                        mainPageApis = refreshed.mainPage,
-                        filterLanguages = action.languages,
-                        shownMainPageApis = filterApis(
-                            refreshed.mainPage,
-                            filterNames,
-                            action.languages
-                        )
-                    )
-                }
-                loadPopular()
+                applyProviderFilters(names = state.value.filterNames, languages = action.languages)
+            }
+
+            HomeAction.RefreshProviders -> {
+                refreshProvidersFromPrefs()
             }
 
             HomeAction.CloseQuery -> updateState {
-                copy(isQueryOpen = false)
+                copy(
+                    isQueryOpen = false,
+                    shownMainPageApis = SearchProviderScope
+                        .filterGrid(enabledMainPageApis, gridFilterQuery)
+                        .toPersistentList(),
+                )
             }
 
             is HomeAction.ResultAction -> {
@@ -262,36 +284,46 @@ class HomeViewModel2 : ViewModel(),
         RecentSearches.save(recent)
         updateState { copy(recentSearches = recent.toImmutableList()) }
         searchQuery.launch {
-            // Pick up providers added after the search screen opened (custom / plugins).
-            val refreshed = refreshedApis()
-            val act = CommonActivity.activity
-            val syncedNames = act?.let { CustomProviders.syncEnabledInSearch(it) }.orEmpty()
-            val current = state.value
-            val names = if (syncedNames.isNotEmpty()) {
-                syncedNames.toPersistentSet()
-            } else {
-                current.filterNames
+            val snapshot = refreshProvidersFromPrefs()
+            val scoped = resolveNovelSearch(
+                query,
+                snapshot.all,
+                snapshot.names,
+                snapshot.languages,
+            )
+            // Typing only the page/provider name → open that provider's main page.
+            if (scoped.scopedToProvider && scoped.novelQuery.isBlank() && scoped.apis.size == 1) {
+                val api = scoped.apis.first()
+                updateState {
+                    copy(
+                        isQueryOpen = false,
+                        isLoading = false,
+                        gridFilterQuery = "",
+                        shownMainPageApis = enabledMainPageApis,
+                    )
+                }
+                if (api.hasMainPage) {
+                    postEffect { NavigateToMainPage(api.name, FilterQuery()) }
+                } else {
+                    searchQuery("", listOf(api).toPersistentList())
+                }
+                return@launch
             }
-            // Always allow languages used by installed custom providers for this query.
-            val customLangs = CustomProviders.load().map { it.lang }.filter { it.isNotBlank() }.toSet()
-            val langs = (current.filterLanguages + customLangs).toPersistentSet()
-            updateState {
-                copy(
-                    allApis = refreshed.all,
-                    mainPageApis = refreshed.mainPage,
-                    filterNames = names,
-                    filterLanguages = langs,
-                    shownMainPageApis = filterApis(refreshed.mainPage, names, langs),
-                )
-            }
-            val searchApis = apisForSearch(refreshed.all, names, langs)
-            searchQuery(query, searchApis)
+            // Novel title (optionally "Wattpad romance") → search scoped providers.
+            searchQuery(scoped.novelQuery.ifBlank { query }, scoped.apis.toPersistentList())
         }
     }
 
     private data class RefreshedApis(
         val all: ImmutableList<MainAPI>,
         val mainPage: ImmutableList<MainAPI>,
+    )
+
+    private data class ProviderFilterSnapshot(
+        val all: ImmutableList<MainAPI>,
+        val mainPage: ImmutableList<MainAPI>,
+        val names: ImmutableSet<String>,
+        val languages: ImmutableSet<String>,
     )
 
     private fun refreshedApis(): RefreshedApis {
@@ -301,6 +333,60 @@ class HomeViewModel2 : ViewModel(),
             all = all,
             mainPage = all.filter { api -> api.hasMainPage }.toImmutableList(),
         )
+    }
+
+    private fun applyProviderFilters(
+        names: ImmutableSet<String>,
+        languages: ImmutableSet<String>,
+    ) {
+        val refreshed = refreshedApis()
+        val customLangs = CustomProviders.load().map { it.lang }.filter { it.isNotBlank() }.toSet()
+        val langs = (languages + customLangs).toPersistentSet()
+        val enabled = filterApis(refreshed.mainPage, names, langs)
+        val gridQ = state.value.gridFilterQuery
+        updateState {
+            copy(
+                allApis = refreshed.all,
+                mainPageApis = refreshed.mainPage,
+                filterNames = names,
+                filterLanguages = langs,
+                enabledMainPageApis = enabled,
+                shownMainPageApis = SearchProviderScope.filterGrid(enabled, gridQ).toPersistentList(),
+            )
+        }
+        loadPopular()
+    }
+
+    /**
+     * Syncs custom/plugin names into Search prefs, refreshes Apis, and updates the grid.
+     * Call when Buscar resumes so installs done in Settings appear without a novel search.
+     */
+    private fun refreshProvidersFromPrefs(): ProviderFilterSnapshot {
+        val act = CommonActivity.activity
+        val syncedNames = act?.let { CustomProviders.syncEnabledInSearch(it) }.orEmpty()
+        val current = state.value
+        val names = if (syncedNames.isNotEmpty()) {
+            syncedNames.toPersistentSet()
+        } else {
+            current.filterNames
+        }
+        val customLangs = CustomProviders.load().map { it.lang }.filter { it.isNotBlank() }.toSet()
+        val langs = (current.filterLanguages + customLangs).toPersistentSet()
+        val refreshed = refreshedApis()
+        val enabled = filterApis(refreshed.mainPage, names, langs)
+        val gridQ = current.gridFilterQuery
+        updateState {
+            copy(
+                allApis = refreshed.all,
+                mainPageApis = refreshed.mainPage,
+                filterNames = names,
+                filterLanguages = langs,
+                enabledMainPageApis = enabled,
+                shownMainPageApis = SearchProviderScope.filterGrid(enabled, gridQ).toPersistentList(),
+            )
+        }
+        loadPopular()
+        return ProviderFilterSnapshot(refreshed.all, refreshed.mainPage, names, langs)
     }
 
     private suspend fun searchQuery(query: String, apis: ImmutableList<MainAPI>) {

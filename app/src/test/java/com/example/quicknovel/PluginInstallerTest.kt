@@ -6,6 +6,7 @@ import com.lagradost.quicknovel.plugins.PluginTemplateHints
 import com.lagradost.quicknovel.plugins.PluginTemplateKind
 import com.lagradost.quicknovel.providers.CustomProviderConfig
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -27,7 +28,10 @@ class PluginInstallerTest {
         val cfg = PluginInstaller.configFromManifest(madara)
         assertNotNull(cfg)
         assertEquals(CustomProviderConfig.KIND_CSS, cfg!!.kind)
-        assertTrue(cfg.searchUrl.contains("wp-manga"))
+        assertEquals(CustomProviderConfig.DEFAULT_SITE_SEARCH_URL, cfg.searchUrl)
+        assertFalse(cfg.searchUrl.contains("wp-manga"))
+        assertTrue(cfg.chaptersViaAjax)
+        assertTrue(cfg.resultItem.contains("page-item-detail"))
         assertEquals("https://ar-no.com", cfg.baseUrl)
     }
 
@@ -48,7 +52,7 @@ class PluginInstallerTest {
     }
 
     @Test
-    fun untaggedJs_withSite_autoMapsMadaraBridge_likeLnAutoAdd() {
+    fun untaggedJs_withSite_mapsGenericBridge_notMadara() {
         val item = PluginManifestItem(
             id = "novelfire",
             name = "NovelFire",
@@ -60,7 +64,9 @@ class PluginInstallerTest {
         assertEquals(PluginTemplateKind.UNSUPPORTED_JS, PluginTemplateHints.detect(item))
         val cfg = PluginInstaller.configFromManifest(item)
         assertNotNull(cfg)
-        assertTrue(cfg!!.searchUrl.contains("wp-manga"))
+        assertEquals("/?s={query}", cfg!!.searchUrl)
+        assertFalse("must not invent wp-manga for untagged JS", cfg.searchUrl.contains("wp-manga"))
+        assertFalse("must not invent Madara ajax for untagged JS", cfg.chaptersViaAjax)
         assertEquals("https://novelfire.net", cfg.baseUrl)
     }
 

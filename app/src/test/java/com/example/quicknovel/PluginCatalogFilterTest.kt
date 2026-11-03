@@ -36,12 +36,15 @@ class PluginCatalogFilterTest {
     private val catalog = listOf(sky, madara, blogger)
 
     @Test
-    fun query_matchesNameOnly() {
+    fun query_matchesNameOrSiteHost() {
         assertTrue(PluginCatalogFilter.matchesQuery(sky, "sky"))
         assertTrue(PluginCatalogFilter.matchesQuery(sky, "SkyNovels"))
-        assertFalse(PluginCatalogFilter.matchesQuery(sky, "skynovels.net"))
+        assertTrue(PluginCatalogFilter.matchesQuery(sky, "skynovels.net"))
+        assertTrue(PluginCatalogFilter.matchesQuery(sky, "https://skynovels.net"))
+        assertTrue(PluginCatalogFilter.matchesQuery(madara, "lightnoveldaily.com"))
         assertFalse(PluginCatalogFilter.matchesQuery(sky, "Español"))
         assertFalse(PluginCatalogFilter.matchesQuery(sky, "madara"))
+        assertFalse(PluginCatalogFilter.matchesQuery(sky, "zzz-missing"))
     }
 
     @Test

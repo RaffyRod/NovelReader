@@ -386,11 +386,12 @@ class SettingsPage extends BasePage {
   }
 
   get fuentesEditBtn() {
-    return this.byText('Editar');
+    // Footer enters bulk-select mode (was labeled Editar; now Seleccionar).
+    return this.byText('Seleccionar');
   }
 
   get fuentesEditBtnEn() {
-    return this.byText('Edit');
+    return this.byText('Select');
   }
 
   get fuentesDeleteSelected() {
@@ -440,7 +441,7 @@ class SettingsPage extends BasePage {
   }
 
   /**
-   * True when Fuentes is in normal mode (Editar visible, not Eliminar seleccionados).
+   * True when Fuentes is in normal mode (Seleccionar visible, not Eliminar seleccionados).
    * @returns {Promise<boolean>}
    */
   async fuentesIsNormalMode() {
@@ -474,6 +475,42 @@ class SettingsPage extends BasePage {
       (await this.fuentesDoneBtn.isDisplayed().catch(() => false)) ||
       (await this.fuentesDoneBtnEn.isDisplayed().catch(() => false))
     );
+  }
+
+  /**
+   * Fuentes / catalog filter field (hint: name or site).
+   */
+  get fuentesFilterField() {
+    return $('android=new UiSelector().className("android.widget.EditText")');
+  }
+
+  /**
+   * Types into the Fuentes filter box.
+   * @param {string} query
+   */
+  async typeFuentesFilter(query) {
+    const field = this.fuentesFilterField;
+    await field.waitForDisplayed({ timeout: 10000 });
+    await field.click();
+    await field.clearValue().catch(() => {});
+    await field.setValue(query);
+    await driver.pause(700);
+  }
+
+  /**
+   * True when any list row TextView contains [needle] (case-insensitive).
+   * @param {string} needle
+   * @returns {Promise<boolean>}
+   */
+  async fuentesListContains(needle) {
+    const q = needle.trim().toLowerCase();
+    if (!q) return false;
+    const texts = await $$('android.widget.TextView');
+    for (const el of texts) {
+      const t = ((await el.getText().catch(() => '')) || '').trim().toLowerCase();
+      if (t.includes(q)) return true;
+    }
+    return false;
   }
 
   /**
