@@ -4,6 +4,16 @@ All notable changes to **QuickNovel Ultimate** are listed here.
 Manual **Release → Telegram** auto-bumps `versionName` / `versionCode` when there are
 new commits since the last `v2.*` tag, then posts style **D** from `### Added` / `### Fixed`.
 
+## 2.0.3
+
+### Fixed
+- CI emu cold boot
+- Fuentes delete visible
+- Fuentes TTS e2e
+
+### Notes
+- versionCode 203
+
 ## 2.0.2
 
 ### Added
