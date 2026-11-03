@@ -218,6 +218,9 @@ abstract class AbstractBook {
     }
 
     abstract fun author(): String?
+
+    /** ISO language of the source (provider), when known — used for TTS voice selection. */
+    open fun contentLanguage(): String? = null
 }
 
 class QuickBook(val data: QuickStreamData) : AbstractBook() {
@@ -228,6 +231,9 @@ class QuickBook(val data: QuickStreamData) : AbstractBook() {
     override fun author(): String? {
         return data.meta.author
     }
+
+    override fun contentLanguage(): String? =
+        Apis.getApiFromNameNull(data.meta.apiName)?.lang?.take(2)?.lowercase()
 
     override val canReload = true
 
@@ -1246,6 +1252,7 @@ class ReadActivityViewModel : ViewModel() {
     fun init(book: AbstractBook, context: Context) {
         this.book = book
         _title.postValue(book.title())
+        ttsSession?.contentLanguageHint = book.contentLanguage()
 
         updateChapters()
         val imageLoader: ImageLoader = SingletonImageLoader.get(context)
@@ -1296,7 +1303,11 @@ class ReadActivityViewModel : ViewModel() {
 
     private fun initTTSSession(context: Context) {
         runOnMainThread {
-            ttsSession = TTSSession(context, ::parseAction)
+            ttsSession = TTSSession(context, ::parseAction).also { session ->
+                if (::book.isInitialized) {
+                    session.contentLanguageHint = book.contentLanguage()
+                }
+            }
         }
     }
 

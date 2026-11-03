@@ -1,64 +1,116 @@
 package com.lagradost.quicknovel.util
 
+import android.content.Context
+import androidx.preference.PreferenceManager
+import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.plugins.InstalledPlugin
 import com.lagradost.quicknovel.plugins.PluginHubUi
 import com.lagradost.quicknovel.plugins.PluginStore
 import com.lagradost.quicknovel.providers.CustomProviderConfig
 
 /**
- * Unified rows for **Administrar proveedores**: URL/JSON customs + installed LNReader
- * plugins (catalog install no longer auto-creates CSS, so plugins must appear here).
+ * Unified **Fuentes de Buscar** (hub mock N): built-in APIs + custom CSS + LNReader plugins.
  */
 object ProviderManage {
     const val PAGE_SIZE = 60
 
-    enum class Kind { CUSTOM, PLUGIN }
+    enum class Kind { BUILTIN, CUSTOM, PLUGIN }
+
+    /** Activas = toggled in Search · Instaladas = customs + plugins · Todas = everything. */
+    enum class Tab { ACTIVE, INSTALLED, ALL }
 
     data class Row(
         val key: String,
         val title: String,
         val subtitle: String,
         val kind: Kind,
+        /** Name stored in [R.string.search_providers_list_key]. Empty when plugin is not CSS-mapped. */
+        val searchName: String,
+        val activeInSearch: Boolean,
+        /** False when a plugin still needs «Elegir plantilla» before it can join Search. */
+        val canToggleSearch: Boolean,
         val config: CustomProviderConfig? = null,
         val plugin: InstalledPlugin? = null,
     )
 
-    /** Deduped manageables — customs first, then plugins not already represented by a custom. */
-    fun loadRows(): List<Row> {
+    fun readActiveNames(context: Context): Set<String> {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val key = context.getString(R.string.search_providers_list_key)
+        val saved = prefs.getStringSet(key, null)
+        return if (saved == null) {
+            Apis.apis.map { it.name }.toSet()
+        } else {
+            HashSet(saved)
+        }
+    }
+
+    /**
+     * Built-ins + customs + plugins (plugins already represented by a custom name are skipped).
+     */
+    fun loadRows(activeNames: Set<String>): List<Row> {
         val customs = CustomProviders.load()
         val customNames = customs.map { it.name.trim().lowercase() }.toSet()
+
+        val builtinRows = Apis.apis.map { api ->
+            Row(
+                key = "builtin:${api.name}",
+                title = api.name,
+                subtitle = "Built-in · ${api.lang}",
+                kind = Kind.BUILTIN,
+                searchName = api.name,
+                activeInSearch = activeNames.contains(api.name),
+                canToggleSearch = true,
+            )
+        }
+
         val customRows = customs.map { cfg ->
+            val host = PluginHubUi.siteHost(cfg.baseUrl).ifBlank { cfg.kind }
             Row(
                 key = "custom:${cfg.name}",
                 title = cfg.name,
-                subtitle = cfg.baseUrl.ifBlank { cfg.kind },
+                subtitle = "$host · Proveedor",
                 kind = Kind.CUSTOM,
+                searchName = cfg.name,
+                activeInSearch = activeNames.contains(cfg.name),
+                canToggleSearch = true,
                 config = cfg,
             )
         }
+
         val pluginRows = PluginStore.loadInstalled()
             .filter { plugin ->
                 val mapped = plugin.providerName.trim()
                 mapped.isBlank() || mapped.lowercase() !in customNames
             }
             .map { plugin ->
+                val mapped = plugin.providerName.trim()
+                val inSearch = plugin.inSearch && mapped.isNotBlank() && activeNames.contains(mapped)
+                val host = PluginHubUi.siteHost(plugin)
                 Row(
                     key = "plugin:${plugin.id}",
                     title = plugin.localName.ifBlank { plugin.name },
-                    subtitle = buildString {
-                        val host = PluginHubUi.siteHost(plugin)
-                        if (host.isNotBlank()) append(host).append(" · ")
-                        append(PluginHubUi.kindLabel(plugin))
-                        if (!plugin.inSearch) append(" · sin búsqueda")
-                    },
+                    // Clean line: host · Plugin (no JS / sin búsqueda clutter — mock A)
+                    subtitle = if (host.isNotBlank()) "$host · Plugin" else "Plugin",
                     kind = Kind.PLUGIN,
+                    searchName = mapped,
+                    activeInSearch = inSearch,
+                    canToggleSearch = plugin.inSearch && mapped.isNotBlank(),
                     plugin = plugin,
                 )
             }
-        return (customRows + pluginRows).sortedBy { it.title.lowercase() }
+
+        return (builtinRows + customRows + pluginRows).sortedBy { it.title.lowercase() }
     }
 
-    fun count(): Int = loadRows().size
+    /** Manageable count for Settings subtitle (customs + plugins, not built-ins). */
+    fun count(): Int = loadRows(emptySet()).count { it.kind != Kind.BUILTIN }
+
+    fun filterTab(rows: List<Row>, tab: Tab): List<Row> =
+        when (tab) {
+            Tab.ALL -> rows
+            Tab.ACTIVE -> rows.filter { it.activeInSearch }
+            Tab.INSTALLED -> rows.filter { it.kind == Kind.CUSTOM || it.kind == Kind.PLUGIN }
+        }
 
     fun matchesName(row: Row, query: String): Boolean {
         if (query.isBlank()) return true

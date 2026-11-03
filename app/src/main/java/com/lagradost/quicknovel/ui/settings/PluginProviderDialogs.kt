@@ -164,6 +164,15 @@ object PluginProviderDialogs {
         }
 
         if (installed.isNotEmpty()) {
+            val inSearch = PluginHubUi.inSearchCount(installed)
+            val pending = PluginHubUi.pendingSearchCount(installed)
+            root.addView(TextView(activity).apply {
+                text = activity.getString(R.string.plugin_hub_smart_banner, inSearch, pending)
+                setTextColor(grayText)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setPadding(0, 0, 0, gap)
+                setLineSpacing(0f, 1.15f)
+            })
             val filterRow = LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -316,16 +325,20 @@ object PluginProviderDialogs {
             )
             setTextColor(grayText)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            setPadding(0, (6 * density).toInt(), 0, (8 * density).toInt())
+            setPadding(0, (6 * density).toInt(), 0, (4 * density).toInt())
         })
-        if (!plugin.inSearch) {
-            card.addView(TextView(activity).apply {
+        card.addView(TextView(activity).apply {
+            if (plugin.inSearch) {
+                text = activity.getString(R.string.plugin_meta_in_search)
+                setTextColor(activity.getColor(R.color.colorPrimaryGreen))
+            } else {
                 text = activity.getString(R.string.plugin_js_not_in_search)
                 setTextColor(primary)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                setPadding(0, 0, 0, (8 * density).toInt())
-            })
-        }
+            }
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, 0, 0, (8 * density).toInt())
+        })
 
         val actions = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL

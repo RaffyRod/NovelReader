@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es" data-surface="dark" data-accent="blue">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fuentes de Buscar — mocks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,500;9..144,650&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #03060f;
+      --text: #e8f1ff;
+      --muted: #8b97ab;
+      --primary: #1a6cff;
+      --primary-rgb: 26, 108, 255;
+      --glow: #4da3ff;
+      --surface: #0a1224;
+      --box: #101a30;
+      --line: rgba(140, 180, 255, 0.14);
+      --ok: #3dd68c;
+      --warn: #f0b429;
+      --danger: #ff6d7d;
+      --on-primary: #fff;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Fraunces", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --sw: 52px;
+    }
+    html[data-surface="light"] {
+      --page: #dfe6f2; --text: #0f1419; --muted: #4a5568;
+      --surface: #f1f4fa; --box: #fff; --line: rgba(15,20,25,.1);
+    }
+    html[data-accent="lava"] { --primary:#ff3b1c; --primary-rgb:255,59,28; --glow:#ff7a62; }
+    html[data-accent="emerald"] { --primary:#00c853; --primary-rgb:0,200,83; --glow:#5dff9c; }
+    html[data-accent="cyan"] { --primary:#00bcd4; --primary-rgb:0,188,212; --glow:#84ffff; }
+    html[data-accent="gold"] { --primary:#c68400; --primary-rgb:198,132,0; --glow:#ffb300; }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 480px at 12% -10%, rgba(var(--primary-rgb),.18), transparent 55%),
+        radial-gradient(700px 420px at 92% 0%, rgba(var(--primary-rgb),.07), transparent 50%),
+        var(--page);
+      padding: 28px 20px 100px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: clamp(1.85rem, 4vw, 2.55rem);
+      margin: 0 0 10px;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      color: var(--muted);
+      max-width: 74ch;
+      line-height: 1.55;
+      margin: 0 0 14px;
+    }
+    .lede strong { color: var(--text); font-weight: 600; }
+    .note {
+      max-width: 74ch;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--primary);
+      background: rgba(var(--primary-rgb), .08);
+      border-radius: 0 10px 10px 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 22px;
+    }
+    .note strong { color: var(--text); }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-bottom: 28px;
+    }
+    .toolbar label {
+      font-size: 11px; color: var(--muted); font-family: var(--mono);
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .toolbar select, .toolbar button {
+      font: inherit; font-size: 13px;
+      border: 1px solid var(--line);
+      background: var(--box);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px 10px;
+    }
+    .toolbar button.pick {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: transparent;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+    .card.pick {
+      outline: 2px solid var(--primary);
+      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), .22);
+    }
+    .card-head {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      display: flex; gap: 10px; align-items: baseline; justify-content: space-between;
+    }
+    .tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .04em;
+      color: var(--glow);
+      background: rgba(var(--primary-rgb), .12);
+      border: 1px solid rgba(var(--primary-rgb), .28);
+      border-radius: 6px;
+      padding: 3px 7px;
+    }
+    .card-head h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .why {
+      padding: 8px 16px 12px;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.45;
+      border-bottom: 1px solid var(--line);
+    }
+    .phone {
+      flex: 1;
+      background: var(--box);
+      margin: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+    }
+    .dlg-title {
+      padding: 14px 14px 6px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 10px 8px;
+    }
+    .tabs span {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tabs .on {
+      color: var(--glow);
+      background: rgba(var(--primary-rgb), .16);
+    }
+    .meta {
+      padding: 0 14px 6px;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .meta.dim { color: var(--muted); font-weight: 400; font-size: 11px; }
+    .search {
+      margin: 0 12px 8px;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(0,0,0,.18);
+      font-size: 12.5px;
+    }
+    .list { flex: 1; overflow: hidden; padding: 0 4px 4px; }
+    .row {
+      display: grid;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 10px;
+      min-height: 56px;
+      border-bottom: 1px solid rgba(140,180,255,.07);
+    }
+    .row:last-child { border-bottom: 0; }
+    .name { font-weight: 600; font-size: 14px; line-height: 1.25; }
+    .sub { color: var(--muted); font-size: 11.5px; margin-top: 2px; line-height: 1.3; }
+    .chip {
+      display: inline-block;
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      margin-right: 4px;
+    }
+    .chip.on { color: var(--ok); border-color: rgba(61,214,140,.35); background: rgba(61,214,140,.1); }
+    .chip.off { color: var(--warn); border-color: rgba(240,180,41,.3); background: rgba(240,180,41,.08); }
+    .chip.kind { color: var(--glow); border-color: rgba(var(--primary-rgb),.3); }
+
+    /* Fixed-width switch column — the alignment fix */
+    .sw {
+      width: var(--sw);
+      height: 30px;
+      border-radius: 999px;
+      background: #3a4254;
+      position: relative;
+      justify-self: end;
+      flex-shrink: 0;
+    }
+    .sw::after {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: #c5c9d4;
+      transition: .15s;
+    }
+    .sw.on { background: var(--primary); }
+    .sw.on::after { left: 25px; background: #fff; }
+
+    .cb {
+      width: 20px; height: 20px;
+      border: 2px solid var(--muted);
+      border-radius: 4px;
+      justify-self: start;
+    }
+    .cb.on { border-color: var(--primary); background: var(--primary); }
+
+    .foot {
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+      padding: 8px 10px 10px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--primary);
+      flex-wrap: wrap;
+    }
+    .foot .muted { color: var(--muted); }
+    .foot .danger { color: var(--danger); }
+    .icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 11px; font-weight: 700; font-family: var(--mono);
+      background: rgba(var(--primary-rgb), .14);
+      color: var(--glow);
+      flex-shrink: 0;
+    }
+    .icon.bi { background: rgba(61,214,140,.12); color: var(--ok); }
+    .rail {
+      width: 3px; align-self: stretch; border-radius: 2px;
+      background: transparent; margin-right: 2px;
+    }
+    .rail.on { background: var(--primary); }
+
+    .seg {
+      display: flex; gap: 6px; padding: 0 12px 8px; flex-wrap: wrap;
+    }
+    .seg i {
+      font-style: normal;
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .seg .on {
+      background: rgba(var(--primary-rgb), .18);
+      border-color: transparent;
+      color: var(--glow);
+      font-weight: 600;
+    }
+
+    .now {
+      opacity: .55;
+      outline: 1px dashed var(--danger);
+    }
+    .now .tag { color: var(--danger); border-color: rgba(255,109,125,.4); background: rgba(255,109,125,.1); }
+
+    .pick-bar {
+      position: sticky; bottom: 0; z-index: 5;
+      margin: 28px -20px -20px; padding: 14px 20px;
+      background: rgba(3,6,15,.92);
+      border-top: 1px solid var(--line);
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+  <h1>Fuentes de Buscar</h1>
+  <p class="lede">
+    El actual mezcla <strong>checkbox + switch</strong> en la misma fila → toggles bailan y el subtítulo
+    <strong>«JS · Plugin · sin búsqueda»</strong> ensucia. Objetivo: <strong>una columna fija de switch</strong>,
+    subtítulo limpio (host + tipo), selección masiva solo en modo editar.
+  </p>
+  <div class="note">
+    Con auto-map LN (JS → puente Madara) casi nadie debería verse «sin búsqueda».
+    Elige una letra; la implementamos en el diálogo real.
+  </div>
+
+  <div class="toolbar">
+    <label>Superficie</label>
+    <select id="surface">
+      <option value="dark">Dark (app)</option>
+      <option value="light">Light</option>
+    </select>
+    <label>Acento</label>
+    <select id="accent">
+      <option value="blue">Ultimate Blue</option>
+      <option value="lava">Lava</option>
+      <option value="emerald">Emerald</option>
+      <option value="cyan">Cyan</option>
+      <option value="gold">Gold</option>
+    </select>
+    <button type="button" class="pick" id="recommend">Marcar elegida (A)</button>
+  </div>
+
+  <div class="grid">
+
+    <!-- NOW -->
+    <article class="card now" data-id="0">
+      <div class="card-head"><span class="tag">HOY</span><h2>Checkbox + switch (roto)</h2></div>
+      <p class="why">Dos controles pelean. Subtítulo ruidoso. Switch sin ancho fijo → desalinea.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="meta">Fuentes (358)</div>
+        <div class="meta dim">Página 1/6 · 1–60 de 358</div>
+        <div class="search">Buscar por nombre…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:22px 1fr auto;">
+            <div class="cb"></div>
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com · JS · Plugin · sin búsqueda</div></div>
+            <div class="sw"></div>
+          </div>
+          <div class="row" style="grid-template-columns:22px 1fr auto;">
+            <div class="cb"></div>
+            <div><div class="name">Bright Novel</div><div class="sub">Built-in · en</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:22px 1fr auto;">
+            <div class="cb"></div>
+            <div><div class="name">Belle Repository</div><div class="sub">belle.novels.xyz · JS · Plugin · sin búsqueda</div></div>
+            <div class="sw" style="margin-top:6px"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="danger">Eliminar</span><span class="muted">Cerrar</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- A -->
+    <article class="card" data-id="A">
+      <div class="card-head"><span class="tag">A ★</span><h2>Solo switch · editar + eliminar</h2></div>
+      <p class="why"><strong>Elegida / implementada.</strong> Normal = solo switch (columna fija). Editar → checkboxes + Seleccionar todos/ninguno + «Eliminar seleccionados» (plugins/propios; built-in bloqueados). Hecho sale del modo.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="meta">358 fuentes · pág. 1/6</div>
+        <div class="search">Buscar por nombre…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com · Plugin</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Belle Repository</div><div class="sub">belle.novels.xyz · Plugin</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Bright Novel</div><div class="sub">Built-in · en</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Box Novel</div><div class="sub">boxnovel.com · Plugin</div></div>
+            <div class="sw"></div>
+          </div>
+        </div>
+        <div class="foot"><span>Editar</span><span class="muted">Cerrar</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- A edit -->
+    <article class="card" data-id="A2">
+      <div class="card-head"><span class="tag">A·edit</span><h2>Modo Editar (eliminar)</h2></div>
+      <p class="why">Tras «Editar»: sin switches. Checkbox + Seleccionar todos. Neutral = Eliminar seleccionados (confirma). Negativo = Hecho.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="meta">3 seleccionadas</div>
+        <div class="foot" style="border:0;border-bottom:1px solid var(--line);justify-content:flex-start;gap:12px">
+          <span>Seleccionar todos</span><span class="muted">Seleccionar ninguno</span>
+        </div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:22px 1fr;">
+            <div class="cb on"></div>
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com · Plugin</div></div>
+          </div>
+          <div class="row" style="grid-template-columns:22px 1fr;">
+            <div class="cb on"></div>
+            <div><div class="name">Belle Repository</div><div class="sub">belle.novels.xyz · Plugin</div></div>
+          </div>
+          <div class="row" style="grid-template-columns:22px 1fr;">
+            <div class="cb"></div>
+            <div><div class="name">Bright Novel</div><div class="sub">Built-in · no eliminable</div></div>
+          </div>
+        </div>
+        <div class="foot"><span class="danger">Eliminar seleccionados</span><span class="muted">Hecho</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- B -->
+    <article class="card" data-id="B">
+      <div class="card-head"><span class="tag">B</span><h2>Chip de estado + switch</h2></div>
+      <p class="why">Host limpio. Chip «Buscar» ON/OFF. Sin JS / sin búsqueda en texto.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="meta">358 · 1–60</div>
+        <div class="search">Filtrar…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div>
+              <div class="name">Beast Novels</div>
+              <div class="sub">beastnovel.com · <span class="chip kind">Plugin</span><span class="chip on">Buscar</span></div>
+            </div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div>
+              <div class="name">Bright Novel</div>
+              <div class="sub"><span class="chip kind">API</span><span class="chip on">Buscar</span></div>
+            </div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div>
+              <div class="name">Box Novel</div>
+              <div class="sub">boxnovel.com · <span class="chip kind">Plugin</span><span class="chip off">Off</span></div>
+            </div>
+            <div class="sw"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Anterior</span><span>2 / 6</span><span>Siguiente</span></div>
+      </div>
+    </article>
+
+    <!-- C -->
+    <article class="card" data-id="C">
+      <div class="card-head"><span class="tag">C</span><h2>Filtro por tipo + filas limpias</h2></div>
+      <p class="why">Pills Plugin / Built-in / Propios encima. Lista sin ruido de kind en cada fila.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="seg"><i class="on">Todas</i><i>Plugin</i><i>Built-in</i><i>Propios</i></div>
+        <div class="search">Buscar…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Belle Repository</div><div class="sub">belle.novels.xyz</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Bright Novel</div><div class="sub">en</div></div>
+            <div class="sw on"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Cerrar</span><span>Agregar proveedor</span></div>
+      </div>
+    </article>
+
+    <!-- D RECOMMENDED -->
+    <article class="card" data-id="D">
+      <div class="card-head"><span class="tag">D ★</span><h2>Rail de acento + switch fijo</h2></div>
+      <p class="why">Recomendada: rail azul si activa; grid 3px | 1fr | 52px. Centrado vertical garantizado. Como header A de Settings.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="meta">358 fuentes</div>
+        <div class="search">Buscar por nombre…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:3px 1fr var(--sw);">
+            <div class="rail on"></div>
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com · Plugin</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:3px 1fr var(--sw);">
+            <div class="rail on"></div>
+            <div><div class="name">Bright Novel</div><div class="sub">Built-in · en</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:3px 1fr var(--sw);">
+            <div class="rail"></div>
+            <div><div class="name">Box Novel</div><div class="sub">boxnovel.com · Plugin</div></div>
+            <div class="sw"></div>
+          </div>
+          <div class="row" style="grid-template-columns:3px 1fr var(--sw);">
+            <div class="rail on"></div>
+            <div><div class="name">Belle Repository</div><div class="sub">belle.novels.xyz · Plugin</div></div>
+            <div class="sw on"></div>
+          </div>
+        </div>
+        <div class="foot"><span>Editar lista</span><span class="muted">Cerrar</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- E -->
+    <article class="card" data-id="E">
+      <div class="card-head"><span class="tag">E</span><h2>Icono tipo + switch</h2></div>
+      <p class="why">Avatar PL / API / CSS. Menos texto. Switch siempre en la misma columna.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span class="on">Activas</span><span>Instaladas</span><span>Todas</span></div>
+        <div class="meta">12 activas</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:36px 1fr var(--sw);">
+            <div class="icon">PL</div>
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:36px 1fr var(--sw);">
+            <div class="icon bi">API</div>
+            <div><div class="name">Bright Novel</div><div class="sub">Inglés</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:36px 1fr var(--sw);">
+            <div class="icon">PL</div>
+            <div><div class="name">Belle Repository</div><div class="sub">belle.novels.xyz</div></div>
+            <div class="sw on"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Cerrar</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- F -->
+    <article class="card" data-id="F">
+      <div class="card-head"><span class="tag">F</span><h2>Modo selección (checkbox solo al editar)</h2></div>
+      <p class="why">Estado normal = A. Al pulsar Editar aparece checkbox + «Eliminar».</p>
+      <div class="phone">
+        <div class="dlg-title">Editar fuentes</div>
+        <div class="meta">3 seleccionadas</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:22px 1fr;">
+            <div class="cb on"></div>
+            <div><div class="name">Beast Novels</div><div class="sub">Plugin</div></div>
+          </div>
+          <div class="row" style="grid-template-columns:22px 1fr;">
+            <div class="cb on"></div>
+            <div><div class="name">Belle Repository</div><div class="sub">Plugin</div></div>
+          </div>
+          <div class="row" style="grid-template-columns:22px 1fr;">
+            <div class="cb"></div>
+            <div><div class="name">Bright Novel</div><div class="sub">Built-in · no eliminable</div></div>
+          </div>
+        </div>
+        <div class="foot"><span class="danger">Eliminar (2)</span><span class="muted">Listo</span></div>
+      </div>
+    </article>
+
+    <!-- G -->
+    <article class="card" data-id="G">
+      <div class="card-head"><span class="tag">G</span><h2>Como LNReader Search</h2></div>
+      <p class="why">Lista plana, solo nombre + switch. Sin URL. Tabs Activas/Todas. Densidad alta.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes</div>
+        <div class="tabs"><span class="on">Activas</span><span>Todas</span></div>
+        <div class="search">Buscar…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr var(--sw); min-height:48px; padding:8px 12px;">
+            <div class="name">Beast Novels</div><div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw); min-height:48px; padding:8px 12px;">
+            <div class="name">Belle Repository</div><div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw); min-height:48px; padding:8px 12px;">
+            <div class="name">Bright Novel</div><div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw); min-height:48px; padding:8px 12px;">
+            <div class="name">Box Novel</div><div class="sw"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Hecho</span></div>
+      </div>
+    </article>
+
+    <!-- H -->
+    <article class="card" data-id="H">
+      <div class="card-head"><span class="tag">H</span><h2>Dos líneas tipográficas</h2></div>
+      <p class="why">Nombre 15/600 · host 12 muted. Switch center en row de 64px. Sin chips.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span class="on">Instaladas</span><span>Todas</span></div>
+        <div class="meta dim">Plugins y propios · 210</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr var(--sw); min-height:64px;">
+            <div>
+              <div class="name" style="font-size:15px">Beast Novels</div>
+              <div class="sub" style="font-size:12px">beastnovel.com</div>
+            </div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw); min-height:64px;">
+            <div>
+              <div class="name" style="font-size:15px">Belle Repository</div>
+              <div class="sub" style="font-size:12px">belle.novels.xyz</div>
+            </div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw); min-height:64px;">
+            <div>
+              <div class="name" style="font-size:15px">Box Novel</div>
+              <div class="sub" style="font-size:12px">boxnovel.com</div>
+            </div>
+            <div class="sw"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Cerrar</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- I -->
+    <article class="card" data-id="I">
+      <div class="card-head"><span class="tag">I</span><h2>Paginación compacta arriba</h2></div>
+      <p class="why">Quita «Seleccionar todos» permanente. Página como stepper. Filas = D sin rail.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="foot" style="border:0; border-bottom:1px solid var(--line);">
+          <span class="muted">‹</span><span>1 / 6</span><span>›</span>
+        </div>
+        <div class="search">Buscar…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Beast Novels</div><div class="sub">Plugin</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Bright Novel</div><div class="sub">Built-in</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Box Novel</div><div class="sub">Plugin</div></div>
+            <div class="sw"></div>
+          </div>
+        </div>
+        <div class="foot"><span>Editar</span><span class="muted">Cerrar</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- J -->
+    <article class="card" data-id="J">
+      <div class="card-head"><span class="tag">J</span><h2>Tap fila = detalle · switch = Buscar</h2></div>
+      <p class="why">Chevron sutil. Switch no compite con checkbox. Abre sheet al tocar nombre.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="tabs"><span>Activas</span><span>Instaladas</span><span class="on">Todas</span></div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr 16px var(--sw);">
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com · Plugin</div></div>
+            <div style="color:var(--muted)">›</div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr 16px var(--sw);">
+            <div><div class="name">Bright Novel</div><div class="sub">Built-in · en</div></div>
+            <div style="color:var(--muted)">›</div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr 16px var(--sw);">
+            <div><div class="name">Box Novel</div><div class="sub">boxnovel.com · Plugin</div></div>
+            <div style="color:var(--muted)">›</div>
+            <div class="sw"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Cerrar</span><span>Agregar</span></div>
+      </div>
+    </article>
+
+    <!-- K -->
+    <article class="card" data-id="K">
+      <div class="card-head"><span class="tag">K</span><h2>Grupos sticky</h2></div>
+      <p class="why">Secciones Built-in / Plugins / Propios. Menos scroll mental. Switch alineado en todas.</p>
+      <div class="phone">
+        <div class="dlg-title">Fuentes de Buscar</div>
+        <div class="search">Buscar…</div>
+        <div class="list">
+          <div class="meta" style="padding-top:8px">Built-in</div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div class="name">Bright Novel</div><div class="sw on"></div>
+          </div>
+          <div class="meta" style="padding-top:8px">Plugins</div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Beast Novels</div><div class="sub">beastnovel.com</div></div>
+            <div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div><div class="name">Belle Repository</div><div class="sub">belle.novels.xyz</div></div>
+            <div class="sw on"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Cerrar</span></div>
+      </div>
+    </article>
+
+    <!-- L -->
+    <article class="card" data-id="L">
+      <div class="card-head"><span class="tag">L</span><h2>Ultra limpia · 1 job</h2></div>
+      <p class="why">Solo activar/desactivar Buscar. Sin eliminar aquí (eso vive en hub de plugins).</p>
+      <div class="phone">
+        <div class="dlg-title">En Buscar</div>
+        <div class="meta dim">Como LNReader · al instalar ya están aquí</div>
+        <div class="search">Filtrar fuentes…</div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div class="name">Beast Novels</div><div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div class="name">Belle Repository</div><div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div class="name">Bright Novel</div><div class="sw on"></div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr var(--sw);">
+            <div class="name">Box Novel</div><div class="sw"></div>
+          </div>
+        </div>
+        <div class="foot"><span class="muted">Listo</span></div>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="pick-bar">
+    <span style="color:var(--muted);font-size:13px">Elegida e implementada: <strong style="color:var(--text)">A</strong> (+ A·edit con eliminar seleccionados).</span>
+    <button type="button" class="pick" id="copy">Copiar elección</button>
+    <span id="chosen" style="font-family:var(--mono);color:var(--glow)"></span>
+  </div>
+
+  <script>
+    const html = document.documentElement;
+    document.getElementById('surface').onchange = (e) => html.dataset.surface = e.target.value;
+    document.getElementById('accent').onchange = (e) => html.dataset.accent = e.target.value;
+    let selected = 'A';
+    const mark = (id) => {
+      selected = id;
+      document.querySelectorAll('.card').forEach((c) => c.classList.toggle('pick', c.dataset.id === id));
+      document.getElementById('chosen').textContent = id === '0' ? '' : `→ ${id}`;
+    };
+    document.querySelectorAll('.card').forEach((c) => {
+      c.addEventListener('click', () => { if (c.dataset.id !== '0') mark(c.dataset.id); });
+    });
+    document.getElementById('recommend').onclick = () => mark('A');
+    document.getElementById('copy').onclick = async () => {
+      const text = `Fuentes de Buscar mock: ${selected}`;
+      await navigator.clipboard.writeText(text);
+      document.getElementById('chosen').textContent = `copiado ${selected}`;
+    };
+    mark('A');
+  </script>
+</body>
+</html>

@@ -18,7 +18,7 @@ Manuals: [`docs/manual-1.2.3/`](../docs/manual-1.2.3/).
 | `07-reader-tts` | Seeds a novel (import fixture / search stream), opens reader, shows TTS, starts TTS — **no skips** |
 | `08-providers` | HTTP probe + multi-select (Select none → enable 2+) + best-effort scoped search |
 | `09-search-special-chars` | Blocks special chars by default; accepts them when Settings toggle is on |
-| `10-plugins` | Settings → Plugins (LNReader) hub: open manage plugins / add repository entry points |
+| `10-plugins` | Settings → Plugins (LNReader): Fuentes A (switch + Editar/eliminar), hub, add repo · JS→Madara Search like LN |
 | `11-download-translate` | Novel detail → Download dialog: language picker + Gemini / Google online engine |
 | `12-reader-loading` | Reader **Glyph Pulse (F)**: 本 overlay, no raw URL as title (cache may skip flash) |
 | `13-theme-defaults` | Fresh install: **Modo oscuro** ON + **Ultimate Blue** |

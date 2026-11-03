@@ -63,7 +63,8 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | Catalog select-all | Visible **Seleccionar todos / ninguno** (was a hidden dialog button) |
 | Name-only filter | Catalog search matches **name** only · paging hint for all 300+ sources |
 | Proveedores propios | Scrollable manager — no ~56-item `setItems` cap |
-| Madara / Blog | No auto-CSS from catalog; add via **URL/JSON** as before |
+| Plugins → Buscar | Como LNReader: al instalar (con URL de sitio) entra en **Buscar** automáticamente |
+| Fuentes de Buscar | Lista unificada: built-in + plugins + propios · tabs Activas / Instaladas / Todas |
 | Settings groups | Accent **rail** headers · **Tutorial** under Información |
 | Plugin install | **Glyph Pulse (本)** loading while fetching plugins |
 | Plugin search | Live filter in hub / catalog / proveedores |

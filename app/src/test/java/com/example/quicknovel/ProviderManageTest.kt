@@ -9,22 +9,40 @@ import org.junit.Test
 class ProviderManageTest {
     private val rows = listOf(
         ProviderManage.Row(
+            key = "builtin:Sky",
+            title = "SkyNovels",
+            subtitle = "Built-in",
+            kind = ProviderManage.Kind.BUILTIN,
+            searchName = "SkyNovels",
+            activeInSearch = true,
+            canToggleSearch = true,
+        ),
+        ProviderManage.Row(
             key = "custom:A",
             title = "Alpha Site",
             subtitle = "https://a.test",
             kind = ProviderManage.Kind.CUSTOM,
+            searchName = "Alpha Site",
+            activeInSearch = false,
+            canToggleSearch = true,
         ),
         ProviderManage.Row(
             key = "plugin:b",
             title = "Beta Novel",
             subtitle = "beta.test · JS",
             kind = ProviderManage.Kind.PLUGIN,
+            searchName = "",
+            activeInSearch = false,
+            canToggleSearch = false,
         ),
         ProviderManage.Row(
             key = "plugin:c",
             title = "Gamma",
             subtitle = "g.test · Madara",
             kind = ProviderManage.Kind.PLUGIN,
+            searchName = "Gamma",
+            activeInSearch = true,
+            canToggleSearch = true,
         ),
     )
 
@@ -33,7 +51,18 @@ class ProviderManageTest {
         assertEquals(1, ProviderManage.filter(rows, "alpha").size)
         assertEquals(1, ProviderManage.filter(rows, "Beta").size)
         assertTrue(ProviderManage.filter(rows, "https://a.test").isEmpty())
-        assertEquals(3, ProviderManage.filter(rows, "").size)
+        assertEquals(4, ProviderManage.filter(rows, "").size)
+    }
+
+    @Test
+    fun filterTab_activeInstalledAll() {
+        assertEquals(2, ProviderManage.filterTab(rows, ProviderManage.Tab.ACTIVE).size)
+        assertEquals(3, ProviderManage.filterTab(rows, ProviderManage.Tab.INSTALLED).size)
+        assertEquals(4, ProviderManage.filterTab(rows, ProviderManage.Tab.ALL).size)
+        assertTrue(
+            ProviderManage.filterTab(rows, ProviderManage.Tab.INSTALLED)
+                .none { it.kind == ProviderManage.Kind.BUILTIN },
+        )
     }
 
     @Test
@@ -44,6 +73,9 @@ class ProviderManageTest {
                 title = "Provider $it",
                 subtitle = "x",
                 kind = ProviderManage.Kind.PLUGIN,
+                searchName = "Provider $it",
+                activeInSearch = false,
+                canToggleSearch = true,
             )
         }
         assertEquals(3, ProviderManage.pageCount(many.size))

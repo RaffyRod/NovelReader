@@ -138,4 +138,15 @@ class PluginHubUiTest {
         assertEquals(3, PluginHubUi.filterInstalled(plugins, "").size)
         assertEquals(0, PluginHubUi.filterInstalled(plugins, "zzz").size)
     }
+
+    @Test
+    fun inSearchCount_countsMappedPluginsOnly() {
+        val plugins = listOf(
+            InstalledPlugin(id = "1", name = "A", cssMapped = true, providerName = "A"),
+            InstalledPlugin(id = "2", name = "B", cssMapped = false, providerName = ""),
+            InstalledPlugin(id = "3", name = "C", cssMapped = true, providerName = "C"),
+        )
+        assertEquals(2, PluginHubUi.inSearchCount(plugins))
+        assertEquals(1, PluginHubUi.pendingSearchCount(plugins))
+    }
 }

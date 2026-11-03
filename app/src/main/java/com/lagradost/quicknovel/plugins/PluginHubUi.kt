@@ -1,7 +1,7 @@
 package com.lagradost.quicknovel.plugins
 
 /**
- * Display helpers for the soft-card installed-plugins hub (option B).
+ * Display helpers for the soft-card installed-plugins hub (smart default / mock M).
  */
 object PluginHubUi {
     fun kindLabel(plugin: InstalledPlugin): String =
@@ -10,6 +10,12 @@ object PluginHubUi {
             "blogger" -> "Blogger"
             else -> if (plugin.cssMapped) "CSS" else "JS"
         }
+
+    /** Count of installed plugins already mapped into Search. */
+    fun inSearchCount(plugins: List<InstalledPlugin>): Int = plugins.count { it.inSearch }
+
+    fun pendingSearchCount(plugins: List<InstalledPlugin>): Int =
+        plugins.size - inSearchCount(plugins)
 
     fun kindLabel(item: PluginManifestItem): String =
         when (PluginTemplateHints.detect(item)) {

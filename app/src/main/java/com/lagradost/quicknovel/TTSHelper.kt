@@ -38,6 +38,12 @@ import kotlin.math.roundToInt
 
 
 class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boolean) {
+    /**
+     * ISO language of the open novel/provider (e.g. "es"). Used when text detection is unclear
+     * so a Spanish source does not fall back to an English UI / Lessac voice.
+     */
+    @Volatile
+    var contentLanguageHint: String? = null
     private val intentFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
     private val myNoisyAudioStreamReceiver = BecomingNoisyReceiver()
 
@@ -201,7 +207,7 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
     private val mutex: Mutex = Mutex() // no duplicate tts
 
     /**
-     * Initializes TTS for the language of [sampleText] (or the app language, Spanish by default).
+     * Initializes TTS for the language of [sampleText] / novel hint / app (Spanish by default).
      * Recreates the engine when the cached instance speaks the wrong language.
      */
     suspend fun requireTTS(
@@ -210,15 +216,14 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
     ): TextToSpeech? = with(mutex) {
         coroutineScope {
             val appLocale = TtsVoicePicker.appLocale(context)
-            val neededLang = TtsVoicePicker.detectLanguage(sampleText.orEmpty())
-                ?: appLocale.language
-                ?: "es"
+            val hint = contentLanguageHint
+            val neededLang = TtsVoicePicker.resolveReadingLanguage(sampleText, hint, appLocale)
 
             val currentTTS = tts
             if (currentTTS != null) {
                 val currentLang = currentTTS.voice?.locale?.language
                     ?: currentTTS.language?.language
-                if (currentLang == null || currentLang == neededLang) {
+                if (currentLang != null && currentLang == neededLang) {
                     return@coroutineScope currentTTS
                 }
                 // Was speaking another language (e.g. English Lessac on Spanish text).
@@ -231,7 +236,7 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
             var success = false
             val voiceName = BaseApplication.getKey<String>(EPUB_VOICE)
             val langName = BaseApplication.getKey<String>(EPUB_LANG)
-            // Prefer Piper/Sherpa neural engine (Dave ES / Lessac EN) when installed.
+            // Prefer Piper/Sherpa for this language only (never Lessac when neededLang=es).
             val preferredEngine = TtsVoicePicker.preferredEnginePackage(context, neededLang)
             var activeEngine = preferredEngine
             val appCtx = context.applicationContext
@@ -269,13 +274,15 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
 
             if (!success) return@coroutineScope null
 
-            val available = pendingTTS.availableLanguages.orEmpty()
-            var locale = TtsVoicePicker.readingLocale(
-                available = available,
+            fun pickLocale(engine: TextToSpeech): Locale = TtsVoicePicker.readingLocale(
+                available = engine.availableLanguages.orEmpty(),
                 appLocale = appLocale,
                 sampleText = sampleText,
                 savedDisplayName = langName,
+                contentLanguageHint = hint,
             )
+
+            var locale = pickLocale(pendingTTS)
             var canSetLanguage = pendingTTS.setLanguage(locale)
             // Neural engine APKs are often one-language (Dave=ES, Lessac=EN).
             // If language is missing, fall back to Google TTS — not the system default,
@@ -295,13 +302,7 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
                         delay(100)
                     }
                     if (!success) return@coroutineScope null
-                    val retryAvailable = pendingTTS.availableLanguages.orEmpty()
-                    locale = TtsVoicePicker.readingLocale(
-                        available = retryAvailable,
-                        appLocale = appLocale,
-                        sampleText = sampleText,
-                        savedDisplayName = langName,
-                    )
+                    locale = pickLocale(pendingTTS)
                     canSetLanguage = pendingTTS.setLanguage(locale)
                 }
             }
@@ -323,13 +324,7 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
                         delay(100)
                     }
                     if (!success) return@coroutineScope null
-                    val retryAvailable = pendingTTS.availableLanguages.orEmpty()
-                    locale = TtsVoicePicker.readingLocale(
-                        available = retryAvailable,
-                        appLocale = appLocale,
-                        sampleText = sampleText,
-                        savedDisplayName = langName,
-                    )
+                    locale = pickLocale(pendingTTS)
                     canSetLanguage = pendingTTS.setLanguage(locale)
                 }
             }
@@ -345,7 +340,14 @@ class TTSSession(val context: Context, event: (TTSHelper.TTSActionType) -> Boole
             val savedVoice = pendingTTS.voices.orEmpty().firstOrNull { voice ->
                 voice.name == voiceName && voice.locale.language == locale.language
             }
-            val chosen = savedVoice ?: bestVoice(pendingTTS, locale) ?: pendingTTS.defaultVoice
+            // Never fall back to defaultVoice of the wrong language (Lessac on Spanish novels).
+            val chosen = savedVoice
+                ?: bestVoice(pendingTTS, locale)
+                ?: pendingTTS.voices.orEmpty().firstOrNull { voice ->
+                    voice.locale.language == locale.language &&
+                        !voice.features.orEmpty().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)
+                }
+                ?: pendingTTS.defaultVoice?.takeIf { it.locale.language == locale.language }
             if (chosen != null) {
                 pendingTTS.voice = chosen
                 // Persist the matching language/voice so the next chapter stays correct.

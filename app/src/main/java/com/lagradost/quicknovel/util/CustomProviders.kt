@@ -122,18 +122,9 @@ object CustomProviders {
 
     /** New providers start enabled for search, otherwise they would not show up in the results. */
     private fun enableInSearch(context: Context, config: CustomProviderConfig, replacing: String?) {
-        val settings = PreferenceManager.getDefaultSharedPreferences(context)
-
-        val providersKey = context.getString(R.string.search_providers_list_key)
-        // Always copy — Android SharedPreferences StringSet must not be mutated in place.
-        val updatedProviders = HashSet(
-            settings.getStringSet(providersKey, null) ?: Apis.apis.map { it.name },
-        )
-        replacing?.let { updatedProviders.remove(it) }
-        updatedProviders.add(config.name)
-        settings.edit().putStringSet(providersKey, HashSet(updatedProviders)).apply()
-
+        setSearchEnabled(context, config.name, enabled = true, replacing = replacing)
         val langKey = context.getString(R.string.provider_lang_key)
+        val settings = PreferenceManager.getDefaultSharedPreferences(context)
         settings.getStringSet(langKey, null)?.let { saved ->
             val langs = HashSet(saved).apply { add(config.lang) }
             settings.edit().putStringSet(langKey, HashSet(langs)).apply()
@@ -141,12 +132,28 @@ object CustomProviders {
     }
 
     private fun disableInSearch(context: Context, name: String) {
+        setSearchEnabled(context, name, enabled = false)
+    }
+
+    /**
+     * Toggles a provider name in the Search multi-select set (Fuentes de Buscar switches).
+     */
+    fun setSearchEnabled(
+        context: Context,
+        name: String,
+        enabled: Boolean,
+        replacing: String? = null,
+    ) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
         val providersKey = context.getString(R.string.search_providers_list_key)
-        val saved = settings.getStringSet(providersKey, null) ?: return
-        val updated = HashSet(saved)
-        if (updated.remove(name)) {
-            settings.edit().putStringSet(providersKey, HashSet(updated)).apply()
-        }
+        val updated = HashSet(
+            settings.getStringSet(providersKey, null) ?: Apis.apis.map { it.name },
+        )
+        replacing?.let { updated.remove(it) }
+        if (enabled) updated.add(trimmed) else updated.remove(trimmed)
+        settings.edit().putStringSet(providersKey, HashSet(updated)).apply()
+        com.lagradost.quicknovel.APIRepository.providersActive = HashSet(updated)
     }
 }

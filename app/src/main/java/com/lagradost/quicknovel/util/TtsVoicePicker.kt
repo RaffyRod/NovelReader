@@ -65,26 +65,38 @@ object TtsVoicePicker {
         for (w in SPANISH_MARKERS) if (padded.contains(w)) es++
         for (w in ENGLISH_MARKERS) if (padded.contains(w)) en++
         return when {
-            es >= en + 2 -> "es"
-            en >= es + 2 -> "en"
+            es > en -> "es"
+            en > es -> "en"
             else -> null
         }
     }
 
     /**
+     * Resolves ISO language for TTS: text sample → novel/provider hint → app UI → "es".
+     */
+    fun resolveReadingLanguage(
+        sampleText: String?,
+        contentLanguageHint: String?,
+        appLocale: Locale,
+    ): String {
+        detectLanguage(sampleText.orEmpty())?.let { return it }
+        val hint = contentLanguageHint?.trim()?.lowercase(Locale.ROOT)?.take(2)
+        if (!hint.isNullOrBlank() && hint != "und" && hint != "xx") return hint
+        return appLocale.language.takeIf { it.isNotBlank() } ?: "es"
+    }
+
+    /**
      * Locale to use for reading: saved choice if it still matches the needed language,
-     * else detected text language, else app language, else device fallback.
+     * else detected text / novel hint / app language.
      */
     fun readingLocale(
         available: Collection<Locale>,
         appLocale: Locale,
         sampleText: String?,
         savedDisplayName: String?,
+        contentLanguageHint: String? = null,
     ): Locale {
-        val detected = sampleText?.let { detectLanguage(it) }
-        val wantedLanguage = detected
-            ?: appLocale.language.takeIf { it.isNotBlank() }
-            ?: "es"
+        val wantedLanguage = resolveReadingLanguage(sampleText, contentLanguageHint, appLocale)
         val saved = available.firstOrNull { it.displayName == savedDisplayName }
         if (saved != null && saved.language == wantedLanguage) {
             return saved
@@ -121,9 +133,20 @@ object TtsVoicePicker {
             ?.name
     }
 
+    private fun packageLooksSpanish(pkg: String): Boolean =
+        listOf("davefx", "dave", "_es", "-es-", ".es.", "spa", "spanish").any {
+            pkg.contains(it, ignoreCase = true)
+        }
+
+    private fun packageLooksEnglish(pkg: String): Boolean =
+        listOf("lessac", "amy", "ryan", "_en", "-en-", ".en.", "eng", "english").any {
+            pkg.contains(it, ignoreCase = true)
+        }
+
     /**
-     * Package name of a preferred neural TTS engine for [language], or any neural engine,
-     * or null when none is installed.
+     * Package name of a preferred neural TTS engine for [language].
+     * Never returns an English-only engine (e.g. Lessac) when reading Spanish, and vice versa —
+     * that used to make Spanish novels speak with an English Piper voice.
      */
     fun preferredEnginePackage(context: Context, language: String? = null): String? {
         val pm = context.packageManager
@@ -135,21 +158,20 @@ object TtsVoicePicker {
         }
         if (neural.isEmpty()) return null
         val lang = language?.lowercase(Locale.ROOT)
-        if (lang == "es") {
-            neural.firstOrNull { pkg ->
-                listOf("davefx", "dave", "_es", "-es-", "spa", "spanish").any {
-                    pkg.contains(it, ignoreCase = true)
-                }
-            }?.let { return it }
+        when (lang) {
+            "es" -> {
+                neural.firstOrNull { packageLooksSpanish(it) }?.let { return it }
+                // Generic Sherpa without lang in the package name may still hold Dave.
+                neural.firstOrNull { !packageLooksEnglish(it) }?.let { return it }
+                return null
+            }
+            "en" -> {
+                neural.firstOrNull { packageLooksEnglish(it) }?.let { return it }
+                neural.firstOrNull { !packageLooksSpanish(it) }?.let { return it }
+                return null
+            }
+            else -> return neural.firstOrNull()
         }
-        if (lang == "en") {
-            neural.firstOrNull { pkg ->
-                listOf("lessac", "amy", "ryan", "_en", "-en-", "eng", "english").any {
-                    pkg.contains(it, ignoreCase = true)
-                }
-            }?.let { return it }
-        }
-        return neural.firstOrNull()
     }
 
     /** True when a Sherpa / Hayai / Piper TTS engine package is installed. */

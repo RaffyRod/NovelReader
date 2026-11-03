@@ -44,6 +44,15 @@ class SettingsPage extends BasePage {
     return this.byTextContains('Añadir repositorio');
   }
 
+  /** Unified Search sources preference (Fuentes de Buscar / Search sources). */
+  get fuentesDeBuscar() {
+    return this.byTextContains('Fuentes de Buscar');
+  }
+
+  get searchSources() {
+    return this.byTextContains('Search sources');
+  }
+
   get uiTheme() {
     return this.byTextContains('Fire');
   }
@@ -304,60 +313,56 @@ class SettingsPage extends BasePage {
   }
 
   /**
-   * Scrolls Settings until the Plugins (LNReader) group is visible.
+   * @returns {Promise<boolean>}
+   */
+  async pluginsSectionVisible() {
+    return (
+      (await this.pluginGroup.isDisplayed().catch(() => false)) ||
+      (await this.pluginHub.isDisplayed().catch(() => false)) ||
+      (await this.pluginAddRepo.isDisplayed().catch(() => false)) ||
+      (await this.fuentesDeBuscar.isDisplayed().catch(() => false)) ||
+      (await this.searchSources.isDisplayed().catch(() => false))
+    );
+  }
+
+  /**
+   * Scrolls Settings until the Plugins (LNReader) / Fuentes group is visible.
+   * One UiScrollable pass per marker (no scrollToText gesture storm — that hung CI locally).
    * @returns {Promise<boolean>}
    */
   async scrollToPlugins() {
+    if (await this.pluginsSectionVisible()) return true;
+
     const markers = [
-      'Plugins (LNReader)',
+      'Fuentes de Buscar',
       'Administrar plugins',
+      'Plugins (LNReader)',
+      'Search sources',
       'Manage plugins',
-      'Añadir repositorio',
-      'Add repository',
-      'Custom',
-      'Proveedores personalizados',
     ];
-    for (let i = 0; i < 6; i++) {
-      await driver.execute('mobile: scrollGesture', {
-        left: 80,
-        top: 400,
-        width: 600,
-        height: 1200,
-        direction: 'up',
-        percent: 0.9,
-      }).catch(() => {});
-      await driver.pause(150);
-    }
     for (const marker of markers) {
-      await this.scrollToText(marker);
-      await driver.pause(250);
-      if (
-        (await this.pluginGroup.isDisplayed().catch(() => false)) ||
-        (await this.pluginHub.isDisplayed().catch(() => false)) ||
-        (await this.pluginAddRepo.isDisplayed().catch(() => false))
-      ) {
-        return true;
-      }
+      await $(
+        `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${marker}"))`,
+      ).catch(() => {});
+      await driver.pause(200);
+      if (await this.pluginsSectionVisible()) return true;
     }
-    for (let i = 0; i < 10; i++) {
-      await driver.execute('mobile: scrollGesture', {
-        left: 80,
-        top: 500,
-        width: 600,
-        height: 1400,
-        direction: 'down',
-        percent: 0.85,
-      });
-      await driver.pause(350);
-      if (
-        (await this.pluginGroup.isDisplayed().catch(() => false)) ||
-        (await this.pluginHub.isDisplayed().catch(() => false)) ||
-        (await this.pluginAddRepo.isDisplayed().catch(() => false))
-      ) {
-        return true;
-      }
+
+    for (let i = 0; i < 6; i++) {
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 1200,
+          direction: 'down',
+          percent: 0.75,
+        })
+        .catch(() => {});
+      await driver.pause(200);
+      if (await this.pluginsSectionVisible()) return true;
     }
-    return false;
+    return this.pluginsSectionVisible();
   }
 
   /**
@@ -378,6 +383,115 @@ class SettingsPage extends BasePage {
       (await this.byTextContains('No plugins yet').isDisplayed().catch(() => false)) ||
       (await this.byTextContains('Añadir repositorio').isDisplayed().catch(() => false))
     );
+  }
+
+  get fuentesEditBtn() {
+    return this.byText('Editar');
+  }
+
+  get fuentesEditBtnEn() {
+    return this.byText('Edit');
+  }
+
+  get fuentesDeleteSelected() {
+    return this.byTextContains('Eliminar seleccionados');
+  }
+
+  get fuentesDeleteSelectedEn() {
+    return this.byTextContains('Delete selected');
+  }
+
+  get fuentesDoneBtn() {
+    return this.byText('Hecho');
+  }
+
+  get fuentesDoneBtnEn() {
+    return this.byText('Done');
+  }
+
+  /**
+   * Opens unified Fuentes de Buscar / Search sources manager (mock A: switch-only).
+   * @returns {Promise<boolean>}
+   */
+  async openFuentesDeBuscar() {
+    await this.open();
+    await this.expectLoaded();
+    if (!(await this.scrollToPlugins())) return false;
+    const rowEs = this.fuentesDeBuscar;
+    const rowEn = this.searchSources;
+    if (await rowEs.isDisplayed().catch(() => false)) {
+      await rowEs.click();
+    } else if (await rowEn.isDisplayed().catch(() => false)) {
+      await rowEn.click();
+    } else {
+      return false;
+    }
+    await driver.pause(900);
+    return (
+      (await this.byTextContains('Activas').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Active').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Instaladas').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Installed').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Todas').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('All').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Fuentes').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Sources').isDisplayed().catch(() => false))
+    );
+  }
+
+  /**
+   * True when Fuentes is in normal mode (Editar visible, not Eliminar seleccionados).
+   * @returns {Promise<boolean>}
+   */
+  async fuentesIsNormalMode() {
+    const edit =
+      (await this.fuentesEditBtn.isDisplayed().catch(() => false)) ||
+      (await this.fuentesEditBtnEn.isDisplayed().catch(() => false));
+    const deleting =
+      (await this.fuentesDeleteSelected.isDisplayed().catch(() => false)) ||
+      (await this.fuentesDeleteSelectedEn.isDisplayed().catch(() => false));
+    return edit && !deleting;
+  }
+
+  /**
+   * Enters Fuentes edit mode (checkboxes + delete selected).
+   * @returns {Promise<boolean>}
+   */
+  async enterFuentesEditMode() {
+    const editEs = this.fuentesEditBtn;
+    const editEn = this.fuentesEditBtnEn;
+    if (await editEs.isDisplayed().catch(() => false)) {
+      await editEs.click();
+    } else if (await editEn.isDisplayed().catch(() => false)) {
+      await editEn.click();
+    } else {
+      return false;
+    }
+    await driver.pause(700);
+    return (
+      (await this.fuentesDeleteSelected.isDisplayed().catch(() => false)) ||
+      (await this.fuentesDeleteSelectedEn.isDisplayed().catch(() => false)) ||
+      (await this.fuentesDoneBtn.isDisplayed().catch(() => false)) ||
+      (await this.fuentesDoneBtnEn.isDisplayed().catch(() => false))
+    );
+  }
+
+  /**
+   * Leaves Fuentes edit mode via Hecho / Done.
+   * @returns {Promise<boolean>}
+   */
+  async exitFuentesEditMode() {
+    const doneEs = this.fuentesDoneBtn;
+    const doneEn = this.fuentesDoneBtnEn;
+    if (await doneEs.isDisplayed().catch(() => false)) {
+      await doneEs.click();
+    } else if (await doneEn.isDisplayed().catch(() => false)) {
+      await doneEn.click();
+    } else {
+      return false;
+    }
+    await driver.pause(700);
+    return this.fuentesIsNormalMode();
   }
 
   /**

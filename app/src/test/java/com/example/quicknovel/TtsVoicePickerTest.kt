@@ -93,6 +93,30 @@ class TtsVoicePickerTest {
     }
 
     @Test
+    fun resolveReadingLanguage_usesProviderHintWhenSampleUnclear() {
+        assertEquals(
+            "es",
+            TtsVoicePicker.resolveReadingLanguage(
+                sampleText = "SonicMTL",
+                contentLanguageHint = "es",
+                appLocale = Locale.US,
+            ),
+        )
+    }
+
+    @Test
+    fun resolveReadingLanguage_prefersDetectedOverEnglishApp() {
+        assertEquals(
+            "es",
+            TtsVoicePicker.resolveReadingLanguage(
+                sampleText = "Finalmente encontré trabajo en la morgue del hospital.",
+                contentLanguageHint = "en",
+                appLocale = Locale.US,
+            ),
+        )
+    }
+
+    @Test
     fun readingLocale_ignoresSavedEnglishWhenTextIsSpanish() {
         val available = listOf(Locale("es", "ES"), Locale.US)
         val locale = TtsVoicePicker.readingLocale(
@@ -100,6 +124,19 @@ class TtsVoicePickerTest {
             appLocale = Locale.US,
             sampleText = "Finalmente encontré trabajo en la morgue del hospital.",
             savedDisplayName = Locale.US.displayName,
+        )
+        assertEquals("es", locale.language)
+    }
+
+    @Test
+    fun readingLocale_usesHintWhenSampleBlankAndAppIsEnglish() {
+        val available = listOf(Locale("es", "ES"), Locale.US)
+        val locale = TtsVoicePicker.readingLocale(
+            available = available,
+            appLocale = Locale.US,
+            sampleText = "",
+            savedDisplayName = Locale.US.displayName,
+            contentLanguageHint = "es",
         )
         assertEquals("es", locale.language)
     }

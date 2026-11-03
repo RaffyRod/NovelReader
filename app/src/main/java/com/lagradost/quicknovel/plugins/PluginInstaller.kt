@@ -10,26 +10,38 @@ import java.io.File
 /**
  * Installs a catalog plugin into Ultimate.
  *
- * Madara / Blogger CSS templates are applied **only** when the plugin is tagged as such
- * (e.g. `[madara]` in the JS URL). Other LNReader JS plugins keep their JS on disk and
- * do **not** get Madara selectors invented for them.
+ * LNReader-like: any install with a site URL is mapped into **Search** immediately.
+ * Tagged Madara / Blogger use that template; other JS plugins get Madara as the default
+ * CSS bridge (Ultimate has no JS plugin runtime). No site URL → cannot join Search.
  */
 object PluginInstaller {
 
     /**
-     * Builds a CSS config for search. Prefer [jsSource] hints from the downloaded plugin file.
-     * Returns null when Ultimate cannot map the plugin to a CSS template (JS-only).
+     * CSS config so the plugin appears in Search after install (needs a site URL).
      */
     fun configFromManifest(
         item: PluginManifestItem,
         localName: String? = null,
         jsSource: String = "",
     ): CustomProviderConfig? {
-        // Catalog install does not auto-apply Madara/Blogger CSS (flooded custom
-        // providers / Search). Map CSS from the hub, or add Madara/Blog via URL/JSON.
-        @Suppress("UNUSED_PARAMETER")
-        val ignored = Triple(item, localName, jsSource)
-        return null
+        val name = localName?.trim()?.takeIf { it.isNotBlank() } ?: item.name.trim()
+        if (name.isBlank()) return null
+        val base = CustomProviderPresets.normalizeBaseUrl(item.site)
+            ?: item.site.trim().trimEnd('/').takeIf { it.isNotBlank() }
+            ?: return null
+        val lang = PluginLangs.codeFor(item.displayLang)
+        return when (PluginTemplateHints.detect(item, jsSource)) {
+            PluginTemplateKind.BLOGGER -> CustomProviderConfig.bloggerTemplate(name, base).copy(
+                lang = lang,
+                iconUrl = item.iconUrl,
+            )
+            // Madara tag OR untagged JS: Madara CSS bridge so Search works like LN auto-add.
+            PluginTemplateKind.MADARA,
+            PluginTemplateKind.UNSUPPORTED_JS -> CustomProviderConfig.madaraTemplate(name, base).copy(
+                lang = lang,
+                iconUrl = item.iconUrl,
+            )
+        }
     }
 
     suspend fun downloadJs(context: Context, item: PluginManifestItem): Pair<String, String> {
@@ -78,11 +90,8 @@ object PluginInstaller {
         val detected = PluginTemplateHints.detect(item, jsText)
         val freshConfig = configFromManifest(item, uniqueName, jsText)
 
-        // Keep prior CSS only when this install still maps to a CSS template. If detect says
-        // JS-only, drop a previously auto-applied Madara/Blogger config so every provider
-        // is not stuck with the same wp-manga query.
+        // Prefer user's existing selectors on update unless forceRetemplate.
         val config = when {
-            detected == PluginTemplateKind.UNSUPPORTED_JS -> null
             previousConfig != null && !forceRetemplate && freshConfig != null ->
                 previousConfig.copy(
                     name = uniqueName,
@@ -99,10 +108,11 @@ object PluginInstaller {
             CustomProviders.remove(context, existing!!.providerName)
         }
 
-        val kind = when (detected) {
-            PluginTemplateKind.MADARA -> "madara"
-            PluginTemplateKind.BLOGGER -> "blogger"
-            PluginTemplateKind.UNSUPPORTED_JS -> "js"
+        val kind = when {
+            config == null -> "js"
+            config.isBlogger -> "blogger"
+            detected == PluginTemplateKind.BLOGGER -> "blogger"
+            else -> "madara"
         }
         val installed = InstalledPlugin(
             id = item.id,

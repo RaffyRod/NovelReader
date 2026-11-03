@@ -5,6 +5,7 @@ import com.lagradost.quicknovel.plugins.PluginManifestClient
 import com.lagradost.quicknovel.plugins.PluginManifestItem
 import com.lagradost.quicknovel.plugins.PluginTemplateHints
 import com.lagradost.quicknovel.plugins.PluginTemplateKind
+import com.lagradost.quicknovel.providers.CustomProviderConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -13,8 +14,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 
 /**
- * Validates against the official LNReader v3.0.0 plugins.min.json (bundled test resource).
- * Ensures Madara CSS / wp-manga is never invented for every provider.
+ * Official LNReader v3 catalog: install with a site URL always maps into Search (LN-like).
  */
 class LnReaderCatalogTest {
 
@@ -50,34 +50,26 @@ class LnReaderCatalogTest {
     }
 
     @Test
-    fun madaraTagged_detectsMadara_butCatalogInstallDoesNotAutoApplyCss() {
-        val madara = catalog.filter {
-            PluginTemplateHints.detect(it) == PluginTemplateKind.MADARA
-        }
-        assertTrue(madara.isNotEmpty())
-        madara.take(20).forEach { item ->
-            assertEquals(PluginTemplateKind.MADARA, PluginTemplateHints.detect(item))
-            // Catalog install no longer floods Custom providers with Madara CSS.
-            assertNull(
-                "${item.id} must not auto-apply Madara CSS on catalog install",
-                PluginInstaller.configFromManifest(item),
-            )
-        }
-    }
-
-    @Test
-    fun catalogInstall_neverAutoAppliesCss_forAnyKind() {
-        assertTrue(catalog.size > 100)
-        catalog.forEach { item ->
-            assertNull(
-                "${item.id} (${PluginTemplateHints.detect(item)}) must not auto-map CSS",
-                PluginInstaller.configFromManifest(item),
-            )
+    fun anyPluginWithSite_autoMapsCss_forSearch() {
+        val withSite = catalog.filter { it.site.isNotBlank() }
+        assertTrue(withSite.size > 100)
+        withSite.take(40).forEach { item ->
+            val cfg = PluginInstaller.configFromManifest(item)
+            assertNotNull(item.id, cfg)
+            when (PluginTemplateHints.detect(item)) {
+                PluginTemplateKind.BLOGGER ->
+                    assertEquals(item.id, CustomProviderConfig.KIND_BLOGGER, cfg!!.kind)
+                PluginTemplateKind.MADARA,
+                PluginTemplateKind.UNSUPPORTED_JS -> {
+                    assertEquals(item.id, CustomProviderConfig.KIND_CSS, cfg!!.kind)
+                    assertTrue(item.id, cfg.searchUrl.contains("wp-manga"))
+                }
+            }
         }
     }
 
     @Test
-    fun lightnovelwp_isNotTreatedAsMadara() {
+    fun lightnovelwp_detectStaysJs_butStillMapsSearchBridge() {
         val lnwp = catalog.filter {
             (it.url.contains("[lightnovelwp]", ignoreCase = true)) ||
                 (it.iconUrl.contains("multisrc/lightnovelwp", ignoreCase = true))
@@ -85,16 +77,17 @@ class LnReaderCatalogTest {
         assertTrue(lnwp.isNotEmpty())
         lnwp.forEach { item ->
             assertEquals(
-                "${item.id} lightnovelwp must stay JS-only (no Madara overwrite)",
                 PluginTemplateKind.UNSUPPORTED_JS,
                 PluginTemplateHints.detect(item),
             )
-            assertNull(PluginInstaller.configFromManifest(item))
+            if (item.site.isNotBlank()) {
+                assertNotNull(item.id, PluginInstaller.configFromManifest(item))
+            }
         }
     }
 
     @Test
-    fun jsBodyMentionsMadara_stillDoesNotOverwrite() {
+    fun jsBodyMentionsMadara_doesNotChangeDetectKind() {
         val plain = catalog.first {
             !it.url.contains("[madara]", ignoreCase = true) &&
                 !it.iconUrl.contains("multisrc/madara", ignoreCase = true)
@@ -104,7 +97,6 @@ class LnReaderCatalogTest {
             jsSource = "import { Madara } from '../../multisrc/madara/Madara'; [madara]",
         )
         assertEquals(PluginTemplateKind.UNSUPPORTED_JS, kind)
-        assertNull(PluginInstaller.configFromManifest(plain, jsSource = "Madara helper"))
     }
 
     @Test
@@ -116,5 +108,16 @@ class LnReaderCatalogTest {
         val ids = com.lagradost.quicknovel.plugins.PluginSelectAll.allIds(spanish)
         assertEquals(spanish.size, ids.size)
         assertEquals(spanish.map { it.id }.toSet(), ids)
+    }
+
+    @Test
+    fun missingSite_cannotMap() {
+        val orphan = PluginManifestItem(
+            id = "no-site",
+            name = "No Site",
+            site = "",
+            url = "https://cdn.example/x.js",
+        )
+        assertNull(PluginInstaller.configFromManifest(orphan))
     }
 }

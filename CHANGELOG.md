@@ -36,6 +36,8 @@ new commits since the last `v2.*` tag, then posts style **D** from `### Added` /
 - Scrollable **Administrar proveedores** (no ~56 setItems cap)
 - Settings group **accent rail** headers · Tutorial under Información
 - Plugin install **Glyph Pulse (本)** + live search in hub/catalog/proveedores
+- Plugins → Buscar **como LNReader**: instalar (con URL) activa Buscar; JS usa puente Madara
+- **Fuentes de Buscar** lista unificada (built-in + plugins + propios · Activas/Instaladas/Todas)
 - E2E catalog suite (`15-plugin-catalog`) · reader tabs via resource-id
 - CI features split (`features` / `features-plugins` / `features-flows`) + AVD cache
 - Release → Telegram requires green **CI Android** (e2e) on main
@@ -44,7 +46,6 @@ new commits since the last `v2.*` tag, then posts style **D** from `### Added` /
 - Select-all / full catalog paging UX
 - Duplicate Search provider names in Settings
 - SharedPreferences StringSet copies for custom providers
-- Catalog no longer auto-applies Madara/Blogger CSS (add via URL/JSON)
 - E2E main-chrome recovery after plugin dialogs (nav tabs missing)
 
 ### Notes

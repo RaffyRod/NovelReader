@@ -2,7 +2,9 @@ package com.lagradost.quicknovel.ui.settings
 
 import android.app.Activity
 import android.content.DialogInterface
+import android.content.res.ColorStateList
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.text.Editable
 import android.text.InputType
 import android.text.TextUtils
@@ -14,14 +16,17 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.ScrollView
+import android.widget.Switch
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -29,6 +34,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.lagradost.quicknovel.CommonActivity.showToast
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.plugins.PluginInstaller
+import com.lagradost.quicknovel.plugins.PluginStore
 import com.lagradost.quicknovel.providers.BloggerValidation
 import com.lagradost.quicknovel.providers.ConfigProblem
 import com.lagradost.quicknovel.providers.CustomProvider
@@ -40,6 +46,7 @@ import com.lagradost.quicknovel.providers.TestStep
 import com.lagradost.quicknovel.util.CustomProviders
 import com.lagradost.quicknovel.util.ProviderManage
 import com.lagradost.quicknovel.util.UIHelper.colorFromAttribute
+import com.lagradost.quicknovel.util.UIHelper.getResourceColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -72,71 +79,157 @@ object CustomProviderDialogs {
     )
 
     /**
-     * Unified manager: URL/JSON customs **and** installed LNReader plugins, paged like the
-     * catalog (name filter + select all). No AlertDialog.setItems ~56 cap.
+     * Fuentes de Buscar (mock A + D polish): switch-only soft cards with accent rail;
+     * **Editar** → checkboxes + delete. Theme attrs for Ultimate / Light / Amoled.
      */
     fun showManager(activity: Activity, onChanged: () -> Unit) {
         val density = activity.resources.displayMetrics.density
         val pad = (14 * density).toInt()
         val gap = (8 * density).toInt()
+        val cardGap = (6 * density).toInt()
+        val switchSlot = (56 * density).toInt()
+        val railW = (3 * density).toInt().coerceAtLeast(2)
         val primary = activity.colorFromAttribute(R.attr.colorPrimary)
         val gray = activity.colorFromAttribute(R.attr.grayTextColor)
         val textColor = activity.colorFromAttribute(R.attr.textColor)
+        val boxBg = activity.colorFromAttribute(R.attr.boxItemBackground)
+        val mutedStroke = activity.getResourceColor(R.attr.white, 0.14f)
+        val accent = run {
+            val a = activity.obtainStyledAttributes(intArrayOf(androidx.appcompat.R.attr.colorAccent))
+            val c = a.getColor(0, 0)
+            a.recycle()
+            if (c != 0) c else primary
+        }
+        val danger = themedDangerColor(activity, primary)
+        val checkTint = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_enabled),
+            ),
+            intArrayOf(primary, gray, ColorUtils.setAlphaComponent(gray, 90)),
+        )
+        val switchThumbTint = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked),
+            ),
+            intArrayOf(primary, gray),
+        )
+        val switchTrackTint = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked),
+            ),
+            intArrayOf(
+                ColorUtils.setAlphaComponent(primary, 140),
+                ColorUtils.setAlphaComponent(gray, 110),
+            ),
+        )
 
-        var allRows = ProviderManage.loadRows()
+        fun pillBg(fill: Int, stroke: Int = 0): GradientDrawable =
+            GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 10 * density
+                setColor(fill)
+                if (stroke != 0) {
+                    setStroke((1 * density).toInt().coerceAtLeast(1), stroke)
+                }
+            }
+
+        fun rowBg(active: Boolean): GradientDrawable =
+            GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 12 * density
+                setColor(boxBg)
+                setStroke(
+                    (1 * density).toInt().coerceAtLeast(1),
+                    if (active) ColorUtils.setAlphaComponent(primary, 110) else mutedStroke,
+                )
+            }
+
+        var currentTab = ProviderManage.Tab.ALL
         var currentQuery = ""
         var currentPage = 0
+        var editing = false
         val selected = linkedSetOf<String>()
-        val checkBoxes = linkedMapOf<String, CheckBox>()
         var dialog: AlertDialog? = null
 
         val root = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad / 2, pad, pad / 2)
         }
-        val countLabel = TextView(activity).apply {
-            setTextColor(primary)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            setPadding(0, 0, 0, gap / 2)
-        }
-        root.addView(countLabel)
 
-        val pageLabel = TextView(activity).apply {
-            setTextColor(primary)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        val tabs = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
             setPadding(0, 0, 0, gap)
+        }
+        lateinit var renderPage: (Boolean) -> Unit
+        lateinit var applyChrome: () -> Unit
+        fun tabBtn(label: String, tab: ProviderManage.Tab): Button =
+            Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
+                text = label
+                isAllCaps = false
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+                setPadding((12 * density).toInt(), (8 * density).toInt(), (12 * density).toInt(), (8 * density).toInt())
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).also {
+                    it.marginStart = (3 * density).toInt()
+                    it.marginEnd = (3 * density).toInt()
+                }
+                setOnClickListener {
+                    currentTab = tab
+                    currentPage = 0
+                    renderPage(true)
+                }
+            }
+        val tabActive = tabBtn(activity.getString(R.string.search_sources_tab_active), ProviderManage.Tab.ACTIVE)
+        val tabInstalled = tabBtn(activity.getString(R.string.search_sources_tab_installed), ProviderManage.Tab.INSTALLED)
+        val tabAll = tabBtn(activity.getString(R.string.search_sources_tab_all), ProviderManage.Tab.ALL)
+        tabs.addView(tabActive)
+        tabs.addView(tabInstalled)
+        tabs.addView(tabAll)
+        root.addView(tabs)
+
+        val metaLabel = TextView(activity).apply {
+            setTextColor(gray)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setPadding(0, 0, 0, gap)
+        }
+        root.addView(metaLabel)
+        // Kept for goto tap target when multi-page (hidden when single page).
+        val pageLabel = TextView(activity).apply {
+            visibility = View.GONE
+            setTextColor(primary)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
         }
         root.addView(pageLabel)
 
-        val filterRow = LinearLayout(activity).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
         val filterEdit = EditText(activity).apply {
             hint = activity.getString(R.string.plugin_cards_filter_hint)
             setTextColor(textColor)
             setHintTextColor(gray)
             inputType = InputType.TYPE_CLASS_TEXT
-            setPadding(pad / 2, pad / 2, pad / 2, pad / 2)
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            setPadding(pad, (10 * density).toInt(), pad, (10 * density).toInt())
+            background = pillBg(boxBg, mutedStroke)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).also { it.bottomMargin = gap }
         }
-        filterRow.addView(filterEdit)
-        val filterGo = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
-            text = activity.getString(android.R.string.search_go)
-            setTextColor(primary)
-        }
-        filterRow.addView(filterGo)
-        root.addView(filterRow)
+        root.addView(filterEdit)
 
         val selectRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, gap / 2, 0, gap / 2)
+            setPadding(0, 0, 0, gap / 2)
+            visibility = View.GONE
         }
         val selectAllBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_select_all)
             isAllCaps = false
             setTextColor(primary)
+            background = pillBg(ColorUtils.setAlphaComponent(primary, 28))
         }
         val selectNoneBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_select_none)
@@ -147,15 +240,6 @@ object CustomProviderDialogs {
         selectRow.addView(selectNoneBtn)
         root.addView(selectRow)
 
-        root.addView(
-            TextView(activity).apply {
-                text = activity.getString(R.string.plugin_cards_page_hint)
-                setTextColor(gray)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                setPadding(0, 0, 0, gap / 2)
-            },
-        )
-
         val cardsHost = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         val scroll = ScrollView(activity).apply {
             addView(cardsHost)
@@ -163,6 +247,7 @@ object CustomProviderDialogs {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 (420 * density).toInt(),
             )
+            isVerticalScrollBarEnabled = false
         }
         root.addView(scroll)
 
@@ -170,10 +255,12 @@ object CustomProviderDialogs {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(0, gap, 0, 0)
+            visibility = View.GONE
         }
         val prevBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_prev)
             isAllCaps = false
+            setTextColor(textColor)
         }
         val gotoBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_goto_page)
@@ -183,14 +270,33 @@ object CustomProviderDialogs {
         val nextBtn = Button(activity, null, android.R.attr.borderlessButtonStyle).apply {
             text = activity.getString(R.string.plugin_cards_next)
             isAllCaps = false
+            setTextColor(textColor)
         }
         nav.addView(prevBtn)
         nav.addView(gotoBtn)
         nav.addView(nextBtn)
         root.addView(nav)
 
-        fun filtered(): List<ProviderManage.Row> =
-            ProviderManage.filter(allRows, currentQuery)
+        fun styleTabs() {
+            fun paint(btn: Button, on: Boolean) {
+                btn.setTextColor(if (on) primary else gray)
+                btn.setTypeface(null, if (on) Typeface.BOLD else Typeface.NORMAL)
+                btn.background = if (on) {
+                    pillBg(ColorUtils.setAlphaComponent(primary, 36))
+                } else {
+                    pillBg(ColorUtils.setAlphaComponent(boxBg, 180), mutedStroke)
+                }
+            }
+            paint(tabActive, currentTab == ProviderManage.Tab.ACTIVE)
+            paint(tabInstalled, currentTab == ProviderManage.Tab.INSTALLED)
+            paint(tabAll, currentTab == ProviderManage.Tab.ALL)
+        }
+
+        fun filtered(): List<ProviderManage.Row> {
+            val active = ProviderManage.readActiveNames(activity)
+            val all = ProviderManage.loadRows(active)
+            return ProviderManage.filter(ProviderManage.filterTab(all, currentTab), currentQuery)
+        }
 
         fun reopen() {
             dialog?.dismiss()
@@ -201,8 +307,13 @@ object CustomProviderDialogs {
         }
 
         fun openRow(row: ProviderManage.Row) {
+            if (editing) return
             dialog?.dismiss()
             when (row.kind) {
+                ProviderManage.Kind.BUILTIN -> {
+                    showToast(activity, activity.getString(R.string.search_sources_builtin_hint))
+                    showManager(activity, onChanged)
+                }
                 ProviderManage.Kind.CUSTOM -> {
                     val cfg = row.config ?: return
                     showOptions(activity, cfg) { reopen() }
@@ -214,48 +325,120 @@ object CustomProviderDialogs {
             }
         }
 
-        fun renderPage(scrollToTop: Boolean = true) {
-            allRows = ProviderManage.loadRows()
+        /** Removes custom CSS and/or the LNReader plugin that owns that Search name. */
+        fun deleteRows(doomed: List<ProviderManage.Row>) {
+            for (row in doomed) {
+                when (row.kind) {
+                    ProviderManage.Kind.CUSTOM -> {
+                        val name = row.config?.name?.trim().orEmpty()
+                        if (name.isBlank()) continue
+                        val linked = PluginStore.loadInstalled()
+                            .firstOrNull { it.providerName.trim() == name }
+                        if (linked != null) {
+                            PluginInstaller.uninstall(activity, linked)
+                        } else {
+                            CustomProviders.remove(activity, name)
+                        }
+                    }
+                    ProviderManage.Kind.PLUGIN ->
+                        row.plugin?.let { PluginInstaller.uninstall(activity, it) }
+                    ProviderManage.Kind.BUILTIN -> Unit
+                }
+            }
+        }
+
+        fun confirmDeleteSelected() {
+            val doomed = filtered().filter {
+                it.key in selected && it.kind != ProviderManage.Kind.BUILTIN
+            }
+            if (doomed.isEmpty()) {
+                showToast(activity, activity.getString(R.string.plugin_pick_one))
+                return
+            }
+            AlertDialog.Builder(activity, R.style.AlertDialogCustom)
+                .setTitle(R.string.cp_delete_selected)
+                .setMessage(activity.getString(R.string.cp_delete_selected_msg, doomed.size))
+                .setPositiveButton(R.string.ok) { _, _ ->
+                    deleteRows(doomed)
+                    selected.clear()
+                    showToast(
+                        activity,
+                        activity.getString(R.string.cp_delete_selected_done, doomed.size),
+                    )
+                    reopen()
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+
+        applyChrome = chrome@{
+            selectRow.visibility = if (editing) View.VISIBLE else View.GONE
+            val shown = dialog ?: return@chrome
+            val neutral = shown.getButton(AlertDialog.BUTTON_NEUTRAL) ?: return@chrome
+            val negative = shown.getButton(AlertDialog.BUTTON_NEGATIVE) ?: return@chrome
+            val positive = shown.getButton(AlertDialog.BUTTON_POSITIVE) ?: return@chrome
+            positive.setTextColor(primary)
+            if (editing) {
+                neutral.text = activity.getString(R.string.cp_delete_selected)
+                neutral.setTextColor(danger)
+                negative.text = activity.getString(R.string.done)
+                negative.setTextColor(accent)
+            } else {
+                neutral.text = activity.getString(R.string.cp_edit)
+                neutral.setTextColor(primary)
+                negative.text = activity.getString(R.string.close)
+                negative.setTextColor(gray)
+            }
+        }
+
+        renderPage = { scrollToTop ->
+            styleTabs()
             val list = filtered()
             val pageCount = ProviderManage.pageCount(list.size)
             currentPage = currentPage.coerceIn(0, pageCount - 1)
             val slice = ProviderManage.pageSlice(list, currentPage)
             val from = currentPage * ProviderManage.PAGE_SIZE
+            val rangeStart = if (slice.isEmpty()) 0 else from + 1
+            val rangeEnd = from + slice.size
 
-            countLabel.text = activity.getString(R.string.cp_manage_count, list.size)
-            pageLabel.text = activity.getString(
-                R.string.plugin_cards_page,
-                currentPage + 1,
-                pageCount,
-                if (slice.isEmpty()) 0 else from + 1,
-                from + slice.size,
-                list.size,
-            )
+            val countText = activity.getString(R.string.cp_manage_count, list.size)
+            if (pageCount <= 1) {
+                metaLabel.text = countText
+                pageLabel.visibility = View.GONE
+                nav.visibility = View.GONE
+            } else {
+                val pageText = activity.getString(
+                    R.string.plugin_cards_page,
+                    currentPage + 1,
+                    pageCount,
+                    rangeStart,
+                    rangeEnd,
+                    list.size,
+                )
+                metaLabel.text = "$countText · ${pageText.substringBefore(" · ")}"
+                pageLabel.text = pageText
+                pageLabel.visibility = View.GONE
+                nav.visibility = View.VISIBLE
+            }
 
             cardsHost.removeAllViews()
-            checkBoxes.clear()
             if (list.isEmpty()) {
                 cardsHost.addView(
                     TextView(activity).apply {
                         text = activity.getString(R.string.cp_manage_empty_hint)
                         setTextColor(gray)
+                        setPadding(0, gap, 0, gap)
                     },
                 )
             } else {
                 slice.forEach { row ->
-                    val check = CheckBox(activity).apply {
-                        isChecked = row.key in selected
-                        setOnCheckedChangeListener { _, checked ->
-                            if (checked) selected.add(row.key) else selected.remove(row.key)
-                        }
-                    }
-                    checkBoxes[row.key] = check
+                    val active = row.activeInSearch
                     val body = LinearLayout(activity).apply {
                         orientation = LinearLayout.VERTICAL
                         layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-                        isClickable = true
-                        isFocusable = true
-                        setOnClickListener { openRow(row) }
+                        isClickable = !editing
+                        isFocusable = !editing
+                        if (!editing) setOnClickListener { openRow(row) }
                     }
                     body.addView(
                         TextView(activity).apply {
@@ -263,7 +446,7 @@ object CustomProviderDialogs {
                             setTextColor(textColor)
                             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                             typeface = Typeface.DEFAULT_BOLD
-                            maxLines = 2
+                            maxLines = 1
                             ellipsize = TextUtils.TruncateAt.END
                         },
                     )
@@ -274,26 +457,101 @@ object CustomProviderDialogs {
                             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                             maxLines = 1
                             ellipsize = TextUtils.TruncateAt.END
+                            setPadding(0, (2 * density).toInt(), 0, 0)
                         },
                     )
+
+                    val cardPad = (12 * density).toInt()
                     val line = LinearLayout(activity).apply {
                         orientation = LinearLayout.HORIZONTAL
                         gravity = Gravity.CENTER_VERTICAL
-                        setPadding(0, gap / 2, 0, gap / 2)
+                        setPadding(cardPad, cardPad, cardPad / 2, cardPad)
+                        minimumHeight = (56 * density).toInt()
+                        background = rowBg(active && !editing)
+                        layoutParams = LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ).also { it.bottomMargin = cardGap }
                     }
-                    line.addView(check)
-                    line.addView(body)
+
+                    if (!editing) {
+                        line.addView(
+                            View(activity).apply {
+                                layoutParams = LinearLayout.LayoutParams(
+                                    railW,
+                                    (36 * density).toInt(),
+                                ).also { it.marginEnd = (10 * density).toInt() }
+                                background = GradientDrawable().apply {
+                                    cornerRadius = 2 * density
+                                    setColor(if (active) primary else ColorUtils.setAlphaComponent(gray, 40))
+                                }
+                            },
+                        )
+                    }
+
+                    if (editing) {
+                        line.addView(
+                            CheckBox(activity).apply {
+                                isChecked = row.key in selected
+                                isEnabled = row.kind != ProviderManage.Kind.BUILTIN
+                                buttonTintList = checkTint
+                                setOnCheckedChangeListener { _, checked ->
+                                    if (checked) selected.add(row.key) else selected.remove(row.key)
+                                }
+                            },
+                        )
+                        line.addView(body)
+                    } else {
+                        line.addView(body)
+                        val toggle = Switch(activity).apply {
+                            isChecked = row.activeInSearch
+                            thumbTintList = switchThumbTint
+                            trackTintList = switchTrackTint
+                            setOnCheckedChangeListener { button, wantOn ->
+                                if (!row.canToggleSearch) {
+                                    button.setOnCheckedChangeListener(null)
+                                    button.isChecked = false
+                                    dialog?.dismiss()
+                                    row.plugin?.let { plugin ->
+                                        PluginProviderDialogs.showOptionsForManage(activity, plugin) {
+                                            reopen()
+                                        }
+                                    }
+                                    return@setOnCheckedChangeListener
+                                }
+                                CustomProviders.setSearchEnabled(activity, row.searchName, wantOn)
+                                onChanged()
+                                renderPage(false)
+                            }
+                        }
+                        line.addView(
+                            FrameLayout(activity).apply {
+                                layoutParams = LinearLayout.LayoutParams(
+                                    switchSlot,
+                                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                                )
+                                addView(
+                                    toggle,
+                                    FrameLayout.LayoutParams(
+                                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                                        Gravity.CENTER_VERTICAL or Gravity.END,
+                                    ),
+                                )
+                            },
+                        )
+                    }
                     cardsHost.addView(line)
                 }
             }
             prevBtn.isEnabled = currentPage > 0
             nextBtn.isEnabled = currentPage < pageCount - 1
             gotoBtn.isEnabled = pageCount > 1
+            applyChrome()
             if (scrollToTop) scroll.scrollTo(0, 0)
         }
 
         var applyingFilterText = false
-
         fun goTo(page: Int, query: String = filterEdit.text?.toString().orEmpty()) {
             currentQuery = query
             currentPage = page
@@ -302,7 +560,7 @@ object CustomProviderDialogs {
                 filterEdit.setText(currentQuery)
                 applyingFilterText = false
             }
-            renderPage(scrollToTop = true)
+            renderPage(true)
         }
 
         filterEdit.addTextChangedListener(object : TextWatcher {
@@ -315,34 +573,24 @@ object CustomProviderDialogs {
                 goTo(0, q)
             }
         })
-
         selectAllBtn.setOnClickListener {
             selected.clear()
-            selected.addAll(filtered().map { it.key })
-            renderPage(scrollToTop = false)
-            showToast(
-                activity,
-                activity.getString(R.string.plugin_select_all_applied, selected.size),
+            selected.addAll(
+                filtered().filter { it.kind != ProviderManage.Kind.BUILTIN }.map { it.key },
             )
+            renderPage(false)
         }
         selectNoneBtn.setOnClickListener {
             selected.clear()
-            renderPage(scrollToTop = false)
-        }
-        filterGo.setOnClickListener { goTo(0) }
-        filterEdit.setOnEditorActionListener { _, _, _ ->
-            goTo(0)
-            true
+            renderPage(false)
         }
         prevBtn.setOnClickListener { goTo(currentPage - 1) }
         nextBtn.setOnClickListener { goTo(currentPage + 1) }
 
-        renderPage(scrollToTop = false)
-
         dialog = AlertDialog.Builder(activity, R.style.AlertDialogCustom)
             .setTitle(R.string.cp_manage)
             .setView(root)
-            .setNeutralButton(R.string.cp_delete_selected, null)
+            .setNeutralButton(R.string.cp_edit, null)
             .setPositiveButton(R.string.cp_add) { _, _ ->
                 showSimpleAdd(activity) {
                     onChanged()
@@ -360,53 +608,55 @@ object CustomProviderDialogs {
                 val edit = EditText(activity).apply {
                     inputType = InputType.TYPE_CLASS_NUMBER
                     hint = activity.getString(R.string.plugin_cards_goto_hint, pageCount)
-                    setText("")
                     setPadding(pad, pad, pad, pad)
                 }
                 AlertDialog.Builder(activity, R.style.AlertDialogCustom)
                     .setTitle(R.string.plugin_cards_goto_page)
                     .setView(edit)
                     .setPositiveButton(R.string.ok) { _, _ ->
-                        val target = ProviderManage.parseGoToPage(
-                            edit.text?.toString(),
-                            pageCount,
-                        ) ?: return@setPositiveButton
+                        val target = ProviderManage.parseGoToPage(edit.text?.toString(), pageCount)
+                            ?: return@setPositiveButton
                         goTo(target)
                     }
                     .setNegativeButton(R.string.cancel, null)
                     .show()
             }
             pageLabel.setOnClickListener { gotoBtn.performClick() }
+
             shown.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                if (selected.isEmpty()) {
-                    showToast(activity, activity.getString(R.string.plugin_pick_one))
-                    return@setOnClickListener
+                if (editing) {
+                    confirmDeleteSelected()
+                } else {
+                    editing = true
+                    selected.clear()
+                    renderPage(false)
                 }
-                val doomed = filtered().filter { it.key in selected }
-                AlertDialog.Builder(activity, R.style.AlertDialogCustom)
-                    .setTitle(R.string.cp_delete_selected)
-                    .setMessage(activity.getString(R.string.cp_delete_selected_msg, doomed.size))
-                    .setPositiveButton(R.string.ok) { _, _ ->
-                        for (row in doomed) {
-                            when (row.kind) {
-                                ProviderManage.Kind.CUSTOM ->
-                                    row.config?.name?.let { CustomProviders.remove(activity, it) }
-                                ProviderManage.Kind.PLUGIN ->
-                                    row.plugin?.let { PluginInstaller.uninstall(activity, it) }
-                            }
-                        }
-                        selected.clear()
-                        showToast(
-                            activity,
-                            activity.getString(R.string.cp_delete_selected_done, doomed.size),
-                        )
-                        reopen()
-                    }
-                    .setNegativeButton(R.string.cancel, null)
-                    .show()
             }
+            shown.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener {
+                if (editing) {
+                    editing = false
+                    selected.clear()
+                    renderPage(false)
+                } else {
+                    shown.dismiss()
+                }
+            }
+            applyChrome()
         }
+        renderPage(false)
         dialog?.show()
+    }
+
+    /**
+     * Destructive accent blended from the active [primary] so delete stays readable on every
+     * Ultimate / Light / Amoled overlay without a hard-coded red.
+     */
+    private fun themedDangerColor(activity: Activity, primary: Int): Int {
+        val attrs = activity.obtainStyledAttributes(intArrayOf(android.R.attr.colorError))
+        val fromTheme = attrs.getColor(0, 0)
+        attrs.recycle()
+        if (fromTheme != 0) return fromTheme
+        return ColorUtils.blendARGB(primary, 0xFFFF5252.toInt(), 0.55f)
     }
 
     /**

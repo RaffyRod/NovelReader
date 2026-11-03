@@ -5,14 +5,15 @@ import com.lagradost.quicknovel.plugins.PluginManifestClient
 import com.lagradost.quicknovel.plugins.PluginManifestItem
 import com.lagradost.quicknovel.plugins.PluginTemplateHints
 import com.lagradost.quicknovel.plugins.PluginTemplateKind
+import com.lagradost.quicknovel.providers.CustomProviderConfig
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Uses the real LNReader `plugins.min.json` (v3.0.0) shipped as a test resource.
- * Ensures Madara CSS / `wp-manga` is never invented for untagged plugins.
+ * Real LNReader catalog: detect stays tag-based; install maps every site into Search (LN-like).
  */
 class LnReaderCatalogIntegrityTest {
 
@@ -40,7 +41,6 @@ class LnReaderCatalogIntegrityTest {
         return Triple(madara, blogger, unsupported)
     }
 
-    /** Madara count comes only from `[madara]` / `multisrc/madara` tags — not lightnovelwp. */
     private fun expectedMadaraFromTags(items: List<PluginManifestItem>): Int =
         items.count { item ->
             item.url.contains("[madara]", ignoreCase = true) ||
@@ -73,41 +73,28 @@ class LnReaderCatalogIntegrityTest {
     }
 
     @Test
-    fun catalogInstall_neverAutoAppliesCss_evenForTaggedMadara() {
+    fun everySiteUrl_mapsIntoSearch_onInstall() {
         val items = loadCatalog()
         for (item in items) {
-            assertNull(
-                "${item.id} must not auto-map CSS on catalog install",
-                PluginInstaller.configFromManifest(item),
-            )
+            val cfg = PluginInstaller.configFromManifest(item)
+            if (item.site.isBlank()) {
+                assertNull(item.id, cfg)
+            } else {
+                assertNotNull(item.id, cfg)
+                when (PluginTemplateHints.detect(item)) {
+                    PluginTemplateKind.BLOGGER ->
+                        assertEquals(item.id, CustomProviderConfig.KIND_BLOGGER, cfg!!.kind)
+                    else -> {
+                        assertEquals(item.id, CustomProviderConfig.KIND_CSS, cfg!!.kind)
+                        assertTrue(item.id, cfg.searchUrl.contains("wp-manga"))
+                    }
+                }
+            }
         }
     }
 
     @Test
-    fun taggedMadara_isDetected_butCatalogInstallDoesNotAutoApplyCss() {
-        val items = loadCatalog()
-        val sample = items.first {
-            it.url.contains("[madara]", ignoreCase = true)
-        }
-        assertEquals(PluginTemplateKind.MADARA, PluginTemplateHints.detect(sample))
-        assertNull(
-            "Madara CSS is added via URL/JSON (Proveedores propios), not catalog install",
-            PluginInstaller.configFromManifest(sample),
-        )
-    }
-
-    @Test
-    fun knownJsOnly_likeNovelFire_orUntaggedArabic_stayUnsupported() {
-        val items = loadCatalog().associateBy { it.id }
-        for (id in listOf("azorafly", "dilartube", "galaxynovels")) {
-            val item = items[id] ?: continue
-            assertEquals(id, PluginTemplateKind.UNSUPPORTED_JS, PluginTemplateHints.detect(item))
-            assertNull(id, PluginInstaller.configFromManifest(item))
-        }
-    }
-
-    @Test
-    fun lightnovelwp_isNotTreatedAsMadara() {
+    fun lightnovelwp_isNotDetectedAsMadaraTag_butStillJoinsSearch() {
         val items = loadCatalog().filter {
             it.url.contains("[lightnovelwp]", ignoreCase = true) ||
                 it.iconUrl.contains("multisrc/lightnovelwp", ignoreCase = true)
@@ -115,7 +102,9 @@ class LnReaderCatalogIntegrityTest {
         assertTrue(items.isNotEmpty())
         items.forEach { item ->
             assertEquals(item.id, PluginTemplateKind.UNSUPPORTED_JS, PluginTemplateHints.detect(item))
-            assertNull(item.id, PluginInstaller.configFromManifest(item))
+            if (item.site.isNotBlank()) {
+                assertNotNull(item.id, PluginInstaller.configFromManifest(item))
+            }
         }
     }
 }

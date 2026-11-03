@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es" data-surface="dark" data-accent="blue">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plugins · Añadir a Buscar — 15 mocks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,500;9..144,650&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #03060f;
+      --text: #e8f1ff;
+      --muted: #8b97ab;
+      --primary: #1a6cff;
+      --primary-rgb: 26, 108, 255;
+      --glow: #4da3ff;
+      --surface: #0a1224;
+      --box: #101a30;
+      --line: rgba(140, 180, 255, 0.14);
+      --ok: #3dd68c;
+      --warn: #f0b429;
+      --danger: #ff6d7d;
+      --on-primary: #fff;
+      --font: "DM Sans", system-ui, sans-serif;
+      --display: "Fraunces", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    html[data-surface="light"] {
+      --page: #dfe6f2; --text: #0f1419; --muted: #4a5568;
+      --surface: #f1f4fa; --box: #fff; --line: rgba(15,20,25,.1);
+    }
+    html[data-accent="lava"] { --primary:#ff3b1c; --primary-rgb:255,59,28; --glow:#ff7a62; }
+    html[data-accent="emerald"] { --primary:#00c853; --primary-rgb:0,200,83; --glow:#5dff9c; }
+    html[data-accent="cyan"] { --primary:#00bcd4; --primary-rgb:0,188,212; --glow:#84ffff; }
+    html[data-accent="gold"] { --primary:#c68400; --primary-rgb:198,132,0; --glow:#ffb300; }
+    html[data-accent="soft"] { --primary:#90caf9; --primary-rgb:144,202,249; --glow:#bbdefb; }
+    html[data-surface="light"][data-accent="soft"] { --primary:#1565c0; --primary-rgb:21,101,192; }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 480px at 12% -10%, rgba(var(--primary-rgb),.18), transparent 55%),
+        radial-gradient(700px 420px at 92% 0%, rgba(var(--primary-rgb),.07), transparent 50%),
+        var(--page);
+      padding: 28px 20px 100px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: clamp(1.85rem, 4vw, 2.55rem);
+      margin: 0 0 10px;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      color: var(--muted);
+      max-width: 72ch;
+      line-height: 1.55;
+      margin: 0 0 14px;
+    }
+    .lede strong { color: var(--text); font-weight: 600; }
+    .note {
+      max-width: 72ch;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--primary);
+      background: rgba(var(--primary-rgb), .08);
+      border-radius: 0 10px 10px 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 22px;
+    }
+    .note strong { color: var(--text); }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-bottom: 28px;
+    }
+    .toolbar label {
+      font-size: 11px; color: var(--muted); font-family: var(--mono);
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .toolbar select, .toolbar button {
+      font: inherit; font-size: 13px;
+      border: 1px solid var(--line);
+      background: var(--box);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px 10px;
+    }
+    .toolbar button.pick {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: transparent;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .picked {
+      display: none;
+      margin: 0 0 22px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(var(--primary-rgb), .15);
+      border: 1px solid rgba(var(--primary-rgb), .35);
+      font-weight: 600;
+    }
+    .picked.show { display: block; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+      align-items: start;
+    }
+    .card-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .opt-head {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline;
+    }
+    .opt-head .letter {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--primary);
+      letter-spacing: .04em;
+    }
+    .opt-head strong { font-size: 1.02rem; }
+    .opt-head .tag {
+      font-size: 11px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+    .desc { font-size: 13px; color: var(--muted); line-height: 1.4; margin: 0; }
+
+    .phone {
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      min-height: 540px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    .status {
+      height: 26px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; font-size: 10px; color: var(--muted);
+    }
+    .titlebar {
+      padding: 6px 14px 10px;
+      font-size: 1rem;
+      font-weight: 650;
+    }
+    .subbar {
+      padding: 0 14px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .body { flex: 1; padding: 0 10px 10px; overflow: hidden; }
+    .foot {
+      display: flex; gap: 8px;
+      padding: 10px;
+      border-top: 1px solid var(--line);
+      background: var(--box);
+    }
+    .btn {
+      flex: 1; border: 0; border-radius: 10px;
+      padding: 10px 8px; font: inherit; font-size: 12px; font-weight: 600;
+      background: rgba(var(--primary-rgb), .12); color: var(--text);
+    }
+    .btn.primary { background: var(--primary); color: var(--on-primary); }
+    .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+
+    .row {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px;
+      border-radius: 12px;
+      background: var(--box);
+      border: 1px solid var(--line);
+      margin-bottom: 8px;
+    }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, rgba(var(--primary-rgb),.45), rgba(var(--primary-rgb),.12));
+      flex: none;
+    }
+    .meta { flex: 1; min-width: 0; }
+    .meta .name { font-size: 13px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600;
+      border-radius: 999px; padding: 2px 7px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .pill.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+    .pill.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+    .sw {
+      width: 40px; height: 22px; border-radius: 999px;
+      background: rgba(255,255,255,.12); position: relative; flex: none; margin-top: 6px;
+    }
+    html[data-surface="light"] .sw { background: rgba(0,0,0,.12); }
+    .sw.on { background: var(--primary); }
+    .sw::after {
+      content: ""; position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; border-radius: 50%; background: #fff;
+      transition: left .15s;
+    }
+    .sw.on::after { left: 20px; }
+    .tabs {
+      display: flex; gap: 4px; padding: 0 10px 10px;
+    }
+    .tabs span {
+      flex: 1; text-align: center; font-size: 11px; font-weight: 600;
+      padding: 7px 4px; border-radius: 8px; color: var(--muted);
+      border: 1px solid transparent;
+    }
+    .tabs span.on {
+      color: var(--text);
+      background: rgba(var(--primary-rgb), .14);
+      border-color: rgba(var(--primary-rgb), .28);
+    }
+    .cta {
+      margin-top: 6px;
+      display: inline-flex;
+      font-size: 11px; font-weight: 700;
+      color: var(--primary);
+    }
+    .banner {
+      margin: 0 10px 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(var(--primary-rgb), .1);
+      border: 1px solid rgba(var(--primary-rgb), .25);
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+    .banner strong { color: var(--text); }
+    .seg {
+      display: flex; gap: 4px; margin-top: 6px;
+    }
+    .seg i {
+      font-style: normal; font-size: 10px; font-weight: 700;
+      padding: 4px 7px; border-radius: 7px;
+      border: 1px solid var(--line); color: var(--muted);
+    }
+    .seg i.on { background: var(--primary); color: var(--on-primary); border-color: transparent; }
+    .sheet {
+      margin-top: 8px; padding: 10px; border-radius: 12px;
+      background: var(--surface); border: 1px dashed rgba(var(--primary-rgb), .35);
+      font-size: 11px; color: var(--muted);
+    }
+    .progress {
+      height: 6px; border-radius: 99px; background: rgba(255,255,255,.08);
+      overflow: hidden; margin: 0 14px 10px;
+    }
+    html[data-surface="light"] .progress { background: rgba(0,0,0,.08); }
+    .progress > i {
+      display: block; height: 100%; width: 35%;
+      background: var(--primary); border-radius: inherit;
+    }
+    .choose {
+      margin-top: 4px;
+      border: 1px solid var(--line);
+      background: var(--box);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: start;
+    }
+    .choose:hover { border-color: var(--primary); color: var(--primary); }
+    .choose.selected {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <h1>Plugins instalados · Buscar</h1>
+  <p class="lede">
+    15 mocks de UI para el hueco <strong>«instalado» vs «en Buscar»</strong>.
+    Elige una letra; el mock respeta Ultimate Blue / tema actual.
+  </p>
+  <div class="note">
+    <strong>¿LNReader pone el plugin en Buscar al instalar?</strong>
+    Sí, en LN el plugin <em>es</em> un motor JS: al instalarlo ya puede buscar novelas.
+    En Ultimate el JS se guarda, pero la pestaña Buscar usa proveedores CSS (Madara / Blogger / selectores).
+    Por eso existe «Añadir a Buscar»: mapear el sitio a un proveedor que Ultimate sí entiende.
+    <strong>Ideal de producto:</strong> al instalar, activar Buscar automáticamente cuando haya plantilla fiable (Madara/Blog detectado);
+    si no, dejar un paso corto — no un callejón sin salida «solo JS».
+  </div>
+
+  <div class="toolbar">
+    <label>Superficie</label>
+    <select id="surface">
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+    </select>
+    <label>Acento</label>
+    <select id="accent">
+      <option value="blue">Ultimate Blue</option>
+      <option value="lava">Lava</option>
+      <option value="emerald">Emerald</option>
+      <option value="cyan">Cyan</option>
+      <option value="gold">Gold</option>
+      <option value="soft">Soft</option>
+    </select>
+    <button type="button" class="pick" id="clearPick">Limpiar elección</button>
+  </div>
+  <div class="picked" id="picked">Elegido: —</div>
+
+  <div class="grid" id="grid">
+    <!-- A -->
+    <article class="card-wrap" data-opt="A">
+      <div class="opt-head"><span class="letter">A</span><strong>Auto al instalar</strong><span class="tag">LN-like</span></div>
+      <p class="desc">Al instalar → intenta Madara/Blog; si no, pide plantilla una vez. Lista ya «en Buscar».</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="banner"><strong>3 instalados</strong> · ya disponibles en Buscar (plantilla aplicada)</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Light Novel Pub</div><div class="sub"><span class="pill ok">En Buscar · Madara</span></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">SkyNovels</div><div class="sub"><span class="pill ok">En Buscar · Madara</span></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Custom JS Site</div><div class="sub"><span class="pill warn">Elige plantilla</span> <span class="cta">Configurar →</span></div></div></div>
+        </div>
+        <div class="foot"><button class="btn ghost">Cerrar</button><button class="btn primary">Añadir repo</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="A">Elegir A</button>
+    </article>
+
+    <!-- B -->
+    <article class="card-wrap" data-opt="B">
+      <div class="opt-head"><span class="letter">B</span><strong>Toggle En Buscar</strong><span class="tag">simple</span></div>
+      <p class="desc">Switch por tarjeta. Off = solo instalado; On = abre map si falta CSS.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="subbar">Activa el switch para buscar novelas ahí</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Light Novel Pub</div><div class="sub">lightnovelpub.com</div></div><div class="sw on"></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">NovelFull</div><div class="sub">novelfull.com</div></div><div class="sw"></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Royal Road</div><div class="sub">royalroad.com</div></div><div class="sw on"></div></div>
+        </div>
+        <div class="foot"><button class="btn ghost">Cerrar</button><button class="btn primary">Añadir</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="B">Elegir B</button>
+    </article>
+
+    <!-- C -->
+    <article class="card-wrap" data-opt="C">
+      <div class="opt-head"><span class="letter">C</span><strong>Tabs Todos / Buscar / Solo JS</strong></div>
+      <p class="desc">Tres listas. Dejas claro cuántos ya buscan novelas.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins</div>
+        <div class="tabs"><span>Todos 12</span><span class="on">En Buscar 4</span><span>Solo JS 8</span></div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Madara Site A</div><div class="sub"><span class="pill ok">Busca novelas</span></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Blogspot B</div><div class="sub"><span class="pill ok">Busca novelas</span></div></div></div>
+        </div>
+        <div class="foot"><button class="btn primary">Activar los 8 restantes</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="C">Elegir C</button>
+    </article>
+
+    <!-- D -->
+    <article class="card-wrap" data-opt="D">
+      <div class="opt-head"><span class="letter">D</span><strong>Pill + CTA corto</strong></div>
+      <p class="desc">Estado en pill; CTA «Usar en Buscar» solo si falta.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Site Ready</div><div class="sub"><span class="pill ok">En Buscar</span></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">JS Only Source</div><div class="sub"><span class="pill warn">Sin Buscar</span><div class="cta">Usar en Buscar →</div></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Another JS</div><div class="sub"><span class="pill warn">Sin Buscar</span><div class="cta">Usar en Buscar →</div></div></div></div>
+        </div>
+        <div class="foot"><button class="btn ghost">Cerrar</button><button class="btn primary">Añadir repo</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="D">Elegir D</button>
+    </article>
+
+    <!-- E -->
+    <article class="card-wrap" data-opt="E">
+      <div class="opt-head"><span class="letter">E</span><strong>Wizard post-install</strong></div>
+      <p class="desc">Tras instalar N plugins, sheet: «¿Añadir a Buscar ahora?»</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Instalación lista</div>
+        <div class="body">
+          <div class="banner"><strong>12 plugins</strong> guardados. Ultimate necesita una plantilla para buscar novelas en ellos.</div>
+          <div class="row"><div class="meta" style="padding:4px 0"><div class="name">Aplicar Madara a sitios WP</div><div class="sub">8 detectados</div></div></div>
+          <div class="row"><div class="meta" style="padding:4px 0"><div class="name">Aplicar Blogger</div><div class="sub">2 detectados</div></div></div>
+          <div class="row"><div class="meta" style="padding:4px 0"><div class="name">Configurar el resto después</div><div class="sub">2 sitios</div></div></div>
+        </div>
+        <div class="foot"><button class="btn ghost">Ahora no</button><button class="btn primary">Activar Buscar</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="E">Elegir E</button>
+    </article>
+
+    <!-- F -->
+    <article class="card-wrap" data-opt="F">
+      <div class="opt-head"><span class="letter">F</span><strong>Bulk checkboxes</strong></div>
+      <p class="desc">Seleccionar varios → «Añadir a Buscar» con plantilla común.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Activar en Buscar</div>
+        <div class="subbar">Seleccionados 5 · plantilla Madara</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">☑ NovelSite 1</div><div class="sub">sin búsqueda</div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">☑ NovelSite 2</div><div class="sub">sin búsqueda</div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">☐ NovelSite 3</div><div class="sub">sin búsqueda</div></div></div>
+        </div>
+        <div class="foot"><button class="btn primary">Añadir 5 a Buscar</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="F">Elegir F</button>
+    </article>
+
+    <!-- G -->
+    <article class="card-wrap" data-opt="G">
+      <div class="opt-head"><span class="letter">G</span><strong>CTA primario en card</strong></div>
+      <p class="desc">Botón filled «Añadir a Buscar» ocupa el lugar del switch.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <div class="row" style="flex-direction:column">
+            <div style="display:flex;gap:10px;width:100%"><div class="avatar"></div><div class="meta"><div class="name">Unread Source</div><div class="sub">example.com · JS</div></div></div>
+            <button class="btn primary" style="margin-top:8px;width:100%">Añadir a Buscar</button>
+          </div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Ready Source</div><div class="sub"><span class="pill ok">Ya busca novelas</span></div></div></div>
+        </div>
+        <div class="foot"><button class="btn ghost">Cerrar</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="G">Elegir G</button>
+    </article>
+
+    <!-- H -->
+    <article class="card-wrap" data-opt="H">
+      <div class="opt-head"><span class="letter">H</span><strong>Dos secciones</strong></div>
+      <p class="desc">«Listos para Buscar» / «Pendientes de mapear».</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins</div>
+        <div class="body">
+          <div class="subbar" style="padding-left:4px">Listos · 2</div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Madara OK</div><div class="sub"><span class="pill ok">Buscar</span></div></div></div>
+          <div class="subbar" style="padding-left:4px;margin-top:8px">Pendientes · 3</div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">JS Pending</div><div class="sub"><span class="cta">Mapear →</span></div></div></div>
+        </div>
+        <div class="foot"><button class="btn primary">Mapear todos (Madara)</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="H">Elegir H</button>
+    </article>
+
+    <!-- I -->
+    <article class="card-wrap" data-opt="I">
+      <div class="opt-head"><span class="letter">I</span><strong>Bottom sheet plantilla</strong></div>
+      <p class="desc">Al tocar «Añadir a Buscar» → sheet Madara / Blog / Manual.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Target Plugin</div><div class="sub">site.com</div></div></div>
+          <div class="sheet">
+            <strong style="color:var(--text)">¿Cómo busca novelas este sitio?</strong><br/>
+            ○ Madara (WordPress manga)<br/>
+            ○ Blogger / Blogspot<br/>
+            ○ Selectores manuales
+          </div>
+        </div>
+        <div class="foot"><button class="btn ghost">Cancelar</button><button class="btn primary">Continuar</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="I">Elegir I</button>
+    </article>
+
+    <!-- J -->
+    <article class="card-wrap" data-opt="J">
+      <div class="opt-head"><span class="letter">J</span><strong>Chips inline</strong></div>
+      <p class="desc">En la card: chips Madara | Blog | Manual (elige plantilla al vuelo).</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta">
+            <div class="name">WP Novel Hub</div>
+            <div class="seg"><i class="on">Madara</i><i>Blog</i><i>Manual</i></div>
+          </div></div>
+          <div class="row"><div class="avatar"></div><div class="meta">
+            <div class="name">My Blogspot</div>
+            <div class="seg"><i>Madara</i><i class="on">Blog</i><i>Manual</i></div>
+          </div></div>
+        </div>
+        <div class="foot"><button class="btn primary">Listo</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="J">Elegir J</button>
+    </article>
+
+    <!-- K -->
+    <article class="card-wrap" data-opt="K">
+      <div class="opt-head"><span class="letter">K</span><strong>Fila compacta icono 🔍</strong></div>
+      <p class="desc">Icono buscar = estado; tap icono añade/quita de Buscar.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Enabled Site</div><div class="sub">en · v2.1</div></div><div style="font-size:18px;color:var(--primary)">🔍</div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Disabled Site</div><div class="sub">en · v1.0</div></div><div style="font-size:18px;color:var(--muted);opacity:.35">🔍</div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Another Off</div><div class="sub">es · v3.0</div></div><div style="font-size:18px;color:var(--muted);opacity:.35">🔍</div></div>
+        </div>
+        <div class="foot"><button class="btn ghost">Cerrar</button><button class="btn primary">Añadir</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="K">Elegir K</button>
+    </article>
+
+    <!-- L -->
+    <article class="card-wrap" data-opt="L">
+      <div class="opt-head"><span class="letter">L</span><strong>Progreso X de Y</strong></div>
+      <p class="desc">Barra «4 / 12 en Buscar» + CTA completar.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="subbar">4 de 12 buscan novelas</div>
+        <div class="progress"><i></i></div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">…</div><div class="sub"><span class="pill ok">OK</span></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">…</div><div class="sub"><span class="pill warn">Pendiente</span></div></div></div>
+        </div>
+        <div class="foot"><button class="btn primary">Completar los 8</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="L">Elegir L</button>
+    </article>
+
+    <!-- M -->
+    <article class="card-wrap" data-opt="M">
+      <div class="opt-head"><span class="letter">M</span><strong>Smart default</strong><span class="tag">recomendado</span></div>
+      <p class="desc">Instalar = auto Madara/Blog si hay señal; si no, card pide 1 tap. Cercano a LN sin mentir.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="banner"><strong>Como LNReader:</strong> si podemos, Buscar queda activo al instalar. Si el JS no tiene plantilla, te pedimos un toque.</div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Auto Madara</div><div class="sub"><span class="pill ok">Buscar ON</span></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">JS desconocido</div><div class="sub"><span class="pill warn">1 toque</span> <span class="cta">Elegir plantilla</span></div></div></div>
+        </div>
+        <div class="foot"><button class="btn ghost">Cerrar</button><button class="btn primary">Añadir</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="M">Elegir M</button>
+    </article>
+
+    <!-- N -->
+    <article class="card-wrap" data-opt="N">
+      <div class="opt-head"><span class="letter">N</span><strong>Lista unificada</strong></div>
+      <p class="desc">Plugins + proveedores propios en una sola lista «fuentes de Buscar».</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Fuentes de Buscar</div>
+        <div class="tabs"><span class="on">Activas</span><span>Instaladas</span><span>Todas</span></div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">SkyNovels</div><div class="sub">Built-in</div></div><div class="sw on"></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Plugin Madara X</div><div class="sub">Plugin · CSS</div></div><div class="sw on"></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">Mi Blog</div><div class="sub">Proveedor propio</div></div><div class="sw on"></div></div>
+        </div>
+        <div class="foot"><button class="btn primary">Gestionar</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="N">Elegir N</button>
+    </article>
+
+    <!-- O -->
+    <article class="card-wrap" data-opt="O">
+      <div class="opt-head"><span class="letter">O</span><strong>Banner LN + enable all</strong></div>
+      <p class="desc">Explica la diferencia LN vs Ultimate + botón «Intentar activar todos en Buscar».</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>本</span></div>
+        <div class="titlebar">Plugins instalados</div>
+        <div class="banner">En <strong>LNReader</strong> el JS busca solo. Aquí activamos Buscar con plantilla CSS. <strong>220 instalados · 40 en Buscar</strong></div>
+        <div class="body">
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">…</div><div class="sub"><span class="pill warn">Pendiente</span></div></div></div>
+          <div class="row"><div class="avatar"></div><div class="meta"><div class="name">…</div><div class="sub"><span class="pill ok">En Buscar</span></div></div></div>
+        </div>
+        <div class="foot"><button class="btn primary">Activar todos posibles</button></div>
+      </div>
+      <button type="button" class="choose" data-pick="O">Elegir O</button>
+    </article>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const pickedEl = document.getElementById('picked');
+    document.getElementById('surface').addEventListener('change', (e) => {
+      root.setAttribute('data-surface', e.target.value);
+    });
+    document.getElementById('accent').addEventListener('change', (e) => {
+      root.setAttribute('data-accent', e.target.value);
+    });
+    function setPick(letter) {
+      document.querySelectorAll('.choose').forEach((b) => {
+        b.classList.toggle('selected', b.getAttribute('data-pick') === letter);
+        b.textContent = b.getAttribute('data-pick') === letter ? `Elegido ${letter}` : `Elegir ${b.getAttribute('data-pick')}`;
+      });
+      if (!letter) {
+        pickedEl.classList.remove('show');
+        pickedEl.textContent = 'Elegido: —';
+        return;
+      }
+      pickedEl.classList.add('show');
+      pickedEl.textContent = `Elegido: ${letter}`;
+      try { localStorage.setItem('qn-plugin-search-mock', letter); } catch (_) {}
+    }
+    document.querySelectorAll('.choose').forEach((btn) => {
+      btn.addEventListener('click', () => setPick(btn.getAttribute('data-pick')));
+    });
+    document.getElementById('clearPick').addEventListener('click', () => {
+      try { localStorage.removeItem('qn-plugin-search-mock'); } catch (_) {}
+      setPick(null);
+      document.querySelectorAll('.choose').forEach((b) => {
+        b.classList.remove('selected');
+        b.textContent = `Elegir ${b.getAttribute('data-pick')}`;
+      });
+    });
+    try {
+      const saved = localStorage.getItem('qn-plugin-search-mock');
+      if (saved) setPick(saved);
+    } catch (_) {}
+  </script>
+</body>
+</html>

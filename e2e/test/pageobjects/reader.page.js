@@ -1,6 +1,6 @@
 const BasePage = require('./base.page');
 
-const APP_ID = 'com.lagradost.quicknovel.ultimate';
+const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
 
 class ReaderPage extends BasePage {
   get ttsButton() {
