@@ -18,6 +18,7 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.ScrollView
@@ -28,10 +29,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.lagradost.quicknovel.CommonActivity.showToast
+import com.lagradost.quicknovel.MainAPI
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.plugins.PluginInstaller
 import com.lagradost.quicknovel.plugins.PluginStore
@@ -41,13 +45,16 @@ import com.lagradost.quicknovel.providers.CustomProvider
 import com.lagradost.quicknovel.providers.CustomProviderConfig
 import com.lagradost.quicknovel.providers.CustomProviderParser
 import com.lagradost.quicknovel.providers.CustomProviderPresets
+import com.lagradost.quicknovel.providers.ProviderHostHealth
 import com.lagradost.quicknovel.providers.ProviderTestReport
 import com.lagradost.quicknovel.providers.TestStep
+import com.lagradost.quicknovel.util.Apis
 import com.lagradost.quicknovel.util.CustomProviders
 import com.lagradost.quicknovel.util.ProviderManage
 import com.lagradost.quicknovel.util.UIHelper.colorFromAttribute
 import com.lagradost.quicknovel.util.UIHelper.getResourceColor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -55,6 +62,18 @@ import kotlinx.coroutines.withContext
 object CustomProviderDialogs {
     private const val DEFAULT_TEST_QUERY = "the"
     private const val DEFAULT_BLOGGER_TEST_QUERY = "a"
+
+    /** Accessibility / e2e ids for the host-health long-press bottom sheet. */
+    const val HOST_HEALTH_SHEET_DESC = "host_health_sheet"
+    const val HOST_HEALTH_PROGRESS_DESC = "host_health_progress"
+    const val HOST_HEALTH_RESULT_DESC = "host_health_result"
+    const val HOST_HEALTH_CONFIGURED_DESC = "host_health_configured"
+    const val HOST_HEALTH_FINAL_DESC = "host_health_final"
+    const val HOST_HEALTH_STATUS_DESC = "host_health_status"
+    const val HOST_HEALTH_LATENCY_DESC = "host_health_latency"
+    const val HOST_HEALTH_USE_URL_DESC = "host_health_use_url"
+    const val HOST_HEALTH_RECHECK_DESC = "host_health_recheck"
+    const val HOST_HEALTH_CLOSE_DESC = "host_health_close"
 
     private class Field(
         @StringRes val hint: Int,
@@ -527,6 +546,12 @@ object CustomProviderDialogs {
                         )
                         line.addView(body)
                     } else {
+                        val openHost = View.OnLongClickListener {
+                            showHostHealthSheet(activity, row) { reopen() }
+                            true
+                        }
+                        body.setOnLongClickListener(openHost)
+                        line.setOnLongClickListener(openHost)
                         line.addView(body)
                         val toggle = Switch(activity).apply {
                             isChecked = row.activeInSearch
@@ -684,6 +709,396 @@ object CustomProviderDialogs {
         return ColorUtils.blendARGB(primary, 0xFFFF5252.toInt(), 0.55f)
     }
 
+    /** Site URL used for host probes (custom / plugin / built-in). */
+    private fun probeUrlFor(row: ProviderManage.Row): String? {
+        when (row.kind) {
+            ProviderManage.Kind.CUSTOM -> {
+                val url = row.config?.baseUrl?.trim().orEmpty()
+                return url.ifBlank { null }
+            }
+            ProviderManage.Kind.PLUGIN -> {
+                val mapped = row.plugin?.providerName?.trim().orEmpty()
+                if (mapped.isNotBlank()) {
+                    val cfg = CustomProviders.load().firstOrNull { it.name == mapped }
+                    val fromCfg = cfg?.baseUrl?.trim().orEmpty()
+                    if (fromCfg.isNotBlank()) return fromCfg
+                }
+                val site = row.plugin?.site?.trim().orEmpty()
+                return site.ifBlank { null }
+            }
+            ProviderManage.Kind.BUILTIN ->
+                return Apis.getApiFromNameNull(row.searchName)?.mainUrl?.trim()?.ifBlank { null }
+        }
+    }
+
+    /**
+     * Resolves a [ProviderManage.Row] for a Search tile [api], so the same host sheet
+     * works from Buscar (long-press) and from Fuentes.
+     */
+    fun rowForApi(activity: Activity, api: MainAPI): ProviderManage.Row {
+        val active = ProviderManage.readActiveNames(activity)
+        val match = ProviderManage.loadRows(active).firstOrNull { row ->
+            row.searchName.equals(api.name, ignoreCase = true) ||
+                row.title.equals(api.name, ignoreCase = true)
+        }
+        if (match != null) return match
+        val url = api.mainUrl.trim().trimEnd('/')
+        return ProviderManage.Row(
+            key = "api:${api.name}",
+            title = api.name,
+            subtitle = url.ifBlank { api.lang },
+            kind = if (api is CustomProvider) ProviderManage.Kind.CUSTOM else ProviderManage.Kind.BUILTIN,
+            searchName = api.name,
+            activeInSearch = true,
+            canToggleSearch = true,
+            config = (api as? CustomProvider)?.config,
+        )
+    }
+
+    /**
+     * Search tile entry: long-press only (tap still opens the provider).
+     * Opens the same bottom sheet with progress loader (#1).
+     */
+    fun showHostHealthForApi(
+        activity: Activity,
+        api: MainAPI,
+        onChanged: () -> Unit = {},
+    ) {
+        showHostHealthSheet(activity, rowForApi(activity, api), onChanged)
+    }
+
+    /**
+     * Bottom sheet (mock #1): probes the host with a progress loader while the grid stays
+     * dimmed behind, then shows configured URL, final URL, status, latency, and
+     * “Use new URL” when the domain changed. Theme attrs for Ultimate / Light / Amoled.
+     */
+    fun showHostHealthSheet(activity: Activity, row: ProviderManage.Row, onChanged: () -> Unit) {
+        val configured = probeUrlFor(row)
+        if (configured.isNullOrBlank()) {
+            showToast(activity, activity.getString(R.string.cp_host_no_url))
+            return
+        }
+        val density = activity.resources.displayMetrics.density
+        val pad = (16 * density).toInt()
+        val gap = (8 * density).toInt()
+        val primary = activity.colorFromAttribute(R.attr.colorPrimary)
+        val gray = activity.colorFromAttribute(R.attr.grayTextColor)
+        val textColor = activity.colorFromAttribute(R.attr.textColor)
+        val boxBg = activity.colorFromAttribute(R.attr.boxItemBackground)
+        val danger = themedDangerColor(activity, primary)
+        val okColor = ColorUtils.blendARGB(textColor, 0xFF1B8A4A.toInt(), 0.55f).let {
+            ColorUtils.blendARGB(it, primary, 0.2f)
+        }
+        val warnColor = ColorUtils.blendARGB(textColor, 0xFFE07010.toInt(), 0.5f).let {
+            ColorUtils.blendARGB(it, primary, 0.25f)
+        }
+        val progressTint = ColorStateList.valueOf(primary)
+
+        fun pillBtn(
+            label: String,
+            fill: Int,
+            labelColor: Int,
+            desc: String,
+        ): MaterialButton =
+            MaterialButton(activity, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                text = label
+                isAllCaps = false
+                setTextColor(labelColor)
+                contentDescription = desc
+                backgroundTintList = ColorStateList.valueOf(fill)
+                strokeColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(gray, 80))
+                strokeWidth = (1 * density).toInt().coerceAtLeast(1)
+                cornerRadius = (12 * density).toInt()
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).also {
+                    it.marginStart = (4 * density).toInt()
+                    it.marginEnd = (4 * density).toInt()
+                }
+            }
+
+        val sheet = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, (10 * density).toInt(), pad, pad)
+            contentDescription = HOST_HEALTH_SHEET_DESC
+            background = GradientDrawable().apply {
+                cornerRadii = floatArrayOf(
+                    18 * density, 18 * density, 18 * density, 18 * density,
+                    0f, 0f, 0f, 0f,
+                )
+                setColor(boxBg)
+            }
+        }
+
+        // Drag handle — matches mock #1 bottom sheet.
+        sheet.addView(
+            View(activity).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    (36 * density).toInt(),
+                    (4 * density).toInt(),
+                ).also {
+                    it.gravity = Gravity.CENTER_HORIZONTAL
+                    it.bottomMargin = gap
+                }
+                background = GradientDrawable().apply {
+                    cornerRadius = 2 * density
+                    setColor(ColorUtils.setAlphaComponent(gray, 90))
+                }
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            },
+        )
+
+        val titleView = TextView(activity).apply {
+            text = row.title
+            setTextColor(textColor)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        sheet.addView(titleView)
+        sheet.addView(
+            TextView(activity).apply {
+                text = activity.getString(R.string.cp_host_sheet_subtitle, row.subtitle)
+                setTextColor(gray)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setPadding(0, (2 * density).toInt(), 0, gap)
+            },
+        )
+
+        val checkingBlock = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, gap / 2, 0, gap)
+            contentDescription = HOST_HEALTH_PROGRESS_DESC
+        }
+        checkingBlock.addView(
+            TextView(activity).apply {
+                text = activity.getString(R.string.cp_host_checking)
+                setTextColor(textColor)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+            },
+        )
+        checkingBlock.addView(
+            ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal).apply {
+                isIndeterminate = true
+                progressTintList = progressTint
+                indeterminateTintList = progressTint
+                secondaryProgressTintList = ColorStateList.valueOf(
+                    ColorUtils.setAlphaComponent(primary, 70),
+                )
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).also { it.topMargin = gap }
+            },
+        )
+        checkingBlock.addView(
+            TextView(activity).apply {
+                text = activity.getString(R.string.cp_host_checking_hint)
+                setTextColor(gray)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setPadding(0, gap / 2, 0, 0)
+            },
+        )
+        sheet.addView(checkingBlock)
+
+        val resultBlock = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+            contentDescription = HOST_HEALTH_RESULT_DESC
+        }
+        fun metaLine(label: String, value: String, desc: String): TextView =
+            TextView(activity).apply {
+                text = "$label\n$value"
+                setTextColor(textColor)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                setPadding(0, 0, 0, gap)
+                setLineSpacing(0f, 1.15f)
+                contentDescription = desc
+            }
+        val configuredView = metaLine(
+            activity.getString(R.string.cp_host_configured),
+            configured,
+            HOST_HEALTH_CONFIGURED_DESC,
+        )
+        val finalView = metaLine(
+            activity.getString(R.string.cp_host_final),
+            "—",
+            HOST_HEALTH_FINAL_DESC,
+        )
+        val statusView = TextView(activity).apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, gap / 2)
+            contentDescription = HOST_HEALTH_STATUS_DESC
+        }
+        val latencyView = TextView(activity).apply {
+            setTextColor(gray)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setPadding(0, 0, 0, gap)
+            contentDescription = HOST_HEALTH_LATENCY_DESC
+        }
+        resultBlock.addView(configuredView)
+        resultBlock.addView(finalView)
+        resultBlock.addView(statusView)
+        resultBlock.addView(latencyView)
+        sheet.addView(resultBlock)
+
+        val actions = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, gap, 0, 0)
+        }
+        val useUrlBtn = pillBtn(
+            activity.getString(R.string.cp_host_use_new_url),
+            primary,
+            android.graphics.Color.WHITE,
+            HOST_HEALTH_USE_URL_DESC,
+        ).also { it.visibility = View.GONE }
+        val recheckBtn = pillBtn(
+            activity.getString(R.string.cp_host_recheck),
+            ColorUtils.setAlphaComponent(primary, 36),
+            primary,
+            HOST_HEALTH_RECHECK_DESC,
+        )
+        val closeBtn = pillBtn(
+            activity.getString(R.string.close),
+            ColorUtils.setAlphaComponent(gray, 36),
+            gray,
+            HOST_HEALTH_CLOSE_DESC,
+        )
+        actions.addView(useUrlBtn)
+        actions.addView(recheckBtn)
+        actions.addView(closeBtn)
+        sheet.addView(actions)
+
+        val dialog = BottomSheetDialog(activity, R.style.AppBottomSheetDialogTheme)
+        dialog.setContentView(sheet)
+        dialog.setCanceledOnTouchOutside(true)
+
+        var lastReport: ProviderHostHealth.Report? = null
+        var probeJob: Job? = null
+        val scope = (activity as? AppCompatActivity)?.lifecycleScope
+
+        fun applyNewUrl(report: ProviderHostHealth.Report) {
+            val newBase = report.effectiveBaseUrl()
+            when (row.kind) {
+                ProviderManage.Kind.CUSTOM -> {
+                    val cfg = row.config
+                        ?: CustomProviders.load().firstOrNull { it.name == row.searchName }
+                        ?: CustomProviders.load().firstOrNull { it.name == row.title }
+                    if (cfg == null) {
+                        showToast(activity, activity.getString(R.string.cp_host_no_url))
+                        return
+                    }
+                    CustomProviders.save(activity, cfg.copy(baseUrl = newBase), replacing = cfg.name)
+                }
+                ProviderManage.Kind.PLUGIN -> {
+                    val plugin = row.plugin ?: return
+                    val mapped = plugin.providerName.trim()
+                    if (mapped.isNotBlank()) {
+                        val cfg = CustomProviders.load().firstOrNull { it.name == mapped }
+                        if (cfg != null) {
+                            CustomProviders.save(
+                                activity,
+                                cfg.copy(baseUrl = newBase),
+                                replacing = cfg.name,
+                            )
+                        }
+                    }
+                    PluginStore.saveInstalled(plugin.copy(site = newBase))
+                }
+                ProviderManage.Kind.BUILTIN -> {
+                    showToast(activity, activity.getString(R.string.cp_host_builtin_readonly))
+                    return
+                }
+            }
+            showToast(
+                activity,
+                activity.getString(
+                    R.string.cp_host_url_updated,
+                    ProviderHostHealth.hostOf(newBase).orEmpty(),
+                ),
+            )
+            dialog.dismiss()
+            onChanged()
+        }
+
+        fun paintResult(report: ProviderHostHealth.Report) {
+            lastReport = report
+            checkingBlock.visibility = View.GONE
+            resultBlock.visibility = View.VISIBLE
+            recheckBtn.isEnabled = true
+            val finalShown = report.finalUrl ?: report.configuredUrl
+            finalView.text = "${activity.getString(R.string.cp_host_final)}\n$finalShown"
+            when {
+                !report.reachable -> {
+                    statusView.text = activity.getString(R.string.cp_host_status_down, report.userMessage())
+                    statusView.setTextColor(danger)
+                }
+                report.domainChanged -> {
+                    statusView.text = activity.getString(
+                        R.string.cp_host_status_moved,
+                        ProviderHostHealth.hostOf(report.finalUrl).orEmpty(),
+                        ProviderHostHealth.hostOf(report.configuredUrl).orEmpty(),
+                    )
+                    statusView.setTextColor(warnColor)
+                }
+                else -> {
+                    statusView.text = activity.getString(
+                        R.string.cp_host_status_ok,
+                        report.httpStatus?.toString() ?: "—",
+                    )
+                    statusView.setTextColor(okColor)
+                }
+            }
+            val ms = report.latencyMs
+            latencyView.text = if (ms != null) {
+                activity.getString(R.string.cp_host_latency, ms)
+            } else {
+                activity.getString(R.string.cp_host_latency_unknown)
+            }
+            val canApply = report.reachable && report.domainChanged &&
+                row.kind != ProviderManage.Kind.BUILTIN
+            useUrlBtn.visibility = if (canApply) View.VISIBLE else View.GONE
+            useUrlBtn.isEnabled = canApply
+        }
+
+        fun runProbe() {
+            checkingBlock.visibility = View.VISIBLE
+            resultBlock.visibility = View.GONE
+            useUrlBtn.visibility = View.GONE
+            recheckBtn.isEnabled = false
+            if (scope == null) {
+                paintResult(ProviderHostHealth.probe(configured))
+                return
+            }
+            probeJob?.cancel()
+            probeJob = scope.launch {
+                val report = withContext(Dispatchers.IO) { ProviderHostHealth.probe(configured) }
+                if (!dialog.isShowing) return@launch
+                paintResult(report)
+            }
+        }
+
+        useUrlBtn.setOnClickListener {
+            val report = lastReport ?: return@setOnClickListener
+            if (!report.domainChanged) return@setOnClickListener
+            applyNewUrl(report)
+        }
+        recheckBtn.setOnClickListener { runProbe() }
+        closeBtn.setOnClickListener { dialog.dismiss() }
+
+        dialog.setOnShowListener {
+            val bottom = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            bottom?.let { sheetView ->
+                sheetView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                val behavior = BottomSheetBehavior.from(sheetView)
+                behavior.skipCollapsed = true
+                behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            }
+            runProbe()
+        }
+        dialog.setOnDismissListener { probeJob?.cancel() }
+        dialog.show()
+    }
+
     /**
      * Easy form: pick Blog or Website, then name and address.
      * Only the chosen layout is tested, so Blogger catalogs and Madara sites do not mix.
@@ -818,12 +1233,41 @@ object CustomProviderDialogs {
             val name = name().ifBlank { "Blog" }
             val lang = lang()
             setBusy(true)
-            hint.text = activity.getString(R.string.cp_validating_blog)
+            hint.text = activity.getString(R.string.cp_host_checking)
             scope.launch {
-                val config = CustomProviderConfig.bloggerTemplate(name, url).copy(lang = lang)
+                val health = withContext(Dispatchers.IO) { ProviderHostHealth.probe(url) }
+                if (!health.reachable) {
+                    hint.text = activity.getString(R.string.cp_host_down, health.userMessage())
+                    setBusy(false)
+                    return@launch
+                }
+                val effectiveUrl = health.effectiveBaseUrl()
+                if (health.domainChanged) {
+                    urlEdit.setText(effectiveUrl)
+                    hint.text = activity.getString(
+                        R.string.cp_host_domain_changed,
+                        ProviderHostHealth.hostOf(health.finalUrl).orEmpty(),
+                        ProviderHostHealth.hostOf(url).orEmpty(),
+                    )
+                } else {
+                    hint.text = activity.getString(R.string.cp_validating_blog)
+                }
+                val config = CustomProviderConfig.bloggerTemplate(name, effectiveUrl).copy(lang = lang)
                 val check = withContext(Dispatchers.IO) { CustomProvider(config).validateBlogger() }
                 if (check.ok) {
-                    hint.text = formatBlogOk(activity, check)
+                    hint.text = buildString {
+                        if (health.domainChanged) {
+                            append(
+                                activity.getString(
+                                    R.string.cp_host_domain_changed,
+                                    ProviderHostHealth.hostOf(health.finalUrl).orEmpty(),
+                                    ProviderHostHealth.hostOf(url).orEmpty(),
+                                )
+                            )
+                            append('\n')
+                        }
+                        append(formatBlogOk(activity, check))
+                    }
                     if (saveIfOk) {
                         CustomProviders.save(activity, config)
                         showToast(R.string.cp_saved)
@@ -861,10 +1305,34 @@ object CustomProviderDialogs {
             val name = name()
             val lang = lang()
             setBusy(true)
-            hint.text = activity.getString(R.string.cp_detecting)
+            hint.text = activity.getString(R.string.cp_host_checking)
             scope.launch {
+                val health = withContext(Dispatchers.IO) { ProviderHostHealth.probe(url) }
+                if (!health.reachable) {
+                    hint.text = activity.getString(R.string.cp_host_down, health.userMessage())
+                    setBusy(false)
+                    return@launch
+                }
+                val effectiveUrl = health.effectiveBaseUrl()
+                if (health.domainChanged) {
+                    urlEdit.setText(effectiveUrl)
+                    hint.text = activity.getString(
+                        R.string.cp_host_domain_changed,
+                        ProviderHostHealth.hostOf(health.finalUrl).orEmpty(),
+                        ProviderHostHealth.hostOf(url).orEmpty(),
+                    )
+                } else {
+                    hint.text = activity.getString(R.string.cp_detecting)
+                }
                 val detection = withContext(Dispatchers.IO) {
-                    detect(CustomProviderPresets.candidates(name, url, lang, CustomProviderConfig.KIND_CSS))
+                    detect(
+                        CustomProviderPresets.candidates(
+                            name,
+                            effectiveUrl,
+                            lang,
+                            CustomProviderConfig.KIND_CSS,
+                        )
+                    )
                 }
                 val found = detection.config
                 if (found != null) {
@@ -875,7 +1343,16 @@ object CustomProviderDialogs {
                 } else {
                     setBusy(false)
                     val reason = detection.error?.let { "\n\n($it)" }.orEmpty()
-                    hint.text = activity.getString(R.string.cp_not_detected) + reason
+                    val domainNote = if (health.domainChanged) {
+                        "\n\n" + activity.getString(
+                            R.string.cp_host_domain_changed,
+                            ProviderHostHealth.hostOf(health.finalUrl).orEmpty(),
+                            ProviderHostHealth.hostOf(url).orEmpty(),
+                        )
+                    } else {
+                        ""
+                    }
+                    hint.text = activity.getString(R.string.cp_not_detected) + domainNote + reason
                 }
             }
         }
@@ -1071,8 +1548,36 @@ object CustomProviderDialogs {
             val problem = problemMessage(config)
             if (problem != null) {
                 showToast(problem)
-            } else {
+                return@setOnClickListener
+            }
+            val scope = (activity as? AppCompatActivity)?.lifecycleScope
+            if (scope == null) {
                 CustomProviders.save(activity, config, replacing = existing?.name)
+                showToast(R.string.cp_saved)
+                dialog.dismiss()
+                onSaved()
+                return@setOnClickListener
+            }
+            showToast(R.string.cp_host_checking)
+            scope.launch {
+                val health = withContext(Dispatchers.IO) { ProviderHostHealth.probe(config.baseUrl) }
+                if (!health.reachable) {
+                    showToast(activity.getString(R.string.cp_host_down, health.userMessage()))
+                    return@launch
+                }
+                val toSave = if (health.domainChanged) {
+                    showToast(
+                        activity.getString(
+                            R.string.cp_host_domain_changed,
+                            ProviderHostHealth.hostOf(health.finalUrl).orEmpty(),
+                            ProviderHostHealth.hostOf(config.baseUrl).orEmpty(),
+                        )
+                    )
+                    config.copy(baseUrl = health.effectiveBaseUrl())
+                } else {
+                    config
+                }
+                CustomProviders.save(activity, toSave, replacing = existing?.name)
                 showToast(R.string.cp_saved)
                 dialog.dismiss()
                 onSaved()
@@ -1090,6 +1595,21 @@ object CustomProviderDialogs {
                 val fallback = if (config.isBlogger) DEFAULT_BLOGGER_TEST_QUERY else DEFAULT_TEST_QUERY
                 val query = testQueryEdit.text?.toString().orEmpty().ifBlank { fallback }
                 scope.launch {
+                    val health = withContext(Dispatchers.IO) { ProviderHostHealth.probe(config.baseUrl) }
+                    if (!health.reachable) {
+                        showToast(activity.getString(R.string.cp_host_down, health.userMessage()))
+                        return@launch
+                    }
+                    if (health.domainChanged) {
+                        showToast(
+                            activity.getString(
+                                R.string.cp_host_domain_changed,
+                                ProviderHostHealth.hostOf(health.finalUrl).orEmpty(),
+                                ProviderHostHealth.hostOf(config.baseUrl).orEmpty(),
+                            )
+                        )
+                        return@launch
+                    }
                     val report = withContext(Dispatchers.IO) { CustomProvider(config).runTest(query) }
                     showReport(activity, report)
                 }

@@ -15,6 +15,7 @@
     "test:features-plugins": "wdio run ./wdio.conf.js --suite features-plugins",
     "test:features-flows": "wdio run ./wdio.conf.js --suite features-flows",
     "test:plugins": "wdio run ./wdio.conf.js --suite features-plugins",
+    "test:host-health": "wdio run ./wdio.conf.js --spec ./test/specs/16-host-health.e2e.js",
     "test:download-translate": "wdio run ./wdio.conf.js --spec ./test/specs/11-download-translate.e2e.js",
     "test:sections": "wdio run ./wdio.conf.js --spec ./test/specs/14-sections-translations.e2e.js",
     "test:reader": "wdio run ./wdio.conf.js --suite reader",

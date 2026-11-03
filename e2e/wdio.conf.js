@@ -52,6 +52,7 @@ exports.config = {
         './test/specs/06-import.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
         './test/specs/10-plugins.e2e.js',
+        './test/specs/16-host-health.e2e.js',
         './test/specs/15-plugin-catalog.e2e.js',
         './test/specs/11-download-translate.e2e.js',
         './test/specs/14-sections-translations.e2e.js',
@@ -72,6 +73,7 @@ exports.config = {
     'features-plugins': [
       [
         './test/specs/10-plugins.e2e.js',
+        './test/specs/16-host-health.e2e.js',
         './test/specs/15-plugin-catalog.e2e.js',
       ],
     ],
@@ -84,6 +86,7 @@ exports.config = {
     plugins: [
       [
         './test/specs/10-plugins.e2e.js',
+        './test/specs/16-host-health.e2e.js',
         './test/specs/15-plugin-catalog.e2e.js',
       ],
     ],

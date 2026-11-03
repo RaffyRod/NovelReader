@@ -90,6 +90,7 @@ import com.lagradost.quicknovel.ui.common.SkeletonProviderRows
 import com.lagradost.quicknovel.ui.common.staggeredEnter
 import com.lagradost.quicknovel.ui.mainpage.MainPageFragment
 import com.lagradost.quicknovel.ui.mainpage.SearchResponseDialog
+import com.lagradost.quicknovel.ui.settings.CustomProviderDialogs
 import com.lagradost.quicknovel.ui.settings.searchLangList
 import com.lagradost.quicknovel.ui.settings.searchProvidersList
 import com.lagradost.quicknovel.util.Apis.Companion.apis
@@ -444,9 +445,15 @@ fun MainAPIItem(
             .height(100.dp)
             .rounded()
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = {
-                action(HomeAction.Open(api))
-            })
+            .combinedClickable(
+                // Tap → open provider. Long-press → bottom sheet host check (mock #1).
+                // Not automatic on select; no extra button on the tile.
+                onClick = { action(HomeAction.Open(api)) },
+                onLongClick = {
+                    val act = CommonActivity.activity ?: return@combinedClickable
+                    CustomProviderDialogs.showHostHealthForApi(act, api)
+                },
+            )
     ) {
         Box(
             modifier = Modifier

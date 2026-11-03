@@ -546,6 +546,20 @@ class CustomProvider(rawConfig: CustomProviderConfig) : MainAPI() {
     /** Downloads [url] and parses it with the url as base, so relative links resolve to absolute ones. */
     private suspend fun fetch(url: String): Document = Jsoup.parse(app.get(url).text, url)
 
+    /**
+     * Confirms the configured host still answers and has not permanently moved.
+     * Throws [ErrorLoadingException] with a clear message when the site is down or the domain changed.
+     */
+    private fun ensureHostHealthy() {
+        val report = ProviderHostHealth.probe(mainUrl)
+        if (!report.reachable) {
+            throw ErrorLoadingException(report.userMessage())
+        }
+        if (report.domainChanged) {
+            throw ErrorLoadingException(report.userMessage())
+        }
+    }
+
     override val hasMainPage = true
 
     /** The provider list shows every site; opening it lists homepage novels, with search-URL fallbacks. */
@@ -555,6 +569,7 @@ class CustomProvider(rawConfig: CustomProviderConfig) : MainAPI() {
         orderBy: String?,
         tag: String?
     ): HeadMainPageResponse {
+        ensureHostHealthy()
         if (config.isBlogger) {
             val indexed = bloggerIndexNovels()
             if (indexed.isNotEmpty()) {
@@ -680,6 +695,7 @@ class CustomProvider(rawConfig: CustomProviderConfig) : MainAPI() {
         if (number % 1.0 == 0.0) number.toInt().toString() else number.toString()
 
     override suspend fun search(query: String): List<SearchResponse> {
+        ensureHostHealthy()
         if (config.isBlogger) return bloggerSearch(query)
         return fetchFirstResults(query).second
     }
@@ -731,6 +747,19 @@ class CustomProvider(rawConfig: CustomProviderConfig) : MainAPI() {
             return BloggerValidation(step = "kind", error = "Provider is not a Blogger blog")
         }
         return try {
+            val host = ProviderHostHealth.probe(mainUrl)
+            if (!host.reachable) {
+                return BloggerValidation(
+                    step = "host",
+                    error = host.userMessage(),
+                )
+            }
+            if (host.domainChanged) {
+                return BloggerValidation(
+                    step = "domain",
+                    error = host.userMessage(),
+                )
+            }
             val home = fetch(mainUrl)
             if (!BloggerParser.looksLikeBlogger(home, mainUrl)) {
                 return BloggerValidation(

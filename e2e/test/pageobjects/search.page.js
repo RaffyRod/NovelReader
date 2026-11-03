@@ -335,6 +335,69 @@ class SearchPage extends BasePage {
   }
 
   /**
+   * Finds a visible provider tile TextView on Buscar (prefers known built-ins).
+   * @returns {Promise<WebdriverIO.Element|null>}
+   */
+  async findProviderTileTarget() {
+    const preferred = ['Wattpad', 'SkyLight', 'Royal', 'Wuxia', 'Novel'];
+    for (const name of preferred) {
+      const el = this.byTextContains(name);
+      if (await el.isDisplayed().catch(() => false)) return el;
+    }
+    const skip =
+      /^(buscar|search|proveedores|providers|recientes|recent|popular|todos|all|sin resultados|no results)$/i;
+    const texts = await $$('android.widget.TextView');
+    for (const el of texts) {
+      if (!(await el.isDisplayed().catch(() => false))) continue;
+      const t = ((await el.getText().catch(() => '')) || '').trim();
+      if (!t || t.length < 3 || t.length > 40) continue;
+      if (skip.test(t)) continue;
+      if (/^\d+$/.test(t) || /\(\d+\)$/.test(t)) continue;
+      return el;
+    }
+    return null;
+  }
+
+  /**
+   * Long-press a Buscar provider tile to open the host-health modal.
+   * @returns {Promise<boolean>}
+   */
+  async openHostHealthFromSearchTile() {
+    await this.ensureMainChrome(20000).catch(() => {});
+    await this.open();
+    await this.expectLoaded();
+    // Ensure provider grid is showing (not novel results).
+    const field = this.searchField;
+    if (await field.isDisplayed().catch(() => false)) {
+      await field.click().catch(() => {});
+      await field.clearValue().catch(() => {});
+      await driver.pause(400);
+    }
+    let target = await this.findProviderTileTarget();
+    if (!target) {
+      await driver.execute('mobile: scrollGesture', {
+        left: 80,
+        top: 500,
+        width: 500,
+        height: 1100,
+        direction: 'down',
+        percent: 0.6,
+      }).catch(() => {});
+      await driver.pause(400);
+      target = await this.findProviderTileTarget();
+    }
+    if (!target) return false;
+    const loc = await target.getLocation();
+    const size = await target.getSize();
+    const x = Math.round(loc.x + size.width / 2);
+    const y = Math.round(loc.y + size.height / 2);
+    await driver.execute('mobile: longClickGesture', { x, y, duration: 1100 });
+    await driver.pause(700);
+    const settingsPage = require('./settings.page');
+    return settingsPage.isHostHealthSheetOpen();
+  }
+
+  /**
    * True when MainPage / provider browse UI is showing (back affordance, filter row, or no home tune).
    * Annas Archive keeps an EditText ("Búsqueda …") on MainPage — do not treat that as home.
    */

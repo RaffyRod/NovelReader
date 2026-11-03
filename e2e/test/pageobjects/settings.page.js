@@ -531,6 +531,233 @@ class SettingsPage extends BasePage {
     return this.fuentesIsNormalMode();
   }
 
+  get hostHealthSheet() {
+    return this.byA11y('host_health_sheet');
+  }
+
+  get hostHealthProgress() {
+    return this.byA11y('host_health_progress');
+  }
+
+  get hostHealthResult() {
+    return this.byA11y('host_health_result');
+  }
+
+  get hostHealthConfigured() {
+    return this.byA11y('host_health_configured');
+  }
+
+  get hostHealthStatus() {
+    return this.byA11y('host_health_status');
+  }
+
+  get hostHealthLatency() {
+    return this.byA11y('host_health_latency');
+  }
+
+  get hostHealthRecheck() {
+    return this.byA11y('host_health_recheck');
+  }
+
+  get hostHealthRecheckEn() {
+    return this.byTextContains('Check again');
+  }
+
+  get hostHealthRecheckEs() {
+    return this.byTextContains('Comprobar de nuevo');
+  }
+
+  get hostHealthClose() {
+    return this.byA11y('host_health_close');
+  }
+
+  get hostHealthCloseEn() {
+    return this.byText('Close');
+  }
+
+  get hostHealthCloseEs() {
+    return this.byText('Cerrar');
+  }
+
+  /**
+   * Selects the Todas / All tab inside Fuentes when visible.
+   */
+  async selectFuentesTabAll() {
+    const tabAll = this.byTextContains('Todas');
+    const tabAllEn = this.byTextContains('All');
+    if (await tabAll.isDisplayed().catch(() => false)) {
+      await tabAll.click();
+      await driver.pause(500);
+      return true;
+    }
+    if (await tabAllEn.isDisplayed().catch(() => false)) {
+      await tabAllEn.click();
+      await driver.pause(500);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Finds a provider title TextView in Fuentes suitable for long-press (not tabs/filter).
+   * Prefers a known built-in name so CI has a stable target.
+   * @returns {Promise<WebdriverIO.Element|null>}
+   */
+  async findFuentesLongPressTarget() {
+    const preferred = ['Wattpad', 'SkyLight', 'Royal', 'Wuxia', 'Novel'];
+    for (const name of preferred) {
+      const el = this.byTextContains(name);
+      if (await el.isDisplayed().catch(() => false)) return el;
+    }
+    const skip =
+      /activas|active|instaladas|installed|todas|all|filtrar|filter|seleccionar|select|cerrar|close|fuentes|sources|buscar|search/i;
+    const texts = await $$('android.widget.TextView');
+    for (const el of texts) {
+      if (!(await el.isDisplayed().catch(() => false))) continue;
+      const t = ((await el.getText().catch(() => '')) || '').trim();
+      if (t.length < 3 || t.length > 48) continue;
+      if (skip.test(t)) continue;
+      if (/built-in|proveedor|plugin|http/i.test(t)) continue;
+      return el;
+    }
+    return null;
+  }
+
+  /**
+   * Long-presses an element via UiAutomator2 gesture.
+   * @param {WebdriverIO.Element} el
+   * @param {number} [durationMs]
+   */
+  async longPressElement(el, durationMs = 1100) {
+    const loc = await el.getLocation();
+    const size = await el.getSize();
+    const x = Math.round(loc.x + size.width / 2);
+    const y = Math.round(loc.y + size.height / 2);
+    await driver.execute('mobile: longClickGesture', { x, y, duration: durationMs });
+    await driver.pause(600);
+  }
+
+  /**
+   * Opens Fuentes, long-presses a row, waits for host-health sheet chrome.
+   * @returns {Promise<boolean>}
+   */
+  async openHostHealthSheetFromFuentes() {
+    const opened = await this.openFuentesDeBuscar();
+    if (!opened) return false;
+    await this.selectFuentesTabAll();
+    const target = await this.findFuentesLongPressTarget();
+    if (!target) return false;
+    await this.longPressElement(target);
+    return this.isHostHealthSheetOpen();
+  }
+
+  /**
+   * True when the host-health sheet (progress or result) is on screen.
+   * @returns {Promise<boolean>}
+   */
+  async isHostHealthSheetOpen() {
+    if (await this.hostHealthSheet.isDisplayed().catch(() => false)) return true;
+    if (await this.hostHealthProgress.isDisplayed().catch(() => false)) return true;
+    if (await this.hostHealthResult.isDisplayed().catch(() => false)) return true;
+    const checking =
+      (await this.byTextContains('Comprobando que el sitio').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Checking that the site').isDisplayed().catch(() => false));
+    const configured =
+      (await this.byTextContains('URL configurada').isDisplayed().catch(() => false)) ||
+      (await this.byTextContains('Configured URL').isDisplayed().catch(() => false));
+    const recheck =
+      (await this.hostHealthRecheck.isDisplayed().catch(() => false)) ||
+      (await this.hostHealthRecheckEn.isDisplayed().catch(() => false));
+    return checking || configured || recheck;
+  }
+
+  /**
+   * Waits until probe finishes (result / latency / status) or timeout.
+   * Soft: progress alone still counts as success mid-flight if network is slow.
+   * @param {number} [timeoutMs]
+   * @returns {Promise<{done: boolean, sawProgress: boolean, statusText: string}>}
+   */
+  async waitHostHealthResult(timeoutMs = 25000) {
+    const deadline = Date.now() + timeoutMs;
+    let sawProgress = false;
+    let statusText = '';
+    while (Date.now() < deadline) {
+      if (await this.hostHealthProgress.isDisplayed().catch(() => false)) sawProgress = true;
+      if (
+        (await this.byTextContains('Comprobando que el sitio').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Checking that the site').isDisplayed().catch(() => false))
+      ) {
+        sawProgress = true;
+      }
+      const status = this.hostHealthStatus;
+      if (await status.isDisplayed().catch(() => false)) {
+        statusText = ((await status.getText().catch(() => '')) || '').trim();
+        if (statusText) {
+          return { done: true, sawProgress, statusText };
+        }
+      }
+      const latencyVisible =
+        (await this.hostHealthLatency.isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Latencia').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Latency').isDisplayed().catch(() => false));
+      const resultVisible =
+        (await this.hostHealthResult.isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('URL final').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Final URL').isDisplayed().catch(() => false));
+      if (latencyVisible || resultVisible) {
+        const ok =
+          (await this.byTextContains('OK').isDisplayed().catch(() => false)) ||
+          (await this.byTextContains('Caído').isDisplayed().catch(() => false)) ||
+          (await this.byTextContains('Down').isDisplayed().catch(() => false)) ||
+          (await this.byTextContains('Movido').isDisplayed().catch(() => false)) ||
+          (await this.byTextContains('Moved').isDisplayed().catch(() => false));
+        return { done: ok || latencyVisible, sawProgress, statusText };
+      }
+      await driver.pause(400);
+    }
+    return { done: false, sawProgress, statusText };
+  }
+
+  /**
+   * Taps Recheck / Comprobar de nuevo when visible.
+   * @returns {Promise<boolean>}
+   */
+  async tapHostHealthRecheck() {
+    const candidates = [
+      this.hostHealthRecheck,
+      this.hostHealthRecheckEs,
+      this.hostHealthRecheckEn,
+    ];
+    for (const btn of candidates) {
+      if (await btn.isDisplayed().catch(() => false)) {
+        await btn.click();
+        await driver.pause(400);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Dismisses the host-health bottom sheet via Cerrar / Close / back.
+   */
+  async dismissHostHealthSheet() {
+    const candidates = [
+      this.hostHealthClose,
+      this.hostHealthCloseEs,
+      this.hostHealthCloseEn,
+    ];
+    for (const btn of candidates) {
+      if (await btn.isDisplayed().catch(() => false)) {
+        await btn.click();
+        await driver.pause(500);
+        return;
+      }
+    }
+    await driver.back().catch(() => {});
+    await driver.pause(500);
+  }
+
   /**
    * Opens the add-repository dialog (URL / paste JSON).
    * @returns {Promise<boolean>}

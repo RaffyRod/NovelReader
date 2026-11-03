@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel — Host health en Buscar (10 modelos)</title>
+<style>
+  :root {
+    --bg:#130B0C; --surface:#1C1112; --card:#241618; --tile:#2A1B1D;
+    --text:#F4EBE6; --muted:#A89A98; --red:#E5322D; --orange:#FF7A1A;
+    --gold:#FFC247; --green:#2DB86A; --blue:#4A9EFF;
+    --ease:cubic-bezier(.2,.8,.2,1); --w:340px; --phone-h:640px;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:#080405; color:var(--text);
+    font-family:system-ui,"Segoe UI",Roboto,sans-serif;
+    padding:24px 18px 160px;
+  }
+  h1 { font-size:24px; margin:0 0 6px; }
+  h1 span { color:var(--red); }
+  p.lead { color:var(--muted); margin:0 0 14px; max-width:920px; font-size:14px; line-height:1.45; }
+  .note { color:var(--muted); font-size:12.5px; margin:0 0 12px; max-width:920px; }
+  .toolbar {
+    position:sticky; top:0; z-index:30; background:#080405ee; backdrop-filter:blur(8px);
+    padding:10px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    border-bottom:1px solid #2a1b1d; margin-bottom:18px;
+  }
+  .toolbar b { font-size:13px; color:var(--muted); }
+  .seg button {
+    all:unset; cursor:pointer; padding:7px 14px; border:1px solid #3a2326;
+    font-size:13px; color:var(--muted);
+  }
+  .seg button:first-child { border-radius:18px 0 0 18px; }
+  .seg button:last-child { border-radius:0 18px 18px 0; }
+  .seg button.on { background:var(--red); border-color:var(--red); color:#fff; }
+  .options { display:flex; flex-wrap:wrap; gap:24px; }
+  label.opt {
+    display:flex; flex-direction:column; gap:8px; cursor:pointer;
+    width:var(--w); max-width:100%;
+  }
+  label.opt input { position:absolute; opacity:0; pointer-events:none; }
+  label.opt .tag {
+    font-size:13.5px; font-weight:700; display:flex; gap:8px; align-items:flex-start;
+  }
+  label.opt .tag::before {
+    content:""; width:16px; height:16px; border-radius:50%; border:2px solid #5a3a3e;
+    flex:none; margin-top:2px; transition:all .2s;
+  }
+  label.opt .tag small {
+    display:block; color:var(--muted); font-weight:400; font-size:12px;
+    margin-top:2px; line-height:1.35;
+  }
+  label.opt input:checked ~ .tag::before {
+    background:var(--red); border-color:var(--red); box-shadow:0 0 0 3px #E5322D44;
+  }
+  label.opt input:checked ~ .frame {
+    border-color:var(--red); box-shadow:0 0 0 2px #E5322D66, 0 12px 34px #000a;
+  }
+  .frame {
+    width:100%; height:var(--phone-h); background:var(--bg); border:1px solid #3a2326;
+    border-radius:26px; overflow:hidden; position:relative; transition:all .25s var(--ease);
+    font-size:12px;
+  }
+  label.opt:hover .frame { transform:translateY(-3px); }
+
+  /* Full Search chrome */
+  .status {
+    height:18px; padding:4px 14px 0; display:flex; justify-content:space-between;
+    color:#ffffff66; font-size:9px;
+  }
+  .topbar { padding:6px 12px 8px; }
+  .searchbar {
+    height:40px; border-radius:20px; background:var(--surface); border:1px solid #3a2326;
+    display:flex; align-items:center; gap:8px; padding:0 12px; color:var(--muted);
+  }
+  .searchbar .tune {
+    margin-left:auto; width:28px; height:28px; border-radius:8px; background:var(--tile);
+    display:grid; place-items:center; font-size:13px; color:var(--text);
+  }
+  .sec {
+    padding:8px 12px 4px; font-size:12px; font-weight:700; color:var(--text);
+  }
+  .chips { display:flex; gap:6px; padding:0 12px 8px; overflow:hidden; }
+  .chip {
+    padding:5px 10px; border-radius:999px; background:var(--tile); color:var(--muted);
+    font-size:10.5px; white-space:nowrap;
+  }
+  .popular {
+    display:flex; gap:8px; padding:0 12px 8px; overflow:hidden;
+  }
+  .cover {
+    width:58px; height:86px; border-radius:8px; flex:none;
+    background:linear-gradient(160deg,var(--c1,#7a1f2b),var(--c2,#1b0b10));
+  }
+  .c1 { --c1:#c2312f; --c2:#2b0a12; }
+  .c2 { --c1:#3d5af1; --c2:#0d1030; }
+  .c3 { --c1:#ff9a3c; --c2:#4a1408; }
+  .grid {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
+    padding:0 10px 70px;
+  }
+  .tile {
+    background:var(--tile); border-radius:12px; height:92px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; border:1px solid transparent; position:relative;
+  }
+  .tile .ico {
+    width:34px; height:34px; border-radius:10px;
+    background:linear-gradient(145deg,#5a2a30,#1a0c10);
+    display:grid; place-items:center; font-size:11px; font-weight:700; color:#ffd8d0;
+  }
+  .tile b {
+    font-size:10.5px; font-weight:600; text-align:center; padding:0 4px;
+    line-height:1.15; max-width:100%;
+  }
+  .tile.press {
+    border-color:var(--orange); box-shadow:0 0 0 2px #FF7A1A55;
+    transform:scale(.97);
+  }
+  .tile .ripple {
+    position:absolute; inset:0; border-radius:12px;
+    background:radial-gradient(circle at 50% 40%, #FF7A1A33, transparent 60%);
+    pointer-events:none;
+  }
+  .nav {
+    position:absolute; left:0; right:0; bottom:0; height:52px;
+    background:var(--surface); border-top:1px solid #2a1b1d;
+    display:flex; justify-content:space-around; align-items:center;
+    color:var(--muted); font-size:9.5px; z-index:2;
+  }
+  .nav b { color:var(--red); font-weight:700; }
+
+  .overlay { position:absolute; inset:0; background:#0009; z-index:5; }
+  .sheet {
+    position:absolute; left:0; right:0; bottom:52px; z-index:6;
+    background:var(--surface); border-radius:18px 18px 0 0;
+    padding:12px 14px 14px; border-top:1px solid #3a2326;
+    box-shadow:0 -12px 36px #000a; max-height:58%;
+  }
+  .sheet.fullish { bottom:0; max-height:72%; border-radius:20px 20px 0 0; }
+  .sheet .handle {
+    width:36px; height:4px; border-radius:2px; background:#ffffff22; margin:0 auto 10px;
+  }
+  .dialog {
+    position:absolute; left:16px; right:16px; top:16%; z-index:6;
+    background:var(--surface); border-radius:16px; border:1px solid #3a2326;
+    padding:14px; box-shadow:0 18px 44px #000c;
+  }
+  .dialog.center { top:22%; }
+  .card-float {
+    position:absolute; left:18px; right:18px; bottom:70px; z-index:6;
+    background:var(--surface); border-radius:16px; border:1px solid #3a2326;
+    padding:12px 14px; box-shadow:0 12px 32px #000a;
+  }
+  .muted { color:var(--muted); }
+  .progress {
+    height:6px; border-radius:3px; background:#ffffff14; overflow:hidden; margin:8px 0;
+  }
+  .progress i {
+    display:block; height:100%; width:55%;
+    background:linear-gradient(90deg,var(--red),var(--gold));
+    border-radius:3px;
+    animation:pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:.7; width:42%; }
+    50% { opacity:1; width:72%; }
+  }
+  .pill {
+    display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px;
+    font-size:10px; font-weight:700;
+  }
+  .pill.ok { background:#2DB86A33; color:var(--green); }
+  .pill.move { background:#FF7A1A33; color:var(--orange); }
+  .pill.fail { background:#E5322D33; color:#ff8a86; }
+  .pill.run { background:#4A9EFF33; color:var(--blue); }
+  .btn {
+    display:inline-flex; justify-content:center; align-items:center; gap:6px;
+    padding:9px 12px; border-radius:12px; background:var(--red); color:#fff;
+    font-weight:600; font-size:12px;
+  }
+  .btn.ghost { background:var(--card); border:1px solid #3a2326; color:var(--text); }
+  .btn.block { width:100%; }
+  .btn.sm { padding:6px 10px; font-size:11px; }
+  .actions { display:flex; gap:8px; margin-top:10px; }
+  .meta { font-size:11.5px; line-height:1.45; margin:6px 0; color:var(--muted); }
+  .meta b { color:var(--text); font-weight:600; }
+  .toast {
+    position:absolute; left:16px; right:16px; bottom:64px; z-index:7;
+    background:#2a1518; border:1px solid #5a2a2e; border-radius:12px;
+    padding:10px 12px; display:flex; gap:8px; align-items:center;
+  }
+  .hint-finger {
+    position:absolute; z-index:4; font-size:22px; filter:drop-shadow(0 4px 8px #000a);
+    animation:tap 1.4s ease-in-out infinite;
+  }
+  @keyframes tap {
+    0%,100% { transform:translateY(0) scale(1); opacity:.9; }
+    50% { transform:translateY(4px) scale(.92); opacity:1; }
+  }
+  .badge-hold {
+    position:absolute; z-index:4; background:#FF7A1Acc; color:#fff;
+    font-size:9px; font-weight:700; padding:3px 7px; border-radius:8px;
+  }
+  .side-rail {
+    position:absolute; right:0; top:120px; bottom:70px; width:44px; z-index:3;
+    background:linear-gradient(180deg,#2a1518,#1a0c10); border-left:1px solid #3a2326;
+    display:flex; flex-direction:column; align-items:center; gap:10px; padding-top:12px;
+  }
+  .side-rail span {
+    writing-mode:vertical-rl; transform:rotate(180deg); font-size:10px; color:var(--muted);
+  }
+  .full-screen-modal {
+    position:absolute; inset:0; z-index:6; background:var(--bg);
+    display:flex; flex-direction:column; padding:14px;
+  }
+  .summary {
+    position:fixed; left:0; right:0; bottom:0; z-index:40; background:#12080a;
+    border-top:2px solid var(--red); padding:10px 18px;
+    display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+  }
+  .summary pre {
+    margin:0; font-size:12px; color:var(--muted); flex:1; min-width:240px;
+    white-space:pre-wrap; max-height:72px; overflow:auto;
+  }
+  .summary button {
+    all:unset; cursor:pointer; background:var(--red); color:#fff;
+    padding:9px 16px; border-radius:12px; font-weight:600; font-size:13px;
+  }
+</style>
+</head>
+<body>
+  <h1>Host health en <span>Buscar</span> — 10 modelos</h1>
+  <p class="lead">
+    Cada mock muestra la <b>pantalla Buscar completa</b> (barra, recientes, popular, grilla de proveedores, tabs)
+    y cómo se dispara el validador. Elige uno; abajo se arma el resumen para pegar.
+  </p>
+  <p class="note">Contexto: long-press / modal sobre el tile. Estados: comprobando · OK · movido · caído.</p>
+
+  <div class="toolbar">
+    <b>Ancho:</b>
+    <div class="seg" id="widths">
+      <button type="button" data-w="300px" data-h="580px">Pequeño</button>
+      <button type="button" data-w="340px" data-h="640px" class="on">Teléfono</button>
+      <button type="button" data-w="380px" data-h="700px">Grande</button>
+    </div>
+  </div>
+
+  <div class="options" id="options"></div>
+
+  <div class="summary">
+    <div><b>Mi selección</b><pre id="sumtext">Aún no has elegido nada.</pre></div>
+    <button id="copy" type="button">Copiar resumen</button>
+  </div>
+
+<script>
+const searchChrome = (opts = {}) => {
+  const press = opts.press || null; // tile index 0..5
+  const tiles = [
+    ['WP', 'Wattpad'],
+    ['SK', 'SkyLight'],
+    ['RR', 'Royal Road'],
+    ['WX', 'Wuxia'],
+    ['NL', 'NovelaLive'],
+    ['AN', 'Annas'],
+  ];
+  const grid = tiles.map((t, i) => {
+    const on = press === i;
+    return `<div class="tile${on ? ' press' : ''}">
+      ${on ? '<div class="ripple"></div>' : ''}
+      <div class="ico">${t[0]}</div><b>${t[1]}</b>
+    </div>`;
+  }).join('');
+  return `
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="topbar">
+      <div class="searchbar">🔍 Buscar novelas… <span class="tune">⚙</span></div>
+    </div>
+    <div class="sec">Recientes</div>
+    <div class="chips">
+      <span class="chip">Mother of Learning</span>
+      <span class="chip">Solo Leveling</span>
+      <span class="chip">Borrar</span>
+    </div>
+    <div class="sec">Popular</div>
+    <div class="popular">
+      <div class="cover c1"></div>
+      <div class="cover c2"></div>
+      <div class="cover c3"></div>
+      <div class="cover c1" style="opacity:.5"></div>
+    </div>
+    <div class="sec">Proveedores</div>
+    <div class="grid">${grid}</div>
+    <div class="nav"><span>Biblioteca</span><b>Buscar</b><span>Historial</span><span>Ajustes</span></div>
+  `;
+};
+
+const checkingBody = `
+  <div style="font-weight:700;margin-bottom:2px">Comprobando que el sitio esté en línea…</div>
+  <div class="progress"><i></i></div>
+  <div class="muted" style="font-size:11px">Siguiendo redirecciones y midiendo latencia…</div>
+`;
+
+const resultMoved = `
+  <div class="meta">URL configurada<br><b>https://viejo-dominio.com</b></div>
+  <div class="meta">URL final<br><b style="color:var(--orange)">https://nuevo-blog.com</b></div>
+  <div style="margin:6px 0"><span class="pill move">MOVIDO</span></div>
+  <div class="muted" style="font-size:11px">Latencia: 340 ms · HTTP 301 → 200</div>
+  <div class="actions">
+    <div class="btn" style="flex:1">Usar nueva URL</div>
+    <div class="btn ghost" style="flex:1">Comprobar de nuevo</div>
+  </div>
+`;
+
+const resultOk = `
+  <div class="meta">URL configurada<br><b>https://www.wattpad.com</b></div>
+  <div class="meta">URL final<br><b>https://www.wattpad.com</b></div>
+  <div style="margin:6px 0"><span class="pill ok">OK · HTTP 200</span></div>
+  <div class="muted" style="font-size:11px">Latencia: 210 ms</div>
+  <div class="actions">
+    <div class="btn ghost block">Comprobar de nuevo</div>
+  </div>
+`;
+
+const proposals = [
+  {
+    k: '1',
+    n: 'Long-press → bottom sheet (loader)',
+    d: 'Mantienes el tile; sheet desde abajo con barra de progreso. La grilla queda visible detrás.',
+    h: () => `${searchChrome({ press: 4 })}
+      <div class="hint-finger" style="left:58%; top:58%">👆</div>
+      <div class="badge-hold" style="left:52%; top:54%">mantener</div>
+      <div class="overlay"></div>
+      <div class="sheet">
+        <div class="handle"></div>
+        <b style="font-size:14px">NovelaLive</b>
+        <div class="muted" style="margin:2px 0 8px;font-size:11px">Proveedor · long-press</div>
+        ${checkingBody}
+        <div class="actions"><div class="btn ghost block" style="opacity:.5">Cerrar</div></div>
+      </div>`
+  },
+  {
+    k: '2',
+    n: 'Long-press → bottom sheet (resultado movido)',
+    d: 'Tras el probe: URL configurada/final, pill MOVIDO y CTA Usar nueva URL.',
+    h: () => `${searchChrome({ press: 4 })}
+      <div class="overlay"></div>
+      <div class="sheet">
+        <div class="handle"></div>
+        <b style="font-size:14px">NovelaLive</b>
+        <div class="muted" style="margin:2px 0 8px;font-size:11px">Dominio cambió</div>
+        ${resultMoved}
+        <div class="btn ghost block" style="margin-top:8px">Cerrar</div>
+      </div>`
+  },
+  {
+    k: '3',
+    n: 'Diálogo centrado (AlertDialog)',
+    d: 'Modal clásico sobre Buscar — el mismo estilo que Fuentes. Compacto, con loader o resultado.',
+    h: () => `${searchChrome({ press: 0 })}
+      <div class="overlay"></div>
+      <div class="dialog center">
+        <b style="font-size:14px">Wattpad</b>
+        <div class="muted" style="font-size:11px;margin:4px 0 8px">Built-in · en</div>
+        ${checkingBody}
+        <div class="actions">
+          <div class="btn ghost" style="flex:1">Cerrar</div>
+          <div class="btn ghost" style="flex:1;opacity:.45">Comprobar</div>
+        </div>
+      </div>`
+  },
+  {
+    k: '4',
+    n: 'Diálogo centrado (OK + recheck)',
+    d: 'Resultado OK sin CTA de URL (built-in). Footer teñido al tema.',
+    h: () => `${searchChrome({ press: 0 })}
+      <div class="overlay"></div>
+      <div class="dialog">
+        <b style="font-size:14px">Wattpad</b>
+        <div class="muted" style="font-size:11px;margin:4px 0 8px">Host saludable</div>
+        ${resultOk}
+        <div class="btn ghost block" style="margin-top:8px">Cerrar</div>
+      </div>`
+  },
+  {
+    k: '5',
+    n: 'Card flotante sobre la grilla',
+    d: 'Tarjeta anclada arriba del bottom nav, sin tapar tanto la grilla. Más liviana.',
+    h: () => `${searchChrome({ press: 1 })}
+      <div class="overlay" style="background:#0005"></div>
+      <div class="card-float">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <b>SkyLight</b><span class="pill run">…</span>
+        </div>
+        ${checkingBody}
+        <div class="actions">
+          <div class="btn sm ghost" style="flex:1">Cerrar</div>
+        </div>
+      </div>`
+  },
+  {
+    k: '6',
+    n: 'Toast “mantener para comprobar” + sheet',
+    d: 'Primera vez: hint toast. Luego long-press abre sheet. Educa el gesto.',
+    h: () => `${searchChrome({ press: null })}
+      <div class="toast">
+        <div style="flex:1">
+          <b style="font-size:12px">Consejo</b>
+          <div class="muted" style="font-size:11px">Mantén un proveedor para comprobar si está en línea</div>
+        </div>
+        <div class="btn sm">OK</div>
+      </div>
+      <div class="hint-finger" style="left:22%; top:57%">👆</div>`
+  },
+  {
+    k: '7',
+    n: 'Sheet a pantalla casi completa',
+    d: 'Ocupa ~70% desde abajo; más espacio para URLs largas y historial de redirects.',
+    h: () => `${searchChrome({ press: 4 })}
+      <div class="overlay"></div>
+      <div class="sheet fullish">
+        <div class="handle"></div>
+        <b style="font-size:15px">NovelaLive</b>
+        <div class="muted" style="margin:4px 0 10px;font-size:11px">Diagnóstico de host</div>
+        <div class="meta">Pasos<br><b>1. HEAD viejo-dominio.com → 301</b><br><b>2. GET nuevo-blog.com → 200</b></div>
+        ${resultMoved}
+      </div>`
+  },
+  {
+    k: '8',
+    n: 'Pantalla completa de diagnóstico',
+    d: 'Navega a una vista dedicada (no modal). Volver con ←. Útil si quieres historial/logs.',
+    h: () => `
+      <div class="full-screen-modal">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div class="btn sm ghost">←</div>
+          <div>
+            <b style="font-size:15px">Diagnóstico</b>
+            <div class="muted" style="font-size:11px">NovelaLive</div>
+          </div>
+        </div>
+        ${checkingBody}
+        <div style="margin-top:16px;opacity:.55">
+          <div class="meta">URL configurada / final aparecerán aquí</div>
+          <div class="actions">
+            <div class="btn ghost" style="flex:1">Comprobar de nuevo</div>
+          </div>
+        </div>
+        <div class="muted" style="margin-top:auto;font-size:11px;padding-top:20px">
+          Desde Buscar · long-press en tile
+        </div>
+      </div>
+      <div class="nav"><span>Biblioteca</span><b>Buscar</b><span>Historial</span><span>Ajustes</span></div>`
+  },
+  {
+    k: '9',
+    n: 'Menú contextual del tile → Comprobar host',
+    d: 'Long-press abre menú (Abrir / Comprobar host / Desactivar). El modal es el 2º paso.',
+    h: () => `${searchChrome({ press: 2 })}
+      <div class="overlay" style="background:#0006"></div>
+      <div class="dialog" style="top:42%;left:40px;right:40px;padding:8px">
+        <div style="padding:10px 12px;border-bottom:1px solid #3a2326"><b>Abrir</b></div>
+        <div style="padding:10px 12px;border-bottom:1px solid #3a2326;color:var(--orange)"><b>Comprobar host</b></div>
+        <div style="padding:10px 12px" class="muted">Desactivar en Buscar</div>
+      </div>`
+  },
+  {
+    k: '10',
+    n: 'Icono 🩺 en el tile (tap directo)',
+    d: 'Sin long-press: badge en cada tile. Tap al icono abre el modal; tap al tile abre el sitio.',
+    h: () => {
+      const base = searchChrome({ press: null });
+      // inject badges into tiles via replacement of first two icos area - simpler overlay badges
+      return `${base}
+        <div class="badge-hold" style="left:28%; top:52%; background:#E5322Dcc">🩺</div>
+        <div class="badge-hold" style="left:61%; top:52%; background:#E5322Dcc">🩺</div>
+        <div class="badge-hold" style="left:94%; top:52%; background:#E5322Dcc; transform:translateX(-100%)">🩺</div>
+        <div class="overlay"></div>
+        <div class="dialog">
+          <b style="font-size:14px">Wattpad</b>
+          <div class="muted" style="font-size:11px;margin:4px 0 8px">Tap en 🩺</div>
+          ${resultOk}
+          <div class="btn ghost block" style="margin-top:8px">Cerrar</div>
+        </div>`;
+    }
+  },
+];
+
+const host = document.getElementById('options');
+host.innerHTML = proposals.map((p) => `
+  <label class="opt">
+    <input type="radio" name="pick" value="${p.k}">
+    <div class="tag">${p.k}. ${p.n}<small>${p.d}</small></div>
+    <div class="frame">${p.h()}</div>
+  </label>
+`).join('');
+
+const sum = document.getElementById('sumtext');
+const update = () => {
+  const checked = [...document.querySelectorAll('input[name=pick]:checked')];
+  if (!checked.length) {
+    sum.textContent = 'Aún no has elegido nada.';
+    return;
+  }
+  const p = proposals.find((x) => x.k === checked[0].value);
+  sum.textContent = `Host health en Buscar: #${p.k} — ${p.n}\n${p.d}`;
+};
+host.addEventListener('change', update);
+
+document.getElementById('copy').onclick = async () => {
+  update();
+  await navigator.clipboard.writeText(sum.textContent);
+  const b = document.getElementById('copy');
+  b.textContent = 'Copiado';
+  setTimeout(() => { b.textContent = 'Copiar resumen'; }, 1200);
+};
+
+document.getElementById('widths').onclick = (e) => {
+  const btn = e.target.closest('button[data-w]');
+  if (!btn) return;
+  [...e.currentTarget.children].forEach((b) => b.classList.toggle('on', b === btn));
+  document.documentElement.style.setProperty('--w', btn.dataset.w);
+  document.documentElement.style.setProperty('--phone-h', btn.dataset.h);
+};
+</script>
+</body>
+</html>
