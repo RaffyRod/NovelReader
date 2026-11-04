@@ -38,15 +38,76 @@ function pushFixtureEpub() {
 }
 
 /**
- * Seeds EPUB under /sdcard/Download and returns a FileProvider content URI.
- * Avoids /sdcard/Android/data/<pkg> — shell mkdir is Permission denied on API 30+ CI emulators.
- * Uses provider_paths external-path name=external (sdcard root).
+ * Sleep helper for adb-side waits (no Node timers needed in sync seed).
+ * @param {number} ms
+ */
+function adbSleepMs(ms) {
+  const sec = Math.max(0.2, ms / 1000);
+  try {
+    adb(['shell', 'sleep', String(sec)]);
+  } catch (_) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  }
+}
+
+/**
+ * Tries app-owned external_files (works when shell can write Android/data).
+ * @returns {string|null}
+ */
+function trySeedExternalFilesUri() {
+  const pkg = appId();
+  const dir = `/sdcard/Android/data/${pkg}/files`;
+  const dest = `${dir}/${FIXTURE_NAME}`;
+  try {
+    adb(['shell', 'mkdir', '-p', dir]);
+    execFileSync('adb', ['push', FIXTURE_PATH, dest], { stdio: 'pipe' });
+    return `content://${pkg}.provider/external_files/${FIXTURE_NAME}`;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Indexes /sdcard/Download fixture in MediaStore and returns a content://media URI.
+ * FileProvider over Download EACCES on targetSdk 30+ (app does not own the file).
+ * MediaProvider + FLAG_GRANT_READ_URI_PERMISSION is the CI-safe path.
+ * @returns {string}
+ */
+function seedEpubMediaStoreUri() {
+  pushFixtureEpub();
+  const fileUri = `file:///sdcard/Download/${FIXTURE_NAME}`;
+  try {
+    adb(['shell', 'am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', fileUri]);
+  } catch (_) {
+    /* scanner optional */
+  }
+
+  // One remote shell string keeps quotes around the WHERE clause (hyphenated names).
+  const queryCmd =
+    `content query --uri content://media/external/file --projection _id ` +
+    `--where "_display_name='${FIXTURE_NAME}'"`;
+  for (let i = 0; i < 25; i += 1) {
+    let out = '';
+    try {
+      out = adb(['shell', queryCmd]);
+    } catch (_) {
+      out = '';
+    }
+    const match = String(out).match(/_id=(\d+)/);
+    if (match) {
+      return `content://media/external/file/${match[1]}`;
+    }
+    adbSleepMs(400);
+  }
+  throw new Error(`MediaStore did not index ${FIXTURE_NAME}`);
+}
+
+/**
+ * Seeds EPUB and returns a content URI ReadActivity can open on CI (API 30+, release APK).
  * @returns {string}
  */
 function seedEpubFileProviderUri() {
-  const pkg = appId();
-  pushFixtureEpub();
-  return `content://${pkg}.provider/external/Download/${FIXTURE_NAME}`;
+  return trySeedExternalFilesUri() || seedEpubMediaStoreUri();
 }
 
 /**
@@ -94,6 +155,7 @@ async function openReaderViaEpubIntent() {
   const uri = seedEpubFileProviderUri();
   const component = `${appId()}/${READ_ACTIVITY}`;
   // adb am start (Appium startActivity drops the VIEW data → "Empty intent").
+  // --grant-read-uri-permission is required for MediaStore content:// URIs.
   adb([
     'shell',
     'am',
@@ -107,6 +169,7 @@ async function openReaderViaEpubIntent() {
     '-n',
     component,
     '--grant-read-uri-permission',
+    '--grant-write-uri-permission',
   ]);
   await driver.pause(2500);
   const deadline = Date.now() + 25000;
@@ -199,4 +262,6 @@ module.exports = {
   openReaderViaEpubIntent,
   pushFixtureEpub,
   seedEpubFileProviderUri,
+  seedEpubMediaStoreUri,
+  trySeedExternalFilesUri,
 };
