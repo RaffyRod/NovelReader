@@ -523,7 +523,7 @@ class SearchPage extends BasePage {
    * @param {number} timeoutMs
    * @returns {Promise<{ok:boolean, blocked:boolean, hasCards:boolean, emptyOrError:boolean}>}
    */
-  async waitProviderMainPageSettled(timeoutMs = 90000) {
+  async waitProviderMainPageSettled(timeoutMs = 30000) {
     const started = Date.now();
     let hasCards = false;
     let emptyOrError = false;
@@ -581,7 +581,7 @@ class SearchPage extends BasePage {
    * @param {string} query
    * @param {number} timeoutMs
    */
-  async search(query, timeoutMs = 180000) {
+  async search(query, timeoutMs = 60000) {
     await this.typeQuery(query);
     const field = await $('android.widget.EditText');
     await field.addValue('\uE007').catch(() => {});
@@ -659,7 +659,7 @@ class SearchPage extends BasePage {
     return chipCount > 0;
   }
 
-  async waitSearchIdle(timeoutMs = 180000) {
+  async waitSearchIdle(timeoutMs = 45000) {
     const started = Date.now();
     let stableRounds = 0;
     let loadingSeen = false;

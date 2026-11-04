@@ -4,7 +4,7 @@ const readerPage = require('../pageobjects/reader.page');
 const { ensureReaderOpen, hasFixtureContent } = require('../helpers/seedNovel');
 
 describe('Reader Glyph Pulse loading', function () {
-  this.timeout(120000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Reader / Glyph Pulse');
@@ -19,10 +19,9 @@ describe('Reader Glyph Pulse loading', function () {
   it('shows Glyph Pulse (本) without raw URL, or opens reader from cache', async () => {
     allure.addSeverity('critical');
 
-    const pulsePromise = readerPage.waitForGlyphPulse(45000);
+    // Open first — racing waitForGlyphPulse before seed burned the full 120s suite timeout.
     await ensureReaderOpen();
-
-    const pulse = await pulsePromise;
+    const pulse = await readerPage.waitForGlyphPulse(8000);
     if (pulse.seen) {
       expect(pulse.glyph).toContain('本');
       expect(pulse.title).not.toMatch(/^https?:\/\//i);

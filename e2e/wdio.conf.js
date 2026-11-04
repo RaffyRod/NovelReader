@@ -168,9 +168,10 @@ exports.config = {
     },
   ],
   logLevel: process.env.WDIO_LOG_LEVEL || 'info',
-  // CI: stop the suite on first hard failure — retries burned ~1h on general.
-  bail: process.env.CI ? 1 : 0,
-  waitforTimeout: 15000,
+  // Fail-fast always: continuing after chrome/nav death burns 60–80m on timeout walls.
+  // Override with WDIO_BAIL=0 only when debugging a full matrix.
+  bail: process.env.WDIO_BAIL === '0' ? 0 : 1,
+  waitforTimeout: 10000,
   // Session create installs APK + UiAutomator2; CI_FAST used to set 90s and caused
   // UND_ERR_HEADERS_TIMEOUT (~95s) on GH runners.
   connectionRetryTimeout: 240000,
@@ -207,45 +208,66 @@ exports.config = {
   ],
   mochaOpts: {
     ui: 'bdd',
-    // Smoke nav/search and general reader need headroom; per-spec this.timeout can raise further.
-    timeout: process.env.CI ? 180000 : 180000,
-    // Retries doubled general to ~1h when import/reader hung — fail fast instead.
+    // Root before/session needs headroom; per-describe this.timeout(90000) caps individual tests.
+    timeout: Number(process.env.WDIO_TIMEOUT_MS || 120000),
     retries: 0,
-    bail: Boolean(process.env.CI),
+    bail: process.env.WDIO_BAIL === '0' ? false : true,
   },
   before: async () => {
     await driver.updateSettings({ waitForIdleTimeout: 100 });
+    await driver.setTimeout({ implicit: 0 }).catch(() => {});
+    // Clear leftover ANR / frozen process from prior runs (local emulator gets stuck often).
+    const { execFileSync } = require('child_process');
+    try {
+      execFileSync('adb', ['shell', 'am', 'force-stop', APP_ID], { stdio: 'ignore' });
+    } catch (_) {
+      await driver.terminateApp(APP_ID).catch(() => {});
+    }
+    await driver.pause(400);
     await driver.execute('mobile: startActivity', {
       component: `${APP_ID}/${APP_ACTIVITY}`,
     });
-    await driver.pause(2000);
+    await driver.pause(1200);
+    const { dismissBlockingDialogs } = require('./test/helpers/dialogs');
+    await dismissBlockingDialogs().catch(() => {});
   },
   /**
    * Between describe blocks in a nested worker: clear stuck dialogs from prior specs.
    */
   beforeSuite: async () => {
     const { dismissBlockingDialogs } = require('./test/helpers/dialogs');
-    await dismissBlockingDialogs();
-    const chrome = await Promise.all(
-      [
+    const chromeVisible = async () => {
+      for (const id of [
         `${APP_ID}:id/navigation_download`,
         `${APP_ID}:id/navigation_search`,
         `${APP_ID}:id/navigation_settings`,
-      ].map(async (id) =>
-        $(`android=new UiSelector().resourceId("${id}")`)
-          .isDisplayed()
-          .catch(() => false),
-      ),
-    );
-    if (chrome.some(Boolean)) return;
+      ]) {
+        if (
+          await $(`android=new UiSelector().resourceId("${id}")`)
+            .isDisplayed()
+            .catch(() => false)
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+    if (await chromeVisible()) {
+      await dismissBlockingDialogs().catch(() => {});
+      return;
+    }
+    await dismissBlockingDialogs().catch(() => {});
+    if (await chromeVisible()) return;
     await driver.terminateApp(APP_ID).catch(() => {});
-    await driver.pause(500);
+    await driver.pause(400);
     // Prefer explicit MainActivity — activateApp can resolve Ultimate*Launcher aliases.
-    await driver.execute('mobile: startActivity', {
-      component: `${APP_ID}/${APP_ACTIVITY}`,
-    }).catch(() => {});
-    await driver.pause(1200);
-    await dismissBlockingDialogs();
+    await driver
+      .execute('mobile: startActivity', {
+        component: `${APP_ID}/${APP_ACTIVITY}`,
+      })
+      .catch(() => {});
+    await driver.pause(1000);
+    await dismissBlockingDialogs().catch(() => {});
   },
   afterTest: async function (test, context, { error }) {
     if (error) {
@@ -255,7 +277,7 @@ exports.config = {
     const BasePage = require('./test/pageobjects/base.page');
     await dismissBlockingDialogs().catch(() => {});
     // Reader / picker / sheets leave MainActivity — restore chrome for the next spec.
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       const hasNav = await $(
         `android=new UiSelector().resourceId("${APP_ID}:id/navigation_search")`,
       )
@@ -263,9 +285,10 @@ exports.config = {
         .catch(() => false);
       if (hasNav) return;
       await driver.back().catch(() => {});
-      await driver.pause(300);
+      await driver.pause(200);
     }
     const page = new BasePage();
+    // Hard relaunch — soft back loops after a dead chrome cost minutes per failed test.
     await page.recoverMainApp().catch(() => {});
   },
 };

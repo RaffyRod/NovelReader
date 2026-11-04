@@ -143,8 +143,8 @@ class SettingsPage extends BasePage {
       if (await el.isDisplayed().catch(() => false)) return el;
     }
 
-    // Preference sits near the top of General — rewind list first.
-    for (let i = 0; i < 8; i++) {
+    // Preference sits near the top of General — short rewind (long loops hung special-chars 3m+).
+    for (let i = 0; i < 3; i++) {
       await driver.execute('mobile: scrollGesture', {
         left: 80,
         top: 400,
@@ -153,11 +153,11 @@ class SettingsPage extends BasePage {
         direction: 'up',
         percent: 0.9,
       }).catch(() => {});
-      await driver.pause(200);
+      await driver.pause(120);
     }
 
     for (const label of this.allowSpecialCharsLabels) {
-      await this.scrollToText(label);
+      await this.scrollToText(label).catch(() => {});
       const el = this.byTextContains(label);
       if (await el.isDisplayed().catch(() => false)) return el;
     }
@@ -174,7 +174,7 @@ class SettingsPage extends BasePage {
     await this.open();
     await this.expectLoaded();
     const title = await this.findAllowSpecialSearchCharsTitle();
-    await title.waitForDisplayed({ timeout: 20000 });
+    await title.waitForDisplayed({ timeout: 8000 });
 
     const isOn = await this.isAllowSpecialSearchCharsOn(title);
     if (isOn !== enabled) {

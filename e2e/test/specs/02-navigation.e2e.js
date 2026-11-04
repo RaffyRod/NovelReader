@@ -6,7 +6,7 @@ const settingsPage = require('../pageobjects/settings.page');
 const sectionsPage = require('../pageobjects/sections.page');
 
 describe('Bottom navigation', function () {
-  this.timeout(180000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Navigation');

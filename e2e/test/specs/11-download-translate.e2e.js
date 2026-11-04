@@ -67,7 +67,7 @@ async function openNovelDetailForDownload() {
 }
 
 describe('Download language translation', function () {
-  this.timeout(240000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Download translate');

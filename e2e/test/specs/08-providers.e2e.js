@@ -27,19 +27,19 @@ function pickMultiSelectSample() {
 }
 
 describe('Providers', function () {
-  this.timeout(600000);
+  this.timeout(120000);
 
   it('HTTP probe: provider hosts respond (soft on Cloudflare)', function () {
     allure.addFeature('Providers');
     allure.addSeverity('critical');
-    this.timeout(600000);
+    this.timeout(90000);
 
     const script = path.join(__dirname, '../../scripts/probe-providers.js');
     let output = '';
     try {
       output = execFileSync(process.execPath, [script], {
         encoding: 'utf8',
-        timeout: 560000,
+        timeout: 80000,
       });
     } catch (err) {
       output = `${err.stdout || ''}${err.stderr || ''}`;
@@ -111,7 +111,7 @@ describe('Providers', function () {
     }
 
     const onMain = await searchPage.isProviderMainPageOpen();
-    const settled = await searchPage.waitProviderMainPageSettled(90000);
+    const settled = await searchPage.waitProviderMainPageSettled(30000);
     allure.addAttachment(
       'buscar-tile-navigation',
       Buffer.from(JSON.stringify({ opened: true, onMain, settled }, null, 2)),

@@ -4,7 +4,7 @@ const readerPage = require('../pageobjects/reader.page');
 const { ensureReaderOpen, hasFixtureContent } = require('../helpers/seedNovel');
 
 describe('Reader and TTS', function () {
-  this.timeout(120000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Reader / TTS');

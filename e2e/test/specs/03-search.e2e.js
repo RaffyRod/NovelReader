@@ -2,7 +2,7 @@ const allure = require('@wdio/allure-reporter').default;
 const searchPage = require('../pageobjects/search.page');
 
 describe('Search novels', function () {
-  this.timeout(180000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Search');

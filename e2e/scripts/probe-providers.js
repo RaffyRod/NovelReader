@@ -64,7 +64,7 @@ function fetchOnce(url, redirects = 0, startUrl = url) {
       url,
       {
         headers: { 'User-Agent': UA, Accept: 'text/html,*/*' },
-        timeout: 20000,
+        timeout: 8000,
         rejectUnauthorized: false,
       },
       (res) => {
@@ -125,18 +125,41 @@ function fetchOnce(url, redirects = 0, startUrl = url) {
   });
 }
 
+/**
+ * Runs probes with limited concurrency (sequential was multi-minute on CI/local).
+ * @template T
+ * @param {T[]} items
+ * @param {number} concurrency
+ * @param {(item: T) => Promise<unknown>} worker
+ */
+async function mapPool(items, concurrency, worker) {
+  const out = new Array(items.length);
+  let next = 0;
+  async function run() {
+    for (;;) {
+      const i = next;
+      next += 1;
+      if (i >= items.length) return;
+      out[i] = await worker(items[i]);
+    }
+  }
+  const n = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: n }, () => run()));
+  return out;
+}
+
 async function main() {
   const catalog = loadCatalog();
-  const results = [];
-  for (const entry of catalog) {
+  const results = await mapPool(catalog, 10, async (entry) => {
     const probe = await fetchOnce(entry.mainUrl);
-    results.push({ ...entry, ...probe });
+    const row = { ...entry, ...probe };
     const mark = probe.ok ? (probe.domainChanged ? 'MOVE' : 'OK') : 'FAIL';
     const move = probe.domainChanged ? ` → ${probe.finalUrl}` : '';
     console.log(
       `${mark.padEnd(4)} ${entry.name} → ${entry.mainUrl}${move} (${probe.status}, ${probe.bytes}b${probe.error ? `, ${probe.error}` : ''})`,
     );
-  }
+    return row;
+  });
   const failed = results.filter((r) => !r.ok);
   const moved = results.filter((r) => r.ok && r.domainChanged);
   const report = {

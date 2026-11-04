@@ -52,22 +52,27 @@ class BasePage {
    */
   async recoverMainApp() {
     const pkg = appId();
-    await driver.terminateApp(pkg).catch(() => {});
-    await driver.pause(600);
-    await driver
-      .execute('mobile: startActivity', {
-        component: `${pkg}/${APP_ACTIVITY}`,
-        intentAction: 'android.intent.action.MAIN',
-      })
-      .catch(() => {
-        const { execFileSync } = require('child_process');
-        execFileSync(
-          'adb',
-          ['shell', 'am', 'start', '-n', `${pkg}/${APP_ACTIVITY}`],
-          { stdio: 'ignore' },
-        );
+    const { execFileSync } = require('child_process');
+    // adb force-stop clears ANR dialogs; terminateApp alone often leaves the app frozen.
+    try {
+      execFileSync('adb', ['shell', 'am', 'force-stop', pkg], { stdio: 'ignore' });
+    } catch (_) {
+      await driver.terminateApp(pkg).catch(() => {});
+    }
+    await driver.pause(500);
+    try {
+      execFileSync('adb', ['shell', 'am', 'start', '-n', `${pkg}/${APP_ACTIVITY}`], {
+        stdio: 'ignore',
       });
-    await driver.pause(1500);
+    } catch (_) {
+      await driver
+        .execute('mobile: startActivity', {
+          component: `${pkg}/${APP_ACTIVITY}`,
+          intentAction: 'android.intent.action.MAIN',
+        })
+        .catch(() => {});
+    }
+    await driver.pause(1200);
     await dismissBlockingDialogs();
   }
   /**
@@ -125,7 +130,7 @@ class BasePage {
    * Leaves reader / pickers / dialogs until bottom navigation is back.
    * Restarts / relaunches the app if back presses are not enough.
    */
-  async ensureMainChrome(timeoutMs = 25000) {
+  async ensureMainChrome(timeoutMs = 12000) {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       await dismissBlockingDialogs();
@@ -236,9 +241,9 @@ class BasePage {
 
       if (resId) {
         const byRes = this.byId(resId);
-        if (await byRes.waitForDisplayed({ timeout: 8000 }).then(() => true).catch(() => false)) {
+        if (await byRes.waitForDisplayed({ timeout: 3000 }).then(() => true).catch(() => false)) {
           await byRes.click();
-          await driver.pause(800);
+          await driver.pause(500);
           await dismissBlockingDialogs();
           return true;
         }

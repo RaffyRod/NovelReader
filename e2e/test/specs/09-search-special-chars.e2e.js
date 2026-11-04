@@ -2,7 +2,9 @@ const allure = require('@wdio/allure-reporter').default;
 const searchPage = require('../pageobjects/search.page');
 const settingsPage = require('../pageobjects/settings.page');
 
-describe('Search special characters', () => {
+describe('Search special characters', function () {
+  this.timeout(60000);
+
   before(async () => {
     allure.addFeature('Search');
     allure.addEpic('QuickNovel Ultimate');
