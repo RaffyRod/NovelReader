@@ -445,13 +445,13 @@ class SettingsPage extends BasePage {
     const rowEs = this.fuentesDeBuscar;
     const rowEn = this.searchSources;
     if (await rowEs.isDisplayed().catch(() => false)) {
-      await rowEs.click();
+      await this.clickPreferenceRow(rowEs);
     } else if (await rowEn.isDisplayed().catch(() => false)) {
-      await rowEn.click();
+      await this.clickPreferenceRow(rowEn);
     } else {
       return false;
     }
-    await driver.pause(900);
+    await driver.pause(500);
     return (
       (await this.byTextContains('Activas').isDisplayed().catch(() => false)) ||
       (await this.byTextContains('Active').isDisplayed().catch(() => false)) ||
@@ -789,26 +789,26 @@ class SettingsPage extends BasePage {
   async openPluginAddRepo() {
     await this.open();
     await this.expectLoaded();
-    if (!(await this.scrollToPlugins())) return false;
-    // Prefer the dedicated preference row; hub positive button is also "Añadir repositorio".
-    const row = this.pluginAddRepo;
-    if (await row.isDisplayed().catch(() => false)) {
-      await row.click();
-      await driver.pause(900);
-    } else if (await this.openPluginHub()) {
-      const add = this.byTextContains('Añadir repositorio');
-      if (await add.isDisplayed().catch(() => false)) {
-        await add.click();
-        await driver.pause(900);
-      }
+    await this.rewindSettingsTop();
+    for (let i = 0; i < 12; i++) {
+      if (await this.pluginAddRepo.isDisplayed().catch(() => false)) break;
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 1000,
+          direction: 'down',
+          percent: 0.55,
+        })
+        .catch(() => {});
+      await driver.pause(120);
     }
-    return (
-      (await this.byTextContains('plugins.min.json').isDisplayed().catch(() => false)) ||
-      (await this.byTextContains('pegar JSON').isDisplayed().catch(() => false)) ||
-      (await this.byTextContains('paste JSON').isDisplayed().catch(() => false)) ||
-      (await this.byTextContains('Obtener').isDisplayed().catch(() => false)) ||
-      (await this.byTextContains('Fetch').isDisplayed().catch(() => false))
-    );
+    const row = this.pluginAddRepo;
+    if (!(await row.isDisplayed().catch(() => false))) return false;
+    await this.clickPreferenceRow(row);
+    const src = String((await driver.getPageSource().catch(() => '')) || '');
+    return /plugins\.min\.json|pegar JSON|paste JSON|Obtener|Fetch/i.test(src);
   }
 
   /**
