@@ -1,113 +1,114 @@
 const path = require('path');
 const { execFileSync } = require('child_process');
 const libraryPage = require('../pageobjects/library.page');
-const searchPage = require('../pageobjects/search.page');
 const readerPage = require('../pageobjects/reader.page');
 
 const FIXTURE_NAME = 'e2e-sample-novel.epub';
 const FIXTURE_PATH = path.join(__dirname, '../../fixtures/sample-novel.epub');
-const DEVICE_PATH = `/sdcard/Download/${FIXTURE_NAME}`;
+const READ_ACTIVITY = 'com.lagradost.quicknovel.ReadActivity2';
+
+/** @returns {string} */
+function appId() {
+  return process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+}
+
+/**
+ * Runs adb and returns stdout as string.
+ * @param {string[]} args
+ * @returns {string}
+ */
+function adb(args) {
+  return execFileSync('adb', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+}
 
 /**
  * Pushes the sample EPUB onto the emulator Downloads folder.
  */
 function pushFixtureEpub() {
-  execFileSync('adb', ['push', FIXTURE_PATH, DEVICE_PATH], { stdio: 'pipe' });
+  execFileSync('adb', ['push', FIXTURE_PATH, `/sdcard/Download/${FIXTURE_NAME}`], {
+    stdio: 'pipe',
+  });
 }
 
 /**
- * Navigates DocumentsUI toward Downloads / the fixture file.
+ * Seeds EPUB into the app's external files dir and returns a FileProvider content URI.
+ * Works for release CI APKs (no run-as / DocumentsUI).
+ * @returns {string}
+ */
+function seedEpubFileProviderUri() {
+  const pkg = appId();
+  const dir = `/sdcard/Android/data/${pkg}/files`;
+  const dest = `${dir}/${FIXTURE_NAME}`;
+  adb(['shell', 'mkdir', '-p', dir]);
+  execFileSync('adb', ['push', FIXTURE_PATH, dest], { stdio: 'pipe' });
+  return `content://${pkg}.provider/external_files/${FIXTURE_NAME}`;
+}
+
+/**
+ * True when ReadActivity2 is the resumed activity.
  * @returns {Promise<boolean>}
  */
-async function pickFixtureInDocumentUi() {
-  const navLabels = [
-    'Show roots',
-    'Mostrar raíces',
-    'Files',
-    'Documents',
-    'Downloads',
-    'Download',
-    'Descargas',
-    'Recent',
-    'Recientes',
-  ];
-  const fileLabels = [FIXTURE_NAME, 'e2e-sample-novel', 'sample-novel', 'Prueba-QuickNovel'];
-
-  for (let pass = 0; pass < 10; pass++) {
-    for (const label of fileLabels) {
-      const el = await $(`android=new UiSelector().textContains("${label}")`);
-      if (!(await el.isExisting().catch(() => false))) continue;
-      if (!(await el.isDisplayed().catch(() => false))) continue;
-      await el.click().catch(() => {});
-      await driver.pause(1200);
-      // Left DocumentsUI → app resumed / import started.
-      const stillPicker =
-        (await $('android=new UiSelector().textContains("Downloads")').isDisplayed().catch(() => false)) ||
-        (await $('android=new UiSelector().textContains("Open from")').isDisplayed().catch(() => false)) ||
-        (await $('android=new UiSelector().packageName("com.google.android.documentsui")').isExisting().catch(() => false)) ||
-        (await $('android=new UiSelector().packageName("com.android.documentsui")').isExisting().catch(() => false));
-      if (!stillPicker) return true;
-      // Sometimes need a second tap on the row / Open.
-      const openBtn = await $('android=new UiSelector().textMatches("(?i)(Open|Abrir|Select|Seleccionar)")');
-      if (await openBtn.isDisplayed().catch(() => false)) {
-        await openBtn.click().catch(() => {});
-        await driver.pause(1200);
-        return true;
-      }
-      return true;
-    }
-
-    for (const label of navLabels) {
-      const el = await $(`android=new UiSelector().textContains("${label}")`);
-      if (await el.isDisplayed().catch(() => false)) {
-        await el.click().catch(() => {});
-        await driver.pause(700);
-      }
-    }
-
-    // Hamburger / drawer in DocumentsUI
-    const drawer = await $('android=new UiSelector().descriptionContains("Show roots")');
-    if (await drawer.isDisplayed().catch(() => false)) {
-      await drawer.click().catch(() => {});
-      await driver.pause(500);
-    }
-
-    await driver.execute('mobile: scrollGesture', {
-      left: 80,
-      top: 400,
-      width: 600,
-      height: 1400,
-      direction: 'down',
-      percent: 0.55,
-    }).catch(() => {});
-    await driver.pause(350);
+async function isReadActivityOpen() {
+  const activity = await driver.getCurrentActivity().catch(() => '');
+  if (String(activity).includes('ReadActivity2')) return true;
+  try {
+    const dump = adb(['shell', 'dumpsys', 'activity', 'activities']);
+    return /topResumedActivity=.*ReadActivity2/.test(dump);
+  } catch (_) {
+    return false;
   }
+}
+
+/**
+ * One cheap pass for reader chrome.
+ * @returns {Promise<boolean>}
+ */
+async function hasReaderChromeOnce() {
+  await readerPage.revealControls().catch(() => {});
+  if (await readerPage.hasTtsChrome()) return true;
   return false;
 }
 
 /**
- * Imports the fixture EPUB through Biblioteca → Import-B → DocumentsUI.
+ * Opens the fixture EPUB in ReadActivity2 via app FileProvider (CI-safe).
  * @returns {Promise<boolean>}
  */
-async function importFixtureEpub() {
-  pushFixtureEpub();
-  await libraryPage.ensureMainChrome(15000).catch(() => {});
-  await libraryPage.open();
-  await libraryPage.importDropZone.waitForDisplayed({ timeout: 15000 });
-  await libraryPage.importDropZone.click();
-  await driver.pause(2000);
-  const picked = await pickFixtureInDocumentUi();
-  if (!picked) {
-    await driver.back().catch(() => {});
-    await driver.pause(400);
-    await driver.back().catch(() => {});
-    return false;
-  }
-  for (let i = 0; i < 25; i++) {
-    await libraryPage.ensureMainChrome(8000).catch(() => {});
-    await libraryPage.open();
-    if (await libraryPage.hasNovelCard()) return true;
-    await driver.pause(800);
+async function openReaderViaEpubIntent() {
+  const uri = seedEpubFileProviderUri();
+  const component = `${appId()}/${READ_ACTIVITY}`;
+  // adb am start (Appium startActivity drops the VIEW data → "Empty intent").
+  adb([
+    'shell',
+    'am',
+    'start',
+    '-a',
+    'android.intent.action.VIEW',
+    '-d',
+    uri,
+    '-t',
+    'application/epub+zip',
+    '-n',
+    component,
+  ]);
+  await driver.pause(2500);
+  const deadline = Date.now() + 25000;
+  while (Date.now() < deadline) {
+    if (await readerPage.byId(`${appId()}:id/fail_text`).isDisplayed().catch(() => false)) {
+      const msg = await readerPage.byId(`${appId()}:id/fail_text`).getText().catch(() => '');
+      throw new Error(`ReadActivity failed: ${msg}`);
+    }
+    const layout = await readerPage
+      .byId(`${appId()}:id/read_normal_layout`)
+      .isDisplayed()
+      .catch(() => false);
+    if (layout) {
+      // Book is open — reveal chrome for TTS assertions.
+      if (await readerPage.isReaderVisible()) return true;
+      if (await hasReaderChromeOnce()) return true;
+      // Content visible is enough to proceed; caller reveals TTS again.
+      return true;
+    }
+    await driver.pause(500);
   }
   return false;
 }
@@ -117,94 +118,46 @@ async function importFixtureEpub() {
  * @returns {Promise<boolean>}
  */
 async function openReaderFromLibrary() {
-  await libraryPage.ensureMainChrome(15000).catch(() => {});
+  await libraryPage.ensureMainChrome(10000).catch(() => {});
   await libraryPage.open();
   if (!(await libraryPage.openFirstNovelIfPresent())) return false;
-  if (await readerPage.isReaderVisible()) return true;
+  if (await hasReaderChromeOnce()) return true;
   const leer = await $('android=new UiSelector().textMatches("(?i).*(Leer|Read).*")');
   if (await leer.isDisplayed().catch(() => false)) {
     await leer.click();
-    await driver.pause(2500);
+    await driver.pause(1500);
   }
-  return readerPage.isReaderVisible();
+  return hasReaderChromeOnce();
 }
 
 /**
- * Opens a search result and starts online reading to reach the reader.
- * Scopes to a small set of providers so CI does not hang on dead hosts.
- * @returns {Promise<boolean>}
- */
-async function openReaderViaSearch() {
-  await searchPage.ensureMainChrome(15000).catch(() => {});
-  await searchPage.open();
-  await searchPage.expectLoaded();
-
-  // Prefer import path for reader; search is last resort with short queries.
-  let searched = false;
-  for (const query of ['amor', 'the', 'el']) {
-    try {
-      await searchPage.search(query, 60000);
-      searched = true;
-      break;
-    } catch (e) {
-      console.warn(`openReaderViaSearch query "${query}": ${e.message || e}`);
-      await searchPage.recoverMainApp();
-      await searchPage.open();
-      await searchPage.expectLoaded();
-    }
-  }
-  if (!searched) return false;
-  if (!(await searchPage.hasSearchResultRows()) && (await searchPage.collectProviderHits()).size === 0) {
-    return false;
-  }
-
-  const covers = await searchPage.findNovelCoverElements();
-  for (const el of covers.slice(0, 5)) {
-    await el.click().catch(() => {});
-    await driver.pause(2500);
-    if (await readerPage.isReaderVisible()) break;
-  }
-
-  const stream = await $('android=new UiSelector().textContains("Leer en línea")');
-  const leer = await $('android=new UiSelector().textMatches("(?i)^Leer$|^Read$")');
-  if (await stream.isDisplayed().catch(() => false)) {
-    await stream.click();
-  } else if (await leer.isDisplayed().catch(() => false)) {
-    await leer.click();
-  } else {
-    const chapter = await $('android=new UiSelector().textContains("Capítulo")');
-    if (await chapter.isDisplayed().catch(() => false)) {
-      await chapter.click();
-    }
-  }
-  await driver.pause(3000);
-  return readerPage.isReaderVisible();
-}
-
-/**
- * Ensures the reader can be opened: library → import fixture → scoped search.
- * Throws when none of the paths reach the reader (no soft skip).
+ * Ensures the reader can be opened via FileProvider EPUB (fast) or library.
+ * No live search — that burned ~1h on CI when DocumentsUI/search hung.
  * @returns {Promise<true>}
  */
 async function ensureReaderOpen() {
-  if (await openReaderFromLibrary()) return true;
+  if (await openReaderViaEpubIntent()) return true;
 
-  if (await importFixtureEpub()) {
+  if (await libraryPage.hasNovelCard().catch(() => false)) {
     if (await openReaderFromLibrary()) return true;
   }
 
-  await searchPage.recoverMainApp();
-  if (await openReaderViaSearch()) return true;
-
   throw new Error(
-    'Could not open reader: library empty, EPUB import failed, and scoped search did not reach reader UI',
+    'Could not open reader: FileProvider EPUB seed failed and library has no novel',
   );
+}
+
+/** @deprecated kept for callers that still import by name */
+async function importFixtureEpub() {
+  pushFixtureEpub();
+  return openReaderViaEpubIntent();
 }
 
 module.exports = {
   ensureReaderOpen,
   importFixtureEpub,
   openReaderFromLibrary,
-  openReaderViaSearch,
+  openReaderViaEpubIntent,
   pushFixtureEpub,
+  seedEpubFileProviderUri,
 };

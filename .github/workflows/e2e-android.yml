@@ -290,7 +290,8 @@ jobs:
           # All non-smoke specs in one WDIO run / one emulator cold boot.
           # (Was 5 parallel jobs × ~10 min boot+setup each.)
           - suite: general
-            timeout: 55
+            # Fail-fast (bail=1, no mocha retries, EPUB VIEW seed) — was ~55m hangs.
+            timeout: 40
             soft: false
     steps:
       - name: Free disk space

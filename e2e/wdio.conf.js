@@ -165,10 +165,11 @@ exports.config = {
     },
   ],
   logLevel: process.env.WDIO_LOG_LEVEL || 'info',
-  bail: 0,
+  // CI: stop the suite on first hard failure — retries burned ~1h on general.
+  bail: process.env.CI ? 1 : 0,
   waitforTimeout: 15000,
   // Session create installs APK + UiAutomator2; CI_FAST used to set 90s and caused
-  // UND_ERR_HEADERS_TIMEOUT (~95s) on GH runners. Keep retries for that path only.
+  // UND_ERR_HEADERS_TIMEOUT (~95s) on GH runners.
   connectionRetryTimeout: 240000,
   connectionRetryCount: 2,
   specFileRetries: 0,
@@ -203,8 +204,10 @@ exports.config = {
   ],
   mochaOpts: {
     ui: 'bdd',
-    timeout: 180000,
-    retries: process.env.CI ? 1 : 0,
+    timeout: process.env.CI ? 120000 : 180000,
+    // Retries doubled general to ~1h when import/reader hung — fail fast instead.
+    retries: 0,
+    bail: Boolean(process.env.CI),
   },
   before: async () => {
     await driver.updateSettings({ waitForIdleTimeout: 100 });
@@ -243,10 +246,10 @@ exports.config = {
   },
   afterTest: async function (test, context, { error }) {
     if (error) {
-      await driver.takeScreenshot();
+      await driver.takeScreenshot().catch(() => {});
     }
     const { dismissBlockingDialogs } = require('./test/helpers/dialogs');
-    await dismissBlockingDialogs();
+    await dismissBlockingDialogs().catch(() => {});
     // Keep bottom nav alive across dense general-suite specs (picker / sheets / catalog).
     for (let i = 0; i < 2; i++) {
       const hasNav = await $(

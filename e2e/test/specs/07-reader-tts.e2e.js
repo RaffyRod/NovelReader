@@ -4,7 +4,7 @@ const readerPage = require('../pageobjects/reader.page');
 const { ensureReaderOpen } = require('../helpers/seedNovel');
 
 describe('Reader and TTS', function () {
-  this.timeout(300000);
+  this.timeout(120000);
 
   before(async () => {
     allure.addFeature('Reader / TTS');
@@ -16,7 +16,6 @@ describe('Reader and TTS', function () {
     allure.addSeverity('critical');
     await ensureReaderOpen();
     await readerPage.expectTtsControlVisible();
-    // Stay in the reader so the next case does not fight bottom-nav / back stack.
   });
 
   it('starts TTS from the reader when a novel is open', async () => {
@@ -26,10 +25,8 @@ describe('Reader and TTS', function () {
     }
 
     await readerPage.startTts();
-    await readerPage.revealControls();
-    const pausePlay = await readerPage.ttsPausePlay.isDisplayed().catch(() => false);
-    const stop = await readerPage.ttsStop.isDisplayed().catch(() => false);
-    const tts = await readerPage.ttsButton.isDisplayed().catch(() => false);
-    expect(pausePlay || stop || tts).toBe(true);
+    // Starting TTS swaps bottom chrome for the TTS bar — do not re-tap content
+    // (switchVisibility would hide it).
+    expect(await readerPage.hasActiveTtsBar()).toBe(true);
   });
 });

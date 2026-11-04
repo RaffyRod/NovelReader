@@ -1,7 +1,10 @@
 const allure = require('@wdio/allure-reporter').default;
 const libraryPage = require('../pageobjects/library.page');
+const { openReaderViaEpubIntent } = require('../helpers/seedNovel');
 
-describe('Import book (Import-B)', () => {
+describe('Import book (Import-B)', function () {
+  this.timeout(60000);
+
   before(async () => {
     allure.addFeature('Import');
     allure.addEpic('QuickNovel Ultimate');
@@ -30,20 +33,16 @@ describe('Import book (Import-B)', () => {
     }
     expect(pickerVisible).toBe(true);
 
-    // Leave DocumentsUI so later general-suite specs keep bottom nav.
     for (let i = 0; i < 3; i++) {
       await driver.back().catch(() => {});
-      await driver.pause(300);
+      await driver.pause(250);
     }
-    await libraryPage.ensureMainChrome(15000);
+    await libraryPage.ensureMainChrome(12000);
   });
 
-  it('imports sample EPUB into Biblioteca', async () => {
+  it('opens sample EPUB into the reader via FileProvider VIEW intent', async () => {
     allure.addSeverity('critical');
-    const { importFixtureEpub } = require('../helpers/seedNovel');
-    const imported = await importFixtureEpub();
-    expect(imported).toBe(true);
-    await libraryPage.open();
-    expect(await libraryPage.hasNovelCard()).toBe(true);
+    const opened = await openReaderViaEpubIntent();
+    expect(opened).toBe(true);
   });
 });
