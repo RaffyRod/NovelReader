@@ -80,21 +80,41 @@ class SettingsPage extends BasePage {
     );
   }
 
-  async scrollToTutorials() {
-    if (await this.tutorialsVisible()) return true;
+  /** Rewinds Settings list toward the top (Compose LazyColumn). */
+  async rewindSettingsTop() {
     await driver.setTimeout({ implicit: 0 }).catch(() => {});
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 5; i++) {
       await driver
         .execute('mobile: scrollGesture', {
           left: 80,
           top: 400,
           width: 600,
           height: 1200,
-          direction: 'down',
-          percent: 0.85,
+          direction: 'up',
+          percent: 0.9,
         })
         .catch(() => {});
-      await driver.pause(150);
+      await driver.pause(120);
+    }
+  }
+
+  async scrollToTutorials() {
+    if (await this.tutorialsVisible()) return true;
+    await this.rewindSettingsTop();
+    if (await this.tutorialsVisible()) return true;
+    // Short steps — long flings overshoot Theme → Plugins and miss Tutorial.
+    for (let i = 0; i < 14; i++) {
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 900,
+          direction: 'down',
+          percent: 0.45,
+        })
+        .catch(() => {});
+      await driver.pause(160);
       if (await this.tutorialsVisible()) return true;
     }
     return this.tutorialsVisible();
@@ -108,12 +128,25 @@ class SettingsPage extends BasePage {
       this.byText('Text to speech (TTS)'),
       this.tutorialTts,
     ];
-    for (const item of candidates) {
-      if (await item.isDisplayed().catch(() => false)) {
-        await item.click();
-        await driver.pause(800);
-        return true;
+    for (let step = 0; step < 6; step++) {
+      for (const item of candidates) {
+        if (await item.isDisplayed().catch(() => false)) {
+          await this.clickPreferenceRow(item);
+          await driver.pause(500);
+          return true;
+        }
       }
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 900,
+          direction: 'down',
+          percent: 0.35,
+        })
+        .catch(() => {});
+      await driver.pause(160);
     }
     return false;
   }
@@ -306,34 +339,20 @@ class SettingsPage extends BasePage {
    */
   async scrollToPlugins() {
     if (await this.pluginsSectionVisible()) return true;
-
-    const markers = [
-      'Fuentes de Buscar',
-      'Administrar plugins',
-      'Plugins (LNReader)',
-      'Search sources',
-      'Manage plugins',
-    ];
-    for (const marker of markers) {
-      await $(
-        `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${marker}"))`,
-      ).catch(() => {});
-      await driver.pause(200);
-      if (await this.pluginsSectionVisible()) return true;
-    }
-
-    for (let i = 0; i < 6; i++) {
+    await this.rewindSettingsTop();
+    if (await this.pluginsSectionVisible()) return true;
+    for (let i = 0; i < 16; i++) {
       await driver
         .execute('mobile: scrollGesture', {
           left: 80,
           top: 500,
           width: 600,
-          height: 1200,
+          height: 1000,
           direction: 'down',
-          percent: 0.75,
+          percent: 0.55,
         })
         .catch(() => {});
-      await driver.pause(200);
+      await driver.pause(140);
       if (await this.pluginsSectionVisible()) return true;
     }
     return this.pluginsSectionVisible();
@@ -343,20 +362,51 @@ class SettingsPage extends BasePage {
    * Opens the installed-plugins hub dialog from Settings.
    * @returns {Promise<boolean>}
    */
+  /**
+   * Clicks a preference title via gesture — Compose TextViews are often not clickable.
+   * @param {WebdriverIO.Element} el
+   */
+  async clickPreferenceRow(el) {
+    const loc = await el.getLocation();
+    const size = await el.getSize();
+    const x = Math.round(loc.x + size.width / 2);
+    const y = Math.round(loc.y + size.height / 2);
+    await driver.execute('mobile: clickGesture', { x, y });
+    await driver.pause(700);
+  }
+
+  async isPluginHubDialogOpen() {
+    const src = String((await driver.getPageSource().catch(() => '')) || '');
+    return /Plugins instalados|Installed plugins|Aún no hay plugins|No plugins yet|Explorar catálogo|Browse catalog/i.test(
+      src,
+    );
+  }
+
   async openPluginHub() {
     await this.open();
     await this.expectLoaded();
-    if (!(await this.scrollToPlugins())) return false;
+    await this.rewindSettingsTop();
+    // Must land on Administrar plugins — Fuentes alone must not short-circuit.
+    for (let i = 0; i < 12; i++) {
+      if (await this.pluginHub.isDisplayed().catch(() => false)) break;
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 1000,
+          direction: 'down',
+          percent: 0.55,
+        })
+        .catch(() => {});
+      await driver.pause(120);
+    }
     const hub = this.pluginHub;
     if (!(await hub.isDisplayed().catch(() => false))) return false;
-    await hub.click();
-    await driver.pause(900);
-    return (
-      (await this.pluginHubTitle.isDisplayed().catch(() => false)) ||
-      (await this.byTextContains('Aún no hay plugins').isDisplayed().catch(() => false)) ||
-      (await this.byTextContains('No plugins yet').isDisplayed().catch(() => false)) ||
-      (await this.byTextContains('Añadir repositorio').isDisplayed().catch(() => false))
-    );
+    await this.clickPreferenceRow(hub);
+    if (await this.isPluginHubDialogOpen()) return true;
+    await this.clickPreferenceRow(hub);
+    return this.isPluginHubDialogOpen();
   }
 
   get fuentesEditBtn() {
