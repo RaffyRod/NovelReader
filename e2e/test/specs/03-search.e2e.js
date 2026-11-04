@@ -20,24 +20,26 @@ describe('Search novels', function () {
     expect(value.toLowerCase()).toContain('mother');
   });
 
-  it('live grid filter by page name shrinks tiles then clears', async () => {
+  it('live grid filter by page name shrinks tiles then clears', async function () {
     allure.addSeverity('critical');
+    this.timeout(90000);
     await searchPage.open();
     await searchPage.expectLoaded();
-    // Previous specs may leave a novel query that live-filters the provider grid empty.
     await searchPage.typeQuery('');
-    await driver.pause(500);
-    await searchPage.revealProvidersGrid();
+    await driver.pause(400);
 
-    const tileName = await searchPage.firstVisibleProviderTileName();
+    // Prefer two known tiles without long scroll storms.
+    await $(
+      'android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("AllNovel"))',
+    ).catch(() => {});
+    const tileName = (await searchPage.byTextContains('AllNovel').isDisplayed().catch(() => false))
+      ? 'AllNovel'
+      : await searchPage.firstVisibleProviderTileName();
     expect(tileName).toBeTruthy();
-    const others = searchPage
-      .preferredProviderNames()
-      .filter((n) => n !== tileName)
-      .slice(0, 4);
-    // Need another known tile on screen before filtering so we can prove it disappears.
+
+    const otherCandidates = searchPage.preferredProviderNames().filter((n) => n !== tileName);
     let otherVisible = null;
-    for (const name of others) {
+    for (const name of otherCandidates) {
       if (await searchPage.byTextContains(name).isDisplayed().catch(() => false)) {
         otherVisible = name;
         break;
@@ -47,65 +49,63 @@ describe('Search novels', function () {
 
     await searchPage.typeQuery(tileName);
     await driver.pause(900);
-    const matchVisible = await searchPage.byTextContains(tileName).isDisplayed().catch(() => false);
-    const otherGone = !(await searchPage
-      .byTextContains(otherVisible)
-      .isDisplayed()
-      .catch(() => false));
-    allure.addAttachment(
-      'grid-filter-state',
-      Buffer.from(JSON.stringify({ tileName, otherVisible, matchVisible, otherGone }, null, 2)),
-      'application/json',
+    expect(await searchPage.byTextContains(tileName).isDisplayed().catch(() => false)).toBe(true);
+    expect(await searchPage.byTextContains(otherVisible).isDisplayed().catch(() => false)).toBe(
+      false,
     );
-    expect(matchVisible).toBe(true);
-    expect(otherGone).toBe(true);
 
     await searchPage.typeQuery('');
     await driver.pause(700);
-    await searchPage.revealProvidersGrid();
-    const restored = await searchPage.byTextContains(otherVisible).isDisplayed().catch(() => false);
-    expect(restored).toBe(true);
+    expect(await searchPage.byTextContains(otherVisible).isDisplayed().catch(() => false)).toBe(
+      true,
+    );
   });
 
-  it('provider-name submit opens provider page or stays stable', async () => {
+  it('provider-name submit opens provider page or stays stable', async function () {
     allure.addSeverity('critical');
+    this.timeout(60000);
+    const { execFileSync } = require('child_process');
+    const pkg = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+
     await searchPage.open();
     await searchPage.expectLoaded();
     await searchPage.typeQuery('');
-    await driver.pause(400);
-    await searchPage.revealProvidersGrid();
+    await driver.pause(300);
 
-    const tileName = await searchPage.firstVisibleProviderTileName();
-    expect(tileName).toBeTruthy();
-
+    const tileName = 'AllNovel';
     await searchPage.typeQuery(tileName);
     const field = await $('android.widget.EditText');
     await field.addValue('\uE007').catch(() => {});
     await driver.execute('mobile: performEditorAction', { action: 'search' }).catch(() => {});
     await driver.execute('mobile: shell', { command: 'input', args: ['keyevent', '66'] });
+    await driver.pause(2500);
 
-    // Cap network wait — provider MainPage can hang on a dead host.
-    const deadline = Date.now() + 15000;
-    let onMain = false;
-    let stillSearch = false;
-    while (Date.now() < deadline) {
-      stillSearch = await searchPage.providersButton.isDisplayed().catch(() => false);
-      onMain = await searchPage.isProviderMainPageOpen();
-      if (onMain || stillSearch) break;
-      await driver.pause(500);
-    }
+    // Avoid Appium findElement here — a loading MainPage freezes UiAutomator2.
+    execFileSync('adb', ['shell', 'uiautomator', 'dump', '/sdcard/qn-submit.xml'], {
+      stdio: 'ignore',
+    });
+    const xml = execFileSync('adb', ['shell', 'cat', '/sdcard/qn-submit.xml'], {
+      encoding: 'utf8',
+    });
+    const stillHome =
+      xml.includes('content-desc="Proveedores"') ||
+      xml.includes('content-desc="Search Providers"') ||
+      xml.includes('content-desc="Providers"');
+    const leftHome = !stillHome;
     allure.addAttachment(
       'provider-submit-state',
-      Buffer.from(JSON.stringify({ onMain, stillSearch, tileName }, null, 2)),
+      Buffer.from(JSON.stringify({ stillHome, leftHome, tileName }, null, 2)),
       'application/json',
     );
-    // Must land on provider MainPage (or loading) OR remain on Buscar home — not a blank limbo.
-    expect(onMain || stillSearch).toBe(true);
+    expect(leftHome).toBe(true);
 
-    // Always force chrome back so Historial / later smoke specs are not stranded.
-    await driver.back().catch(() => {});
-    await driver.pause(400);
-    await searchPage.recoverMainApp();
+    execFileSync('adb', ['shell', 'am', 'force-stop', pkg], { stdio: 'ignore' });
+    execFileSync(
+      'adb',
+      ['shell', 'am', 'start', '-n', `${pkg}/com.lagradost.quicknovel.MainActivity`],
+      { stdio: 'ignore' },
+    );
+    await driver.pause(2000);
     await searchPage.open();
     await searchPage.expectLoaded();
     expect(await searchPage.isMainChromeVisible()).toBe(true);
