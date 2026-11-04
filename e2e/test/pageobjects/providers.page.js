@@ -34,14 +34,49 @@ class ProvidersPage extends BasePage {
   }
 
   /**
+   * @param {string} label
+   * @param {string[]} names
+   */
+  matchProviderLabel(label, names) {
+    const plain = label
+      .replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F\s]+/u, '')
+      .trim();
+    return names.some((n) => plain === n || plain.endsWith(` ${n}`) || plain.includes(n));
+  }
+
+  /**
+   * Syncs visible checkboxes once (no scroll).
+   * @param {string[]} names
+   */
+  async syncVisibleProviderChecks(names) {
+    const boxes = await $$('android.widget.CheckBox');
+    for (const box of boxes) {
+      const parent = await box.$('..');
+      const texts = await parent.$$('android.widget.TextView');
+      let label = '';
+      for (const t of texts) {
+        const v = ((await t.getText().catch(() => '')) || '').trim();
+        if (v) label = v;
+      }
+      const shouldCheck = this.matchProviderLabel(label, names);
+      const checked = (await box.getAttribute('checked')) === 'true';
+      if (shouldCheck !== checked) {
+        await box.click();
+        await driver.pause(60);
+      }
+    }
+  }
+
+  /**
    * Leaves only the given provider names checked in the search providers dialog.
+   * Fast path: few scroll passes (CI hangs if this takes minutes).
    * @param {string[]} names
    */
   async selectOnlyProviders(names) {
     await this.openProvidersDialog();
-    const wanted = new Set(names);
 
-    for (let pass = 0; pass < 12; pass++) {
+    const matched = new Set();
+    for (let pass = 0; pass < 6; pass++) {
       const boxes = await $$('android.widget.CheckBox');
       for (const box of boxes) {
         const parent = await box.$('..');
@@ -51,14 +86,17 @@ class ProvidersPage extends BasePage {
           const v = ((await t.getText().catch(() => '')) || '').trim();
           if (v) label = v;
         }
-        // Flag prefix: "🇺🇸 Name" or just "Name"
-        const plain = label.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
-        const matchName = [...wanted].find((n) => plain === n || plain.endsWith(n) || plain.includes(n));
-        const shouldCheck = Boolean(matchName);
+        const shouldCheck = this.matchProviderLabel(label, names);
+        if (shouldCheck) matched.add(label);
         const checked = (await box.getAttribute('checked')) === 'true';
-        if (shouldCheck !== checked) {
+        // Only flip boxes we positively identify; never wipe the whole list first.
+        if (shouldCheck && !checked) {
           await box.click();
-          await driver.pause(80);
+          await driver.pause(60);
+        } else if (!shouldCheck && checked && matched.size > 0) {
+          // Uncheck extras only after we already locked at least one wanted provider.
+          await box.click();
+          await driver.pause(60);
         }
       }
       await driver.execute('mobile: scrollGesture', {
@@ -67,52 +105,13 @@ class ProvidersPage extends BasePage {
         width: 500,
         height: 1100,
         direction: 'down',
-        percent: 0.8,
-      });
-      await driver.pause(250);
+        percent: 0.75,
+      }).catch(() => {});
+      await driver.pause(180);
     }
 
-    // Scroll back up and do a second pass for items above
-    for (let pass = 0; pass < 8; pass++) {
-      await driver.execute('mobile: scrollGesture', {
-        left: 80,
-        top: 500,
-        width: 500,
-        height: 1100,
-        direction: 'up',
-        percent: 0.8,
-      });
-      await driver.pause(200);
-    }
-
-    for (let pass = 0; pass < 12; pass++) {
-      const boxes = await $$('android.widget.CheckBox');
-      for (const box of boxes) {
-        const parent = await box.$('..');
-        const texts = await parent.$$('android.widget.TextView');
-        let label = '';
-        for (const t of texts) {
-          const v = ((await t.getText().catch(() => '')) || '').trim();
-          if (v) label = v;
-        }
-        const plain = label.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
-        const matchName = [...wanted].find((n) => plain === n || plain.endsWith(` ${n}`) || plain === n);
-        const shouldCheck = Boolean(matchName);
-        const checked = (await box.getAttribute('checked')) === 'true';
-        if (shouldCheck !== checked) {
-          await box.click();
-          await driver.pause(80);
-        }
-      }
-      await driver.execute('mobile: scrollGesture', {
-        left: 80,
-        top: 500,
-        width: 500,
-        height: 1100,
-        direction: 'down',
-        percent: 0.8,
-      });
-      await driver.pause(200);
+    if (matched.size === 0) {
+      console.warn(`selectOnlyProviders: none of [${names.join(', ')}] found — keeping current selection`);
     }
 
     await this.confirmDialog();

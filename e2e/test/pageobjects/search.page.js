@@ -509,56 +509,102 @@ class SearchPage extends BasePage {
     await this.waitSearchIdle(timeoutMs);
   }
 
+  /**
+   * Legacy chip labels "Name (N)" — kept for older builds / filter rows.
+   */
   async countResultChipLabels() {
+    const chips = await $$(
+      'android=new UiSelector().className("android.widget.TextView").textMatches(".+\\\\s*\\\\([0-9]+\\\\)$")',
+    );
     let count = 0;
-    const texts = await $$('android.widget.TextView');
-    for (const el of texts) {
+    for (const el of chips) {
       const t = ((await el.getText().catch(() => '')) || '').trim();
       if (/^.+\s*\((\d+)\)$/.test(t) && !t.startsWith('Todos') && !t.startsWith('All')) count += 1;
     }
     return count;
   }
 
+  /**
+   * Current SearchResults UI: query mode shows back-to-search + provider SearchRow titles (no chips).
+   * @returns {Promise<boolean>}
+   */
+  async isSearchQueryOpen() {
+    const backEs = await this.byA11y('Volver a buscar').isDisplayed().catch(() => false);
+    const backEn = await this.byA11y('Back to search').isDisplayed().catch(() => false);
+    return backEs || backEn;
+  }
+
+  /**
+   * True when SearchRow results (covers / provider headers) are on screen.
+   * @returns {Promise<boolean>}
+   */
+  async hasSearchResultRows() {
+    if (await this.noResults.isDisplayed().catch(() => false)) return false;
+    const images = await $$('android.widget.ImageView');
+    // Covers in LazyRow — more than chrome icons once results land.
+    if (images.length >= 4) return true;
+    const chipCount = await this.countResultChipLabels();
+    return chipCount > 0;
+  }
+
   async waitSearchIdle(timeoutMs = 180000) {
     const started = Date.now();
-    let lastCount = -1;
     let stableRounds = 0;
     let loadingSeen = false;
-    let maxChips = 0;
+    let resultsSeen = false;
     let providersEver = false;
+    let lastProgress = true;
 
     while (Date.now() - started < timeoutMs) {
-      const chipCount = await this.countResultChipLabels();
+      const progress = await $(
+        'android=new UiSelector().className("android.widget.ProgressBar")',
+      )
+        .isDisplayed()
+        .catch(() => false);
       const noResults = await this.noResults.isDisplayed().catch(() => false);
       const providersVisible = await this.providersButton.isDisplayed().catch(() => false);
-      if (providersVisible) providersEver = true;
-      maxChips = Math.max(maxChips, chipCount);
-      if (!providersVisible) loadingSeen = true;
+      const queryOpen = await this.isSearchQueryOpen();
+      const hasRows = await this.hasSearchResultRows();
+      const chipCount = await this.countResultChipLabels();
 
-      if (chipCount !== lastCount) {
+      if (providersVisible) providersEver = true;
+      if (progress || (!providersVisible && queryOpen)) loadingSeen = true;
+      if (hasRows || chipCount > 0) resultsSeen = true;
+
+      if (progress !== lastProgress) {
         stableRounds = 0;
-        lastCount = chipCount;
+        lastProgress = progress;
       } else {
         stableRounds += 1;
       }
 
-      if (loadingSeen && providersVisible && stableRounds >= 3) return;
-      if (providersVisible && maxChips > 0 && stableRounds >= 4) return;
-      if (noResults && providersVisible && stableRounds >= 2) return;
-      if (!loadingSeen && maxChips === 0 && providersVisible && Date.now() - started > 25000) {
-        if (noResults) return;
-        throw new Error('Search did not start (no loading / no chips after 25s)');
+      // Modern UI: query open, spinner gone, rows or empty state.
+      if (queryOpen && !progress && stableRounds >= 2 && (hasRows || noResults || resultsSeen)) {
+        return;
       }
-      // Stuck loading / no chrome after catalog suites — fail fast instead of 120s hang.
-      if (!providersEver && maxChips === 0 && Date.now() - started > 40000) {
-        await this.ensureMainChrome(8000).catch(() => {});
-        throw new Error('Search stuck without provider chrome after 40s');
+      if (chipCount > 0 && !progress && stableRounds >= 2) return;
+      if (loadingSeen && providersVisible && !progress && stableRounds >= 3) return;
+      if (noResults && stableRounds >= 2) return;
+
+      if (!loadingSeen && !queryOpen && providersVisible && Date.now() - started > 25000) {
+        throw new Error('Search did not start (still on provider grid after 25s)');
+      }
+      if (loadingSeen && !resultsSeen && !noResults && Date.now() - started > 50000) {
+        throw new Error('Search loading >50s with no result rows');
+      }
+      if (!loadingSeen && !providersEver && !queryOpen && Date.now() - started > 20000) {
+        const field = await this.searchField.isDisplayed().catch(() => false);
+        if (!field) {
+          await this.ensureMainChrome(8000).catch(() => {});
+          throw new Error('Search left Buscar chrome without starting');
+        }
       }
       await driver.pause(1000);
     }
 
-    if (maxChips > 0 || (await this.noResults.isDisplayed().catch(() => false))) return;
-    throw new Error(`Search did not finish within ${timeoutMs}ms (chips=${lastCount})`);
+    if (resultsSeen || (await this.noResults.isDisplayed().catch(() => false))) return;
+    if (await this.hasSearchResultRows()) return;
+    throw new Error(`Search did not finish within ${timeoutMs}ms`);
   }
 
   async collectProviderHits() {
@@ -566,9 +612,11 @@ class SearchPage extends BasePage {
     const { width, height } = await driver.getWindowSize();
     const y = Math.floor(height * 0.22);
 
-    for (let pass = 0; pass < 12; pass++) {
-      const texts = await $$('android.widget.TextView');
-      for (const el of texts) {
+    for (let pass = 0; pass < 4; pass++) {
+      const chips = await $$(
+        'android=new UiSelector().className("android.widget.TextView").textMatches(".+\\\\s*\\\\([0-9]+\\\\)$")',
+      );
+      for (const el of chips) {
         const t = ((await el.getText().catch(() => '')) || '').trim();
         const m = t.match(/^(.+?)\s*\((\d+)\)$/);
         if (!m) continue;
@@ -577,6 +625,7 @@ class SearchPage extends BasePage {
         if (name === 'Todos' || name === 'All' || Number.isNaN(count)) continue;
         hits.set(name, Math.max(hits.get(name) || 0, count));
       }
+      if (hits.size > 0 && pass >= 1) break;
       await driver.execute('mobile: swipeGesture', {
         left: Math.floor(width * 0.15),
         top: y - 40,
@@ -584,8 +633,8 @@ class SearchPage extends BasePage {
         height: 80,
         direction: 'left',
         percent: 0.85,
-      });
-      await driver.pause(250);
+      }).catch(() => {});
+      await driver.pause(200);
     }
     return hits;
   }

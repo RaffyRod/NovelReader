@@ -12,25 +12,17 @@ describe('Reader and TTS', function () {
     await libraryPage.waitReady();
   });
 
-  it('opens a novel and shows TTS control', async function () {
+  it('opens a novel and shows TTS control', async () => {
     allure.addSeverity('critical');
-    const opened = await ensureReaderOpen();
-    if (!opened) {
-      allure.addDescription('Skipped: could not open reader (import/search unavailable)');
-      return this.skip();
-    }
+    await ensureReaderOpen();
     await readerPage.expectTtsControlVisible();
     // Stay in the reader so the next case does not fight bottom-nav / back stack.
   });
 
-  it('starts TTS from the reader when a novel is open', async function () {
+  it('starts TTS from the reader when a novel is open', async () => {
     allure.addSeverity('critical');
     if (!(await readerPage.isReaderVisible())) {
-      const opened = await ensureReaderOpen();
-      if (!opened) {
-        allure.addDescription('Skipped: could not open reader (import/search unavailable)');
-        return this.skip();
-      }
+      await ensureReaderOpen();
     }
 
     await readerPage.startTts();

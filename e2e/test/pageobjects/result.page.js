@@ -57,33 +57,42 @@ class ResultPage extends BasePage {
       console.warn(`Search chrome missing: ${e.message || e}`);
       await searchPage.recoverMainApp();
       await searchPage.open();
-      try {
-        await searchPage.expectLoaded();
-      } catch (e2) {
-        console.warn(`Search still unavailable: ${e2.message || e2}`);
-        return false;
+      await searchPage.expectLoaded();
+    }
+    await searchPage.search(query, 55000);
+    // SearchResults = provider SearchRows with cover ImageViews (not legacy chips).
+    const covers = await $$('android.widget.ImageView');
+    let tapped = false;
+    for (const el of covers) {
+      if (!(await el.isDisplayed().catch(() => false))) continue;
+      const clickable = (await el.getAttribute('clickable').catch(() => 'false')) === 'true';
+      // Covers may not be marked clickable; parent row item still receives the tap.
+      await el.click().catch(() => {});
+      await driver.pause(2500);
+      if (await this.isDetailVisible()) {
+        tapped = true;
+        break;
+      }
+      if (clickable) {
+        tapped = true;
+        break;
       }
     }
-    try {
-      await searchPage.search(query, 60000);
-    } catch (e) {
-      console.warn(`Search failed: ${e.message || e}`);
-      return false;
-    }
-    const texts = await $$('android.widget.TextView');
-    for (const el of texts) {
-      const t = ((await el.getText().catch(() => '')) || '').trim();
-      if (!t || t.length < 8 || t.length > 100) continue;
-      if (/^\(.+\)$/.test(t)) continue;
-      if (/Todos|\(\d+\)|Proveedores|Buscar|Biblioteca|Historial|Ajustes|Secciones/.test(t)) {
-        continue;
+    if (!tapped) {
+      const candidates = await $$(
+        'android=new UiSelector().className("android.widget.TextView").clickable(true)',
+      );
+      for (const el of candidates) {
+        const t = ((await el.getText().catch(() => '')) || '').trim();
+        if (!t || t.length < 8 || t.length > 100) continue;
+        if (/Proveedores|Buscar|Biblioteca|Historial|Ajustes|Secciones|Volver/i.test(t)) continue;
+        await el.click().catch(() => {});
+        await driver.pause(2500);
+        break;
       }
-      await el.click();
-      await driver.pause(2800);
-      break;
     }
     // Wait briefly for detail chrome (download / chapters / read).
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 16; i++) {
       if (await this.isDetailVisible()) return true;
       await driver.pause(500);
     }

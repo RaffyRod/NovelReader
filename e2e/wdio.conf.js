@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
+const { execFileSync } = require('child_process');
 
-const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
 const APP_ACTIVITY = 'com.lagradost.quicknovel.MainActivity';
 
 function resolveAppPath() {
@@ -26,10 +26,45 @@ function resolveAppPath() {
   return candidates.find((p) => p && fs.existsSync(p)) || candidates[0];
 }
 
+/**
+ * Reads applicationId from the APK so debug builds (*.ultimate.debug) match locators.
+ * @param {string} apkPath
+ * @returns {string|null}
+ */
+function detectPackageFromApk(apkPath) {
+  if (!apkPath || !fs.existsSync(apkPath)) return null;
+  try {
+    const sdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT || '';
+    const btRoot = path.join(sdk, 'build-tools');
+    if (!fs.existsSync(btRoot)) return null;
+    const versions = fs.readdirSync(btRoot).sort().reverse();
+    for (const ver of versions) {
+      const aapt = path.join(btRoot, ver, process.platform === 'win32' ? 'aapt.exe' : 'aapt');
+      if (!fs.existsSync(aapt)) continue;
+      const out = execFileSync(aapt, ['dump', 'badging', apkPath], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const m = out.match(/package: name='([^']+)'/);
+      return m ? m[1] : null;
+    }
+  } catch (_) {
+    /* keep default */
+  }
+  return null;
+}
+
 const appPath = resolveAppPath();
+const APP_ID =
+  process.env.APP_PACKAGE ||
+  detectPackageFromApk(appPath) ||
+  'com.lagradost.quicknovel.ultimate';
+process.env.APP_PACKAGE = APP_ID;
 const appiumHost = process.env.APPIUM_HOST || '127.0.0.1';
 const appiumPort = Number(process.env.APPIUM_PORT || 4723);
 const useExternalAppium = process.env.APPIUM_EXTERNAL === '1';
+console.log(`[wdio] app=${appPath}`);
+console.log(`[wdio] package=${APP_ID}`);
 
 exports.config = {
   runner: 'local',
@@ -45,19 +80,21 @@ exports.config = {
       ],
     ],
     // One CI job / one emulator boot for everything after smoke (saves ~4× cold-boot tax).
+    // Order: chrome-light + reader/download first (fresh nav), then plugins/host-health (heavy),
+    // then providers probe last so a dead host cannot starve reader seed.
     general: [
       [
         './test/specs/13-theme-defaults.e2e.js',
         './test/specs/05-settings.e2e.js',
         './test/specs/06-import.e2e.js',
+        './test/specs/07-reader-tts.e2e.js',
+        './test/specs/12-reader-loading.e2e.js',
+        './test/specs/11-download-translate.e2e.js',
+        './test/specs/14-sections-translations.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
         './test/specs/10-plugins.e2e.js',
         './test/specs/16-host-health.e2e.js',
         './test/specs/15-plugin-catalog.e2e.js',
-        './test/specs/11-download-translate.e2e.js',
-        './test/specs/14-sections-translations.e2e.js',
-        './test/specs/07-reader-tts.e2e.js',
-        './test/specs/12-reader-loading.e2e.js',
         './test/specs/08-providers.e2e.js',
       ],
     ],
@@ -210,5 +247,16 @@ exports.config = {
     }
     const { dismissBlockingDialogs } = require('./test/helpers/dialogs');
     await dismissBlockingDialogs();
+    // Keep bottom nav alive across dense general-suite specs (picker / sheets / catalog).
+    for (let i = 0; i < 2; i++) {
+      const hasNav = await $(
+        `android=new UiSelector().resourceId("${APP_ID}:id/navigation_search")`,
+      )
+        .isDisplayed()
+        .catch(() => false);
+      if (hasNav) break;
+      await driver.back().catch(() => {});
+      await driver.pause(250);
+    }
   },
 };

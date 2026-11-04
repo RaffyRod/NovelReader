@@ -29,5 +29,21 @@ describe('Import book (Import-B)', () => {
       }
     }
     expect(pickerVisible).toBe(true);
+
+    // Leave DocumentsUI so later general-suite specs keep bottom nav.
+    for (let i = 0; i < 3; i++) {
+      await driver.back().catch(() => {});
+      await driver.pause(300);
+    }
+    await libraryPage.ensureMainChrome(15000);
+  });
+
+  it('imports sample EPUB into Biblioteca', async () => {
+    allure.addSeverity('critical');
+    const { importFixtureEpub } = require('../helpers/seedNovel');
+    const imported = await importFixtureEpub();
+    expect(imported).toBe(true);
+    await libraryPage.open();
+    expect(await libraryPage.hasNovelCard()).toBe(true);
   });
 });
