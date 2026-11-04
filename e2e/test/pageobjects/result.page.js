@@ -49,8 +49,21 @@ class ResultPage extends BasePage {
    * @returns {Promise<boolean>}
    */
   async openFirstFromSearch(query = 'amor') {
+    await searchPage.ensureMainChrome(15000).catch(() => {});
     await searchPage.open();
-    await searchPage.expectLoaded();
+    try {
+      await searchPage.expectLoaded();
+    } catch (e) {
+      console.warn(`Search chrome missing: ${e.message || e}`);
+      await searchPage.recoverMainApp();
+      await searchPage.open();
+      try {
+        await searchPage.expectLoaded();
+      } catch (e2) {
+        console.warn(`Search still unavailable: ${e2.message || e2}`);
+        return false;
+      }
+    }
     try {
       await searchPage.search(query, 60000);
     } catch (e) {

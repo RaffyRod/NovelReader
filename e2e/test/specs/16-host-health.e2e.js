@@ -10,7 +10,9 @@ describe('Host health bottom sheet', () => {
   });
 
   afterEach(async () => {
-    for (let i = 0; i < 6; i++) {
+    // Dismiss bottom sheet / dialogs without full app restart (keeps general suite stable).
+    await settingsPage.dismissHostHealthSheet().catch(() => {});
+    for (let i = 0; i < 4; i++) {
       await driver.back().catch(() => {});
       await driver.pause(200);
     }
@@ -20,7 +22,6 @@ describe('Host health bottom sheet', () => {
   // Buscar first (fresh chrome). Mock #1: long-press only — not auto, no tile button.
   it('Buscar: tap does NOT open host sheet (only opens provider path)', async () => {
     allure.addSeverity('critical');
-    await searchPage.recoverMainApp();
     await searchPage.ensureMainChrome(20000);
     await searchPage.open();
     await searchPage.expectLoaded();
@@ -43,7 +44,6 @@ describe('Host health bottom sheet', () => {
 
   it('Buscar long-press opens bottom sheet with loader then result (mock #1)', async () => {
     allure.addSeverity('critical');
-    await searchPage.recoverMainApp();
     await searchPage.ensureMainChrome(20000);
     const opened = await searchPage.openHostHealthFromSearchTile();
     expect(opened).toBe(true);
@@ -89,7 +89,7 @@ describe('Host health bottom sheet', () => {
 
   it('Fuentes long-press opens bottom sheet with progress then result', async () => {
     allure.addSeverity('critical');
-    await settingsPage.recoverMainApp();
+    await settingsPage.ensureMainChrome(15000);
     const opened = await settingsPage.openHostHealthSheetFromFuentes();
     expect(opened).toBe(true);
 
@@ -126,7 +126,7 @@ describe('Host health bottom sheet', () => {
 
   it('Fuentes recheck shows progress again and close returns to list', async () => {
     allure.addSeverity('critical');
-    await settingsPage.recoverMainApp();
+    await settingsPage.ensureMainChrome(15000);
     const opened = await settingsPage.openHostHealthSheetFromFuentes();
     expect(opened).toBe(true);
     await settingsPage.waitHostHealthResult(28000);

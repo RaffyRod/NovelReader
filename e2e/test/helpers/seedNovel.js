@@ -86,9 +86,27 @@ async function importFixtureEpub() {
  * @returns {Promise<boolean>}
  */
 async function openReaderViaSearch() {
+  await searchPage.ensureMainChrome(15000).catch(() => {});
   await searchPage.open();
-  await searchPage.expectLoaded();
-  await searchPage.search('amor', 120000);
+  try {
+    await searchPage.expectLoaded();
+  } catch (e) {
+    console.warn(`openReaderViaSearch chrome: ${e.message || e}`);
+    await searchPage.recoverMainApp();
+    await searchPage.open();
+    try {
+      await searchPage.expectLoaded();
+    } catch (e2) {
+      console.warn(`openReaderViaSearch unavailable: ${e2.message || e2}`);
+      return false;
+    }
+  }
+  try {
+    await searchPage.search('amor', 90000);
+  } catch (e) {
+    console.warn(`openReaderViaSearch search: ${e.message || e}`);
+    return false;
+  }
   const hits = await searchPage.collectProviderHits();
   if (hits.size === 0) return false;
 

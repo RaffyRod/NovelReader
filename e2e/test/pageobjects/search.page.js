@@ -50,11 +50,23 @@ class SearchPage extends BasePage {
   }
 
   async open() {
+    await this.ensureMainChrome(15000).catch(() => {});
     await this.openTab('Buscar');
   }
 
   async expectLoaded() {
     await this.waitReady();
+    await this.ensureMainChrome(15000).catch(() => {});
+    let tabOk = await this.tabSearch
+      .waitForDisplayed({ timeout: 12000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!tabOk) {
+      // Dense suites (Fuentes / host-health / catalog) can leave chrome hidden.
+      await this.recoverMainApp();
+      await this.ensureMainChrome(20000);
+      await this.openTab('Buscar');
+    }
     await this.tabSearch.waitForDisplayed({ timeout: 20000 });
     // Prefer providers tune control; fall back to search field (locale-safe).
     const providersVisible = await this.providersButton
@@ -513,11 +525,13 @@ class SearchPage extends BasePage {
     let stableRounds = 0;
     let loadingSeen = false;
     let maxChips = 0;
+    let providersEver = false;
 
     while (Date.now() - started < timeoutMs) {
       const chipCount = await this.countResultChipLabels();
       const noResults = await this.noResults.isDisplayed().catch(() => false);
       const providersVisible = await this.providersButton.isDisplayed().catch(() => false);
+      if (providersVisible) providersEver = true;
       maxChips = Math.max(maxChips, chipCount);
       if (!providersVisible) loadingSeen = true;
 
@@ -534,6 +548,11 @@ class SearchPage extends BasePage {
       if (!loadingSeen && maxChips === 0 && providersVisible && Date.now() - started > 25000) {
         if (noResults) return;
         throw new Error('Search did not start (no loading / no chips after 25s)');
+      }
+      // Stuck loading / no chrome after catalog suites — fail fast instead of 120s hang.
+      if (!providersEver && maxChips === 0 && Date.now() - started > 40000) {
+        await this.ensureMainChrome(8000).catch(() => {});
+        throw new Error('Search stuck without provider chrome after 40s');
       }
       await driver.pause(1000);
     }

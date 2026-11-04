@@ -22,10 +22,61 @@ env:
   EMU_AVD: qn_ci_api30_gapis
 
 jobs:
+  # Drop prior-run Allure/WDIO/APK/report artifacts so Actions storage does not accumulate.
+  cleanup-artifacts:
+    name: Prune old artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Delete previous CI artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prefixes = [
+              'validate-test-reports',
+              'unit-test-reports',
+              'quicknovel-ultimate-apk',
+              'allure-results-',
+              'wdio-logs-',
+              'allure-report',
+            ];
+            const match = (name) =>
+              prefixes.some((p) => name === p || name.startsWith(p));
+            let deleted = 0;
+            let page = 1;
+            for (;;) {
+              const { data } = await github.rest.actions.listArtifactsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page,
+              });
+              if (!data.artifacts.length) break;
+              for (const a of data.artifacts) {
+                if (a.workflow_run && a.workflow_run.id === context.runId) continue;
+                if (!match(a.name)) continue;
+                core.info(`Deleting ${a.name} (#${a.id}) from run ${a.workflow_run?.id}`);
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: a.id,
+                });
+                deleted++;
+              }
+              if (data.artifacts.length < 100) break;
+              page++;
+            }
+            core.info(`Deleted ${deleted} artifact(s)`);
+
   validate:
     name: Validate i18n & timing
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    needs: [cleanup-artifacts]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -51,7 +102,8 @@ jobs:
           name: validate-test-reports
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
+          overwrite: true
 
   unit:
     name: Unit tests
@@ -76,12 +128,14 @@ jobs:
           name: unit-test-reports
           path: app/build/reports/tests/testDebugUnitTest
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
+          overwrite: true
 
   build-apk:
     name: Build & sign APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    needs: [cleanup-artifacts]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -119,7 +173,8 @@ jobs:
         with:
           name: quicknovel-ultimate-apk
           path: e2e/apps/QuickNovel-Ultimate.apk
-          retention-days: 7
+          retention-days: 3
+          overwrite: true
 
   # Optional warmer: fill system-images + AVD cache once. Must NOT gate e2e —
   # when this failed, GH skipped the matrix and showed literal "E2E ${{ matrix.suite }}".
@@ -301,7 +356,8 @@ jobs:
           name: allure-results-${{ matrix.suite }}
           path: e2e/allure-results
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
+          overwrite: true
       - name: Upload WDIO logs (${{ matrix.suite }})
         if: failure()
         uses: actions/upload-artifact@v4
@@ -312,6 +368,8 @@ jobs:
             e2e/appium-ci.log
             e2e/allure-results
           if-no-files-found: ignore
+          retention-days: 3
+          overwrite: true
 
   allure-report:
     name: Merge Allure report
@@ -355,4 +413,5 @@ jobs:
           name: allure-report
           path: e2e/allure-report
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
+          overwrite: true
