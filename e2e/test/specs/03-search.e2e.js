@@ -80,21 +80,34 @@ describe('Search novels', function () {
     await driver.execute('mobile: shell', { command: 'input', args: ['keyevent', '66'] });
     await driver.pause(2500);
 
-    // Avoid Appium findElement here — a loading MainPage freezes UiAutomator2.
-    execFileSync('adb', ['shell', 'uiautomator', 'dump', '/sdcard/qn-submit.xml'], {
-      stdio: 'ignore',
-    });
-    const xml = execFileSync('adb', ['shell', 'cat', '/sdcard/qn-submit.xml'], {
-      encoding: 'utf8',
-    });
-    const stillHome =
-      xml.includes('content-desc="Proveedores"') ||
-      xml.includes('content-desc="Search Providers"') ||
-      xml.includes('content-desc="Providers"');
-    const leftHome = !stillHome;
+    // Do not run `adb uiautomator dump` while Appium UiAutomator2 owns the device (CI fails).
+    // dumpsys does not conflict; providers tune vanishing also signals left Buscar home.
+    let dumpsys = '';
+    try {
+      dumpsys = execFileSync('adb', ['shell', 'dumpsys', 'activity', 'activities'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch (_) {
+      dumpsys = '';
+    }
+    const topResumed =
+      (dumpsys.match(/topResumedActivity=ActivityRecord\{[^}]+\s+(\S+)/) || [])[1] || '';
+    const providersStill = await searchPage.providersButton.isDisplayed().catch(() => false);
+    const providerPage = await searchPage.isProviderMainPageOpen().catch(() => false);
+    const leftHome =
+      providerPage ||
+      !providersStill ||
+      /MainPage|ReadActivity/i.test(topResumed);
     allure.addAttachment(
       'provider-submit-state',
-      Buffer.from(JSON.stringify({ stillHome, leftHome, tileName }, null, 2)),
+      Buffer.from(
+        JSON.stringify(
+          { leftHome, providersStill, providerPage, topResumed, tileName },
+          null,
+          2,
+        ),
+      ),
       'application/json',
     );
     expect(leftHome).toBe(true);

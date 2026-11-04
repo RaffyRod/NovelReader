@@ -38,17 +38,15 @@ function pushFixtureEpub() {
 }
 
 /**
- * Seeds EPUB into the app's external files dir and returns a FileProvider content URI.
- * Works for release CI APKs (no run-as / DocumentsUI).
+ * Seeds EPUB under /sdcard/Download and returns a FileProvider content URI.
+ * Avoids /sdcard/Android/data/<pkg> — shell mkdir is Permission denied on API 30+ CI emulators.
+ * Uses provider_paths external-path name=external (sdcard root).
  * @returns {string}
  */
 function seedEpubFileProviderUri() {
   const pkg = appId();
-  const dir = `/sdcard/Android/data/${pkg}/files`;
-  const dest = `${dir}/${FIXTURE_NAME}`;
-  adb(['shell', 'mkdir', '-p', dir]);
-  execFileSync('adb', ['push', FIXTURE_PATH, dest], { stdio: 'pipe' });
-  return `content://${pkg}.provider/external_files/${FIXTURE_NAME}`;
+  pushFixtureEpub();
+  return `content://${pkg}.provider/external/Download/${FIXTURE_NAME}`;
 }
 
 /**
@@ -108,6 +106,7 @@ async function openReaderViaEpubIntent() {
     'application/epub+zip',
     '-n',
     component,
+    '--grant-read-uri-permission',
   ]);
   await driver.pause(2500);
   const deadline = Date.now() + 25000;
