@@ -8,7 +8,7 @@ import androidx.compose.animation.core.repeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.compositionLocalOf
@@ -277,9 +277,11 @@ internal fun BasePreferenceWidget(
     }
 
     if (style == 2) {
+        // fillMaxWidth+Height — fillMaxSize() inside IntrinsicSize.Min mosaic rows collapses hits.
         Column(
             modifier = modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .fillMaxHeight()
                 .clip(RoundedCornerShape(18.dp))
                 .background(surface)
                 .highlightBackground(highlighted)

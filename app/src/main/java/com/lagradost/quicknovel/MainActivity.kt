@@ -93,6 +93,38 @@ import kotlin.reflect.KClass
 
 class MainActivity : AppCompatActivity() {
     companion object {
+        /** SAF often tags EPUBs as octet-stream; keep pdf/epub + that catch-all. */
+        val IMPORT_DOCUMENT_MIME_TYPES = arrayOf(
+            "application/pdf",
+            "application/epub+zip",
+            "application/epub",
+            "application/octet-stream",
+        )
+
+        /**
+         * Persist URI access for later opens. Try R+W first; if WRITE is denied, keep READ.
+         */
+        fun takePersistableUriRead(ctx: Context, uri: Uri) {
+            val cr = ctx.contentResolver
+            val read = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            val rw = read or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            try {
+                cr.takePersistableUriPermission(uri, rw)
+            } catch (_: SecurityException) {
+                try {
+                    cr.takePersistableUriPermission(uri, read)
+                } catch (t: Throwable) {
+                    logError(t)
+                }
+            } catch (t: Throwable) {
+                try {
+                    cr.takePersistableUriPermission(uri, read)
+                } catch (t2: Throwable) {
+                    logError(t2)
+                }
+            }
+        }
+
         private var _mainActivity: WeakReference<MainActivity>? = null
         private var mainActivity
             get() = _mainActivity?.get()
@@ -383,12 +415,8 @@ class MainActivity : AppCompatActivity() {
     fun importUri(uri: Uri) = safe {
         val ctx: Context = this
 
-        safe {
-            ctx.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            )
-        }
+        // Prefer R+W when SAF grants it; never let a WRITE denial wipe READ persist.
+        takePersistableUriRead(ctx, uri)
 
         val file = StorageFile.from(ctx, uri)
         val fileName = file?.name
@@ -426,28 +454,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun openEpubPicker() {
         safe {
-            epubPathPicker.launch(
-                arrayOf(
-                    //"text/plain",
-                    //"text/str",
-                    //"application/octet-stream",
-                    "application/pdf",
-                    "application/epub+zip",
-                )
-            )
+            epubPathPicker.launch(IMPORT_DOCUMENT_MIME_TYPES)
         }
     }
     private fun openEpubPickers() {
         safe {
-            epubPathsPicker.launch(
-                arrayOf(
-                    //"text/plain",
-                    //"text/str",
-                    //"application/octet-stream",
-                    "application/pdf",
-                    "application/epub+zip",
-                )
-            )
+            epubPathsPicker.launch(IMPORT_DOCUMENT_MIME_TYPES)
         }
     }
 
@@ -498,6 +510,17 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
         if (intent.action == Intent.ACTION_SEND) {
+            // Share sheet book files (Files/Drive) arrive as EXTRA_STREAM, not URLs.
+            val stream = try {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            } catch (_: Exception) {
+                null
+            }
+            if (stream != null) {
+                importUri(stream)
+                return
+            }
             val extraText = try { // I don't trust android
                 intent.getStringExtra(Intent.EXTRA_TEXT)
             } catch (e: Exception) {
@@ -506,10 +529,15 @@ class MainActivity : AppCompatActivity() {
             val cd = intent.clipData
             val item = if (cd != null && cd.itemCount > 0) cd.getItemAt(0) else null
             val url = item?.text?.toString()
+            val clipUri = item?.uri
 
-            // idk what I am doing, just hope any of these work
-            if (item?.uri != null && loadResultFromUrl(item.uri?.toString())) {
-                return
+            if (clipUri != null) {
+                val scheme = clipUri.scheme?.lowercase()
+                if (scheme == "content" || scheme == "file") {
+                    importUri(clipUri)
+                    return
+                }
+                if (loadResultFromUrl(clipUri.toString())) return
             }
             if (url != null && loadResultFromUrl(url)) {
                 return

@@ -7,8 +7,10 @@ import androidx.core.net.toUri
 import com.lagradost.quicknovel.GeminiProtocol
 import com.lagradost.quicknovel.GeminiTranslator
 import com.mihon.presentation.settings.collectAsState
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.lagradost.quicknovel.MainActivity.Companion.takePersistableUriRead
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -103,15 +105,7 @@ object SettingScreen : SearchableSettings {
             rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
                 // It lies, it can be null if file manager quits.
                 if (uri == null) return@rememberLauncherForActivityResult
-                try {
-                    context.contentResolver.takePersistableUriPermission(
-                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    )
-                } catch (t: Throwable) {
-                    // remote shit can throw
-                    logError(t)
-                }
+                takePersistableUriRead(context, uri)
                 storage.setLocation(context, uri)
             }
         return Preference.PreferenceItem.ListPreference(
@@ -147,6 +141,8 @@ object SettingScreen : SearchableSettings {
     @Composable
     override fun getPreferences(): List<Preference> {
         val context = LocalContext.current
+        // Prefer Composition LocalActivity — CommonActivity.activity can be null mid-recreate.
+        val hostActivity = LocalActivity.current ?: activity
         val store = AndroidPreferenceStore(context)
         val scope = rememberCoroutineScope()
         val settings = rememberAppSettings()
@@ -182,7 +178,7 @@ object SettingScreen : SearchableSettings {
                             R.string.restore_success,
                             Toast.LENGTH_LONG
                         )
-                        activity?.recreate()
+                        hostActivity?.recreate()
                     }
                 }
             }
@@ -254,7 +250,7 @@ object SettingScreen : SearchableSettings {
                         subtitle = stringResource(R.string.dark_mode_settings_desc),
                         preference = settings.ui.darkMode,
                         onValueChanged = { dark ->
-                            activity?.let { act ->
+                            hostActivity?.let { act ->
                                 com.lagradost.quicknovel.ui.AppearanceMode.apply(act, dark)
                             }
                             true
@@ -272,7 +268,7 @@ object SettingScreen : SearchableSettings {
                         },
                         onValueChanged = { value ->
                             // Accent pack only; icon treatment stays on Tema de iconos.
-                            activity?.let { act ->
+                            hostActivity?.let { act ->
                                 com.lagradost.quicknovel.ui.FireThemes.apply(act, value)
                             }
                             true
@@ -326,7 +322,7 @@ object SettingScreen : SearchableSettings {
                         title = stringResource(R.string.tutorial_providers),
                         subtitle = stringResource(R.string.tutorial_providers_desc),
                         onClick = {
-                            activity?.let { act ->
+                            hostActivity?.let { act ->
                                 androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
                                     .setTitle(R.string.tutorial_providers)
                                     .setMessage(R.string.tutorial_providers_body)
@@ -340,7 +336,7 @@ object SettingScreen : SearchableSettings {
                         title = stringResource(R.string.tutorial_download),
                         subtitle = stringResource(R.string.tutorial_download_desc),
                         onClick = {
-                            activity?.let { act ->
+                            hostActivity?.let { act ->
                                 androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
                                     .setTitle(R.string.tutorial_download)
                                     .setMessage(R.string.tutorial_download_body)
@@ -354,12 +350,89 @@ object SettingScreen : SearchableSettings {
                         title = stringResource(R.string.tutorial_tts),
                         subtitle = stringResource(R.string.tutorial_tts_desc),
                         onClick = {
-                            activity?.let { act ->
+                            hostActivity?.let { act ->
                                 androidx.appcompat.app.AlertDialog.Builder(act, R.style.AlertDialogCustom)
                                     .setTitle(R.string.tutorial_tts)
                                     .setMessage(R.string.tutorial_tts_body)
                                     .setPositiveButton(R.string.close, null)
                                     .show()
+                            }
+                        }
+                    ),
+                )
+            ),
+            // Plugins / custom providers next to tutorials — primary discovery, not buried.
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.cp_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.extension_24px),
+                        title = stringResource(R.string.cp_add),
+                        subtitle = stringResource(R.string.cp_add_desc),
+                        onClick = {
+                            hostActivity?.let { act ->
+                                CustomProviderDialogs.showSimpleAdd(act) {
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                }
+                            }
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.plugin_lang),
+                        title = stringResource(R.string.cp_manage),
+                        subtitle = stringResource(R.string.cp_count_manageable, customProviderCount),
+                        onClick = {
+                            hostActivity?.let { act ->
+                                CustomProviderDialogs.showManager(act) {
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                }
+                            }
+                        }
+                    ),
+                )
+            ),
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.plugin_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.extension_24px),
+                        title = stringResource(R.string.plugin_hub),
+                        subtitle = stringResource(
+                            R.string.plugin_hub_count,
+                            pluginInstalledCount,
+                            if (pluginUpdateCount > 0) {
+                                stringResource(R.string.plugin_hub_updates, pluginUpdateCount)
+                            } else {
+                                ""
+                            },
+                        ),
+                        onClick = {
+                            hostActivity?.let { act ->
+                                PluginProviderDialogs.showHub(act) {
+                                    val installed = PluginStore.loadInstalled()
+                                    pluginInstalledCount = installed.size
+                                    pluginUpdateCount = installed.count { it.hasUpdate }
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                }
+                            }
+                        }
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.plugin_lang),
+                        title = stringResource(R.string.plugin_add_repo),
+                        subtitle = stringResource(R.string.plugin_hub_desc),
+                        onClick = {
+                            hostActivity?.let { act ->
+                                PluginProviderDialogs.showAddRepo(act) {
+                                    val installed = PluginStore.loadInstalled()
+                                    pluginInstalledCount = installed.size
+                                    pluginUpdateCount = installed.count { it.hasUpdate }
+                                    customProviderCount =
+                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                }
                             }
                         }
                     ),
@@ -399,7 +472,7 @@ object SettingScreen : SearchableSettings {
                         subtitle = null,
                         onClick = {
                             scope.launch {
-                                BackupUtils.createBackupFile(context, activity)
+                                BackupUtils.createBackupFile(context, hostActivity)
                                     .onFailure { error ->
                                         logError(error)
                                         if (error.message != null) {
@@ -544,82 +617,6 @@ object SettingScreen : SearchableSettings {
                                         error ?: context.getString(R.string.translation_test_ok),
                                         Toast.LENGTH_LONG
                                     )
-                                }
-                            }
-                        }
-                    ),
-                )
-            ),
-            Preference.PreferenceGroup(
-                title = stringResource(R.string.cp_group),
-                preferenceItems = persistentListOf(
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.extension_24px),
-                        title = stringResource(R.string.cp_add),
-                        subtitle = stringResource(R.string.cp_add_desc),
-                        onClick = {
-                            activity?.let { act ->
-                                CustomProviderDialogs.showSimpleAdd(act) {
-                                    customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
-                                }
-                            }
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.plugin_lang),
-                        title = stringResource(R.string.cp_manage),
-                        subtitle = stringResource(R.string.cp_count_manageable, customProviderCount),
-                        onClick = {
-                            activity?.let { act ->
-                                CustomProviderDialogs.showManager(act) {
-                                    customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
-                                }
-                            }
-                        }
-                    ),
-                )
-            ),
-            Preference.PreferenceGroup(
-                title = stringResource(R.string.plugin_group),
-                preferenceItems = persistentListOf(
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.extension_24px),
-                        title = stringResource(R.string.plugin_hub),
-                        subtitle = stringResource(
-                            R.string.plugin_hub_count,
-                            pluginInstalledCount,
-                            if (pluginUpdateCount > 0) {
-                                stringResource(R.string.plugin_hub_updates, pluginUpdateCount)
-                            } else {
-                                ""
-                            },
-                        ),
-                        onClick = {
-                            activity?.let { act ->
-                                PluginProviderDialogs.showHub(act) {
-                                    val installed = PluginStore.loadInstalled()
-                                    pluginInstalledCount = installed.size
-                                    pluginUpdateCount = installed.count { it.hasUpdate }
-                                    customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
-                                }
-                            }
-                        }
-                    ),
-                    Preference.PreferenceItem.TextPreference(
-                        icon = painterResource(R.drawable.plugin_lang),
-                        title = stringResource(R.string.plugin_add_repo),
-                        subtitle = stringResource(R.string.plugin_hub_desc),
-                        onClick = {
-                            activity?.let { act ->
-                                PluginProviderDialogs.showAddRepo(act) {
-                                    val installed = PluginStore.loadInstalled()
-                                    pluginInstalledCount = installed.size
-                                    pluginUpdateCount = installed.count { it.hasUpdate }
-                                    customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
                                 }
                             }
                         }

@@ -177,11 +177,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             // It lies, it can be null if file manager quits.
             if (uri == null) return@registerForActivityResult
             val context = context ?: return@registerForActivityResult
-            // RW perms for the path
-            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-
-            context.contentResolver.takePersistableUriPermission(uri, flags)
+            com.lagradost.quicknovel.MainActivity.takePersistableUriRead(context, uri)
 
             val file = SafeFile.fromUri(context, uri)
             val filePath = file?.filePath()
