@@ -6,6 +6,13 @@ const readerPage = require('../pageobjects/reader.page');
 const FIXTURE_NAME = 'e2e-sample-novel.epub';
 const FIXTURE_PATH = path.join(__dirname, '../../fixtures/sample-novel.epub');
 const READ_ACTIVITY = 'com.lagradost.quicknovel.ReadActivity2';
+/** Markers that must appear when the sample EPUB actually rendered. */
+const FIXTURE_MARKERS = [
+  'Prueba QuickNovel E2E',
+  'novela de prueba',
+  'Capitulo 1',
+  'Capítulo 1',
+];
 
 /** @returns {string} */
 function appId() {
@@ -60,17 +67,29 @@ async function isReadActivityOpen() {
 }
 
 /**
- * One cheap pass for reader chrome.
+ * True when the sample EPUB body/title is on screen (not just an empty reader shell).
  * @returns {Promise<boolean>}
  */
-async function hasReaderChromeOnce() {
-  await readerPage.revealControls().catch(() => {});
-  if (await readerPage.hasTtsChrome()) return true;
+async function hasFixtureContent() {
+  for (const marker of FIXTURE_MARKERS) {
+    const el = await $(`android=new UiSelector().textContains("${marker}")`);
+    if (await el.isDisplayed().catch(() => false)) return true;
+  }
   return false;
 }
 
 /**
+ * One pass: reveal chrome and check TTS bar.
+ * @returns {Promise<boolean>}
+ */
+async function hasReaderChromeOnce() {
+  await readerPage.revealControls().catch(() => {});
+  return readerPage.hasTtsChrome();
+}
+
+/**
  * Opens the fixture EPUB in ReadActivity2 via app FileProvider (CI-safe).
+ * Succeeds only when layout + fixture text are visible (hard content check).
  * @returns {Promise<boolean>}
  */
 async function openReaderViaEpubIntent() {
@@ -101,16 +120,25 @@ async function openReaderViaEpubIntent() {
       .byId(`${appId()}:id/read_normal_layout`)
       .isDisplayed()
       .catch(() => false);
-    if (layout) {
-      // Book is open — reveal chrome for TTS assertions.
-      if (await readerPage.isReaderVisible()) return true;
-      if (await hasReaderChromeOnce()) return true;
-      // Content visible is enough to proceed; caller reveals TTS again.
+    if (layout && (await hasFixtureContent())) {
       return true;
     }
     await driver.pause(500);
   }
   return false;
+}
+
+/**
+ * Opens fixture EPUB and asserts real content (throws on soft/empty open).
+ * @returns {Promise<void>}
+ */
+async function openAndAssertFixtureReader() {
+  const opened = await openReaderViaEpubIntent();
+  expect(opened).toBe(true);
+  expect(await hasFixtureContent()).toBe(true);
+  const chrome = await readerPage.isReaderVisible();
+  expect(chrome).toBe(true);
+  await expect(readerPage.ttsButton).toBeDisplayed();
 }
 
 /**
@@ -131,15 +159,24 @@ async function openReaderFromLibrary() {
 }
 
 /**
- * Ensures the reader can be opened via FileProvider EPUB (fast) or library.
- * No live search — that burned ~1h on CI when DocumentsUI/search hung.
+ * Ensures the reader is open with real chrome (TTS bar).
+ * FileProvider EPUB first (asserts fixture text); library fallback still requires chrome.
  * @returns {Promise<true>}
  */
 async function ensureReaderOpen() {
-  if (await openReaderViaEpubIntent()) return true;
+  if (await openReaderViaEpubIntent()) {
+    expect(await hasFixtureContent()).toBe(true);
+    const chrome = await readerPage.isReaderVisible();
+    expect(chrome).toBe(true);
+    return true;
+  }
 
   if (await libraryPage.hasNovelCard().catch(() => false)) {
-    if (await openReaderFromLibrary()) return true;
+    if (await openReaderFromLibrary()) {
+      const chrome = await readerPage.isReaderVisible();
+      expect(chrome).toBe(true);
+      return true;
+    }
   }
 
   throw new Error(
@@ -155,7 +192,10 @@ async function importFixtureEpub() {
 
 module.exports = {
   ensureReaderOpen,
+  FIXTURE_MARKERS,
+  hasFixtureContent,
   importFixtureEpub,
+  openAndAssertFixtureReader,
   openReaderFromLibrary,
   openReaderViaEpubIntent,
   pushFixtureEpub,

@@ -1,9 +1,13 @@
 const allure = require('@wdio/allure-reporter').default;
 const libraryPage = require('../pageobjects/library.page');
-const { openReaderViaEpubIntent } = require('../helpers/seedNovel');
+const readerPage = require('../pageobjects/reader.page');
+const {
+  hasFixtureContent,
+  openAndAssertFixtureReader,
+} = require('../helpers/seedNovel');
 
 describe('Import book (Import-B)', function () {
-  this.timeout(60000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Import');
@@ -40,9 +44,15 @@ describe('Import book (Import-B)', function () {
     await libraryPage.ensureMainChrome(12000);
   });
 
-  it('opens sample EPUB into the reader via FileProvider VIEW intent', async () => {
+  it('opens sample EPUB and shows fixture title, chapter text, and TTS', async () => {
     allure.addSeverity('critical');
-    const opened = await openReaderViaEpubIntent();
-    expect(opened).toBe(true);
+    // DocumentsUI path is flaky on CI emulators; FileProvider VIEW still exercises
+    // the same ReadActivity2 EPUB parse/render path and must prove real content.
+    await openAndAssertFixtureReader();
+    expect(await hasFixtureContent()).toBe(true);
+    await expect(readerPage.ttsButton).toBeDisplayed();
+    await expect(
+      $(`android=new UiSelector().textContains("Prueba QuickNovel E2E")`),
+    ).toBeDisplayed();
   });
 });

@@ -1,7 +1,7 @@
 const allure = require('@wdio/allure-reporter').default;
 const libraryPage = require('../pageobjects/library.page');
 const readerPage = require('../pageobjects/reader.page');
-const { ensureReaderOpen } = require('../helpers/seedNovel');
+const { ensureReaderOpen, hasFixtureContent } = require('../helpers/seedNovel');
 
 describe('Reader and TTS', function () {
   this.timeout(120000);
@@ -15,6 +15,7 @@ describe('Reader and TTS', function () {
   it('opens a novel and shows TTS control', async () => {
     allure.addSeverity('critical');
     await ensureReaderOpen();
+    expect(await hasFixtureContent()).toBe(true);
     await readerPage.expectTtsControlVisible();
   });
 
@@ -25,8 +26,8 @@ describe('Reader and TTS', function () {
     }
 
     await readerPage.startTts();
-    // Starting TTS swaps bottom chrome for the TTS bar — do not re-tap content
-    // (switchVisibility would hide it).
+    // Must see the active TTS controls — not just the idle read_action_tts button.
+    await expect(readerPage.ttsPausePlay).toBeDisplayed();
     expect(await readerPage.hasActiveTtsBar()).toBe(true);
   });
 });

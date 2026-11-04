@@ -139,28 +139,33 @@ class ReaderPage extends BasePage {
   }
 
   /**
-   * Starts TTS from the reader chrome. Retries reveal because the bottom bar auto-hides,
-   * and falls back to content-description when the resource-id node is momentarily gone.
-   */
-  /**
-   * True when the active TTS bottom bar (pause/stop) is showing.
+   * True only when pause or stop controls are visible (TTS actually started).
    * @returns {Promise<boolean>}
    */
   async hasActiveTtsBar() {
     if (await this.ttsPausePlay.isDisplayed().catch(() => false)) return true;
     if (await this.ttsStop.isDisplayed().catch(() => false)) return true;
-    if (
-      await this.byId(`${pkg()}:id/reader_bottom_view_tts`).isDisplayed().catch(() => false)
-    ) {
-      return true;
-    }
     return false;
   }
 
-  async startTts() {
-    for (let attempt = 0; attempt < 6; attempt++) {
-      if (await this.hasActiveTtsBar()) return;
+  /**
+   * Stops TTS if the active bar is up, so a later start can be asserted for real.
+   */
+  async stopTtsIfRunning() {
+    if (!(await this.hasActiveTtsBar())) return;
+    if (await this.ttsStop.isDisplayed().catch(() => false)) {
+      await this.ttsStop.click();
+      await driver.pause(1200);
+    }
+  }
 
+  /**
+   * Taps TTS and waits until pause/stop appears. Fails if TTS never starts.
+   */
+  async startTts() {
+    await this.stopTtsIfRunning();
+
+    for (let attempt = 0; attempt < 6; attempt++) {
       if (!(await this.hasTtsChrome())) {
         await this.revealControls();
       }
@@ -176,14 +181,14 @@ class ReaderPage extends BasePage {
         continue;
       }
 
-      // Wait for TTS bar — do not tap content again (that hides chrome).
-      const deadline = Date.now() + 8000;
+      // Do not re-tap content (that toggles chrome off). Wait for pause/stop.
+      const deadline = Date.now() + 10000;
       while (Date.now() < deadline) {
         if (await this.hasActiveTtsBar()) return;
         await driver.pause(400);
       }
     }
-    throw new Error('TTS control not found after reveal retries');
+    throw new Error('TTS did not start: pause/stop controls never appeared');
   }
 }
 
