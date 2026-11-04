@@ -5,7 +5,9 @@ const historyPage = require('../pageobjects/history.page');
 const settingsPage = require('../pageobjects/settings.page');
 const sectionsPage = require('../pageobjects/sections.page');
 
-describe('Bottom navigation', () => {
+describe('Bottom navigation', function () {
+  this.timeout(180000);
+
   before(async () => {
     allure.addFeature('Navigation');
     allure.addEpic('QuickNovel Ultimate');

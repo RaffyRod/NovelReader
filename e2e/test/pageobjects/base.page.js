@@ -1,20 +1,24 @@
 const { dismissBlockingDialogs } = require('../helpers/dialogs');
 
-const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
 const APP_ACTIVITY = 'com.lagradost.quicknovel.MainActivity';
 
-/** Bottom-nav resource-ids (locale-independent). */
-const TAB_IDS = {
-  Biblioteca: `${APP_ID}:id/navigation_download`,
-  Library: `${APP_ID}:id/navigation_download`,
-  Buscar: `${APP_ID}:id/navigation_search`,
-  Search: `${APP_ID}:id/navigation_search`,
-  Historial: `${APP_ID}:id/navigation_history`,
-  History: `${APP_ID}:id/navigation_history`,
-  Ajustes: `${APP_ID}:id/navigation_settings`,
-  Settings: `${APP_ID}:id/navigation_settings`,
-  Secciones: `${APP_ID}:id/navigation_sections`,
-  Sections: `${APP_ID}:id/navigation_sections`,
+/** @returns {string} live applicationId (must not be frozen at require-time). */
+function appId() {
+  return process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+}
+
+/** Bottom-nav id suffixes (locale-independent). */
+const TAB_SUFFIXES = {
+  Biblioteca: 'navigation_download',
+  Library: 'navigation_download',
+  Buscar: 'navigation_search',
+  Search: 'navigation_search',
+  Historial: 'navigation_history',
+  History: 'navigation_history',
+  Ajustes: 'navigation_settings',
+  Settings: 'navigation_settings',
+  Secciones: 'navigation_sections',
+  Sections: 'navigation_sections',
 };
 
 /** Labels that may appear depending on app / system locale. */
@@ -26,26 +30,43 @@ const TAB_ALIASES = {
   Secciones: ['Secciones', 'Sections'],
 };
 
-const MAIN_TAB_IDS = [
-  TAB_IDS.Biblioteca,
-  TAB_IDS.Buscar,
-  TAB_IDS.Historial,
-  TAB_IDS.Ajustes,
-  TAB_IDS.Secciones,
+const MAIN_TAB_SUFFIXES = [
+  'navigation_download',
+  'navigation_search',
+  'navigation_history',
+  'navigation_settings',
+  'navigation_sections',
 ];
 
 class BasePage {
+  /** @param {string} tabName */
+  tabResourceId(tabName) {
+    const suffix = TAB_SUFFIXES[tabName];
+    return suffix ? `${appId()}:id/${suffix}` : null;
+  }
+
   /**
    * Hard reset to MainActivity when bottom nav is gone (dialogs / stuck activities).
+   * Never use activateApp: after Ultimate icon aliases, package resolve-activity
+   * returns *Launcher and can crash the emulator package manager.
    */
   async recoverMainApp() {
-    await driver.terminateApp(APP_ID).catch(() => {});
+    const pkg = appId();
+    await driver.terminateApp(pkg).catch(() => {});
     await driver.pause(600);
-    await driver.activateApp(APP_ID).catch(() => {});
-    await driver.pause(1500);
-    await driver.execute('mobile: startActivity', {
-      component: `${APP_ID}/${APP_ACTIVITY}`,
-    }).catch(() => {});
+    await driver
+      .execute('mobile: startActivity', {
+        component: `${pkg}/${APP_ACTIVITY}`,
+        intentAction: 'android.intent.action.MAIN',
+      })
+      .catch(() => {
+        const { execFileSync } = require('child_process');
+        execFileSync(
+          'adb',
+          ['shell', 'am', 'start', '-n', `${pkg}/${APP_ACTIVITY}`],
+          { stdio: 'ignore' },
+        );
+      });
     await driver.pause(1500);
     await dismissBlockingDialogs();
   }
@@ -86,8 +107,9 @@ class BasePage {
    * True when any main bottom-nav tab is visible (resource-id first).
    */
   async isMainChromeVisible() {
-    for (const id of MAIN_TAB_IDS) {
-      const el = this.byId(id);
+    const pkg = appId();
+    for (const suffix of MAIN_TAB_SUFFIXES) {
+      const el = this.byId(`${pkg}:id/${suffix}`);
       if (await el.isDisplayed().catch(() => false)) return true;
     }
     for (const labels of Object.values(TAB_ALIASES)) {
@@ -107,6 +129,16 @@ class BasePage {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       await dismissBlockingDialogs();
+      const act = String((await driver.getCurrentActivity().catch(() => '')) || '');
+      if (/Launcher$/i.test(act)) {
+        await driver.back().catch(() => {});
+        await driver
+          .execute('mobile: startActivity', {
+            component: `${appId()}/${APP_ACTIVITY}`,
+          })
+          .catch(() => {});
+        await driver.pause(600);
+      }
       if (await this.isMainChromeVisible()) return;
       await driver.back().catch(() => {});
       await driver.pause(400);
@@ -159,7 +191,7 @@ class BasePage {
       await this.ensureMainChrome();
       await dismissBlockingDialogs();
 
-      const resId = TAB_IDS[tabName];
+      const resId = this.tabResourceId(tabName);
       if (resId) {
         const byRes = this.byId(resId);
         if (await byRes.isDisplayed().catch(() => false)) {
@@ -221,4 +253,5 @@ class BasePage {
   }
 }
 
+BasePage.appId = appId;
 module.exports = BasePage;

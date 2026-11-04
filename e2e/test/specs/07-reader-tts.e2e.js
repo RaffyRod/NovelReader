@@ -12,6 +12,10 @@ describe('Reader and TTS', function () {
     await libraryPage.waitReady();
   });
 
+  after(async () => {
+    await libraryPage.recoverMainApp().catch(() => {});
+  });
+
   it('opens a novel and shows TTS control', async () => {
     allure.addSeverity('critical');
     await ensureReaderOpen();

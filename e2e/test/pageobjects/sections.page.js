@@ -1,10 +1,8 @@
 const BasePage = require('./base.page');
 
-const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
-
 class SectionsPage extends BasePage {
   get tabSections() {
-    return this.byId(`${APP_ID}:id/navigation_sections`);
+    return this.byId(`${BasePage.appId()}:id/navigation_sections`);
   }
 
   /** Content-desc for LibraryRail translation history (ES/EN). */

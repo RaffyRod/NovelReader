@@ -84,11 +84,12 @@ exports.config = {
     // then providers probe last so a dead host cannot starve reader seed.
     general: [
       [
-        './test/specs/13-theme-defaults.e2e.js',
-        './test/specs/05-settings.e2e.js',
+        // Reader/import first (stable FileProvider seed) — theme last so a
+        // launcher-alias flake cannot starve the critical path under bail=1.
         './test/specs/06-import.e2e.js',
         './test/specs/07-reader-tts.e2e.js',
         './test/specs/12-reader-loading.e2e.js',
+        './test/specs/05-settings.e2e.js',
         './test/specs/11-download-translate.e2e.js',
         './test/specs/14-sections-translations.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
@@ -96,6 +97,7 @@ exports.config = {
         './test/specs/16-host-health.e2e.js',
         './test/specs/15-plugin-catalog.e2e.js',
         './test/specs/08-providers.e2e.js',
+        './test/specs/13-theme-defaults.e2e.js',
       ],
     ],
     // Kept for local/debug runs (`npm run test:features`, etc.).
@@ -162,6 +164,7 @@ exports.config = {
       'appium:uiautomator2ServerInstallTimeout': 180000,
       'appium:uiautomator2ServerLaunchTimeout': 120000,
       'appium:disableWindowAnimation': true,
+      'appium:ignoreHiddenApiPolicyError': true,
     },
   ],
   logLevel: process.env.WDIO_LOG_LEVEL || 'info',
@@ -204,7 +207,8 @@ exports.config = {
   ],
   mochaOpts: {
     ui: 'bdd',
-    timeout: process.env.CI ? 120000 : 180000,
+    // Smoke nav/search and general reader need headroom; per-spec this.timeout can raise further.
+    timeout: process.env.CI ? 180000 : 180000,
     // Retries doubled general to ~1h when import/reader hung — fail fast instead.
     retries: 0,
     bail: Boolean(process.env.CI),
@@ -236,8 +240,7 @@ exports.config = {
     if (chrome.some(Boolean)) return;
     await driver.terminateApp(APP_ID).catch(() => {});
     await driver.pause(500);
-    await driver.activateApp(APP_ID).catch(() => {});
-    await driver.pause(1200);
+    // Prefer explicit MainActivity — activateApp can resolve Ultimate*Launcher aliases.
     await driver.execute('mobile: startActivity', {
       component: `${APP_ID}/${APP_ACTIVITY}`,
     }).catch(() => {});
@@ -249,17 +252,20 @@ exports.config = {
       await driver.takeScreenshot().catch(() => {});
     }
     const { dismissBlockingDialogs } = require('./test/helpers/dialogs');
+    const BasePage = require('./test/pageobjects/base.page');
     await dismissBlockingDialogs().catch(() => {});
-    // Keep bottom nav alive across dense general-suite specs (picker / sheets / catalog).
-    for (let i = 0; i < 2; i++) {
+    // Reader / picker / sheets leave MainActivity — restore chrome for the next spec.
+    for (let i = 0; i < 3; i++) {
       const hasNav = await $(
         `android=new UiSelector().resourceId("${APP_ID}:id/navigation_search")`,
       )
         .isDisplayed()
         .catch(() => false);
-      if (hasNav) break;
+      if (hasNav) return;
       await driver.back().catch(() => {});
-      await driver.pause(250);
+      await driver.pause(300);
     }
+    const page = new BasePage();
+    await page.recoverMainApp().catch(() => {});
   },
 };

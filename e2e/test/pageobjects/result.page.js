@@ -1,18 +1,16 @@
 const BasePage = require('./base.page');
 const searchPage = require('./search.page');
 
-const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
-
 /**
  * Novel detail / result screen and the chapter download dialog.
  */
 class ResultPage extends BasePage {
   get stickyDownload() {
-    return this.byId(`${APP_ID}:id/sticky_download`);
+    return this.byId(`${BasePage.appId()}:id/sticky_download`);
   }
 
   get downloadButton() {
-    return this.byId(`${APP_ID}:id/result_download_btt`);
+    return this.byId(`${BasePage.appId()}:id/result_download_btt`);
   }
 
   get downloadByText() {

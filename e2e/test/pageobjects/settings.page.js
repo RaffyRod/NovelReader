@@ -81,45 +81,39 @@ class SettingsPage extends BasePage {
   }
 
   async scrollToTutorials() {
-    // Tutorial is the last group — rewind then scroll past Información.
-    for (let i = 0; i < 6; i++) {
-      await driver.execute('mobile: scrollGesture', {
-        left: 80,
-        top: 400,
-        width: 600,
-        height: 1200,
-        direction: 'up',
-        percent: 0.9,
-      }).catch(() => {});
-      await driver.pause(150);
+    if (await this.tutorialsVisible()) return true;
+    // Short implicit wait — missing markers must not burn the full suite timeout.
+    await driver.setTimeout({ implicit: 2000 }).catch(() => {});
+    try {
+      for (const marker of ['Tutorial', '(TTS)', 'Cómo descargar']) {
+        await $(
+          `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${marker}"))`,
+        ).catch(() => {});
+        if (await this.tutorialsVisible()) return true;
+      }
+      for (let i = 0; i < 10; i++) {
+        await driver
+          .execute('mobile: flingGesture', {
+            left: 100,
+            top: 500,
+            width: 500,
+            height: 1200,
+            direction: 'down',
+            speed: 4000,
+          })
+          .catch(() => {});
+        await driver.pause(200);
+        if (await this.tutorialsVisible()) return true;
+      }
+      return this.tutorialsVisible();
+    } finally {
+      await driver.setTimeout({ implicit: 15000 }).catch(() => {});
     }
-
-    const anchors = ['Información', 'Tutorial', '(TTS)', 'Cómo descargar novelas', 'Cómo agregar un Blog'];
-    for (const marker of anchors) {
-      await this.scrollToText(marker);
-      await driver.pause(250);
-      if (await this.tutorialsVisible()) return true;
-    }
-
-    for (let i = 0; i < 16; i++) {
-      await driver.execute('mobile: scrollGesture', {
-        left: 80,
-        top: 500,
-        width: 600,
-        height: 1400,
-        direction: 'down',
-        percent: 0.9,
-      });
-      await driver.pause(280);
-      if (await this.tutorialsVisible()) return true;
-    }
-    return false;
   }
 
   async openTutorialTts() {
     if (!(await this.scrollToTutorials())) return false;
 
-    // Prefer exact ES/EN titles; fall back to "(TTS)" marker.
     const candidates = [
       this.byText('Lectura en voz alta (TTS)'),
       this.byText('Text to speech (TTS)'),
@@ -131,15 +125,6 @@ class SettingsPage extends BasePage {
         await driver.pause(800);
         return true;
       }
-    }
-
-    await this.scrollToText('(TTS)');
-    await driver.pause(300);
-    const tts = this.tutorialTts;
-    if (await tts.isDisplayed().catch(() => false)) {
-      await tts.click();
-      await driver.pause(800);
-      return true;
     }
     return false;
   }

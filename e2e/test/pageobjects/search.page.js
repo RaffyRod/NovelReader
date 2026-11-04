@@ -1,10 +1,8 @@
 const BasePage = require('./base.page');
 
-const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
-
 class SearchPage extends BasePage {
   get tabSearch() {
-    return this.byId(`${APP_ID}:id/navigation_search`);
+    return this.byId(`${BasePage.appId()}:id/navigation_search`);
   }
 
   get providersButton() {
@@ -296,22 +294,99 @@ class SearchPage extends BasePage {
   }
 
   /**
+   * Provider-grid chrome / section labels to ignore when counting tiles.
+   * @param {string} label
+   */
+  isProviderTileNoise(label) {
+    const skip =
+      /^(buscar|search|proveedores|providers|recientes|recent|popular|todos|all|sin resultados|no results|biblioteca|library|historial|history|ajustes|settings|secciones|sections)$/i;
+    if (!label || label.length < 2 || label.length > 48) return true;
+    if (skip.test(label)) return true;
+    if (/^\d+$/.test(label)) return true;
+    if (/\(\d+\)$/.test(label)) return true;
+    return false;
+  }
+
+  /**
+   * Visible provider tile labels on the Buscar grid.
+   * @returns {Promise<string[]>}
+   */
+  async listVisibleProviderTiles() {
+    const texts = await $$('android.widget.TextView');
+    const labels = [];
+    for (const el of texts) {
+      if (!(await el.isDisplayed().catch(() => false))) continue;
+      const label = ((await el.getText().catch(() => '')) || '').trim();
+      if (this.isProviderTileNoise(label)) continue;
+      labels.push(label);
+    }
+    return labels;
+  }
+
+  /**
    * Counts TextViews that look like provider tiles on the Buscar grid (excludes chrome).
    * @returns {Promise<number>}
    */
   async countVisibleProviderTiles() {
-    const skip = /^(buscar|search|proveedores|providers|recientes|recent|popular|todos|all|sin resultados|no results)$/i;
-    const texts = await $$('android.widget.TextView');
-    let count = 0;
-    for (const el of texts) {
-      const label = ((await el.getText().catch(() => '')) || '').trim();
-      if (!label || label.length < 2 || label.length > 48) continue;
-      if (skip.test(label)) continue;
-      if (/^\d+$/.test(label)) continue;
-      if (/\(\d+\)$/.test(label)) continue;
-      count += 1;
+    return (await this.listVisibleProviderTiles()).length;
+  }
+
+  /**
+   * Scrolls the Buscar home past Populares until the Proveedores grid is on screen.
+   */
+  async revealProvidersGrid() {
+    for (let i = 0; i < 6; i++) {
+      const header =
+        (await this.byTextContains('Proveedores').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Providers').isDisplayed().catch(() => false));
+      const known =
+        (await this.byTextContains('AllNovel').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('FreeWebNovel').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Wattpad').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Annas Archive').isDisplayed().catch(() => false));
+      if (header || known) return;
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 1100,
+          direction: 'down',
+          percent: 0.7,
+        })
+        .catch(() => {});
+      await driver.pause(350);
     }
-    return count;
+  }
+
+  /**
+   * Known catalog tile names used for live-filter assertions.
+   * @returns {string[]}
+   */
+  preferredProviderNames() {
+    return [
+      'AllNovel',
+      'FreeWebNovel',
+      'DevilNovels',
+      'Annas Archive',
+      'Wattpad',
+      'FanMTL',
+      'Bright Novel',
+      'Galaxy Novels',
+    ];
+  }
+
+  /**
+   * First visible provider tile name suitable for live filter tests.
+   * Prefers known catalog tiles over Populares novel titles.
+   * @returns {Promise<string|null>}
+   */
+  async firstVisibleProviderTileName() {
+    await this.revealProvidersGrid();
+    for (const name of this.preferredProviderNames()) {
+      if (await this.byTextContains(name).isDisplayed().catch(() => false)) return name;
+    }
+    return null;
   }
 
   /**
@@ -429,8 +504,17 @@ class SearchPage extends BasePage {
       'android=new UiSelector().textContains("Búsqueda")',
     ).isDisplayed().catch(() => false);
     if (busqueda) return true;
+    // Loading MainPage: spinner with no Buscar home chrome.
+    const progress = await $(
+      'android=new UiSelector().className("android.widget.ProgressBar")',
+    )
+      .isDisplayed()
+      .catch(() => false);
+    if (progress) return true;
     const field = await this.searchField.isDisplayed().catch(() => false);
-    return !field;
+    const tab = await this.tabSearch.isDisplayed().catch(() => false);
+    // Left the provider grid (no field / no tab) → treat as provider page / intermediate.
+    return !field && !tab;
   }
 
   /**

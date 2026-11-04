@@ -1,10 +1,8 @@
 const BasePage = require('./base.page');
 
-const APP_ID = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
-
 class HistoryPage extends BasePage {
   get tabHistory() {
-    return this.byId(`${APP_ID}:id/navigation_history`);
+    return this.byId(`${BasePage.appId()}:id/navigation_history`);
   }
 
   get emptyState() {

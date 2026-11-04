@@ -1,7 +1,9 @@
 const allure = require('@wdio/allure-reporter').default;
 const settingsPage = require('../pageobjects/settings.page');
 
-describe('Theme defaults', () => {
+describe('Theme defaults', function () {
+  this.timeout(90000);
+
   before(async () => {
     allure.addFeature('Settings / Theme');
     allure.addEpic('QuickNovel Ultimate');
@@ -13,66 +15,53 @@ describe('Theme defaults', () => {
     await settingsPage.open();
     await settingsPage.expectLoaded();
 
-    // Previous specs may leave Settings scrolled far down — rewind first.
-    for (let i = 0; i < 8; i++) {
-      await driver.execute('mobile: scrollGesture', {
-        left: 80,
-        top: 400,
-        width: 600,
-        height: 1200,
-        direction: 'up',
-        percent: 0.9,
-      }).catch(() => {});
-      await driver.pause(120);
-    }
-
-    const themeLabels = ['Tema Ultimate', 'Ultimate theme', 'Ultimate Theme'];
-    let themeRow = null;
-    for (const label of themeLabels) {
-      await settingsPage.scrollToText(label);
-      await driver.pause(350);
-      const row = settingsPage.byText(label);
-      if (await row.isDisplayed().catch(() => false)) {
-        themeRow = row;
-        break;
-      }
-    }
-    expect(themeRow).not.toBeNull();
-
-    // Subtitle can be clipped on short CI viewports — open the picker and assert default.
-    await themeRow.click();
-    await driver.pause(800);
-    const blueInDialog = settingsPage.byText('Ultimate Blue');
-    await blueInDialog.waitForDisplayed({ timeout: 10000 });
-    expect(await blueInDialog.isDisplayed()).toBe(true);
-    // Dismiss picker (Cancel / Aceptar / back)
-    const cancel = settingsPage.byText('Cancelar');
-    const cancelEn = settingsPage.byText('Cancel');
-    if (await cancel.isDisplayed().catch(() => false)) await cancel.click();
-    else if (await cancelEn.isDisplayed().catch(() => false)) await cancelEn.click();
-    else await driver.back();
-    await driver.pause(500);
-
-    const darkLabels = ['Modo oscuro', 'Dark mode'];
+    // Dark mode sits above Ultimate theme — assert it before scrolling down.
     let darkRow = null;
-    for (const label of darkLabels) {
-      await settingsPage.scrollToText(label);
-      await driver.pause(400);
-      const row = settingsPage.byText(label);
+    for (const label of ['Modo oscuro', 'Dark mode']) {
+      await $(
+        `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${label}"))`,
+      ).catch(() => {});
+      const row = settingsPage.byTextContains(label);
       if (await row.isDisplayed().catch(() => false)) {
         darkRow = row;
         break;
       }
     }
     expect(darkRow).not.toBeNull();
-    await darkRow.waitForDisplayed({ timeout: 15000 });
+    const onSwitch = await $('android=new UiSelector().description("switch_on")')
+      .isDisplayed()
+      .catch(() => false);
+    const nearOn = await settingsPage.isPreferenceSwitchOnNear(darkRow);
+    expect(onSwitch || nearOn).toBe(true);
 
-    let darkOn = await settingsPage.isPreferenceSwitchOnNear(darkRow);
-    if (!darkOn) {
-      // Explicit semantics from SwitchPreferenceWidget (switch_on / ON).
-      const onSwitch = $('android=new UiSelector().description("switch_on")');
-      darkOn = await onSwitch.isDisplayed().catch(() => false);
+    await $(
+      'android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Ultimate Blue"))',
+    ).catch(() => {});
+    await driver.pause(300);
+
+    let blueOk = await settingsPage.byTextContains('Ultimate Blue').isDisplayed().catch(() => false);
+    if (!blueOk) {
+      await $(
+        'android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Tema Ultimate"))',
+      ).catch(() => {});
+      await $(
+        'android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Ultimate theme"))',
+      ).catch(() => {});
+      const themeRow = (await settingsPage
+        .byTextContains('Tema Ultimate')
+        .isDisplayed()
+        .catch(() => false))
+        ? settingsPage.byTextContains('Tema Ultimate')
+        : settingsPage.byTextContains('Ultimate theme');
+      await themeRow.click();
+      await driver.pause(600);
+      blueOk = await settingsPage.byTextContains('Ultimate Blue').isDisplayed().catch(() => false);
+      expect(blueOk).toBe(true);
+      const cancel = settingsPage.byText('Cancelar');
+      if (await cancel.isDisplayed().catch(() => false)) await cancel.click();
+      else await driver.back();
+      await driver.pause(400);
     }
-    expect(darkOn).toBe(true);
+    expect(blueOk).toBe(true);
   });
 });

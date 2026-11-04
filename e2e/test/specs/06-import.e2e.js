@@ -15,6 +15,10 @@ describe('Import book (Import-B)', function () {
     await libraryPage.waitReady();
   });
 
+  after(async () => {
+    await libraryPage.recoverMainApp().catch(() => {});
+  });
+
   it('shows Fire drop-zone with EPUB/PDF hint under search', async () => {
     allure.addSeverity('critical');
     await libraryPage.open();

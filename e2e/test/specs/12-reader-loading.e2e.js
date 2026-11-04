@@ -12,6 +12,10 @@ describe('Reader Glyph Pulse loading', function () {
     await libraryPage.waitReady();
   });
 
+  after(async () => {
+    await libraryPage.recoverMainApp().catch(() => {});
+  });
+
   it('shows Glyph Pulse (本) without raw URL, or opens reader from cache', async () => {
     allure.addSeverity('critical');
 
