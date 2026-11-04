@@ -38,6 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -263,6 +267,15 @@ internal fun BasePreferenceWidget(
     val iconStyle = LocalIconStyle.current
     val surface = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)
 
+    // Merge title into one clickable a11y node so TalkBack/UiAutomator hit the row, not orphan TextViews.
+    fun Modifier.preferenceRowSemantics(): Modifier {
+        if (onClick == null || title.isNullOrBlank()) return this
+        return semantics(mergeDescendants = true) {
+            role = Role.Button
+            contentDescription = title
+        }
+    }
+
     if (style == 2) {
         Column(
             modifier = modifier
@@ -270,6 +283,7 @@ internal fun BasePreferenceWidget(
                 .clip(RoundedCornerShape(18.dp))
                 .background(surface)
                 .highlightBackground(highlighted)
+                .preferenceRowSemantics()
                 .clickable(enabled = onClick != null, onClick = { onClick?.invoke() })
                 .padding(top = 14.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -316,6 +330,7 @@ internal fun BasePreferenceWidget(
             .highlightBackground(highlighted)
             .focusOutline()
             .sizeIn(minHeight = minHeight)
+            .preferenceRowSemantics()
             .clickable(enabled = onClick != null, onClick = { onClick?.invoke() })
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
