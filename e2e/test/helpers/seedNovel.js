@@ -158,12 +158,11 @@ async function openReaderViaSearch() {
     return false;
   }
 
-  const covers = await $$('android.widget.ImageView');
-  for (const el of covers) {
-    if (!(await el.isDisplayed().catch(() => false))) continue;
+  const covers = await searchPage.findNovelCoverElements();
+  for (const el of covers.slice(0, 5)) {
     await el.click().catch(() => {});
     await driver.pause(2500);
-    break;
+    if (await readerPage.isReaderVisible()) break;
   }
 
   const stream = await $('android=new UiSelector().textContains("Leer en línea")');

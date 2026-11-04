@@ -59,40 +59,29 @@ class ResultPage extends BasePage {
       await searchPage.open();
       await searchPage.expectLoaded();
     }
-    await searchPage.search(query, 55000);
-    // SearchResults = provider SearchRows with cover ImageViews (not legacy chips).
-    const covers = await $$('android.widget.ImageView');
-    let tapped = false;
+    await searchPage.search(query, 70000);
+    // Coil covers use novel title as contentDescription (Compose — not always ImageView).
+    const covers = await searchPage.findNovelCoverElements();
     for (const el of covers) {
-      if (!(await el.isDisplayed().catch(() => false))) continue;
-      const clickable = (await el.getAttribute('clickable').catch(() => 'false')) === 'true';
-      // Covers may not be marked clickable; parent row item still receives the tap.
       await el.click().catch(() => {});
       await driver.pause(2500);
-      if (await this.isDetailVisible()) {
-        tapped = true;
-        break;
-      }
-      if (clickable) {
-        tapped = true;
-        break;
-      }
+      if (await this.isDetailVisible()) return true;
     }
-    if (!tapped) {
-      const candidates = await $$(
-        'android=new UiSelector().className("android.widget.TextView").clickable(true)',
-      );
-      for (const el of candidates) {
-        const t = ((await el.getText().catch(() => '')) || '').trim();
-        if (!t || t.length < 8 || t.length > 100) continue;
-        if (/Proveedores|Buscar|Biblioteca|Historial|Ajustes|Secciones|Volver/i.test(t)) continue;
+    // Fallback: open a SearchRow (provider header) then first cover in the dialog/list.
+    const row = await $(
+      'android=new UiSelector().className("android.widget.TextView").textMatches("(?i).*(Wattpad|Royal|Novel|Wuxia|Sky|Devil).*")',
+    );
+    if (await row.isDisplayed().catch(() => false)) {
+      await row.click().catch(() => {});
+      await driver.pause(1500);
+      const more = await searchPage.findNovelCoverElements();
+      for (const el of more) {
         await el.click().catch(() => {});
         await driver.pause(2500);
-        break;
+        if (await this.isDetailVisible()) return true;
       }
     }
-    // Wait briefly for detail chrome (download / chapters / read).
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 12; i++) {
       if (await this.isDetailVisible()) return true;
       await driver.pause(500);
     }

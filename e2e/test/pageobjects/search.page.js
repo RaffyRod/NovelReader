@@ -535,14 +535,42 @@ class SearchPage extends BasePage {
   }
 
   /**
-   * True when SearchRow results (covers / provider headers) are on screen.
+   * Chrome / nav labels that are not novel cover contentDescriptions.
+   * @param {string} label
+   */
+  isSearchChromeDescription(label) {
+    if (!label || label.length < 4 || label.length > 140) return true;
+    return /^(Buscar|Search|Proveedores|Providers|Biblioteca|Library|Historial|History|Ajustes|Settings|Secciones|Sections|Volver|Back|Navigate|Ordenar|Import|EPUB|PDF)$/i.test(
+      label.trim(),
+    );
+  }
+
+  /**
+   * Coil covers expose the novel title as contentDescription (Compose).
+   * @returns {Promise<WebdriverIO.Element[]>}
+   */
+  async findNovelCoverElements() {
+    const nodes = await $$(
+      'android=new UiSelector().descriptionMatches(".{5,120}")',
+    );
+    const covers = [];
+    for (const el of nodes) {
+      const desc = ((await el.getAttribute('contentDescription').catch(() => '')) || '').trim();
+      if (this.isSearchChromeDescription(desc)) continue;
+      if (/^\d+$/.test(desc)) continue;
+      covers.push(el);
+    }
+    return covers;
+  }
+
+  /**
+   * True when SearchRow results (covers via a11y desc / provider headers) are on screen.
    * @returns {Promise<boolean>}
    */
   async hasSearchResultRows() {
     if (await this.noResults.isDisplayed().catch(() => false)) return false;
-    const images = await $$('android.widget.ImageView');
-    // Covers in LazyRow — more than chrome icons once results land.
-    if (images.length >= 4) return true;
+    const covers = await this.findNovelCoverElements();
+    if (covers.length >= 1) return true;
     const chipCount = await this.countResultChipLabels();
     return chipCount > 0;
   }
@@ -578,10 +606,12 @@ class SearchPage extends BasePage {
         stableRounds += 1;
       }
 
-      // Modern UI: query open, spinner gone, rows or empty state.
+      // Modern UI: query open, spinner gone, covers (a11y) or empty state.
       if (queryOpen && !progress && stableRounds >= 2 && (hasRows || noResults || resultsSeen)) {
         return;
       }
+      // Spinner gone after loading even if a11y covers are slow to register.
+      if (queryOpen && loadingSeen && !progress && stableRounds >= 4) return;
       if (chipCount > 0 && !progress && stableRounds >= 2) return;
       if (loadingSeen && providersVisible && !progress && stableRounds >= 3) return;
       if (noResults && stableRounds >= 2) return;
@@ -589,8 +619,8 @@ class SearchPage extends BasePage {
       if (!loadingSeen && !queryOpen && providersVisible && Date.now() - started > 25000) {
         throw new Error('Search did not start (still on provider grid after 25s)');
       }
-      if (loadingSeen && !resultsSeen && !noResults && Date.now() - started > 50000) {
-        throw new Error('Search loading >50s with no result rows');
+      if (loadingSeen && !resultsSeen && !noResults && Date.now() - started > 70000) {
+        throw new Error('Search loading >70s with no result covers');
       }
       if (!loadingSeen && !providersEver && !queryOpen && Date.now() - started > 20000) {
         const field = await this.searchField.isDisplayed().catch(() => false);
