@@ -86,7 +86,7 @@ function seedEpubMediaStoreUri() {
   const queryCmd =
     `content query --uri content://media/external/file --projection _id ` +
     `--where "_display_name='${FIXTURE_NAME}'"`;
-  for (let i = 0; i < 25; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     let out = '';
     try {
       out = adb(['shell', queryCmd]);
@@ -97,7 +97,7 @@ function seedEpubMediaStoreUri() {
     if (match) {
       return `content://media/external/file/${match[1]}`;
     }
-    adbSleepMs(400);
+    adbSleepMs(300);
   }
   throw new Error(`MediaStore did not index ${FIXTURE_NAME}`);
 }
@@ -171,8 +171,8 @@ async function openReaderViaEpubIntent() {
     '--grant-read-uri-permission',
     '--grant-write-uri-permission',
   ]);
-  await driver.pause(2500);
-  const deadline = Date.now() + 25000;
+  await driver.pause(1500);
+  const deadline = Date.now() + 15000;
   while (Date.now() < deadline) {
     if (await readerPage.byId(`${appId()}:id/fail_text`).isDisplayed().catch(() => false)) {
       const msg = await readerPage.byId(`${appId()}:id/fail_text`).getText().catch(() => '');

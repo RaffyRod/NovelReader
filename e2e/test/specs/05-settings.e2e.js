@@ -2,7 +2,7 @@ const allure = require('@wdio/allure-reporter').default;
 const settingsPage = require('../pageobjects/settings.page');
 
 describe('Settings', function () {
-  this.timeout(90000);
+  this.timeout(45000);
 
   before(async () => {
     allure.addFeature('Settings');
@@ -17,9 +17,7 @@ describe('Settings', function () {
 
     let darkRow = null;
     for (const label of ['Modo oscuro', 'Dark mode']) {
-      await $(
-        `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${label}"))`,
-      ).catch(() => {});
+      await settingsPage.scrollToText(label).catch(() => {});
       const row = settingsPage.byTextContains(label);
       if (await row.isDisplayed().catch(() => false)) {
         darkRow = row;
@@ -35,17 +33,9 @@ describe('Settings', function () {
     await settingsPage.open();
     await settingsPage.expectLoaded();
 
-    await $(
-      'android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("Tutorial"))',
-    ).catch(() => {});
-    await $(
-      'android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("(TTS)"))',
-    ).catch(() => {});
-
-    const ttsRow = settingsPage.tutorialTts;
-    await ttsRow.waitForDisplayed({ timeout: 10000 });
-    await ttsRow.click();
-    await driver.pause(700);
+    const opened = await settingsPage.openTutorialTts();
+    expect(opened).toBe(true);
+    await driver.pause(500);
 
     const dialog =
       (await settingsPage.byTextContains('Abre un capítulo').isDisplayed().catch(() => false)) ||

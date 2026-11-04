@@ -82,33 +82,22 @@ class SettingsPage extends BasePage {
 
   async scrollToTutorials() {
     if (await this.tutorialsVisible()) return true;
-    // Short implicit wait — missing markers must not burn the full suite timeout.
-    await driver.setTimeout({ implicit: 2000 }).catch(() => {});
-    try {
-      for (const marker of ['Tutorial', '(TTS)', 'Cómo descargar']) {
-        await $(
-          `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${marker}"))`,
-        ).catch(() => {});
-        if (await this.tutorialsVisible()) return true;
-      }
-      for (let i = 0; i < 10; i++) {
-        await driver
-          .execute('mobile: flingGesture', {
-            left: 100,
-            top: 500,
-            width: 500,
-            height: 1200,
-            direction: 'down',
-            speed: 4000,
-          })
-          .catch(() => {});
-        await driver.pause(200);
-        if (await this.tutorialsVisible()) return true;
-      }
-      return this.tutorialsVisible();
-    } finally {
-      await driver.setTimeout({ implicit: 15000 }).catch(() => {});
+    await driver.setTimeout({ implicit: 0 }).catch(() => {});
+    for (let i = 0; i < 8; i++) {
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 400,
+          width: 600,
+          height: 1200,
+          direction: 'down',
+          percent: 0.85,
+        })
+        .catch(() => {});
+      await driver.pause(150);
+      if (await this.tutorialsVisible()) return true;
     }
+    return this.tutorialsVisible();
   }
 
   async openTutorialTts() {

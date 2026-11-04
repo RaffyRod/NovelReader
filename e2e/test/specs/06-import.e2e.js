@@ -7,7 +7,7 @@ const {
 } = require('../helpers/seedNovel');
 
 describe('Import book (Import-B)', function () {
-  this.timeout(90000);
+  this.timeout(45000);
 
   before(async () => {
     allure.addFeature('Import');
@@ -41,11 +41,7 @@ describe('Import book (Import-B)', function () {
     }
     expect(pickerVisible).toBe(true);
 
-    for (let i = 0; i < 3; i++) {
-      await driver.back().catch(() => {});
-      await driver.pause(250);
-    }
-    await libraryPage.ensureMainChrome(12000);
+    await libraryPage.recoverMainApp();
   });
 
   it('opens sample EPUB and shows fixture title, chapter text, and TTS', async () => {

@@ -130,30 +130,34 @@ class BasePage {
    * Leaves reader / pickers / dialogs until bottom navigation is back.
    * Restarts / relaunches the app if back presses are not enough.
    */
-  async ensureMainChrome(timeoutMs = 12000) {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-      await dismissBlockingDialogs();
+  async ensureMainChrome(timeoutMs = 10000) {
+    const hardDeadline = Date.now() + timeoutMs;
+    await dismissBlockingDialogs();
+    while (Date.now() < hardDeadline) {
+      if (await this.isMainChromeVisible()) return;
       const act = String((await driver.getCurrentActivity().catch(() => '')) || '');
       if (/Launcher$/i.test(act)) {
-        await driver.back().catch(() => {});
         await driver
           .execute('mobile: startActivity', {
             component: `${appId()}/${APP_ACTIVITY}`,
           })
           .catch(() => {});
-        await driver.pause(600);
+        await driver.pause(400);
+        continue;
       }
-      if (await this.isMainChromeVisible()) return;
       await driver.back().catch(() => {});
-      await driver.pause(400);
+      await driver.pause(250);
+    }
+    // Recovery must fit inside the remaining budget (never add another full timeout).
+    const remaining = hardDeadline - Date.now();
+    if (remaining < 1500) {
+      throw new Error('Main bottom navigation not visible before recovery budget');
     }
     await this.recoverMainApp();
-    const verifyUntil = Date.now() + 12000;
-    while (Date.now() < verifyUntil) {
+    while (Date.now() < hardDeadline) {
       if (await this.isMainChromeVisible()) return;
       await dismissBlockingDialogs();
-      await driver.pause(500);
+      await driver.pause(300);
     }
     throw new Error('Main bottom navigation not visible after app recovery');
   }
@@ -166,23 +170,22 @@ class BasePage {
     const target = this.byTextContains(text);
     if (await target.isDisplayed().catch(() => false)) return;
 
-    await $(
-      `android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().textContains("${text}"))`,
-    ).catch(() => {});
-    if (await target.isDisplayed().catch(() => false)) return;
-
-    for (const direction of ['up', 'down', 'up', 'down']) {
-      for (let i = 0; i < 5; i++) {
+    // Prefer gestures — UiScrollable.scrollIntoView can block 30s+ when missing.
+    await driver.setTimeout({ implicit: 0 }).catch(() => {});
+    for (const direction of ['down', 'up', 'down']) {
+      for (let i = 0; i < 4; i++) {
         if (await target.isDisplayed().catch(() => false)) return;
-        await driver.execute('mobile: scrollGesture', {
-          left: 80,
-          top: 400,
-          width: 600,
-          height: 1200,
-          direction,
-          percent: 0.75,
-        }).catch(() => {});
-        await driver.pause(250);
+        await driver
+          .execute('mobile: scrollGesture', {
+            left: 80,
+            top: 400,
+            width: 600,
+            height: 1200,
+            direction,
+            percent: 0.8,
+          })
+          .catch(() => {});
+        await driver.pause(150);
       }
     }
   }
@@ -193,7 +196,7 @@ class BasePage {
    */
   async openTab(tabName) {
     const tryOpen = async () => {
-      await this.ensureMainChrome();
+      await this.ensureMainChrome(8000);
       await dismissBlockingDialogs();
 
       const resId = this.tabResourceId(tabName);
