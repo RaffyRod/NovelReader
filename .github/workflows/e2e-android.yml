@@ -134,9 +134,18 @@ jobs:
   build-apk:
     name: Build & sign APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     needs: [cleanup-artifacts]
     steps:
+      # Same disk pressure as e2e: R8 + AGP OOMs / "No space left" on stock runners.
+      - name: Free disk space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
+            /usr/local/.ghcup 2>/dev/null || true
+          sudo docker system prune -af 2>/dev/null || true
+          df -h
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
@@ -153,9 +162,17 @@ jobs:
         run: ./gradlew :app:assembleRelease --no-daemon -PabiFilter=x86_64
       - name: Sign APK (debug keystore for CI)
         run: |
-          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK" && test -d "$SDK"
+          BUILD_TOOLS=$(ls -d "$SDK"/build-tools/* | sort -V | tail -n1)
+          test -n "$BUILD_TOOLS"
           UNSIGNED=app/build/outputs/apk/release/app-x86_64-release-unsigned.apk
-          test -f "$UNSIGNED"
+          if [ ! -f "$UNSIGNED" ]; then
+            echo "Expected unsigned APK missing; listing outputs:"
+            find app/build/outputs/apk -type f -name '*.apk' -print || true
+            exit 1
+          fi
           KEYSTORE=$HOME/.android/debug.keystore
           mkdir -p "$HOME/.android"
           if [ ! -f "$KEYSTORE" ]; then
@@ -168,6 +185,7 @@ jobs:
           "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android \
             --key-pass pass:android --ks-key-alias androiddebugkey --out "$OUT" "$UNSIGNED"
           ls -lh "$OUT"
+          test -s "$OUT"
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
@@ -175,6 +193,7 @@ jobs:
           path: e2e/apps/QuickNovel-Ultimate.apk
           retention-days: 3
           overwrite: true
+          if-no-files-found: error
 
   # Optional warmer: fill system-images + AVD cache once. Must NOT gate e2e —
   # when this failed, GH skipped the matrix and showed literal "E2E ${{ matrix.suite }}".
