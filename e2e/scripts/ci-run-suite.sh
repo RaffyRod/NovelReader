@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Invoked as a single command by android-emulator-runner (it runs each script: line in a fresh shell).
+# Suites: smoke | general | gates | features | … — "gates" = smoke then general on one AVD boot.
 set -euo pipefail
 
-SUITE="${1:?suite name required (smoke|general|features|features-plugins|features-flows|reader|providers)}"
+SUITE="${1:?suite name required (smoke|general|gates|features|features-plugins|features-flows|reader|providers)}"
 ROOT="${GITHUB_WORKSPACE:-$(cd "$(dirname "$0")/../.." && pwd)}"
 E2E_DIR="$ROOT/e2e"
 APK="$E2E_DIR/apps/QuickNovel-Ultimate.apk"
@@ -118,16 +119,57 @@ export APPIUM_PORT
 # Appium/Android does not need X11 — any non-empty DISPLAY forces plain fork.
 export DISPLAY="${DISPLAY:-:99}"
 
-set +e
-./node_modules/.bin/wdio run ./wdio.conf.js --suite "$SUITE"
-WDIO_EXIT=$?
-set -e
+run_wdio() {
+  local name="$1"
+  echo "===== WDIO suite: ${name} ====="
+  set +e
+  ./node_modules/.bin/wdio run ./wdio.conf.js --suite "$name"
+  local rc=$?
+  set -e
+  if [ "$rc" -ne 0 ]; then
+    echo "===== appium-ci.log (tail) ====="
+    tail -n 120 "$APPIUM_LOG" || true
+    echo "===== adb devices ====="
+    adb devices -l || true
+  fi
+  return "$rc"
+}
 
-if [ "$WDIO_EXIT" -ne 0 ]; then
-  echo "===== appium-ci.log (tail) ====="
-  tail -n 120 "$APPIUM_LOG" || true
-  echo "===== adb devices ====="
-  adb devices -l || true
+# Stash Allure files so a second suite does not wipe the first shard.
+stash_allure() {
+  local shard="$1"
+  mkdir -p "allure-shards/${shard}"
+  if [ -d allure-results ] && [ "$(ls -A allure-results 2>/dev/null || true)" ]; then
+    cp -a allure-results/. "allure-shards/${shard}/"
+  fi
+  rm -rf allure-results
+  mkdir -p allure-results
+}
+
+merge_allure_shards() {
+  mkdir -p allure-results
+  if [ -d allure-shards ]; then
+    find allure-shards -type f -exec cp {} allure-results/ \;
+  fi
+}
+
+FINAL_EXIT=0
+if [ "$SUITE" = "gates" ]; then
+  # One AVD + Appium: smoke gate, then general (saves a full cold-boot job).
+  if ! run_wdio smoke; then
+    FINAL_EXIT=1
+  else
+    stash_allure smoke
+    if ! run_wdio general; then
+      FINAL_EXIT=1
+    fi
+    stash_allure general
+    merge_allure_shards
+  fi
+else
+  if ! run_wdio "$SUITE"; then
+    FINAL_EXIT=1
+  fi
 fi
 
-exit "$WDIO_EXIT"
+exit "$FINAL_EXIT"

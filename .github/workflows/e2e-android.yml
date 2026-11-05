@@ -13,7 +13,7 @@ concurrency:
 
 env:
   # Shared emulator profile — keep in sync across prepare-emulator + e2e jobs.
-  # Pipeline: validate → unit → build-apk → smoke → general (one gate at a time).
+  # Pipeline: unit → build-apk → e2e gates (smoke then general, one AVD boot).
   # prepare-emulator may warm the AVD cache in parallel with unit/build (optional).
   # google_apis (not AOSP default): proven on this runner; avoid hardcoding ANDROID_SDK_ROOT
   # (overrides setup-android and breaks sdkmanager → prepare-emulator exit 1).
@@ -72,44 +72,12 @@ jobs:
               `Deleted ${deleted} artifact(s), ~${(bytes / 1048576).toFixed(1)} MB freed`
             );
 
-  validate:
-    name: Validate i18n & timing
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    needs: [cleanup-artifacts]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
-      - name: Grant Gradle execute
-        run: chmod +x gradlew
-      - name: Translations + timing + theme defaults
-        run: >
-          ./gradlew :app:testDebugUnitTest --no-daemon
-          --tests com.example.quicknovel.LocaleStringsParityTest
-          --tests com.example.quicknovel.TimingGuardsTest
-          --tests com.lagradost.quicknovel.AppearanceAndThemeDefaultsTest
-          --tests com.example.quicknovel.DownloadTranslateTest
-          --tests com.example.quicknovel.DownloadTranslationGuardTest
-          --tests com.example.quicknovel.ProviderLanguagesTest
-      - name: Upload validate reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: validate-test-reports
-          path: app/build/reports/tests/testDebugUnitTest
-          if-no-files-found: warn
-          retention-days: 3
-          overwrite: true
-
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [validate]
+    # Folded former "validate" job — those tests already live in testDebugUnitTest.
+    needs: [cleanup-artifacts]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -197,7 +165,7 @@ jobs:
           if-no-files-found: error
 
   # Optional warmer: fill system-images + AVD cache while unit/build run.
-  # Must NOT hard-gate e2e (continue-on-error) — smoke still needs a successful APK.
+  # Must NOT hard-gate e2e (continue-on-error) — e2e still needs a successful APK.
   prepare-emulator:
     name: Prepare emulator cache
     runs-on: ubuntu-24.04
@@ -272,39 +240,24 @@ jobs:
           disable-animations: true
           script: echo "AVD + system image ready for cache"
 
-  # Device gates: smoke then general. prepare-emulator is soft (cache only).
-  e2e-smoke:
-    name: E2E smoke
+  # One emulator boot: smoke then general (same gate order, ~6–8m less overhead).
+  e2e:
+    name: E2E gates
     needs: [build-apk, prepare-emulator]
     if: always() && needs.build-apk.result == 'success'
     # ubuntu-latest → 26.04 breaks WDIO worker IPC via xvfb-run (#15685)
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Run smoke suite
+      - name: Run smoke then general
         uses: ./.github/actions/e2e-emulator-suite
         with:
-          suite: smoke
-
-  e2e-general:
-    name: E2E general
-    needs: [e2e-smoke]
-    # Long suite only after smoke green (APK already proven installable).
-    if: always() && needs.e2e-smoke.result == 'success'
-    runs-on: ubuntu-24.04
-    # Target 20–30m green; hard cap so timeout walls cannot burn a full hour.
-    timeout-minutes: 35
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run general suite
-        uses: ./.github/actions/e2e-emulator-suite
-        with:
-          suite: general
+          suite: gates
 
   allure-report:
     name: Merge Allure report
-    needs: [e2e-smoke, e2e-general]
+    needs: [e2e]
     if: always()
     runs-on: ubuntu-latest
     steps:

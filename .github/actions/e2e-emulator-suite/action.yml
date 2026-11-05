@@ -1,8 +1,8 @@
 name: E2E emulator suite
-description: Free disk, restore emulator cache, install deps, boot AVD, run one WDIO suite
+description: Free disk, restore emulator cache, install deps, boot AVD, run WDIO suite(s)
 inputs:
   suite:
-    description: WDIO suite name (smoke, general, …)
+    description: WDIO suite name (smoke, general, gates, …). gates = smoke then general on one boot.
     required: true
 runs:
   using: composite
