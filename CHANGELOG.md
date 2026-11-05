@@ -4,6 +4,22 @@ All notable changes to **QuickNovel Ultimate** are listed here.
 Manual **Release → Telegram** auto-bumps `versionName` / `versionCode` when there are
 new commits since the last `v2.*` tag, then posts style **D** from `### Added` / `### Fixed`.
 
+## 2.0.6
+
+### Added
+- Settings hub **Configuración / Administración** (mock 9 split)
+- CI Unit ∥ Build → E2E gates (smoke then general, one emulator boot)
+- Allure **single-file** HTML report (doble clic)
+
+### Fixed
+- Same-URL provider toggles stay independent
+- E2E download-translate timeout / chapter-numbers empty TOC
+- GitHub Actions Node 24 deprecations · pin `ubuntu-24.04`
+
+### Notes
+- Package: `com.ultimateSoft.quicknovel.ultimate` · versionCode 206
+- New package id — install as new app (does not update `com.lagradost.quicknovel.ultimate`)
+
 ## 2.0.3
 
 ### Fixed
