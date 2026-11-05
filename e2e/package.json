@@ -30,10 +30,10 @@
     "pretest:features": "npm run providers:generate",
     "pretest:reader": "npm run providers:generate",
     "pretest:sections": "npm run providers:generate",
-    "allure:generate": "npx allure awesome ./allure-results --output ./allure-report-v3",
+    "allure:generate": "npx allure awesome ./allure-results --single-file -o ./allure-report-v3",
     "allure:open": "npx allure open ./allure-report-v3 --host 127.0.0.1 --port 52525",
-    "allure:serve": "npx allure awesome ./allure-results --output ./allure-report-v3 && npx allure open ./allure-report-v3 --host 127.0.0.1 --port 52525",
-    "allure:report": "npm run allure:serve"
+    "allure:serve": "npm run allure:generate && npx allure open ./allure-report-v3 --host 127.0.0.1 --port 52525",
+    "allure:report": "npm run allure:generate"
   },
   "devDependencies": {
     "@wdio/allure-reporter": "^9.16.2",
