@@ -2,7 +2,7 @@ const BasePage = require('./base.page');
 
 class SettingsPage extends BasePage {
   get tabSettings() {
-    const pkg = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+    const pkg = process.env.APP_PACKAGE || 'com.ultimateSoft.quicknovel.ultimate';
     return this.byId(`${pkg}:id/navigation_settings`);
   }
 

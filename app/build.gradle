@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.lagradost.quicknovel.ultimate"
+        applicationId "com.ultimateSoft.quicknovel.ultimate"
         minSdkVersion 23
         targetSdkVersion 37
         versionCode 205

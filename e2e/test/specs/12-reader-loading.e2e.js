@@ -33,7 +33,7 @@ describe('Reader Glyph Pulse loading', function () {
       expect(await hasFixtureContent()).toBe(true);
       const failShown = await readerPage
         .byId(
-          `${process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate'}:id/read_fail`,
+          `${process.env.APP_PACKAGE || 'com.ultimateSoft.quicknovel.ultimate'}:id/read_fail`,
         )
         .isDisplayed()
         .catch(() => false);

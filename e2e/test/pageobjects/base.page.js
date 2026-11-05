@@ -4,7 +4,7 @@ const APP_ACTIVITY = 'com.lagradost.quicknovel.MainActivity';
 
 /** @returns {string} live applicationId (must not be frozen at require-time). */
 function appId() {
-  return process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+  return process.env.APP_PACKAGE || 'com.ultimateSoft.quicknovel.ultimate';
 }
 
 /** Bottom-nav id suffixes (locale-independent). */

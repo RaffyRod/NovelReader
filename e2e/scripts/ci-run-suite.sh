@@ -69,8 +69,8 @@ ls -lh "$APK"
 
 # Pre-install so session create is not the first APK push (still may reinstall with noReset:false).
 echo "Pre-installing APK..."
-adb uninstall com.lagradost.quicknovel.ultimate >/dev/null 2>&1 || true
-adb uninstall com.lagradost.quicknovel.ultimate.debug >/dev/null 2>&1 || true
+adb uninstall com.ultimateSoft.quicknovel.ultimate >/dev/null 2>&1 || true
+adb uninstall com.ultimateSoft.quicknovel.ultimate.debug >/dev/null 2>&1 || true
 INSTALL_OK=0
 for attempt in 1 2 3; do
   if adb install -r -g "$APK"; then
@@ -84,7 +84,7 @@ if [ "$INSTALL_OK" != "1" ]; then
   echo "adb install failed after retries"
   exit 1
 fi
-adb shell pm path com.lagradost.quicknovel.ultimate
+adb shell pm path com.ultimateSoft.quicknovel.ultimate
 
 cd "$E2E_DIR"
 

@@ -31,7 +31,7 @@ async function dismissBlockingDialogs() {
         await driver.pause(200);
       }
     }
-    const pkg = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+    const pkg = process.env.APP_PACKAGE || 'com.ultimateSoft.quicknovel.ultimate';
     const hasNav = await $(
       `android=new UiSelector().resourceId("${pkg}:id/navigation_download")`,
     )

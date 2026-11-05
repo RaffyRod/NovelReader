@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test (release or .debug suffix).
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertTrue(appContext.packageName.startsWith("com.lagradost.quicknovel.ultimate"))
+        assertTrue(appContext.packageName.startsWith("com.ultimateSoft.quicknovel.ultimate"))
     }
 }

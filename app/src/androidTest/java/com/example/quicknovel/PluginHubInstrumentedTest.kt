@@ -32,7 +32,7 @@ class PluginHubInstrumentedTest {
     fun appContext_usesUltimatePackageFamily() {
         assertTrue(
             "Unexpected package: ${context.packageName}",
-            context.packageName.startsWith("com.lagradost.quicknovel.ultimate"),
+            context.packageName.startsWith("com.ultimateSoft.quicknovel.ultimate"),
         )
     }
 

@@ -2,7 +2,7 @@ const BasePage = require('./base.page');
 
 /** @returns {string} */
 function pkg() {
-  return process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+  return process.env.APP_PACKAGE || 'com.ultimateSoft.quicknovel.ultimate';
 }
 
 class ReaderPage extends BasePage {

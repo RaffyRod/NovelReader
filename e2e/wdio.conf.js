@@ -58,7 +58,7 @@ const appPath = resolveAppPath();
 const APP_ID =
   process.env.APP_PACKAGE ||
   detectPackageFromApk(appPath) ||
-  'com.lagradost.quicknovel.ultimate';
+  'com.ultimateSoft.quicknovel.ultimate';
 process.env.APP_PACKAGE = APP_ID;
 const appiumHost = process.env.APPIUM_HOST || '127.0.0.1';
 const appiumPort = Number(process.env.APPIUM_PORT || 4723);

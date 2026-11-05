@@ -65,7 +65,7 @@ describe('Search novels', function () {
     allure.addSeverity('critical');
     this.timeout(60000);
     const { execFileSync } = require('child_process');
-    const pkg = process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+    const pkg = process.env.APP_PACKAGE || 'com.ultimateSoft.quicknovel.ultimate';
 
     await searchPage.open();
     await searchPage.expectLoaded();

@@ -17,7 +17,7 @@ Fork of [QuickNovel](https://github.com/LagradOst/QuickNovel) with Ultimate bran
 | | |
 |---|---|
 | 🏷️ **Version** | **2.0.1** (`versionCode` 201) |
-| 📦 **Package** | `com.lagradost.quicknovel.ultimate` |
+| 📦 **Package** | `com.ultimateSoft.quicknovel.ultimate` |
 | 🌙 **Defaults** | Dark mode **ON** · **Ultimate Blue** · English providers **ON** |
 | 📥 **Download** | [Releases](https://github.com/RaffyRod/NovelReader/releases) · universal APK · or run **Release → Telegram** (manual) |
 | 🧑‍💻 **Repo** | https://github.com/RaffyRod/NovelReader |

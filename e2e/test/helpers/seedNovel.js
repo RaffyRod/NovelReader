@@ -16,7 +16,7 @@ const FIXTURE_MARKERS = [
 
 /** @returns {string} */
 function appId() {
-  return process.env.APP_PACKAGE || 'com.lagradost.quicknovel.ultimate';
+  return process.env.APP_PACKAGE || 'com.ultimateSoft.quicknovel.ultimate';
 }
 
 /**
