@@ -12,7 +12,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Shared emulator profile — keep in sync across prepare-emulator + e2e matrix.
+  # Shared emulator profile — keep in sync across prepare-emulator + e2e jobs.
+  # Pipeline: validate → unit → build-apk → smoke → general (one gate at a time).
+  # prepare-emulator may warm the AVD cache in parallel with unit/build (optional).
   # google_apis (not AOSP default): proven on this runner; avoid hardcoding ANDROID_SDK_ROOT
   # (overrides setup-android and breaks sdkmanager → prepare-emulator exit 1).
   EMU_API: 30
@@ -133,7 +135,8 @@ jobs:
     name: Build & sign APK
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    needs: [cleanup-artifacts]
+    # After unit: skip expensive release assemble when JVM tests already failed.
+    needs: [unit]
     steps:
       # Same disk pressure as e2e: R8 + AGP OOMs / "No space left" on stock runners.
       - name: Free disk space
@@ -193,13 +196,14 @@ jobs:
           overwrite: true
           if-no-files-found: error
 
-  # Optional warmer: fill system-images + AVD cache once. Must NOT gate e2e —
-  # when this failed, GH skipped the matrix and showed literal "E2E ${{ matrix.suite }}".
+  # Optional warmer: fill system-images + AVD cache while unit/build run.
+  # Must NOT hard-gate e2e (continue-on-error) — smoke still needs a successful APK.
   prepare-emulator:
     name: Prepare emulator cache
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     continue-on-error: true
+    needs: [cleanup-artifacts]
     steps:
       # ~2GB system-image cache failed with "No space left on device" on stock runners.
       # Must recreate /usr/local/lib/android owned by runner — setup-android cannot mkdir there (EACCES).
@@ -268,7 +272,7 @@ jobs:
           disable-animations: true
           script: echo "AVD + system image ready for cache"
 
-  # Smoke first (fast gate). General waits so a red smoke skips the second emulator boot.
+  # Device gates: smoke then general. prepare-emulator is soft (cache only).
   e2e-smoke:
     name: E2E smoke
     needs: [build-apk, prepare-emulator]
@@ -285,9 +289,9 @@ jobs:
 
   e2e-general:
     name: E2E general
-    needs: [build-apk, prepare-emulator, e2e-smoke]
-    # Only burn the long suite when smoke is green (and APK built).
-    if: always() && needs.build-apk.result == 'success' && needs.e2e-smoke.result == 'success'
+    needs: [e2e-smoke]
+    # Long suite only after smoke green (APK already proven installable).
+    if: always() && needs.e2e-smoke.result == 'success'
     runs-on: ubuntu-24.04
     # Target 20–30m green; hard cap so timeout walls cannot burn a full hour.
     timeout-minutes: 35
