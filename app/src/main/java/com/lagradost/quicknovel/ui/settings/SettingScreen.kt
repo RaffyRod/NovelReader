@@ -385,6 +385,28 @@ object SettingScreen : SearchableSettings {
                     ),
                 )
             ),
+            // Mock 1: Información — Acerca abre hoja con CTA a Política.
+            Preference.PreferenceGroup(
+                title = stringResource(R.string.about_group),
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.info_24px),
+                        title = stringResource(R.string.about_title),
+                        subtitle = stringResource(R.string.about_subtitle),
+                        onClick = {
+                            hostActivity?.let { AboutPrivacyDialogs.showAbout(it) }
+                        },
+                    ),
+                    Preference.PreferenceItem.TextPreference(
+                        icon = painterResource(R.drawable.article_24px),
+                        title = stringResource(R.string.privacy_title),
+                        subtitle = stringResource(R.string.privacy_subtitle),
+                        onClick = {
+                            hostActivity?.let { AboutPrivacyDialogs.showPrivacy(it) }
+                        },
+                    ),
+                )
+            ),
             // Plugins / custom providers — Administración tab.
             Preference.PreferenceGroup(
                 title = stringResource(R.string.cp_group),

@@ -314,4 +314,31 @@
     <string name="cp_blog_fail">Этот блог недействителен или не работает: %1$s</string>
     <string name="cp_blog_mode_index">список</string>
     <string name="cp_blog_mode_feed">лента</string>
+
+    <!-- О приложении / Конфиденциальность -->
+    <string name="about_group">Информация</string>
+    <string name="about_title">О приложении</string>
+    <string name="about_subtitle">Версия, лицензия и конфиденциальность</string>
+    <string name="about_tagline">Читалка новелл · Ultimate Blue</string>
+    <string name="about_version_label">Версия</string>
+    <string name="about_package_label">Пакет</string>
+    <string name="about_build_label">Сборка</string>
+    <string name="about_version_value">%1$s (%2$d)</string>
+    <string name="about_open_privacy">Открыть политику</string>
+    <string name="privacy_title">Политика конфиденциальности</string>
+    <string name="privacy_subtitle">Какие данные использует QuickNovel Ultimate</string>
+    <string name="privacy_intro">QuickNovel Ultimate уважает вашу конфиденциальность. Здесь описано, какие данные используются при чтении и загрузке.</string>
+    <string name="privacy_s1">Что мы не собираем</string>
+    <string name="privacy_p1">Аккаунт, email и вход не требуются. Мы не продаём персональные данные.</string>
+    <string name="privacy_s2">Хранение на устройстве</string>
+    <string name="privacy_p2">Новеллы, история, настройки и переводы хранятся на телефоне. Их можно удалить в приложении или при удалении приложения.</string>
+    <string name="privacy_s3">Сеть и провайдеры</string>
+    <string name="privacy_p3">Поиск и главы обращаются к выбранным вами сайтам/провайдерам по их правилам.</string>
+    <string name="privacy_s4">Перевод</string>
+    <string name="privacy_p4">При включённом переводе текст главы отправляется в выбранный сервис (например Google/Gemini) только для перевода.</string>
+    <string name="privacy_s5">Обновления</string>
+    <string name="privacy_p5">Проверка обновлений может обращаться к серверу релизов. Библиотека не загружается.</string>
+    <string name="privacy_s6">Контакты</string>
+    <string name="privacy_p6">Вопросы о конфиденциальности — через канал поддержки в разделе «О приложении».</string>
+    <string name="privacy_updated">Обновлено: ноябрь 2026</string>
 </resources>

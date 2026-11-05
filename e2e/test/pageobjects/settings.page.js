@@ -195,6 +195,426 @@ class SettingsPage extends BasePage {
     return false;
   }
 
+  get aboutGroup() {
+    return this.byTextContains('Información');
+  }
+
+  get aboutGroupEn() {
+    return this.byTextContains('Information');
+  }
+
+  /** Compose preference rows expose the title as content-desc (merged click target). */
+  get aboutTitle() {
+    return this.byA11y('Acerca de');
+  }
+
+  get aboutTitleEn() {
+    return this.byA11y('About');
+  }
+
+  get aboutTitleText() {
+    return this.byText('Acerca de');
+  }
+
+  get aboutTitleTextEn() {
+    return this.byText('About');
+  }
+
+  get privacyTitle() {
+    return this.byA11y('Política de privacidad');
+  }
+
+  get privacyTitleEn() {
+    return this.byA11y('Privacy policy');
+  }
+
+  get privacyTitleText() {
+    return this.byText('Política de privacidad');
+  }
+
+  get privacyTitleTextEn() {
+    return this.byText('Privacy policy');
+  }
+
+  get aboutSheet() {
+    return this.byA11y('about_sheet');
+  }
+
+  get privacySheet() {
+    return this.byA11y('privacy_sheet');
+  }
+
+  get aboutOpenPrivacy() {
+    return this.byA11y('about_open_privacy');
+  }
+
+  get aboutClose() {
+    return this.byA11y('about_close');
+  }
+
+  get privacyClose() {
+    return this.byA11y('privacy_close');
+  }
+
+  /**
+   * True when About / Privacy preference rows (Información group) are visible.
+   * @returns {Promise<boolean>}
+   */
+  async aboutSectionVisible() {
+    return (
+      (await this.aboutGroup.isDisplayed().catch(() => false)) ||
+      (await this.aboutGroupEn.isDisplayed().catch(() => false)) ||
+      (await this.aboutTitle.isDisplayed().catch(() => false)) ||
+      (await this.aboutTitleEn.isDisplayed().catch(() => false)) ||
+      (await this.privacyTitle.isDisplayed().catch(() => false)) ||
+      (await this.privacyTitleEn.isDisplayed().catch(() => false)) ||
+      (await this.aboutTitleText.isDisplayed().catch(() => false)) ||
+      (await this.aboutTitleTextEn.isDisplayed().catch(() => false)) ||
+      (await this.privacyTitleText.isDisplayed().catch(() => false)) ||
+      (await this.privacyTitleTextEn.isDisplayed().catch(() => false))
+    );
+  }
+
+  /**
+   * Scrolls Configuration until the Información / About preference group is visible.
+   * @returns {Promise<boolean>}
+   */
+  async scrollToAbout() {
+    await this.selectMenuTab('config');
+    if (await this.aboutSectionVisible()) return true;
+    await this.rewindSettingsTop();
+    await this.selectMenuTab('config');
+    if (await this.aboutSectionVisible()) return true;
+    for (let i = 0; i < 12; i++) {
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 900,
+          direction: 'down',
+          percent: 0.45,
+        })
+        .catch(() => {});
+      await driver.pause(160);
+      if (await this.aboutSectionVisible()) return true;
+    }
+    return this.aboutSectionVisible();
+  }
+
+  /**
+   * Opens the About bottom sheet from Settings → Configuration → Información.
+   * @returns {Promise<boolean>}
+   */
+  /**
+   * Taps a preference row by accessibility description (Compose merged title).
+   * Uses page-source bounds + shell tap — more reliable than clickGesture on thin a11y nodes.
+   * @param {string[]} descriptions
+   * @returns {Promise<boolean>}
+   */
+  async tapPreferenceByDescription(descriptions) {
+    const { execFileSync } = require('child_process');
+    const src = String((await driver.getPageSource().catch(() => '')) || '');
+    for (const desc of descriptions) {
+      const esc = desc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(
+        `content-desc="${esc}"[^>]*bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"|bounds="\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]"[^>]*content-desc="${esc}"`,
+      );
+      const m = src.match(re);
+      if (!m) continue;
+      const nums = m.slice(1).filter((v) => v != null);
+      const x1 = Number(nums[0]);
+      const y1 = Number(nums[1]);
+      const x2 = Number(nums[2]);
+      const y2 = Number(nums[3]);
+      const x = Math.round((x1 + x2) / 2);
+      // Thin a11y nodes sit at the bottom of the real row — tap slightly above.
+      let y = Math.round((y1 + y2) / 2);
+      if (y2 - y1 < 48) y = Math.max(200, y1 - 60);
+      if (y > 2550) y = 2400;
+      try {
+        execFileSync('adb', ['shell', 'input', 'tap', String(x), String(y)], {
+          stdio: 'ignore',
+        });
+      } catch (_) {
+        await driver.execute('mobile: clickGesture', { x, y }).catch(() => {});
+      }
+      await driver.pause(900);
+      return true;
+    }
+    // Fallback: UiSelector description + element click.
+    for (const desc of descriptions) {
+      const el = $(`android=new UiSelector().description("${desc}")`);
+      if (await el.isDisplayed().catch(() => false)) {
+        await el.click().catch(async () => {
+          await this.clickPreferenceRow(el);
+        });
+        await driver.pause(900);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Taps the first preference row under the Información / Information group header.
+   * Compose merges the title into a thin non-clickable a11y node; coordinate tap is reliable.
+   * @param {number} rowIndex 0 = About, 1 = Privacy
+   * @returns {Promise<boolean>}
+   */
+  async tapInfoGroupRow(rowIndex) {
+    const { execFileSync } = require('child_process');
+    const headers = [this.aboutGroup, this.aboutGroupEn];
+    for (const header of headers) {
+      if (!(await header.isDisplayed().catch(() => false))) continue;
+      const loc = await header.getLocation();
+      const size = await header.getSize();
+      const x = Math.round(loc.x + Math.min(size.width, 600) / 2);
+      // Group header → first row ~72–96dp; second row another ~72dp.
+      const y = Math.round(loc.y + size.height + 90 + rowIndex * 130);
+      try {
+        execFileSync('adb', ['shell', 'input', 'tap', String(x), String(y)], {
+          stdio: 'ignore',
+        });
+      } catch (_) {
+        await driver.execute('mobile: clickGesture', { x, y }).catch(() => {});
+      }
+      await driver.pause(900);
+      return true;
+    }
+    return this.tapPreferenceByDescription(
+      rowIndex === 0
+        ? ['Acerca de', 'About']
+        : ['Política de privacidad', 'Privacy policy'],
+    );
+  }
+
+  /**
+   * Scrolls until the About a11y row is fully on screen (not clipped by the nav).
+   * @returns {Promise<WebdriverIO.Element|null>}
+   */
+  async bringAboutRowIntoView() {
+    const candidates = () => [
+      this.aboutTitle,
+      this.aboutTitleEn,
+      this.aboutTitleText,
+      this.aboutTitleTextEn,
+    ];
+    for (let step = 0; step < 14; step++) {
+      for (const item of candidates()) {
+        if (!(await item.isDisplayed().catch(() => false))) continue;
+        const loc = await item.getLocation().catch(() => null);
+        const size = await item.getSize().catch(() => null);
+        if (!loc || !size) continue;
+        const midY = loc.y + size.height / 2;
+        // Comfortable band above bottom nav / below app bar.
+        if (midY >= 500 && midY <= 2100 && size.height >= 40) {
+          return item;
+        }
+        // Too low / clipped — scroll down to lift the row.
+        if (midY > 2100 || size.height < 40) {
+          await driver
+            .execute('mobile: scrollGesture', {
+              left: 80,
+              top: 500,
+              width: 600,
+              height: 900,
+              direction: 'down',
+              percent: 0.28,
+            })
+            .catch(() => {});
+          await driver.pause(200);
+          break;
+        }
+      }
+      // Not found yet — keep hunting downward from config top.
+      if (step < 10) {
+        await driver
+          .execute('mobile: scrollGesture', {
+            left: 80,
+            top: 500,
+            width: 600,
+            height: 900,
+            direction: 'down',
+            percent: 0.4,
+          })
+          .catch(() => {});
+        await driver.pause(160);
+      }
+    }
+    for (const item of candidates()) {
+      if (await item.isDisplayed().catch(() => false)) return item;
+    }
+    return null;
+  }
+
+  async openAboutSheet() {
+    await this.open();
+    await this.expectLoaded();
+    await this.selectMenuTab('config');
+    await this.rewindSettingsTop();
+    await this.selectMenuTab('config');
+    const row = await this.bringAboutRowIntoView();
+    if (!row) return false;
+    await this.clickPreferenceRow(row);
+    await driver.pause(800);
+    if (await this.isAboutSheetOpen()) return true;
+    // Fallback: adb tap at expanded hit target above thin a11y bounds.
+    const loc = await row.getLocation().catch(() => null);
+    const size = await row.getSize().catch(() => null);
+    if (loc && size) {
+      const { execFileSync } = require('child_process');
+      const x = Math.round(loc.x + size.width / 2);
+      const y = Math.round(Math.max(400, loc.y - 30));
+      try {
+        execFileSync('adb', ['shell', 'input', 'tap', String(x), String(y)], {
+          stdio: 'ignore',
+        });
+      } catch (_) {
+        await driver.execute('mobile: clickGesture', { x, y }).catch(() => {});
+      }
+      await driver.pause(900);
+    }
+    if (await this.isAboutSheetOpen()) return true;
+    await this.tapInfoGroupRow(0);
+    return this.isAboutSheetOpen();
+  }
+
+  /**
+   * Opens Privacy policy sheet from the hub row (not via About CTA).
+   * @returns {Promise<boolean>}
+   */
+  async openPrivacySheetFromHub() {
+    await this.open();
+    await this.expectLoaded();
+    await this.selectMenuTab('config');
+    await this.rewindSettingsTop();
+    await this.selectMenuTab('config');
+    // Bring About into view first — Privacy is the next row.
+    await this.bringAboutRowIntoView();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const privacyRow =
+        ((await this.privacyTitle.isDisplayed().catch(() => false)) && this.privacyTitle) ||
+        ((await this.privacyTitleEn.isDisplayed().catch(() => false)) && this.privacyTitleEn) ||
+        null;
+      if (privacyRow) {
+        await this.clickPreferenceRow(privacyRow);
+        await driver.pause(800);
+        if (await this.isPrivacySheetOpen()) return true;
+      }
+      await this.tapInfoGroupRow(1);
+      if (await this.isPrivacySheetOpen()) return true;
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 900,
+          direction: 'down',
+          percent: 0.18,
+        })
+        .catch(() => {});
+      await driver.pause(200);
+    }
+    return this.isPrivacySheetOpen();
+  }
+
+  /**
+   * @returns {Promise<boolean>}
+   */
+  async isAboutSheetOpen() {
+    for (let i = 0; i < 6; i++) {
+      if (await this.aboutSheet.isDisplayed().catch(() => false)) return true;
+      if (await this.aboutOpenPrivacy.isDisplayed().catch(() => false)) return true;
+      if (
+        (await this.byTextContains('Ver política de privacidad').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('View privacy policy').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Lector de novelas').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Novel reader').isDisplayed().catch(() => false))
+      ) {
+        return true;
+      }
+      const src = String((await driver.getPageSource().catch(() => '')) || '');
+      if (
+        /about_sheet|about_open_privacy|Ver política de privacidad|View privacy policy|Lector de novelas|Novel reader/i.test(
+          src,
+        )
+      ) {
+        return true;
+      }
+      await driver.pause(350);
+    }
+    return false;
+  }
+
+  /**
+   * @returns {Promise<boolean>}
+   */
+  async isPrivacySheetOpen() {
+    for (let i = 0; i < 6; i++) {
+      if (await this.privacySheet.isDisplayed().catch(() => false)) return true;
+      if (
+        (await this.byTextContains('Datos que no recopilamos').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Data we do not collect').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Última actualización').isDisplayed().catch(() => false)) ||
+        (await this.byTextContains('Last updated').isDisplayed().catch(() => false))
+      ) {
+        return true;
+      }
+      const src = String((await driver.getPageSource().catch(() => '')) || '');
+      if (
+        /privacy_sheet|Datos que no recopilamos|Data we do not collect|Última actualización|Last updated/i.test(
+          src,
+        )
+      ) {
+        return true;
+      }
+      await driver.pause(350);
+    }
+    return false;
+  }
+
+  /**
+   * Taps the privacy CTA inside the About sheet.
+   * @returns {Promise<boolean>}
+   */
+  async tapAboutOpenPrivacy() {
+    const candidates = [
+      this.aboutOpenPrivacy,
+      this.byTextContains('Ver política de privacidad'),
+      this.byTextContains('View privacy policy'),
+    ];
+    for (const btn of candidates) {
+      if (await btn.isDisplayed().catch(() => false)) {
+        await btn.click();
+        await driver.pause(600);
+        return this.isPrivacySheetOpen();
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Dismisses About or Privacy sheet via Close / a11y / back.
+   */
+  async dismissAboutOrPrivacySheet() {
+    const candidates = [
+      this.privacyClose,
+      this.aboutClose,
+      this.byText('Cerrar'),
+      this.byText('Close'),
+    ];
+    for (const btn of candidates) {
+      if (await btn.isDisplayed().catch(() => false)) {
+        await btn.click();
+        await driver.pause(500);
+        return;
+      }
+    }
+    await driver.back().catch(() => {});
+    await driver.pause(500);
+  }
+
   get allowSpecialCharsLabels() {
     return ['Permitir caracteres especiales', 'Allow special characters'];
   }

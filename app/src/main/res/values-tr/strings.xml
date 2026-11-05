@@ -227,4 +227,31 @@
     <string name="cp_blog_fail">Bu blog geçerli değil veya çalışmıyor: %1$s</string>
     <string name="cp_blog_mode_index">liste</string>
     <string name="cp_blog_mode_feed">besleme</string>
+
+    <!-- Hakkında / Gizlilik -->
+    <string name="about_group">Bilgi</string>
+    <string name="about_title">Hakkında</string>
+    <string name="about_subtitle">Sürüm, lisans ve gizlilik</string>
+    <string name="about_tagline">Roman okuyucu · Ultimate Blue</string>
+    <string name="about_version_label">Sürüm</string>
+    <string name="about_package_label">Paket</string>
+    <string name="about_build_label">Derleme</string>
+    <string name="about_version_value">%1$s (%2$d)</string>
+    <string name="about_open_privacy">Gizlilik politikasını gör</string>
+    <string name="privacy_title">Gizlilik politikası</string>
+    <string name="privacy_subtitle">QuickNovel Ultimate hangi verileri kullanır</string>
+    <string name="privacy_intro">QuickNovel Ultimate gizliliğinize saygı duyar. Bu politika, okuma ve indirme sırasında hangi bilgilerin kullanıldığını açıklar.</string>
+    <string name="privacy_s1">Toplamadığımız veriler</string>
+    <string name="privacy_p1">Hesap, e-posta veya oturum açma gerekmez. Kişisel veri satmayız.</string>
+    <string name="privacy_s2">Cihazda depolama</string>
+    <string name="privacy_p2">Romanlar, geçmiş, ayarlar ve çeviriler telefonda kalır. Uygulamadan veya kaldırarak silebilirsiniz.</string>
+    <string name="privacy_s3">Ağ ve sağlayıcılar</string>
+    <string name="privacy_p3">Arama ve bölümler, etkinleştirdiğiniz site/sağlayıcılara gider; onların kuralları geçerlidir.</string>
+    <string name="privacy_s4">Çeviri</string>
+    <string name="privacy_p4">Çeviri açıksa bölüm metni yalnızca çeviri için yapılandırdığınız hizmete (ör. Google/Gemini) gönderilir.</string>
+    <string name="privacy_s5">Güncellemeler</string>
+    <string name="privacy_p5">Güncelleme denetimi bir yayın sunucusuna gidebilir. Kitaplığınız yüklenmez.</string>
+    <string name="privacy_s6">İletişim</string>
+    <string name="privacy_p6">Gizlilik soruları için Hakkında bölümündeki destek kanalını kullanın.</string>
+    <string name="privacy_updated">Son güncelleme: Kasım 2026</string>
 </resources>

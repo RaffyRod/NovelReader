@@ -675,4 +675,31 @@
     <string name="detail_download">Descargar</string>
     <string name="detail_read">Leer en línea</string>
     <string name="detail_read_desc">Leer capítulos en línea sin abrir un EPUB</string>
+
+    <!-- Acerca de / Privacidad (Ajustes → Configuración → Información) -->
+    <string name="about_group">Información</string>
+    <string name="about_title">Acerca de</string>
+    <string name="about_subtitle">Versión, licencia y privacidad</string>
+    <string name="about_tagline">Lector de novelas · Ultimate Blue</string>
+    <string name="about_version_label">Versión</string>
+    <string name="about_package_label">Paquete</string>
+    <string name="about_build_label">Compilación</string>
+    <string name="about_version_value">%1$s (%2$d)</string>
+    <string name="about_open_privacy">Ver política de privacidad</string>
+    <string name="privacy_title">Política de privacidad</string>
+    <string name="privacy_subtitle">Qué datos usa QuickNovel Ultimate</string>
+    <string name="privacy_intro">QuickNovel Ultimate respeta tu privacidad. Esta política explica qué información se usa al leer y descargar novelas.</string>
+    <string name="privacy_s1">Datos que no recopilamos</string>
+    <string name="privacy_p1">No pedimos cuenta, correo ni inicio de sesión para usar la app. No vendemos datos personales.</string>
+    <string name="privacy_s2">Almacenamiento en el dispositivo</string>
+    <string name="privacy_p2">Las novelas, historial, ajustes y traducciones se guardan en tu teléfono. Puedes borrarlos desde la app o desinstalando.</string>
+    <string name="privacy_s3">Red y proveedores</string>
+    <string name="privacy_p3">Al buscar o abrir capítulos, la app contacta sitios/proveedores que tú eliges. Esas peticiones siguen las reglas de cada sitio.</string>
+    <string name="privacy_s4">Traducción</string>
+    <string name="privacy_p4">Si activas traducción, el texto del capítulo se envía al servicio que configures (p. ej. Google/Gemini) solo para ese fin.</string>
+    <string name="privacy_s5">Actualizaciones</string>
+    <string name="privacy_p5">Las comprobaciones de actualización pueden consultar un servidor de releases. No incluyen tu biblioteca.</string>
+    <string name="privacy_s6">Contacto</string>
+    <string name="privacy_p6">Para preguntas sobre privacidad, usa el canal de soporte indicado en Acerca de.</string>
+    <string name="privacy_updated">Última actualización: noviembre 2026</string>
 </resources>

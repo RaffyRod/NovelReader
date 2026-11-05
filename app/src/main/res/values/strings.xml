@@ -714,4 +714,31 @@
     <string name="detail_download">Download</string>
     <string name="detail_read">Read online</string>
     <string name="detail_read_desc">Stream chapters online without opening an EPUB</string>
+
+    <!-- About / Privacy (Settings → Configuration → Information) -->
+    <string name="about_group">Information</string>
+    <string name="about_title">About</string>
+    <string name="about_subtitle">Version, license and privacy</string>
+    <string name="about_tagline">Novel reader · Ultimate Blue</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_package_label">Package</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_version_value">%1$s (%2$d)</string>
+    <string name="about_open_privacy">View privacy policy</string>
+    <string name="privacy_title">Privacy policy</string>
+    <string name="privacy_subtitle">What data QuickNovel Ultimate uses</string>
+    <string name="privacy_intro">QuickNovel Ultimate respects your privacy. This policy explains what information is used when you read and download novels.</string>
+    <string name="privacy_s1">Data we do not collect</string>
+    <string name="privacy_p1">We do not require an account, email, or sign-in to use the app. We do not sell personal data.</string>
+    <string name="privacy_s2">On-device storage</string>
+    <string name="privacy_p2">Novels, history, settings, and translations stay on your phone. You can clear them in-app or by uninstalling.</string>
+    <string name="privacy_s3">Network and providers</string>
+    <string name="privacy_p3">Search and chapter loads contact sites/providers you enable. Those requests follow each site’s rules.</string>
+    <string name="privacy_s4">Translation</string>
+    <string name="privacy_p4">If you enable translation, chapter text is sent to the service you configure (e.g. Google/Gemini) for that purpose only.</string>
+    <string name="privacy_s5">Updates</string>
+    <string name="privacy_p5">Update checks may contact a releases server. They do not upload your library.</string>
+    <string name="privacy_s6">Contact</string>
+    <string name="privacy_p6">For privacy questions, use the support channel listed in About.</string>
+    <string name="privacy_updated">Last updated: November 2026</string>
 </resources>
