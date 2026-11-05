@@ -20,14 +20,15 @@ runs:
         sudo mkdir -p /usr/local/lib/android
         sudo chown -R "$USER:$USER" /usr/local/lib/android
         df -h
-    - uses: actions/setup-java@v4
+    - uses: actions/setup-java@v5
       with:
         distribution: temurin
         java-version: 17
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: 20
         cache: npm
+        package-manager-cache: false
         cache-dependency-path: e2e/package-lock.json
     - name: Enable KVM
       shell: bash
@@ -48,7 +49,7 @@ runs:
         mkdir -p "$SDK/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}"
         df -h
     - name: Emulator cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.android/avd/*
@@ -56,7 +57,7 @@ runs:
           ${{ steps.sdk.outputs.dir }}/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}
         key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v5
     - name: Download APK
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: quicknovel-ultimate-apk
         path: e2e/apps
@@ -85,7 +86,7 @@ runs:
         script: bash e2e/scripts/ci-run-suite.sh ${{ inputs.suite }}
     - name: Upload Allure results (${{ inputs.suite }})
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: allure-results-${{ inputs.suite }}
         path: e2e/allure-results
@@ -106,7 +107,7 @@ runs:
         fi
     - name: Upload Allure HTML
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: allure-report
         path: e2e/allure-report
@@ -115,7 +116,7 @@ runs:
         overwrite: true
     - name: Upload WDIO logs (${{ inputs.suite }})
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: wdio-logs-${{ inputs.suite }}
         path: |
