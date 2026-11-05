@@ -1,36 +1,35 @@
 const allure = require('@wdio/allure-reporter').default;
 const resultPage = require('../pageobjects/result.page');
 const searchPage = require('../pageobjects/search.page');
-const settingsPage = require('../pageobjects/settings.page');
 
 /**
- * Opens novel detail for the download dialog (Popular → search → provider MainPage).
+ * Opens novel detail for the download dialog.
+ * Prefer unified search first — home-cover loops + Settings toggles burned the
+ * previous 90s mocha budget before openFirstFromSearch could finish (CI general).
  * @returns {Promise<boolean>}
  */
 async function openNovelDetailForDownload() {
   await resultPage.recoverMainApp();
   await resultPage.ensureMainChrome(15000);
-  await settingsPage.enableAllSearchProviders().catch(() => {});
 
-  await searchPage.open();
-  await searchPage.expectLoaded();
-
-  // 1) Popular / home covers (contentDescription = novel title).
-  const homeCovers = await searchPage.findNovelCoverElements();
-  for (const el of homeCovers.slice(0, 6)) {
-    await el.click().catch(() => {});
-    await driver.pause(2200);
-    if (await resultPage.isDetailVisible()) return true;
-    await driver.back().catch(() => {});
-    await driver.pause(400);
-    await searchPage.open().catch(() => {});
-  }
-
-  // 2) Unified search → Coil cover by a11y description.
+  // 1) Unified search → Coil cover (English providers default on).
   try {
     if (await resultPage.openFirstFromSearch('amor')) return true;
   } catch (err) {
     console.warn(`openFirstFromSearch(amor): ${err.message || err}`);
+  }
+
+  // 2) Popular / home covers (short pass only).
+  await searchPage.recoverMainApp().catch(() => {});
+  await searchPage.open().catch(() => {});
+  await searchPage.expectLoaded().catch(() => {});
+  const homeCovers = await searchPage.findNovelCoverElements();
+  for (const el of homeCovers.slice(0, 3)) {
+    await el.click().catch(() => {});
+    await driver.pause(2000);
+    if (await resultPage.isDetailVisible()) return true;
+    await driver.back().catch(() => {});
+    await driver.pause(300);
   }
 
   // 3) Provider MainPage → first novel cover.
@@ -41,13 +40,13 @@ async function openNovelDetailForDownload() {
   if (!tile) return false;
   await tile.click();
   await driver.pause(1500);
-  const settled = await searchPage.waitProviderMainPageSettled(60000);
+  const settled = await searchPage.waitProviderMainPageSettled(30000);
   if (!settled.hasCards && !settled.ok) return false;
 
   const pageCovers = await searchPage.findNovelCoverElements();
-  for (const el of pageCovers.slice(0, 8)) {
+  for (const el of pageCovers.slice(0, 6)) {
     await el.click().catch(() => {});
-    await driver.pause(2200);
+    await driver.pause(2000);
     if (await resultPage.isDetailVisible()) return true;
   }
 
@@ -60,14 +59,15 @@ async function openNovelDetailForDownload() {
       continue;
     }
     await el.click().catch(() => {});
-    await driver.pause(2200);
+    await driver.pause(2000);
     if (await resultPage.isDetailVisible()) return true;
   }
   return false;
 }
 
 describe('Download language translation', function () {
-  this.timeout(90000);
+  // Search alone can take ~70s; keep headroom for dialog asserts after open.
+  this.timeout(180000);
 
   before(async () => {
     allure.addFeature('Download translate');

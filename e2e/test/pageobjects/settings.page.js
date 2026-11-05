@@ -346,6 +346,9 @@ class SettingsPage extends BasePage {
   async enableAllSearchProviders() {
     await this.open();
     await this.expectLoaded();
+    // Preference lives under Configuración after the settings menu split.
+    await this.selectMenuTab('config');
+    await this.rewindSettingsTop();
 
     await this.scrollToText('Mostrar proveedores en inglés');
     await driver.pause(500);
