@@ -32,16 +32,11 @@ describe('Settings menu split (Config / Admin)', function () {
     await settingsPage.open();
     await settingsPage.expectLoaded();
     await settingsPage.selectMenuTab('config');
+    // Previous suites may leave Config scrolled past Theme / dark mode.
+    await settingsPage.rewindSettingsTop();
+    await settingsPage.selectMenuTab('config');
 
-    let darkRow = null;
-    for (const label of ['Modo oscuro', 'Dark mode']) {
-      await settingsPage.scrollToText(label).catch(() => {});
-      const row = settingsPage.byTextContains(label);
-      if (await row.isDisplayed().catch(() => false)) {
-        darkRow = row;
-        break;
-      }
-    }
+    const darkRow = await settingsPage.findDarkModePreference();
     expect(darkRow).not.toBeNull();
 
     const fuentesVisible =

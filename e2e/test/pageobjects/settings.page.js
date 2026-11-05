@@ -67,6 +67,58 @@ class SettingsPage extends BasePage {
     await expect(this.tabSettings).toBeDisplayed();
   }
 
+  /**
+   * Finds Dark mode / Modo oscuro on Configuration (text or a11y title).
+   * @returns {Promise<WebdriverIO.Element|null>}
+   */
+  async findDarkModePreference() {
+    const labels = ['Modo oscuro', 'Dark mode'];
+    const tryFind = async () => {
+      for (const label of labels) {
+        const byText = this.byTextContains(label);
+        if (await byText.isDisplayed().catch(() => false)) return byText;
+        const byA11y = this.byA11y(label);
+        if (await byA11y.isDisplayed().catch(() => false)) return byA11y;
+      }
+      // Subtitle / nearby Theme row — still proves Configuration content.
+      for (const label of [
+        'superficie clara',
+        'light surface',
+        'Tema Ultimate',
+        'Ultimate theme',
+      ]) {
+        const el = this.byTextContains(label);
+        if (await el.isDisplayed().catch(() => false)) return el;
+      }
+      return null;
+    };
+
+    let found = await tryFind();
+    if (found) return found;
+
+    await this.selectMenuTab('config');
+    await this.rewindSettingsTop();
+    found = await tryFind();
+    if (found) return found;
+
+    for (let i = 0; i < 8; i++) {
+      await driver
+        .execute('mobile: scrollGesture', {
+          left: 80,
+          top: 500,
+          width: 600,
+          height: 900,
+          direction: 'down',
+          percent: 0.35,
+        })
+        .catch(() => {});
+      await driver.pause(140);
+      found = await tryFind();
+      if (found) return found;
+    }
+    return null;
+  }
+
   get configurationTab() {
     return this.byA11y('settings_tab_configuration');
   }

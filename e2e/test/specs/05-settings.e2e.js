@@ -14,16 +14,10 @@ describe('Settings', function () {
     allure.addSeverity('critical');
     await settingsPage.open();
     await settingsPage.expectLoaded();
+    await settingsPage.selectMenuTab('config');
+    await settingsPage.rewindSettingsTop();
 
-    let darkRow = null;
-    for (const label of ['Modo oscuro', 'Dark mode']) {
-      await settingsPage.scrollToText(label).catch(() => {});
-      const row = settingsPage.byTextContains(label);
-      if (await row.isDisplayed().catch(() => false)) {
-        darkRow = row;
-        break;
-      }
-    }
+    const darkRow = await settingsPage.findDarkModePreference();
     expect(darkRow).not.toBeNull();
     await expect(darkRow).toBeDisplayed();
   });
