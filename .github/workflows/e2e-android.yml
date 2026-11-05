@@ -268,130 +268,39 @@ jobs:
           disable-animations: true
           script: echo "AVD + system image ready for cache"
 
-  e2e:
-    name: E2E ${{ matrix.suite }}
+  # Smoke first (fast gate). General waits so a red smoke skips the second emulator boot.
+  e2e-smoke:
+    name: E2E smoke
     needs: [build-apk, prepare-emulator]
-    # Run whenever the APK built, even if prepare-emulator failed/skipped.
     if: always() && needs.build-apk.result == 'success'
     # ubuntu-latest → 26.04 breaks WDIO worker IPC via xvfb-run (#15685)
     runs-on: ubuntu-24.04
-    timeout-minutes: ${{ matrix.timeout }}
-    continue-on-error: ${{ matrix.soft }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Fast gate — stays its own emulator job.
-          - suite: smoke
-            timeout: 25
-            soft: false
-          # All non-smoke specs in one WDIO run / one emulator cold boot.
-          # (Was 5 parallel jobs × ~10 min boot+setup each.)
-          - suite: general
-            # Target 20–30m green; hard cap so timeout walls cannot burn a full hour.
-            timeout: 35
-            soft: false
+    timeout-minutes: 25
     steps:
-      - name: Free disk space
-        run: |
-          df -h
-          sudo rm -rf /usr/share/dotnet /opt/ghc \
-            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift \
-            /usr/local/.ghcup 2>/dev/null || true
-          sudo rm -rf /usr/local/lib/android
-          sudo mkdir -p /usr/local/lib/android
-          sudo chown -R "$USER:$USER" /usr/local/lib/android
-          sudo docker system prune -af 2>/dev/null || true
-          df -h
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Run smoke suite
+        uses: ./.github/actions/e2e-emulator-suite
         with:
-          distribution: temurin
-          java-version: 17
-      - uses: actions/setup-node@v4
+          suite: smoke
+
+  e2e-general:
+    name: E2E general
+    needs: [build-apk, prepare-emulator, e2e-smoke]
+    # Only burn the long suite when smoke is green (and APK built).
+    if: always() && needs.build-apk.result == 'success' && needs.e2e-smoke.result == 'success'
+    runs-on: ubuntu-24.04
+    # Target 20–30m green; hard cap so timeout walls cannot burn a full hour.
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run general suite
+        uses: ./.github/actions/e2e-emulator-suite
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: e2e/package-lock.json
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - uses: android-actions/setup-android@v4
-        with:
-          packages: platform-tools emulator
-      - name: Resolve SDK root
-        id: sdk
-        run: |
-          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
-          test -n "$SDK" && test -d "$SDK"
-          echo "dir=$SDK" >> "$GITHUB_OUTPUT"
-          mkdir -p "$SDK/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}"
-          df -h
-      - name: Emulator cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-            ${{ steps.sdk.outputs.dir }}/system-images/android-${{ env.EMU_API }}/${{ env.EMU_TARGET }}/${{ env.EMU_ARCH }}
-          key: emu-${{ runner.os }}-api${{ env.EMU_API }}-${{ env.EMU_TARGET }}-${{ env.EMU_ARCH }}-${{ env.EMU_AVD }}-v5
-      - name: Download APK
-        uses: actions/download-artifact@v4
-        with:
-          name: quicknovel-ultimate-apk
-          path: e2e/apps
-      - name: Install E2E deps
-        working-directory: e2e
-        run: |
-          npm ci
-          npx appium driver install uiautomator2 || npx appium driver update uiautomator2 || true
-          test -f apps/QuickNovel-Ultimate.apk
-          ls -lh apps/QuickNovel-Ultimate.apk
-          df -h
-      - name: Run ${{ matrix.suite }} suite
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ env.EMU_API }}
-          target: ${{ env.EMU_TARGET }}
-          arch: ${{ env.EMU_ARCH }}
-          profile: ${{ env.EMU_PROFILE }}
-          avd-name: ${{ env.EMU_AVD }}
-          force-avd-creation: false
-          cores: 2
-          ram-size: 2048M
-          # Cold boot: -no-snapshot-save alone still LOADS default_boot → DeadSystemException
-          # on unlock (adb keyevent 82) after a bad/partial snapshot. Skip load entirely.
-          emulator-options: -no-snapshot-load -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
-          # emulator-runner runs EACH script line in a fresh /bin/sh — use one bash file
-          script: bash e2e/scripts/ci-run-suite.sh ${{ matrix.suite }}
-      - name: Upload Allure results (${{ matrix.suite }})
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-results-${{ matrix.suite }}
-          path: e2e/allure-results
-          if-no-files-found: warn
-          retention-days: 3
-          overwrite: true
-      - name: Upload WDIO logs (${{ matrix.suite }})
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wdio-logs-${{ matrix.suite }}
-          path: |
-            e2e/*.log
-            e2e/appium-ci.log
-            e2e/allure-results
-          if-no-files-found: ignore
-          retention-days: 3
-          overwrite: true
+          suite: general
 
   allure-report:
     name: Merge Allure report
-    needs: [e2e]
+    needs: [e2e-smoke, e2e-general]
     if: always()
     runs-on: ubuntu-latest
     steps:
