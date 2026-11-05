@@ -1,6 +1,7 @@
 package com.lagradost.quicknovel.ui.search
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -137,10 +138,12 @@ object SearchScreen : Screen {
             onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
         }
 
+        // Prefer LocalActivity — CommonActivity.activity can be null mid-recreate (silent no-op).
+        val hostActivity = LocalActivity.current ?: CommonActivity.activity
         ObserveEffect(viewModel.effect) { effect ->
             when (effect) {
                 is HomeEffect.NavigateToMainPage -> {
-                    CommonActivity.activity?.navigate(
+                    hostActivity?.navigate(
                         R.id.global_to_navigation_mainpage,
                         MainPageFragment.newInstance(effect.api, effect.filter)
                     )
@@ -437,6 +440,7 @@ fun MainAPIItem(
     modifier: Modifier = Modifier,
     action: (HomeAction) -> Unit,
 ) {
+    val hostActivity = LocalActivity.current ?: CommonActivity.activity
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -450,7 +454,7 @@ fun MainAPIItem(
                 // Not automatic on select; no extra button on the tile.
                 onClick = { action(HomeAction.Open(api)) },
                 onLongClick = {
-                    val act = CommonActivity.activity ?: return@combinedClickable
+                    val act = hostActivity ?: return@combinedClickable
                     CustomProviderDialogs.showHostHealthForApi(act, api)
                 },
             )

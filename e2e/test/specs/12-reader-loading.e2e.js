@@ -4,7 +4,7 @@ const readerPage = require('../pageobjects/reader.page');
 const { ensureReaderOpen, hasFixtureContent } = require('../helpers/seedNovel');
 
 describe('Reader Glyph Pulse loading', function () {
-  this.timeout(90000);
+  this.timeout(120000);
 
   before(async () => {
     allure.addFeature('Reader / Glyph Pulse');

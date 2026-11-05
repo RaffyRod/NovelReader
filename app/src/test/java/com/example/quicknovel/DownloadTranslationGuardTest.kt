@@ -38,4 +38,19 @@ class DownloadTranslationGuardTest {
         )
         assertFalse(DownloadTranslationGuard.looksTranslated(source, almost))
     }
+
+    @Test
+    fun alreadyInLanguage_detectsSpanishAndSkipsEnglish() {
+        val spanish = LoadedChapter(
+            "Capítulo 1",
+            "<p>El héroe entró en el bosque oscuro y encontró una antigua espada de poder.</p>",
+        )
+        val english = LoadedChapter(
+            "Chapter 1",
+            "<p>The hero walked into the dark forest and found an ancient sword of power.</p>",
+        )
+        assertTrue(DownloadTranslationGuard.alreadyInLanguage(spanish, "es"))
+        assertFalse(DownloadTranslationGuard.alreadyInLanguage(english, "es"))
+        assertTrue(DownloadTranslationGuard.alreadyInLanguage(english, "en"))
+    }
 }

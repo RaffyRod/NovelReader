@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickNovel Ultimate — 10 mocks Config / Admin</title>
+<style>
+  :root {
+    --accent: #1A6CFF;
+    --on-accent: #fff;
+    --bg: #050B18;
+    --surface: #0D1528;
+    --surface2: #121A2C;
+    --text: #E8F1FF;
+    --muted: #8B97AB;
+    --line: rgba(232,241,255,.10);
+    --ok: #00C853;
+    --warn: #FFB300;
+    --page: #0a1224;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--page);
+    color: #e8f1ff;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+  .hero h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -.02em;
+  }
+  .hero p {
+    margin: 0 0 16px;
+    color: #8b97ab;
+    font-size: 14px;
+    line-height: 1.45;
+    max-width: 62ch;
+  }
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 820px) {
+    .controls { grid-template-columns: 1fr 1fr; }
+    .layout { grid-template-columns: 1fr !important; }
+  }
+  label.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: #8b97ab;
+  }
+  select, button.ghost {
+    width: 100%;
+    border: 1px solid #243049;
+    background: #121a2c;
+    color: #e8f1ff;
+    border-radius: 12px;
+    padding: 11px 12px;
+    font: inherit;
+    font-size: 14px;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 360px minmax(0,1fr);
+    gap: 22px;
+    align-items: start;
+  }
+  .phone {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 34px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.4);
+    display: flex;
+    flex-direction: column;
+    min-height: 720px;
+  }
+  .status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .notch {
+    width: 98px;
+    height: 10px;
+    border-radius: 999px;
+    background: #000;
+    margin: 0 auto 2px;
+    opacity: .55;
+  }
+  .appbar {
+    padding: 6px 16px 12px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface2) 80%, transparent), transparent);
+  }
+  .appbar .eyebrow {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 650;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .appbar h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+  }
+  .appbar .hint {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .screen {
+    flex: 1;
+    overflow: auto;
+    padding: 12px 12px 8px;
+    background: var(--bg);
+  }
+  .bnav {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 2px;
+    padding: 8px 6px 16px;
+    border-top: 1px solid var(--line);
+    background: var(--surface2);
+  }
+  .bnav span {
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    padding: 8px 2px;
+    border-radius: 12px;
+  }
+  .bnav .on {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    font-weight: 700;
+  }
+  .panel {
+    background: #0f1729;
+    border: 1px solid #243049;
+    border-radius: 18px;
+    padding: 16px;
+  }
+  .panel h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+  }
+  .panel p, .panel li {
+    color: #8b97ab;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .panel ul { margin: 0 0 14px; padding-left: 18px; }
+  .mock-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 8px;
+  }
+  .mock-pick {
+    text-align: left;
+    border: 1px solid #243049;
+    background: #121a2c;
+    color: #e8f1ff;
+    border-radius: 14px;
+    padding: 12px;
+    cursor: pointer;
+    font: inherit;
+  }
+  .mock-pick strong { display:block; font-size: 13px; margin-bottom: 4px; }
+  .mock-pick span { display:block; font-size: 11px; color: #8b97ab; line-height: 1.35; }
+  .mock-pick.active {
+    border-color: color-mix(in srgb, var(--accent) 70%, #243049);
+    background: color-mix(in srgb, var(--accent) 16%, #121a2c);
+  }
+
+  /* shared preference chrome */
+  .sec {
+    margin: 10px 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .pref {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    margin-bottom: 8px;
+    border-radius: 14px;
+  }
+  .pref.group-first { border-radius: 16px 16px 6px 6px; margin-bottom: 2px; }
+  .pref.group-mid { border-radius: 6px; margin-bottom: 2px; }
+  .pref.group-last { border-radius: 6px 6px 16px 16px; margin-bottom: 10px; }
+  .ico {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .pref .t { font-size: 14px; font-weight: 600; }
+  .pref .s { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+  .chev { margin-left: auto; color: var(--muted); font-size: 18px; opacity: .7; }
+  .sw {
+    margin-left: auto;
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--muted) 35%, transparent);
+    position: relative;
+    flex: none;
+  }
+  .sw.on { background: var(--accent); }
+  .sw::after {
+    content: "";
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .sw.on::after { left: 21px; }
+
+  .portal {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--line);
+    background: var(--surface2);
+    color: var(--text);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font: inherit;
+  }
+  .portal.primary {
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--accent) 28%, var(--surface2)), var(--surface2) 58%);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .portal .kicker {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .portal .title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .portal .desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .portal .meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--accent);
+    font-weight: 650;
+  }
+  .pill.muted {
+    background: color-mix(in srgb, var(--muted) 18%, transparent);
+    color: var(--muted);
+  }
+
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    margin-bottom: 12px;
+  }
+  .seg button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 11px;
+    padding: 11px 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .seg button.on {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .mosaic {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .mcard {
+    border: 1px solid var(--line);
+    background: var(--surface2);
+    border-radius: 16px;
+    padding: 14px 12px;
+    min-height: 108px;
+    text-align: left;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+  }
+  .mcard .ico { margin-bottom: 10px; }
+  .mcard .t { font-size: 13px; font-weight: 700; }
+  .mcard .s { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .railwrap {
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    gap: 8px;
+    min-height: 470px;
+  }
+  .rail {
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .rail button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 12px;
+    padding: 12px 4px;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .rail button.on {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+  }
+  .rail .dot {
+    width: 22px; height: 22px; border-radius: 8px;
+    margin: 0 auto 6px;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: var(--accent);
+    display: grid; place-items: center;
+    font-size: 11px;
+  }
+
+  .searchbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .sheet {
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface2);
+    border-radius: 18px 18px 14px 14px;
+    padding: 14px;
+  }
+  .sheet .handle {
+    width: 36px; height: 4px; border-radius: 999px;
+    background: color-mix(in srgb, var(--muted) 45%, transparent);
+    margin: 0 auto 12px;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    min-height: 480px;
+  }
+  .split > section {
+    border: 1px solid var(--line);
+    background: var(--surface2);
+    border-radius: 16px;
+    padding: 10px;
+    overflow: auto;
+  }
+  .split h4 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 750;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .mini {
+    padding: 9px 4px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .mini:last-child { border-bottom: 0; }
+  .mini span { display:block; font-size: 10px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+
+  .back {
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    padding: 0 0 8px;
+    cursor: pointer;
+  }
+
+  .banner {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface2));
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    margin-bottom: 12px;
+  }
+  .banner strong { display:block; font-size: 13px; }
+  .banner span { display:block; font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+
+  body[data-surface="light"] {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface2: #F1F4FA;
+    --text: #0F1419;
+    --muted: #4A5568;
+    --line: rgba(15,20,25,.10);
+    --page: #e8edf5;
+    --on-accent: #fff;
+  }
+  body[data-surface="light"] .panel,
+  body[data-surface="light"] select,
+  body[data-surface="light"] button.ghost,
+  body[data-surface="light"] .mock-pick {
+    background: #fff;
+    color: #0F1419;
+    border-color: #d5dce8;
+  }
+  body[data-surface="light"] .hero p,
+  body[data-surface="light"] .panel p,
+  body[data-surface="light"] .panel li,
+  body[data-surface="light"] .mock-pick span { color: #4A5568; }
+  body[data-surface="amoled"] {
+    --bg: #000;
+    --surface: #000;
+    --surface2: #121212;
+    --text: #E8F1FF;
+    --muted: #9aa3b5;
+    --line: rgba(255,255,255,.10);
+    --page: #050505;
+  }
+  body[data-accent-light="1"] { --on-accent: #0F1419; }
+</style>
+</head>
+<body data-surface="dark">
+<div class="shell">
+  <div class="hero">
+    <h1>Ajustes partidos · 10 UIs para la app</h1>
+    <p>Mocks a tamaño teléfono con el chrome de QuickNovel Ultimate (nav inferior, fichas de color, acentos Ultimate). Cambia superficie/acento y elige un diseño; toca Configuración / Administración dentro del móvil.</p>
+  </div>
+
+  <div class="controls">
+    <label class="field">Superficie
+      <select id="surface">
+        <option value="dark">Oscuro Ultimate</option>
+        <option value="light">Claro</option>
+        <option value="amoled">Amoled</option>
+      </select>
+    </label>
+    <label class="field">Acento Ultimate
+      <select id="accent">
+        <option value="#1A6CFF">Blue</option>
+        <option value="#E8EEF8">Black</option>
+        <option value="#FF3B1C">Lava</option>
+        <option value="#00C853">Emerald</option>
+        <option value="#7C4DFF">Violet</option>
+        <option value="#FFB300">Gold</option>
+        <option value="#00E5FF">Cyan</option>
+        <option value="#FF4081">Rose</option>
+        <option value="#536DFE">Midnight</option>
+        <option value="#FF1744">Crimson</option>
+        <option value="#90CAF9">Soft</option>
+      </select>
+    </label>
+    <label class="field">Estilo de filas
+      <select id="rowStyle">
+        <option value="1">1 · Fichas de color</option>
+        <option value="3">3 · Tarjetas agrupadas</option>
+      </select>
+    </label>
+    <label class="field">Menú activo
+      <select id="menuSel">
+        <option value="hub">Hub / inicio</option>
+        <option value="config">Configuración</option>
+        <option value="admin">Administración</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="layout">
+    <div class="phone" id="phone" aria-label="Vista previa del teléfono">
+      <div class="status"><span>9:41</span><div class="notch"></div><span>5G ▮▮▮</span></div>
+      <header class="appbar">
+        <div class="eyebrow" id="eyebrow">QuickNovel Ultimate</div>
+        <h2 id="title">Ajustes</h2>
+        <div class="hint" id="hint">Dos menús: uso diario y herramientas</div>
+      </header>
+      <main class="screen" id="screen"></main>
+      <nav class="bnav" aria-label="Menú inferior">
+        <span>Buscar</span>
+        <span>Historial</span>
+        <span>Biblioteca</span>
+        <span class="on">Ajustes</span>
+      </nav>
+    </div>
+
+    <div>
+      <div class="panel" style="margin-bottom:12px">
+        <h3>Elige un mock</h3>
+        <div class="mock-grid" id="picks"></div>
+      </div>
+      <div class="panel">
+        <h3>Qué va en cada menú</h3>
+        <ul>
+          <li><strong style="color:var(--text)">Configuración</strong> — idioma, proveedores activos, tema Ultimate, iconos, menú, traducción, lector, avisos, tutoriales.</li>
+          <li><strong style="color:var(--text)">Administración</strong> — fuentes CSS, hub de plugins, repos, backup/restore, updates, logcat.</li>
+        </ul>
+        <p id="mockBlurb"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var mocks = [
+    { id: 1, name: "Portales hero", blurb: "Primera pantalla solo con dos destinos claros. Menos scroll, decisión inmediata. Ideal si Administración no se usa a diario." },
+    { id: 2, name: "Segmented top", blurb: "Pestañas Config / Admin bajo el título. Un solo PreferenceScreen, cambio instantáneo sin otra navegación." },
+    { id: 3, name: "Drill-in screens", blurb: "Hub mínimo → pantallas hijas completas con back. Se siente nativo Android y escala bien si crecen las opciones." },
+    { id: 4, name: "Mosaico hub", blurb: "Estilo ajustes 2: tarjetas 2×N para entrar a cada menú y a atajos (Fuentes, Tema). Escaneo visual rápido." },
+    { id: 5, name: "Grupos anidados", blurb: "Estilo 3: una lista, pero Administración vive en su propio bloque agrupado al final, separado del uso diario." },
+    { id: 6, name: "Rail vertical", blurb: "Menú izquierdo fijo Config/Admin + lista a la derecha. Muy rápido al saltar; cabe en teléfono estrecho." },
+    { id: 7, name: "Buscar + pines", blurb: "Barra de búsqueda de ajustes y dos accesos fijos. El resto queda filtrable; Admin no compite con Theme." },
+    { id: 8, name: "Sheet de menú", blurb: "Lista de Config por defecto; un chip abre sheet para ir a Administración. Reduce ruido sin esconder power tools." },
+    { id: 9, name: "Tabs + sticky", blurb: "Segmented sticky + banner contextual (updates en Admin). Buena jerarquía y feedback de sección." },
+    { id: 10, name: "Split dual", blurb: "Ambos menús visibles a la vez (panel partido). Útil en tablet/landscape; en phone muestra compacto." }
+  ];
+
+  var config = [
+    ["Idioma de la app", "Español", "文"],
+    ["Idiomas de proveedores", "es · en", "◎"],
+    ["Mostrar proveedores en inglés", "Activado", "EN", "sw"],
+    ["Proveedores de Buscar", "48 activos", "☰"],
+    ["Modo oscuro", "Activado", "◐", "sw"],
+    ["Tema Ultimate", "Blue", "◆"],
+    ["Tema de iconos", "A — Fire Aura", "✦"],
+    ["Estilo del menú inferior", "Contorno + píldora", "▭"],
+    ["Traducción (Gemini)", "Clave configurada", "文"],
+    ["Lector externo", "Desactivado", "▤", "sw"],
+    ["Avisos de capítulos", "Cada 12 h", "🔔"]
+  ];
+  var admin = [
+    ["Añadir proveedor", "CSS / Madara / Blogger", "＋"],
+    ["Fuentes de Buscar", "12 gestionables", "☰"],
+    ["Hub de plugins", "8 instalados · 1 act.", "▣"],
+    ["Añadir repositorio", "LNReader", "⧉"],
+    ["Copia de seguridad", "Crear archivo", "⬇"],
+    ["Restaurar", "Desde archivo", "⤴"],
+    ["Buscar actualizaciones", "2.0.4-DEBUG", "↻"],
+    ["Instalador de APK", "Sesión del sistema", "⚒"],
+    ["Mostrar logcat", "Depuración", "📄"]
+  ];
+
+  var state = { mock: 1, menu: "hub", surface: "dark", accent: "#1A6CFF", rowStyle: "1" };
+
+  var picks = document.getElementById("picks");
+  mocks.forEach(function (m) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "mock-pick";
+    b.dataset.id = m.id;
+    b.innerHTML = "<strong>" + m.id + " · " + m.name + "</strong><span>" + m.blurb.split(".")[0] + ".</span>";
+    b.addEventListener("click", function () {
+      state.mock = m.id;
+      state.menu = (m.id === 2 || m.id === 5 || m.id === 6 || m.id === 9) ? "config" : (m.id === 10 ? "hub" : "hub");
+      document.getElementById("menuSel").value = state.menu === "hub" && (m.id === 2 || m.id === 5 || m.id === 6 || m.id === 9) ? "config" : state.menu;
+      if (m.id === 2 || m.id === 5 || m.id === 6 || m.id === 9) {
+        state.menu = "config";
+        document.getElementById("menuSel").value = "config";
+      }
+      paint();
+    });
+    picks.appendChild(b);
+  });
+
+  function pref(item, cls) {
+    var action = item[3] === "sw"
+      ? '<div class="sw on" aria-hidden="true"></div>'
+      : '<div class="chev">›</div>';
+    return '<div class="pref ' + (cls || "") + '"><div class="ico">' + item[2] + '</div><div><div class="t">' + item[0] + '</div><div class="s">' + item[1] + '</div></div>' + action + "</div>";
+  }
+  function list(items, limit) {
+    var slice = items.slice(0, limit || items.length);
+    if (state.rowStyle === "3") {
+      return slice.map(function (it, i) {
+        var cls = slice.length === 1 ? "" : (i === 0 ? "group-first" : (i === slice.length - 1 ? "group-last" : "group-mid"));
+        return pref(it, cls);
+      }).join("");
+    }
+    return slice.map(function (it) { return pref(it); }).join("");
+  }
+  function portal(kind, primary) {
+    if (kind === "config") {
+      return '<button type="button" class="portal' + (primary ? " primary" : "") + '" data-go="config"><div class="kicker">Uso diario</div><div class="title">Configuración</div><div class="desc">Idioma, tema Ultimate, proveedores activos, traducción y lector.</div><div class="meta"><span class="pill">11 opciones</span><span class="pill muted">Seguro tocar</span></div></button>';
+    }
+    return '<button type="button" class="portal' + (primary ? " primary" : "") + '" data-go="admin"><div class="kicker">Power tools</div><div class="title">Administración</div><div class="desc">Fuentes, plugins, backup, updates y diagnóstico.</div><div class="meta"><span class="pill">9 herramientas</span><span class="pill muted">Avanzado</span></div></button>';
+  }
+  function seg() {
+    return '<div class="seg" role="tablist"><button type="button" class="' + (state.menu === "config" ? "on" : "") + '" data-go="config">Configuración</button><button type="button" class="' + (state.menu === "admin" ? "on" : "") + '" data-go="admin">Administración</button></div>';
+  }
+  function back() {
+    return '<button type="button" class="back" data-go="hub">‹ Ajustes</button>';
+  }
+
+  function render() {
+    var m = state.mock;
+    var html = "";
+    var title = "Ajustes";
+    var hint = "Configuración y administración";
+    var eye = "QuickNovel Ultimate";
+
+    if (m === 1) {
+      if (state.menu === "hub") {
+        title = "Ajustes"; hint = "Elige el menú según lo que necesitas ahora";
+        html = portal("config", true) + portal("admin", false);
+      } else {
+        title = state.menu === "config" ? "Configuración" : "Administración";
+        hint = state.menu === "config" ? "Preferencias de uso diario" : "Herramientas y mantenimiento";
+        html = back() + list(state.menu === "config" ? config : admin, 7);
+      }
+    } else if (m === 2) {
+      title = state.menu === "admin" ? "Administración" : "Configuración";
+      hint = "Cambio de menú sin salir de Ajustes";
+      html = seg() + list(state.menu === "admin" ? admin : config, 7);
+    } else if (m === 3) {
+      if (state.menu === "hub") {
+        title = "Ajustes"; hint = "Dos pantallas hijas · patrón Android Settings";
+        html = '<div class="banner"><div class="ico">i</div><div><strong>Menús separados</strong><span>Configuración para el día a día. Administración para fuentes y sistema.</span></div></div>' + portal("config", true) + portal("admin", false);
+      } else {
+        title = state.menu === "config" ? "Configuración" : "Administración";
+        hint = "Pantalla dedicada";
+        html = back() + '<div class="sec">' + (state.menu === "config" ? "General" : "Sistema") + "</div>" + list(state.menu === "config" ? config : admin, 8);
+      }
+    } else if (m === 4) {
+      if (state.menu === "hub") {
+        title = "Ajustes"; hint = "Mosaico · estilo visual de la app";
+        html = '<div class="mosaic">' +
+          '<button type="button" class="mcard" data-go="config"><div class="ico">⚙</div><div class="t">Configuración</div><div class="s">Tema, idiomas, TTS</div></button>' +
+          '<button type="button" class="mcard" data-go="admin"><div class="ico">⚒</div><div class="t">Administración</div><div class="s">Fuentes y backup</div></button>' +
+          '<button type="button" class="mcard" data-go="config"><div class="ico">◆</div><div class="t">Tema Ultimate</div><div class="s">Blue</div></button>' +
+          '<button type="button" class="mcard" data-go="admin"><div class="ico">☰</div><div class="t">Fuentes</div><div class="s">12 gestionables</div></button>' +
+          "</div>";
+      } else {
+        title = state.menu === "config" ? "Configuración" : "Administración";
+        html = back() + list(state.menu === "config" ? config : admin, 7);
+      }
+    } else if (m === 5) {
+      title = "Ajustes"; hint = "Una lista · Admin agrupada abajo";
+      html = '<div class="sec">Configuración</div>' + list(config, 5) +
+        '<div class="sec">Administración</div>' + list(admin, 4);
+    } else if (m === 6) {
+      title = "Ajustes"; hint = "Rail + detalle";
+      html = '<div class="railwrap"><div class="rail">' +
+        '<button type="button" class="' + (state.menu !== "admin" ? "on" : "") + '" data-go="config"><div class="dot">C</div>Config</button>' +
+        '<button type="button" class="' + (state.menu === "admin" ? "on" : "") + '" data-go="admin"><div class="dot">A</div>Admin</button>' +
+        '</div><div><div class="sec">' + (state.menu === "admin" ? "Herramientas" : "Preferencias") + "</div>" +
+        list(state.menu === "admin" ? admin : config, 6) + "</div></div>";
+    } else if (m === 7) {
+      if (state.menu === "hub") {
+        title = "Ajustes"; hint = "Busca una opción o entra a un menú";
+        html = '<div class="searchbar">⌕  Buscar en ajustes</div>' +
+          '<div class="mosaic" style="margin-bottom:10px">' +
+          '<button type="button" class="mcard" data-go="config"><div class="ico">⚙</div><div class="t">Configuración</div><div class="s">Uso diario</div></button>' +
+          '<button type="button" class="mcard" data-go="admin"><div class="ico">⚒</div><div class="t">Administración</div><div class="s">Avanzado</div></button>' +
+          "</div>" +
+          '<div class="sec">Recientes</div>' + list([config[4], config[5], admin[1]], 3);
+      } else {
+        title = state.menu === "config" ? "Configuración" : "Administración";
+        html = back() + '<div class="searchbar">⌕  Filtrar ' + (state.menu === "config" ? "configuración" : "administración") + "</div>" + list(state.menu === "config" ? config : admin, 7);
+      }
+    } else if (m === 8) {
+      if (state.menu === "admin") {
+        title = "Administración"; hint = "Herramientas del sistema";
+        html = back() + list(admin, 7);
+      } else {
+        title = "Configuración"; hint = "Administración queda a un toque";
+        html = '<div class="banner"><div class="ico">⚒</div><div><strong>¿Fuentes o plugins?</strong><span>Abre Administración sin mezclarlo con el tema.</span></div></div>' +
+          list(config, 5) +
+          '<div class="sheet"><div class="handle"></div><button type="button" class="portal primary" data-go="admin" style="margin:0"><div class="title">Ir a Administración</div><div class="desc">Fuentes, plugins, backup y updates</div></button></div>';
+      }
+    } else if (m === 9) {
+      title = state.menu === "admin" ? "Administración" : "Configuración";
+      hint = "Segmented sticky + contexto";
+      html = seg();
+      if (state.menu === "admin") {
+        html += '<div class="banner"><div class="ico">↻</div><div><strong>Hay 1 update de plugin</strong><span>Revisa el hub antes de respaldar.</span></div></div>';
+      } else {
+        html += '<div class="banner"><div class="ico">◆</div><div><strong>Tema Ultimate Blue</strong><span>El acento también pinta Administración.</span></div></div>';
+      }
+      html += list(state.menu === "admin" ? admin : config, 6);
+    } else {
+      title = "Ajustes"; hint = "Ambos menús a la vista";
+      html = '<div class="split"><section><h4>Configuración</h4>' +
+        config.slice(0, 7).map(function (it) { return '<div class="mini">' + it[0] + "<span>" + it[1] + "</span></div>"; }).join("") +
+        '</section><section><h4>Administración</h4>' +
+        admin.slice(0, 7).map(function (it) { return '<div class="mini">' + it[0] + "<span>" + it[1] + "</span></div>"; }).join("") +
+        "</section></div>";
+    }
+
+    document.getElementById("title").textContent = title;
+    document.getElementById("hint").textContent = hint;
+    document.getElementById("eyebrow").textContent = eye;
+    document.getElementById("screen").innerHTML = html;
+    document.getElementById("mockBlurb").textContent = mocks.find(function (x) { return x.id === m; }).blurb;
+    document.querySelectorAll(".mock-pick").forEach(function (el) {
+      el.classList.toggle("active", Number(el.dataset.id) === m);
+    });
+    document.getElementById("screen").querySelectorAll("[data-go]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.menu = btn.getAttribute("data-go");
+        document.getElementById("menuSel").value = state.menu;
+        paint();
+      });
+    });
+  }
+
+  function paint() {
+    document.body.dataset.surface = state.surface;
+    document.documentElement.style.setProperty("--accent", state.accent);
+    document.body.style.setProperty("--accent", state.accent);
+    var lightAccents = ["#E8EEF8", "#90CAF9", "#FFB300", "#00E5FF"];
+    document.body.setAttribute("data-accent-light", lightAccents.indexOf(state.accent) >= 0 ? "1" : "0");
+    render();
+  }
+
+  document.getElementById("surface").addEventListener("change", function (e) {
+    state.surface = e.target.value; paint();
+  });
+  document.getElementById("accent").addEventListener("change", function (e) {
+    state.accent = e.target.value; paint();
+  });
+  document.getElementById("rowStyle").addEventListener("change", function (e) {
+    state.rowStyle = e.target.value; paint();
+  });
+  document.getElementById("menuSel").addEventListener("change", function (e) {
+    state.menu = e.target.value; paint();
+  });
+
+  paint();
+})();
+</script>
+</body>
+</html>

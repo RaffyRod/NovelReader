@@ -162,6 +162,24 @@ object CustomProviders {
     }
 
     /**
+     * Pure toggle for the Search multi-select set: only [name] (and optional [replacing])
+     * change. Same-URL siblings with distinct names stay untouched.
+     */
+    fun nextSearchNames(
+        current: Set<String>,
+        name: String,
+        enabled: Boolean,
+        replacing: String? = null,
+    ): Set<String> {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return HashSet(current)
+        val updated = HashSet(current)
+        replacing?.takeIf { it.isNotBlank() && it != trimmed }?.let { updated.remove(it) }
+        if (enabled) updated.add(trimmed) else updated.remove(trimmed)
+        return updated
+    }
+
+    /**
      * Toggles a provider name in the Search multi-select set (Fuentes de Buscar switches).
      */
     fun setSearchEnabled(
@@ -174,11 +192,8 @@ object CustomProviders {
         if (trimmed.isEmpty()) return
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
         val providersKey = context.getString(R.string.search_providers_list_key)
-        val updated = HashSet(
-            settings.getStringSet(providersKey, null) ?: Apis.apis.map { it.name },
-        )
-        replacing?.let { updated.remove(it) }
-        if (enabled) updated.add(trimmed) else updated.remove(trimmed)
+        val current = settings.getStringSet(providersKey, null) ?: Apis.apis.map { it.name }.toSet()
+        val updated = nextSearchNames(current, trimmed, enabled, replacing)
         settings.edit().putStringSet(providersKey, HashSet(updated)).apply()
         com.lagradost.quicknovel.APIRepository.providersActive = HashSet(updated)
     }

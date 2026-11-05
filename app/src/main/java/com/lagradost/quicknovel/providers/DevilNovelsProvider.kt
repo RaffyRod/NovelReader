@@ -93,7 +93,7 @@ class DevilNovelsProvider : MainAPI() {
         val totalChapters = totalChaptersRegex.find(scriptContent)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         val chapters = if (totalChapters > 100) {
             (0 until totalChapters).map { index ->
-                newChapterData("Chapter ${index + 1}", "$url--------$novelId--------$index")
+                newChapterData("Capítulo ${index + 1}", "$url--------$novelId--------$index")
             }
         } else {
             val res = getPageChapters(novelId, 1)

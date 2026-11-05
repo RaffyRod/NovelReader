@@ -563,8 +563,8 @@ class ResultFragment : BaseFragment<FragmentResultBinding>(
             android.R.layout.simple_spinner_dropdown_item,
             langLabels,
         )
-        // Default to Español so downloads are translated unless the user picks Original.
-        dialogBinding.downloadTranslateLang.setSelection(1)
+        // Default to Original — never auto-translate (source may already be Spanish).
+        dialogBinding.downloadTranslateLang.setSelection(0)
 
         val engineLabels = listOf(
             getString(R.string.download_translate_engine_gemini),

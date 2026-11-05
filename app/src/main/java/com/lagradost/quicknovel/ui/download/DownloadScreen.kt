@@ -179,12 +179,14 @@ fun DownloadScreen(
         topBar = {
             BaseSearchBar(
                 content = {
-                    // Import-B drop-zone stays visible under the pinned search.
-                    ImportFireDropZone(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
+                    // List: Import-B under search. Grid: only BoxFooter (avoid dual CTAs).
+                    if (downloadIsRowState) {
+                        ImportFireDropZone(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
                 },
                 onQueryChange = { query ->
                     onAction(DownloadPageAction.Search(query))
@@ -299,17 +301,30 @@ fun DownloadScreen(
                 enter = expandHorizontally() + fadeIn(),
                 exit = shrinkHorizontally() + fadeOut()
             ) {
-                val activity = LocalContext.current as? Activity
+                val hostActivity = androidx.activity.compose.LocalActivity.current
+                    ?: (LocalContext.current as? Activity)
                 val context = LocalContext.current
-                val translationCount = remember(railOpen) {
-                    com.lagradost.quicknovel.TranslationHistory.available(context).size
+                var translationCount by remember {
+                    mutableStateOf(com.lagradost.quicknovel.TranslationHistory.available(context).size)
+                }
+                // Refresh while the rail is open so the badge is not stuck after new exports.
+                LaunchedEffect(railOpen) {
+                    if (railOpen) {
+                        translationCount =
+                            com.lagradost.quicknovel.TranslationHistory.available(context).size
+                    }
                 }
                 LibraryRail(
                     items = railItems,
                     selected = currentPage,
                     onSelect = { page -> scope.launch { pagerState.animateScrollToPage(page) } },
                     onTranslationHistory = {
-                        activity?.let { TranslationHistoryDialogs.show(it) }
+                        hostActivity?.let {
+                            TranslationHistoryDialogs.show(it) {
+                                translationCount =
+                                    com.lagradost.quicknovel.TranslationHistory.available(context).size
+                            }
+                        }
                     },
                     translationCount = translationCount,
                 )
@@ -552,6 +567,8 @@ fun ImportFireDropZone(modifier: Modifier = Modifier) {
     val core = fire.coreFor(darkSurface)
     val glow = fire.glowFor(darkSurface)
     val shape = RoundedCornerShape(12.dp)
+    // Prefer LocalActivity so recreate clearing MainActivity.mainActivity is not a silent no-op.
+    val hostActivity = androidx.activity.compose.LocalActivity.current as? MainActivity
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -571,8 +588,14 @@ fun ImportFireDropZone(modifier: Modifier = Modifier) {
                 )
             }
             .combinedClickable(
-                onClick = { MainActivity.importEpub() },
-                onLongClick = { MainActivity.importEpubs() },
+                onClick = {
+                    if (hostActivity != null) hostActivity.importEpubFromUi()
+                    else MainActivity.importEpub()
+                },
+                onLongClick = {
+                    if (hostActivity != null) hostActivity.importEpubsFromUi()
+                    else MainActivity.importEpubs()
+                },
             )
             .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
@@ -612,6 +635,7 @@ fun BoxFooter() {
     val glow = fire.glowFor(darkSurface)
     val interactionSource = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(10.dp)
+    val hostActivity = androidx.activity.compose.LocalActivity.current as? MainActivity
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -619,8 +643,14 @@ fun BoxFooter() {
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = { MainActivity.importEpub() },
-                onLongClick = { MainActivity.importEpubs() },
+                onClick = {
+                    if (hostActivity != null) hostActivity.importEpubFromUi()
+                    else MainActivity.importEpub()
+                },
+                onLongClick = {
+                    if (hostActivity != null) hostActivity.importEpubsFromUi()
+                    else MainActivity.importEpubs()
+                },
             )
             .rounded()
     ) {

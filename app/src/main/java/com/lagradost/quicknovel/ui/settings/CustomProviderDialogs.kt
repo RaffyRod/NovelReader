@@ -15,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -332,7 +333,7 @@ object CustomProviderDialogs {
 
         fun filtered(): List<ProviderManage.Row> {
             val active = ProviderManage.readActiveNames(activity)
-            val all = ProviderManage.loadRows(active)
+            val all = ProviderManage.loadRows(activity, active)
             return ProviderManage.filter(ProviderManage.filterTab(all, currentTab), currentQuery)
         }
 
@@ -465,6 +466,10 @@ object CustomProviderDialogs {
                 nav.visibility = View.VISIBLE
             }
 
+            // Detach before removeAllViews — destroying a checked Switch can fire
+            // onCheckedChange(false) and would disable every other row on the page
+            // (same-URL mirrors filtered into one list are hit together).
+            detachCompoundButtonListeners(cardsHost)
             cardsHost.removeAllViews()
             if (list.isEmpty()) {
                 cardsHost.addView(
@@ -558,8 +563,8 @@ object CustomProviderDialogs {
                             thumbTintList = switchThumbTint
                             trackTintList = switchTrackTint
                             setOnCheckedChangeListener { button, wantOn ->
+                                button.setOnCheckedChangeListener(null)
                                 if (!row.canToggleSearch) {
-                                    button.setOnCheckedChangeListener(null)
                                     button.isChecked = false
                                     dialog?.dismiss()
                                     row.plugin?.let { plugin ->
@@ -709,6 +714,16 @@ object CustomProviderDialogs {
         return ColorUtils.blendARGB(primary, 0xFFFF5252.toInt(), 0.55f)
     }
 
+    /** Clears listeners so tearing down the Fuentes list cannot cascade disable toggles. */
+    private fun detachCompoundButtonListeners(root: ViewGroup) {
+        for (i in 0 until root.childCount) {
+            when (val child = root.getChildAt(i)) {
+                is CompoundButton -> child.setOnCheckedChangeListener(null)
+                is ViewGroup -> detachCompoundButtonListeners(child)
+            }
+        }
+    }
+
     /** Site URL used for host probes (custom / plugin / built-in). */
     private fun probeUrlFor(row: ProviderManage.Row): String? {
         when (row.kind) {
@@ -737,7 +752,7 @@ object CustomProviderDialogs {
      */
     fun rowForApi(activity: Activity, api: MainAPI): ProviderManage.Row {
         val active = ProviderManage.readActiveNames(activity)
-        val match = ProviderManage.loadRows(active).firstOrNull { row ->
+        val match = ProviderManage.loadRows(activity, active).firstOrNull { row ->
             row.searchName.equals(api.name, ignoreCase = true) ||
                 row.title.equals(api.name, ignoreCase = true)
         }

@@ -362,8 +362,10 @@ class HomeViewModel2 : ViewModel(),
      * Call when Buscar resumes so installs done in Settings appear without a novel search.
      */
     private fun refreshProvidersFromPrefs(): ProviderFilterSnapshot {
-        val act = CommonActivity.activity
-        val syncedNames = act?.let { CustomProviders.syncEnabledInSearch(it) }.orEmpty()
+        // Prefer live activity; fall back to app context so Buscar still syncs after recreate.
+        val ctx = CommonActivity.activity
+            ?: com.lagradost.quicknovel.BaseApplication.context
+        val syncedNames = ctx?.let { CustomProviders.syncEnabledInSearch(it) }.orEmpty()
         val current = state.value
         val names = if (syncedNames.isNotEmpty()) {
             syncedNames.toPersistentSet()

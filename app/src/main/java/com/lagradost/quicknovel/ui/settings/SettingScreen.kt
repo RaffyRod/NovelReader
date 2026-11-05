@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -75,6 +76,7 @@ import com.lagradost.quicknovel.util.SubtitleHelper
 import com.lagradost.quicknovel.util.UIHelper.clipboardHelper
 import com.mihon.common.preference.AndroidPreferenceStore
 import com.mihon.presentation.settings.Preference
+import com.mihon.presentation.settings.PreferenceScaffold
 import com.mihon.presentation.settings.SearchableSettings
 import com.mihon.presentation.settings.widget.TextPreferenceWidget
 import kotlinx.collections.immutable.persistentListOf
@@ -91,6 +93,28 @@ import java.util.Locale
 object SettingScreen : SearchableSettings {
     @Composable
     override fun getTitleRes(): String = stringResource(R.string.title_settings)
+
+    /** Mock 9: sticky Configuración / Administración tabs + contextual banner. */
+    @Composable
+    override fun Content() {
+        var tab by rememberSaveable { mutableStateOf(SettingsMenuTab.CONFIGURATION.name) }
+        val selected = SettingsMenuTab.entries
+            .firstOrNull { it.name == tab }
+            ?: SettingsMenuTab.CONFIGURATION
+        val all = getPreferences()
+        val filtered = remember(all, selected) { SettingsMenuSplit.forTab(all, selected) }
+        PreferenceScaffold(
+            title = getTitleRes(),
+            actions = { AppBarAction() },
+            stickyHeader = {
+                SettingsMenuChrome(
+                    tab = selected,
+                    onTabChange = { next -> tab = next.name },
+                )
+            },
+            itemsProvider = { filtered },
+        )
+    }
 
     @Composable
     fun getFilePreference(
@@ -148,7 +172,7 @@ object SettingScreen : SearchableSettings {
         val settings = rememberAppSettings()
         val geminiKey by settings.translation.geminiApiKey.collectAsState()
         var customProviderCount by remember {
-            mutableStateOf(com.lagradost.quicknovel.util.ProviderManage.count())
+            mutableStateOf(com.lagradost.quicknovel.util.ProviderManage.count(context))
         }
         var pluginInstalledCount by remember {
             mutableStateOf(PluginStore.loadInstalled().size)
@@ -361,9 +385,10 @@ object SettingScreen : SearchableSettings {
                     ),
                 )
             ),
-            // Plugins / custom providers next to tutorials — primary discovery, not buried.
+            // Plugins / custom providers — Administración tab.
             Preference.PreferenceGroup(
                 title = stringResource(R.string.cp_group),
+                section = SettingsMenuTab.ADMINISTRATION,
                 preferenceItems = persistentListOf(
                     Preference.PreferenceItem.TextPreference(
                         icon = painterResource(R.drawable.extension_24px),
@@ -373,7 +398,7 @@ object SettingScreen : SearchableSettings {
                             hostActivity?.let { act ->
                                 CustomProviderDialogs.showSimpleAdd(act) {
                                     customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                        com.lagradost.quicknovel.util.ProviderManage.count(act)
                                 }
                             }
                         }
@@ -386,7 +411,7 @@ object SettingScreen : SearchableSettings {
                             hostActivity?.let { act ->
                                 CustomProviderDialogs.showManager(act) {
                                     customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                        com.lagradost.quicknovel.util.ProviderManage.count(act)
                                 }
                             }
                         }
@@ -395,6 +420,7 @@ object SettingScreen : SearchableSettings {
             ),
             Preference.PreferenceGroup(
                 title = stringResource(R.string.plugin_group),
+                section = SettingsMenuTab.ADMINISTRATION,
                 preferenceItems = persistentListOf(
                     Preference.PreferenceItem.TextPreference(
                         icon = painterResource(R.drawable.extension_24px),
@@ -415,7 +441,7 @@ object SettingScreen : SearchableSettings {
                                     pluginInstalledCount = installed.size
                                     pluginUpdateCount = installed.count { it.hasUpdate }
                                     customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                        com.lagradost.quicknovel.util.ProviderManage.count(act)
                                 }
                             }
                         }
@@ -431,7 +457,7 @@ object SettingScreen : SearchableSettings {
                                     pluginInstalledCount = installed.size
                                     pluginUpdateCount = installed.count { it.hasUpdate }
                                     customProviderCount =
-                                        com.lagradost.quicknovel.util.ProviderManage.count()
+                                        com.lagradost.quicknovel.util.ProviderManage.count(act)
                                 }
                             }
                         }
@@ -440,6 +466,7 @@ object SettingScreen : SearchableSettings {
             ),
             Preference.PreferenceGroup(
                 title = stringResource(R.string.app_settings),
+                section = SettingsMenuTab.ADMINISTRATION,
                 preferenceItems = persistentListOf(
                     Preference.PreferenceItem.TextPreference(
                         icon = painterResource(R.drawable.mobile_arrow_down_24px),
@@ -648,6 +675,7 @@ object SettingScreen : SearchableSettings {
             ),
             Preference.PreferenceGroup(
                 title = stringResource(R.string.info),
+                section = SettingsMenuTab.ADMINISTRATION,
                 preferenceItems = persistentListOf(
                     Preference.PreferenceItem.CustomPreference(
                         title = stringResource(R.string.show_log_cat),

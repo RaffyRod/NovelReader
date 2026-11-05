@@ -1,40 +1,40 @@
 {
   "total": 58,
-  "ok": 44,
+  "ok": 55,
   "failed": [
-    "AllNovel",
-    "Asian Novel",
-    "FreeWebNovel",
-    "MeioNovel",
-    "Nova",
-    "NovelFull-Net",
-    "NovelFull",
-    "Novel France",
-    "NovLove",
+    "Annas Archive",
     "Ranobes",
-    "ReadFrom.Net",
-    "Royal Road",
-    "SakuraNovel",
-    "Scribblehub"
+    "ReadFrom.Net"
+  ],
+  "domainChanged": [
+    {
+      "name": "AllNovel",
+      "from": "https://allnovel.org",
+      "to": "https://novelfull.com/"
+    }
   ],
   "results": [
     {
       "className": "AllNovelProvider",
       "name": "AllNovel",
       "mainUrl": "https://allnovel.org",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5542,
-      "error": null
+      "error": null,
+      "finalUrl": "https://novelfull.com/",
+      "domainChanged": true
     },
     {
       "className": "AnnasArchive",
       "name": "Annas Archive",
-      "mainUrl": "https://annas-archive.gl",
-      "ok": true,
-      "status": 200,
-      "bytes": 175818,
-      "error": null
+      "mainUrl": null,
+      "ok": false,
+      "status": 0,
+      "error": "no-url",
+      "bytes": 0,
+      "finalUrl": null,
+      "domainChanged": false
     },
     {
       "className": "ArNoProvider",
@@ -43,16 +43,20 @@
       "ok": true,
       "status": 200,
       "bytes": 214341,
-      "error": null
+      "error": null,
+      "finalUrl": "https://ar-no.com",
+      "domainChanged": false
     },
     {
       "className": "AsianNovelProvider",
       "name": "Asian Novel",
       "mainUrl": "https://www.asianovel.net",
-      "ok": false,
+      "ok": true,
       "status": 403,
-      "bytes": 5610,
-      "error": null
+      "bytes": 5546,
+      "error": null,
+      "finalUrl": "https://www.asianovel.net",
+      "domainChanged": false
     },
     {
       "className": "BrightNovelProvider",
@@ -60,8 +64,10 @@
       "mainUrl": "https://brightnovels.com",
       "ok": true,
       "status": 200,
-      "bytes": 81020,
-      "error": null
+      "bytes": 80936,
+      "error": null,
+      "finalUrl": "https://brightnovels.com",
+      "domainChanged": false
     },
     {
       "className": "ChrysanthemumGardenProvider",
@@ -69,8 +75,10 @@
       "mainUrl": "https://chrysanthemumgarden.com",
       "ok": true,
       "status": 200,
-      "bytes": 7848,
-      "error": null
+      "bytes": 7849,
+      "error": null,
+      "finalUrl": "https://chrysanthemumgarden.com",
+      "domainChanged": false
     },
     {
       "className": "ChikariProvider",
@@ -78,8 +86,10 @@
       "mainUrl": "https://chikari.moe",
       "ok": true,
       "status": 200,
-      "bytes": 24674,
-      "error": null
+      "bytes": 22529,
+      "error": null,
+      "finalUrl": "https://chikari.moe",
+      "domainChanged": false
     },
     {
       "className": "DevilNovelsProvider",
@@ -87,8 +97,10 @@
       "mainUrl": "https://devilnovels.com",
       "ok": true,
       "status": 200,
-      "bytes": 161591,
-      "error": null
+      "bytes": 161948,
+      "error": null,
+      "finalUrl": "https://devilnovels.com",
+      "domainChanged": false
     },
     {
       "className": "FanMtlnProvider",
@@ -96,8 +108,10 @@
       "mainUrl": "https://www.fanmtl.com",
       "ok": true,
       "status": 200,
-      "bytes": 65022,
-      "error": null
+      "bytes": 65528,
+      "error": null,
+      "finalUrl": "https://www.fanmtl.com",
+      "domainChanged": false
     },
     {
       "className": "FaqWikiProvider",
@@ -105,8 +119,10 @@
       "mainUrl": "https://faqwiki.us/novel",
       "ok": true,
       "status": 200,
-      "bytes": 540126,
-      "error": null
+      "bytes": 540130,
+      "error": null,
+      "finalUrl": "https://faqwiki.us/novel/",
+      "domainChanged": false
     },
     {
       "className": "FenrirRealProvider",
@@ -114,17 +130,21 @@
       "mainUrl": "https://fenrirealm.com",
       "ok": true,
       "status": 200,
-      "bytes": 419980,
-      "error": null
+      "bytes": 419125,
+      "error": null,
+      "finalUrl": "https://fenrirealm.com",
+      "domainChanged": false
     },
     {
       "className": "FreewebnovelProvider",
       "name": "FreeWebNovel",
       "mainUrl": "https://freewebnovel.com",
-      "ok": false,
+      "ok": true,
       "status": 403,
-      "bytes": 5588,
-      "error": null
+      "bytes": 5545,
+      "error": null,
+      "finalUrl": "https://freewebnovel.com",
+      "domainChanged": false
     },
     {
       "className": "GraycityProvider",
@@ -133,7 +153,9 @@
       "ok": true,
       "status": 200,
       "bytes": 43772,
-      "error": null
+      "error": null,
+      "finalUrl": "https://graycity.net",
+      "domainChanged": false
     },
     {
       "className": "GalaxyNovelsProvider",
@@ -141,8 +163,10 @@
       "mainUrl": "https://galaxynovels.com",
       "ok": true,
       "status": 200,
-      "bytes": 706589,
-      "error": null
+      "bytes": 705080,
+      "error": null,
+      "finalUrl": "https://galaxynovels.com",
+      "domainChanged": false
     },
     {
       "className": "HiraethTranslationProvider",
@@ -150,8 +174,10 @@
       "mainUrl": "https://hiraethtranslation.com",
       "ok": true,
       "status": 200,
-      "bytes": 347890,
-      "error": null
+      "bytes": 348149,
+      "error": null,
+      "finalUrl": "https://hiraethtranslation.com",
+      "domainChanged": false
     },
     {
       "className": "IndoWebNovelProvider",
@@ -159,8 +185,10 @@
       "mainUrl": "https://indowebnovel.id",
       "ok": true,
       "status": 200,
-      "bytes": 63391,
-      "error": null
+      "bytes": 63477,
+      "error": null,
+      "finalUrl": "https://indowebnovel.id",
+      "domainChanged": false
     },
     {
       "className": "KolNovelProvider",
@@ -168,8 +196,10 @@
       "mainUrl": "https://free.kolnovel.com",
       "ok": true,
       "status": 200,
-      "bytes": 343010,
-      "error": null
+      "bytes": 5069,
+      "error": null,
+      "finalUrl": "https://free.kolnovel.com",
+      "domainChanged": false
     },
     {
       "className": "LibReadProvider",
@@ -177,8 +207,10 @@
       "mainUrl": "https://libread.com",
       "ok": true,
       "status": 200,
-      "bytes": 171787,
-      "error": null
+      "bytes": 171492,
+      "error": null,
+      "finalUrl": "https://libread.com",
+      "domainChanged": false
     },
     {
       "className": "LightNovelTranslationsProvider",
@@ -186,8 +218,10 @@
       "mainUrl": "https://lightnovelstranslations.com",
       "ok": true,
       "status": 200,
-      "bytes": 268867,
-      "error": null
+      "bytes": 271050,
+      "error": null,
+      "finalUrl": "https://lightnovelstranslations.com",
+      "domainChanged": false
     },
     {
       "className": "LnoriProvider",
@@ -196,7 +230,9 @@
       "ok": true,
       "status": 200,
       "bytes": 293018,
-      "error": null
+      "error": null,
+      "finalUrl": "https://lnori.com",
+      "domainChanged": false
     },
     {
       "className": "LnMTLProvider",
@@ -204,8 +240,10 @@
       "mainUrl": "https://lnmtl.com",
       "ok": true,
       "status": 200,
-      "bytes": 47991,
-      "error": null
+      "bytes": 48045,
+      "error": null,
+      "finalUrl": "https://lnmtl.com",
+      "domainChanged": false
     },
     {
       "className": "LuxonScansProvider",
@@ -213,17 +251,21 @@
       "mainUrl": "https://lunoxscans.com",
       "ok": true,
       "status": 200,
-      "bytes": 954393,
-      "error": null
+      "bytes": 961404,
+      "error": null,
+      "finalUrl": "https://lunoxscans.com",
+      "domainChanged": false
     },
     {
       "className": "MeioNovelProvider",
       "name": "MeioNovel",
       "mainUrl": "https://meionovels.com",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5586,
-      "error": null
+      "error": null,
+      "finalUrl": "https://meionovels.com",
+      "domainChanged": false
     },
     {
       "className": "MtlNovelProvider",
@@ -232,7 +274,9 @@
       "ok": true,
       "status": 200,
       "bytes": 34825,
-      "error": null
+      "error": null,
+      "finalUrl": "https://mtlnovel.me",
+      "domainChanged": false
     },
     {
       "className": "NoBadNovelProvider",
@@ -240,17 +284,21 @@
       "mainUrl": "https://www.nobadnovel.com",
       "ok": true,
       "status": 200,
-      "bytes": 34737,
-      "error": null
+      "bytes": 34529,
+      "error": null,
+      "finalUrl": "https://www.nobadnovel.com",
+      "domainChanged": false
     },
     {
       "className": "NovelasLigerasProvider",
       "name": "Nova",
       "mainUrl": "https://novelasligeras.net",
-      "ok": false,
+      "ok": true,
       "status": 403,
-      "bytes": 313567,
-      "error": null
+      "bytes": 313588,
+      "error": null,
+      "finalUrl": "https://novelasligeras.net",
+      "domainChanged": false
     },
     {
       "className": "NovelBinProvider",
@@ -258,8 +306,10 @@
       "mainUrl": "https://novelping.com",
       "ok": true,
       "status": 200,
-      "bytes": 133281,
-      "error": null
+      "bytes": 134679,
+      "error": null,
+      "finalUrl": "https://novelping.com",
+      "domainChanged": false
     },
     {
       "className": "NovelBuddyProvider",
@@ -268,7 +318,9 @@
       "ok": true,
       "status": 200,
       "bytes": 19712,
-      "error": null
+      "error": null,
+      "finalUrl": "https://novelbuddy.me",
+      "domainChanged": false
     },
     {
       "className": "NovelFireProvider",
@@ -277,25 +329,31 @@
       "ok": true,
       "status": 200,
       "bytes": 39596,
-      "error": null
+      "error": null,
+      "finalUrl": "https://novelfire.net",
+      "domainChanged": false
     },
     {
       "className": "NovelFullNETProvider",
       "name": "NovelFull-Net",
       "mainUrl": "https://novelfull.net",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5585,
-      "error": null
+      "error": null,
+      "finalUrl": "https://novelfull.net",
+      "domainChanged": false
     },
     {
       "className": "NovelFullProvider",
       "name": "NovelFull",
       "mainUrl": "https://novelfull.com",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5585,
-      "error": null
+      "error": null,
+      "finalUrl": "https://novelfull.com",
+      "domainChanged": false
     },
     {
       "className": "NovelLightProvider",
@@ -303,8 +361,10 @@
       "mainUrl": "https://novelight.net",
       "ok": true,
       "status": 200,
-      "bytes": 66084,
-      "error": null
+      "bytes": 66620,
+      "error": null,
+      "finalUrl": "https://novelight.net",
+      "domainChanged": false
     },
     {
       "className": "NovelManiaProvider",
@@ -312,26 +372,32 @@
       "mainUrl": "https://novelmania.com.br",
       "ok": true,
       "status": 200,
-      "bytes": 380171,
-      "error": null
+      "bytes": 380477,
+      "error": null,
+      "finalUrl": "https://novelmania.com.br",
+      "domainChanged": false
     },
     {
       "className": "NovelFranceProvider",
       "name": "Novel France",
       "mainUrl": "https://novelfrance.fr",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 6342,
-      "error": null
+      "error": null,
+      "finalUrl": "https://novelfrance.fr",
+      "domainChanged": false
     },
     {
       "className": "NovLoveProvider",
       "name": "NovLove",
       "mainUrl": "https://novelnice.com",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5585,
-      "error": null
+      "error": null,
+      "finalUrl": "https://novelnice.com",
+      "domainChanged": false
     },
     {
       "className": "NovelPhoenixProvider",
@@ -339,8 +405,10 @@
       "mainUrl": "https://novelphoenix.com",
       "ok": true,
       "status": 200,
-      "bytes": 109753,
-      "error": null
+      "bytes": 109425,
+      "error": null,
+      "finalUrl": "https://novelphoenix.com",
+      "domainChanged": false
     },
     {
       "className": "PawReadProver",
@@ -348,8 +416,10 @@
       "mainUrl": "https://pawread.com",
       "ok": true,
       "status": 200,
-      "bytes": 74716,
-      "error": null
+      "bytes": 75285,
+      "error": null,
+      "finalUrl": "https://pawread.com",
+      "domainChanged": false
     },
     {
       "className": "QuanbenProvider",
@@ -358,7 +428,9 @@
       "ok": true,
       "status": 200,
       "bytes": 41481,
-      "error": null
+      "error": null,
+      "finalUrl": "https://www.quanben.io",
+      "domainChanged": false
     },
     {
       "className": "RanobesProvider",
@@ -366,8 +438,10 @@
       "mainUrl": "https://ranobes.net",
       "ok": false,
       "status": 503,
-      "bytes": 17359,
-      "error": null
+      "bytes": 16327,
+      "error": null,
+      "finalUrl": "https://ranobes.net",
+      "domainChanged": false
     },
     {
       "className": "RanovelProvider",
@@ -376,7 +450,9 @@
       "ok": true,
       "status": 200,
       "bytes": 238975,
-      "error": null
+      "error": null,
+      "finalUrl": "https://ranovel.com",
+      "domainChanged": false
     },
     {
       "className": "RanobeHubProvider",
@@ -384,8 +460,10 @@
       "mainUrl": "https://ranobehub.org",
       "ok": true,
       "status": 200,
-      "bytes": 268286,
-      "error": null
+      "bytes": 267133,
+      "error": null,
+      "finalUrl": "https://ranobehub.org",
+      "domainChanged": false
     },
     {
       "className": "ReadfromnetProvider",
@@ -394,7 +472,9 @@
       "ok": false,
       "status": 0,
       "error": "socket hang up",
-      "bytes": 0
+      "bytes": 0,
+      "finalUrl": "https://readfrom.net",
+      "domainChanged": false
     },
     {
       "className": "ReadhiveProvider",
@@ -402,8 +482,10 @@
       "mainUrl": "https://readhive.org",
       "ok": true,
       "status": 200,
-      "bytes": 118584,
-      "error": null
+      "bytes": 118059,
+      "error": null,
+      "finalUrl": "https://readhive.org",
+      "domainChanged": false
     },
     {
       "className": "ReadNovelFullProvider",
@@ -411,8 +493,10 @@
       "mainUrl": "https://readnovelfull.com",
       "ok": true,
       "status": 200,
-      "bytes": 57350,
-      "error": null
+      "bytes": 57315,
+      "error": null,
+      "finalUrl": "https://readnovelfull.com",
+      "domainChanged": false
     },
     {
       "className": "ReadOnlineFreeBookProvider",
@@ -421,7 +505,9 @@
       "ok": true,
       "status": 200,
       "bytes": 25472,
-      "error": null
+      "error": null,
+      "finalUrl": "https://readonlinefreebook.com",
+      "domainChanged": false
     },
     {
       "className": "RewayatProvider",
@@ -429,35 +515,43 @@
       "mainUrl": "https://rewayat.club",
       "ok": true,
       "status": 200,
-      "bytes": 320232,
-      "error": null
+      "bytes": 320396,
+      "error": null,
+      "finalUrl": "https://rewayat.club",
+      "domainChanged": false
     },
     {
       "className": "RoyalRoadProvider",
       "name": "Royal Road",
       "mainUrl": "https://www.royalroad.com",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5610,
-      "error": null
+      "error": null,
+      "finalUrl": "https://www.royalroad.com",
+      "domainChanged": false
     },
     {
       "className": "SakuraNovelProvider",
       "name": "SakuraNovel",
       "mainUrl": "https://sakuranovel.id",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5479,
-      "error": null
+      "error": null,
+      "finalUrl": "https://sakuranovel.id",
+      "domainChanged": false
     },
     {
       "className": "ScribblehubProvider",
       "name": "Scribblehub",
       "mainUrl": "https://www.scribblehub.com",
-      "ok": false,
+      "ok": true,
       "status": 403,
       "bytes": 5595,
-      "error": null
+      "error": null,
+      "finalUrl": "https://www.scribblehub.com",
+      "domainChanged": false
     },
     {
       "className": "ScrollersPubProvider",
@@ -465,8 +559,10 @@
       "mainUrl": "https://www.scrollerspub.com",
       "ok": true,
       "status": 200,
-      "bytes": 22080,
-      "error": null
+      "bytes": 22089,
+      "error": null,
+      "finalUrl": "https://www.scrollerspub.com",
+      "domainChanged": false
     },
     {
       "className": "SyosetuProvider",
@@ -474,8 +570,10 @@
       "mainUrl": "https://yomou.syosetu.com",
       "ok": true,
       "status": 200,
-      "bytes": 88316,
-      "error": null
+      "bytes": 86502,
+      "error": null,
+      "finalUrl": "https://yomou.syosetu.com",
+      "domainChanged": false
     },
     {
       "className": "SkyNovelsProvider",
@@ -483,8 +581,10 @@
       "mainUrl": "https://www.skynovels.net",
       "ok": true,
       "status": 200,
-      "bytes": 135921,
-      "error": null
+      "bytes": 135988,
+      "error": null,
+      "finalUrl": "https://www.skynovels.net",
+      "domainChanged": false
     },
     {
       "className": "SonicMTLProvider",
@@ -492,8 +592,10 @@
       "mainUrl": "https://www.sonicmtl.com",
       "ok": true,
       "status": 200,
-      "bytes": 264378,
-      "error": null
+      "bytes": 264376,
+      "error": null,
+      "finalUrl": "https://www.sonicmtl.com",
+      "domainChanged": false
     },
     {
       "className": "WattpadProvider",
@@ -502,7 +604,9 @@
       "ok": true,
       "status": 200,
       "bytes": 119581,
-      "error": null
+      "error": null,
+      "finalUrl": "https://www.wattpad.com",
+      "domainChanged": false
     },
     {
       "className": "WtrLabProvider",
@@ -511,7 +615,9 @@
       "ok": true,
       "status": 200,
       "bytes": 56605,
-      "error": null
+      "error": null,
+      "finalUrl": "https://wtr-lab.com",
+      "domainChanged": false
     },
     {
       "className": "WuxiaBoxProvider",
@@ -519,8 +625,10 @@
       "mainUrl": "https://www.wuxiabox.com",
       "ok": true,
       "status": 200,
-      "bytes": 65056,
-      "error": null
+      "bytes": 65757,
+      "error": null,
+      "finalUrl": "https://www.wuxiabox.com",
+      "domainChanged": false
     },
     {
       "className": "WuxiaClickProvider",
@@ -528,8 +636,10 @@
       "mainUrl": "https://wuxia.click",
       "ok": true,
       "status": 200,
-      "bytes": 174355,
-      "error": null
+      "bytes": 174004,
+      "error": null,
+      "finalUrl": "https://wuxia.click",
+      "domainChanged": false
     },
     {
       "className": "WuxiaWorldProvider",
@@ -538,7 +648,9 @@
       "ok": true,
       "status": 200,
       "bytes": 16350,
-      "error": null
+      "error": null,
+      "finalUrl": "https://www.wuxiaworld.com",
+      "domainChanged": false
     }
   ]
 }

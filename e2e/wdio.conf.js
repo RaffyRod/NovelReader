@@ -91,6 +91,7 @@ exports.config = {
         './test/specs/12-reader-loading.e2e.js',
         './test/specs/05-settings.e2e.js',
         './test/specs/11-download-translate.e2e.js',
+        './test/specs/17-chapter-numbers.e2e.js',
         './test/specs/14-sections-translations.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',
         './test/specs/10-plugins.e2e.js',

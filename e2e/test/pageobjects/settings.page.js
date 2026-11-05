@@ -67,6 +67,49 @@ class SettingsPage extends BasePage {
     await expect(this.tabSettings).toBeDisplayed();
   }
 
+  get configurationTab() {
+    return this.byA11y('settings_tab_configuration');
+  }
+
+  get administrationTab() {
+    return this.byA11y('settings_tab_administration');
+  }
+
+  get configurationTabLabel() {
+    return this.byText('Configuración');
+  }
+
+  get administrationTabLabel() {
+    return this.byText('Administración');
+  }
+
+  get configurationTabLabelEn() {
+    return this.byText('Configuration');
+  }
+
+  get administrationTabLabelEn() {
+    return this.byText('Administration');
+  }
+
+  /**
+   * Selects Configuration / Administración hub tab (mock 9).
+   * @param {'config'|'admin'} which
+   */
+  async selectMenuTab(which) {
+    const wantAdmin = which === 'admin';
+    const candidates = wantAdmin
+      ? [this.administrationTab, this.administrationTabLabel, this.administrationTabLabelEn]
+      : [this.configurationTab, this.configurationTabLabel, this.configurationTabLabelEn];
+    for (const el of candidates) {
+      if (await el.isDisplayed().catch(() => false)) {
+        await el.click();
+        await driver.pause(450);
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * True when the Tutorial preference group (under Información) is on screen.
    * Do not treat bare "Descargas" as success — that label appears earlier in Settings.
@@ -99,11 +142,12 @@ class SettingsPage extends BasePage {
   }
 
   async scrollToTutorials() {
+    await this.selectMenuTab('config');
     if (await this.tutorialsVisible()) return true;
     await this.rewindSettingsTop();
     if (await this.tutorialsVisible()) return true;
-    // Short steps — long flings overshoot Theme → Plugins and miss Tutorial.
-    for (let i = 0; i < 14; i++) {
+    // Short steps — tutorials sit under Theme on the Configuration tab.
+    for (let i = 0; i < 10; i++) {
       await driver
         .execute('mobile: scrollGesture', {
           left: 80,
@@ -195,6 +239,7 @@ class SettingsPage extends BasePage {
   async setAllowSpecialSearchChars(enabled) {
     await this.open();
     await this.expectLoaded();
+    await this.selectMenuTab('config');
     const title = await this.findAllowSpecialSearchCharsTitle();
     await title.waitForDisplayed({ timeout: 8000 });
 
@@ -338,8 +383,10 @@ class SettingsPage extends BasePage {
    * @returns {Promise<boolean>}
    */
   async scrollToPlugins() {
+    await this.selectMenuTab('admin');
     if (await this.pluginsSectionVisible()) return true;
     await this.rewindSettingsTop();
+    await this.selectMenuTab('admin');
     if (await this.pluginsSectionVisible()) return true;
     for (let i = 0; i < 16; i++) {
       await driver
@@ -385,7 +432,9 @@ class SettingsPage extends BasePage {
   async openPluginHub() {
     await this.open();
     await this.expectLoaded();
+    await this.selectMenuTab('admin');
     await this.rewindSettingsTop();
+    await this.selectMenuTab('admin');
     // Must land on Administrar plugins — Fuentes alone must not short-circuit.
     for (let i = 0; i < 12; i++) {
       if (await this.pluginHub.isDisplayed().catch(() => false)) break;
@@ -441,6 +490,7 @@ class SettingsPage extends BasePage {
   async openFuentesDeBuscar() {
     await this.open();
     await this.expectLoaded();
+    await this.selectMenuTab('admin');
     if (!(await this.scrollToPlugins())) return false;
     const rowEs = this.fuentesDeBuscar;
     const rowEn = this.searchSources;
@@ -789,7 +839,9 @@ class SettingsPage extends BasePage {
   async openPluginAddRepo() {
     await this.open();
     await this.expectLoaded();
+    await this.selectMenuTab('admin');
     await this.rewindSettingsTop();
+    await this.selectMenuTab('admin');
     for (let i = 0; i < 12; i++) {
       if (await this.pluginAddRepo.isDisplayed().catch(() => false)) break;
       await driver

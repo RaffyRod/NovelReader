@@ -382,7 +382,9 @@ jobs:
         with:
           name: QuickNovel-Ultimate-${{ steps.bump.outputs.name }}
           path: dist/${{ steps.sign.outputs.apk }}
-          retention-days: 30
+          # Short retention — CI cleanup also wipes prior release APKs on each Android run.
+          retention-days: 3
+          overwrite: true
 
       - name: Send APK to Telegram
         if: steps.gate.outputs.should_release == 'true'

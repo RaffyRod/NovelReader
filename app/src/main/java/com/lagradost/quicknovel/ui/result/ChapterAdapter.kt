@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isGone
 import com.lagradost.quicknovel.ChapterData
+import com.lagradost.quicknovel.ChapterSpec
 import com.lagradost.quicknovel.CommonActivity
 import com.lagradost.quicknovel.R
 import com.lagradost.quicknovel.databinding.SimpleChapterBinding
@@ -95,7 +96,13 @@ class ChapterAdapter(val viewModel: ResultViewModel) :
     override fun onBindContent(holder: ViewHolderState<Any>, item: ChapterData, position: Int) {
         val binding = holder.view as? SimpleChapterBinding ?: return
         binding.apply {
-            name.text = item.name
+            val page = viewModel.chapterPage.value
+            val absoluteNumber = (page?.firstPosition ?: 1) + position
+            name.text = ChapterSpec.listTitle(
+                absoluteNumber,
+                item.name,
+                binding.root.context.getString(R.string.chapter_sort),
+            )
             releaseDate.isGone = true
             root.setOnClickListener {
                 if (viewModel.selectionMode.value == true) {

@@ -1326,6 +1326,11 @@ class ResultViewModel : ViewModel() {
         index: Int,
         chapter: LoadedChapter,
     ): LoadedChapter {
+        // Already Spanish (or whatever target) → keep source; do not call Google/Gemini.
+        if (DownloadTranslationGuard.alreadyInLanguage(chapter, request.lang.code)) {
+            return chapter
+        }
+
         val cache = java.io.File(appContext.getFilePath(meta, index) + "." + request.cacheSuffix)
         if (cache.isFile && cache.length() > 0) {
             val text = cache.readText()

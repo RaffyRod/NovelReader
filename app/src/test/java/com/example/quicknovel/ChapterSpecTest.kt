@@ -53,6 +53,33 @@ class ChapterSpecTest {
     }
 
     @Test
+    fun listTitle_localizesGenericChapterNames() {
+        assertEquals("Capítulo 2", ChapterSpec.listTitle(2, "Chapter 2", "Capítulo"))
+        assertEquals("Capítulo 3", ChapterSpec.listTitle(3, "Capítulo 3", "Capítulo"))
+        assertEquals(
+            "Capítulo 4. La tormenta",
+            ChapterSpec.listTitle(4, "Chapter 4: La tormenta", "Capítulo"),
+        )
+        assertEquals("5. The Bitter Truth", ChapterSpec.listTitle(5, "The Bitter Truth", "Capítulo"))
+    }
+
+    @Test
+    fun listTitle_preservesDecimalChapterNumbers() {
+        // List position must NOT overwrite 2.5 / 3.3 from the provider title.
+        assertEquals("Capítulo 2.5", ChapterSpec.listTitle(7, "Chapter 2.5", "Capítulo"))
+        assertEquals("Capítulo 3.3", ChapterSpec.listTitle(9, "Capítulo 3.3", "Capítulo"))
+        assertEquals(
+            "Capítulo 2.5. Extra scene",
+            ChapterSpec.listTitle(7, "Chapter 2.5: Extra scene", "Capítulo"),
+        )
+        assertEquals("Capítulo 1.5", ChapterSpec.listTitle(3, "1.5", "Capítulo"))
+        assertEquals(
+            "Capítulo 4.25. Side story",
+            ChapterSpec.listTitle(12, "4.25 Side story", "Capítulo"),
+        )
+    }
+
+    @Test
     fun group_splitsByChaptersPerFile() {
         assertEquals(listOf(listOf(1, 2), listOf(3, 9)), ChapterSpec.group(listOf(1, 2, 3, 9), 2))
         assertEquals(listOf(listOf(1, 2, 3)), ChapterSpec.group(listOf(1, 2, 3), 0))

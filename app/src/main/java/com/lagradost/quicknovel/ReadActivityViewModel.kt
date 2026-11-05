@@ -1725,9 +1725,10 @@ class ReadActivityViewModel : ViewModel() {
     // FUCK ANDROID WITH ALL MY HEART
     // SEE https://stackoverflow.com/questions/45960265/android-o-oreo-8-and-higher-media-buttons-issue WHY
     private fun playDummySound() {
-        val act = activity ?: return
-        val mMediaPlayer: MediaPlayer = MediaPlayer.create(act, R.raw.dummy_sound_500ms)
-        mMediaPlayer.setOnCompletionListener { mMediaPlayer.release() }
+        // Prefer the reader activity — CommonActivity.activity is MainActivity and may be GC'd.
+        val act = ReadActivity2.readActivity ?: activity ?: return
+        val mMediaPlayer = MediaPlayer.create(act, R.raw.dummy_sound_500ms) ?: return
+        mMediaPlayer.setOnCompletionListener { it.release() }
         mMediaPlayer.start()
     }
 

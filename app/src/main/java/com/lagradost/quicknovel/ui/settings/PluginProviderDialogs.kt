@@ -1611,14 +1611,11 @@ object PluginProviderDialogs {
         plugin: InstalledPlugin,
         onChanged: () -> Unit,
     ) {
-        val hostKey = PluginHubUi.siteHost(plugin).substringBefore('/').lowercase()
+        // Match by explicit names only — never by host/URL. Same-site customs with
+        // distinct names must stay independently toggleable in Fuentes.
         val all = CustomProviders.load()
         val saved = all.firstOrNull { it.name.equals(plugin.providerName, ignoreCase = true) }
             ?: all.firstOrNull { it.name.equals(plugin.localName, ignoreCase = true) }
-            ?: all.firstOrNull { cfg ->
-                hostKey.isNotBlank() &&
-                    PluginHubUi.siteHost(cfg.baseUrl).substringBefore('/').equals(hostKey, ignoreCase = true)
-            }
         if (saved != null) {
             val kind = when {
                 saved.isBlogger -> "blogger"

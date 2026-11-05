@@ -59,6 +59,40 @@ object ChapterSpec {
         }
     }
 
+    /**
+     * Chapter list / TOC label with a stable absolute [number].
+     * Bare "Chapter N" / "Capítulo N" become localized "[chapterWord] N"; richer titles
+     * keep their text and gain a number prefix when missing.
+     * Decimal indices in the source title (2.5, 3.3, …) are preserved — never replaced
+     * by the list position.
+     */
+    fun listTitle(number: Int, title: String, chapterWord: String): String {
+        val clean = title.trim()
+        val word = chapterWord.trim().ifBlank { "Chapter" }
+        if (clean.isEmpty()) return "$word $number"
+
+        // "Chapter 2.5", "Capítulo 3.3: Extra", "Cap. 1.5 — Foo"
+        val labeled = Regex(
+            "^(?:chapter|cap[ií]tulo|cap\\.?)\\s*#?(\\d+(?:\\.\\d+)?)\\s*[:.\\-–—]?\\s*(.*)$",
+            RegexOption.IGNORE_CASE,
+        ).matchEntire(clean)
+        if (labeled != null) {
+            val num = labeled.groupValues[1]
+            val rest = labeled.groupValues[2].trim()
+            return if (rest.isEmpty()) "$word $num" else "$word $num. $rest"
+        }
+
+        // Bare "2.5" / "2.5 Something" (decimal must keep the fractional part).
+        val bareDecimal = Regex("^(\\d+\\.\\d+)\\s*[:.\\-–—]?\\s*(.*)$").matchEntire(clean)
+        if (bareDecimal != null) {
+            val num = bareDecimal.groupValues[1]
+            val rest = bareDecimal.groupValues[2].trim()
+            return if (rest.isEmpty()) "$word $num" else "$word $num. $rest"
+        }
+
+        return numberedTitle(number, clean)
+    }
+
     /** Splits the chapter numbers into groups of [perFile], or a single group when it is not positive. */
     fun group(numbers: List<Int>, perFile: Int): List<List<Int>> {
         if (numbers.isEmpty()) return emptyList()

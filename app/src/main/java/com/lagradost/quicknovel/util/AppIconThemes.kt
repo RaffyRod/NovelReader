@@ -72,14 +72,16 @@ object AppIconThemes {
     }
 
     /**
-     * Applies launcher aliases only when a theme change was deferred.
+     * Reconciles launcher aliases on cold start so only the chosen icon stays enabled.
+     * Mid-session theme flips set [PENDING_LAUNCHER_KEY]; we also repair drift after
+     * reinstall/OEM resets even when that flag is clear (multiple LAUNCHER icons).
      * Does not rewrite the stored Ultimate pack key.
      */
     fun applyFromPrefs(context: Context) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        val pending = prefs.getBoolean(PENDING_LAUNCHER_KEY, false)
-        if (!pending) return
         val raw = prefs.getString(PREF_KEY, BLUE_FIRE) ?: BLUE_FIRE
+        // Always sync components on cold start — pending only mattered to defer the flip.
+        prefs.edit().putBoolean(PENDING_LAUNCHER_KEY, false).apply()
         apply(context, raw)
     }
 

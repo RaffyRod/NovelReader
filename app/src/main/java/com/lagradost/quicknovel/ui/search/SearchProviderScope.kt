@@ -37,12 +37,19 @@ object SearchProviderScope {
             val novelQuery = if (' ' in raw) stripIdentity(raw, api).trim() else ""
             return Resolution(listOf(api), novelQuery, scopedToProvider = true)
         }
+        // Several Fuentes share the same host/name identity (mirrors) — keep only them.
+        if (matches.size > 1) {
+            return Resolution(matches, "", scopedToProvider = true)
+        }
         // "wattpad romance" — name as first token
         val first = raw.substringBefore(' ').trim()
         val rest = raw.substringAfter(' ', "").trim()
         if (first.length >= 3 && rest.isNotEmpty()) {
             val byToken = candidates.filter { matchesIdentity(it, first) }
             if (byToken.size == 1) {
+                return Resolution(byToken, rest, scopedToProvider = true)
+            }
+            if (byToken.size > 1) {
                 return Resolution(byToken, rest, scopedToProvider = true)
             }
         }

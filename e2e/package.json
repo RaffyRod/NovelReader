@@ -16,6 +16,7 @@
     "test:features-flows": "wdio run ./wdio.conf.js --suite features-flows",
     "test:plugins": "wdio run ./wdio.conf.js --suite features-plugins",
     "test:host-health": "wdio run ./wdio.conf.js --spec ./test/specs/16-host-health.e2e.js",
+    "test:chapter-numbers": "wdio run ./wdio.conf.js --spec ./test/specs/17-chapter-numbers.e2e.js",
     "test:download-translate": "wdio run ./wdio.conf.js --spec ./test/specs/11-download-translate.e2e.js",
     "test:sections": "wdio run ./wdio.conf.js --spec ./test/specs/14-sections-translations.e2e.js",
     "test:reader": "wdio run ./wdio.conf.js --suite reader",
@@ -29,10 +30,10 @@
     "pretest:features": "npm run providers:generate",
     "pretest:reader": "npm run providers:generate",
     "pretest:sections": "npm run providers:generate",
-    "allure:generate": "npx allure generate ./allure-results --output ./allure-report --clean",
-    "allure:open": "npx allure open ./allure-report",
-    "allure:serve": "npx allure awesome ./allure-results --open",
-    "allure:report": "npm run allure:generate && npm run allure:open"
+    "allure:generate": "npx allure awesome ./allure-results --output ./allure-report-v3",
+    "allure:open": "npx allure open ./allure-report-v3 --host 127.0.0.1 --port 52525",
+    "allure:serve": "npx allure awesome ./allure-results --output ./allure-report-v3 && npx allure open ./allure-report-v3 --host 127.0.0.1 --port 52525",
+    "allure:report": "npm run allure:serve"
   },
   "devDependencies": {
     "@wdio/allure-reporter": "^9.16.2",

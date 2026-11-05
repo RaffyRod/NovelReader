@@ -39,7 +39,9 @@ class SettingsFragment : BaseComposeFragment(), SearchableSettings by SettingScr
             activity?.let { com.lagradost.quicknovel.ui.FireThemes.softRecreate(it) }
         }
         // Ultimate theme packs are applied by FireThemes.apply (soft recreate).
-        super.Content()
+        // Call SettingScreen explicitly — super.Content() would hit the interface default
+        // and skip the Config/Admin sticky tabs.
+        SettingScreen.Content()
     }
 
 

@@ -170,6 +170,12 @@ sealed class Preference {
         override val enabled: Boolean = true,
 
         val preferenceItems: List<PreferenceItem<out Any?, out Any?>>,
+        /**
+         * Settings hub tab (Configuración vs Administración). Defaults to configuration
+         * so unrelated preference screens stay on the daily-use menu.
+         */
+        val section: com.lagradost.quicknovel.ui.settings.SettingsMenuTab =
+            com.lagradost.quicknovel.ui.settings.SettingsMenuTab.CONFIGURATION,
     ) : Preference()
 }
 

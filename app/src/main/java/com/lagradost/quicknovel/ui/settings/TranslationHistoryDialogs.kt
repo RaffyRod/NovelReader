@@ -22,7 +22,7 @@ import java.util.Date
 
 /** Lists finished background translations (Sections → Historial de traducciones). Theme-aware cards. */
 object TranslationHistoryDialogs {
-    fun show(activity: Activity) {
+    fun show(activity: Activity, onChanged: (() -> Unit)? = null) {
         val density = activity.resources.displayMetrics.density
         val pad = (14 * density).toInt()
         val gap = (10 * density).toInt()
@@ -47,7 +47,8 @@ object TranslationHistoryDialogs {
                     TranslationHistory.forget(entry.uri)
                     showToast(activity, activity.getString(R.string.translation_history_removed))
                     dialog?.dismiss()
-                    show(activity)
+                    onChanged?.invoke()
+                    show(activity, onChanged)
                 })
             }
         }
@@ -65,6 +66,7 @@ object TranslationHistoryDialogs {
             .setView(scroll)
             .setNegativeButton(R.string.close, null)
             .create()
+        dialog?.setOnDismissListener { onChanged?.invoke() }
         dialog?.show()
     }
 

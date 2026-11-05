@@ -12,6 +12,8 @@
     <string name="history_reading_pill">Leyendo</string>
     <string name="history_visited_pill">Visitada</string>
     <string name="title_settings">Ajustes</string>
+    <string name="settings_tab_configuration">Configuración</string>
+    <string name="settings_tab_administration">Administración</string>
     <string name="active_providers">%d proveedores activos</string>
 
     <!-- Información de la Novela / Detalles -->
@@ -63,7 +65,7 @@
     <string name="generate_epub">Generar EPUB</string>
     <string name="generating_epub">Generando EPUB</string>
     <string name="import_epub">Importar un libro</string>
-    <string name="import_epub_hint">EPUB o PDF · toca para elegir</string>
+    <string name="import_epub_hint">EPUB o PDF · toca para elegir · mantén para varios</string>
     <string name="tab_downloads">Descargas</string>
 
     <!-- Acciones de Usuario -->
@@ -463,6 +465,10 @@
     <string name="search_sources_tab_installed">Instaladas</string>
     <string name="search_sources_tab_all">Todas</string>
     <string name="search_sources_builtin_hint">Fuente integrada — usa el switch para Buscar</string>
+    <string name="search_sources_builtin_subtitle">Integrada · %1$s</string>
+    <string name="search_sources_custom_subtitle">%1$s · Proveedor</string>
+    <string name="search_sources_plugin_subtitle">%1$s · Plugin</string>
+    <string name="search_sources_plugin_only">Plugin</string>
     <string name="cp_delete_selected">Eliminar seleccionados</string>
     <string name="cp_delete_selected_msg">¿Quitar %1$d proveedor(es) seleccionado(s)?</string>
     <string name="cp_delete_selected_done">Eliminados: %1$d</string>
@@ -553,7 +559,7 @@
     <string name="download_translate_engine">Motor de traducción</string>
     <string name="download_translate_engine_gemini">Gemini (clave API)</string>
     <string name="download_translate_engine_google">Google Translate (online)</string>
-    <string name="download_translate_hint">Los capítulos se guardan en el idioma que elijas (por defecto Español). Elige Original solo si quieres el idioma de la fuente.</string>
+    <string name="download_translate_hint">Por defecto Original (idioma de la fuente). Elige un idioma solo si quieres traducir los capítulos.</string>
     <string name="download_translate_hint_gemini">Usa tu clave gratuita de Gemini. Es lento por el límite de la versión gratis.</string>
     <string name="download_translate_hint_google">Usa Google Translate online integrado (sin clave Gemini). La calidad varía según el idioma.</string>
     <string name="task_translating">Traduciendo…</string>
@@ -616,7 +622,7 @@
     <string name="cp_detecting">Revisando el sitio, puede tardar unos segundos…</string>
     <string name="cp_host_checking">Comprobando que el sitio esté en línea…</string>
     <string name="cp_host_checking_hint">Siguiendo redirecciones y midiendo latencia…</string>
-    <string name="cp_host_sheet_subtitle">%1$s · long-press</string>
+    <string name="cp_host_sheet_subtitle">%1$s · mantén pulsado</string>
     <string name="cp_host_down">Este sitio no respondió. Puede estar caído o la dirección ser incorrecta: %1$s</string>
     <string name="cp_host_domain_changed">Este sitio se movió a %1$s (antes %2$s). Se usará la nueva dirección.</string>
     <string name="cp_host_configured">URL configurada</string>

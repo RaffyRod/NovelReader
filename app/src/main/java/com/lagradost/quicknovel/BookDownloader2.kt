@@ -70,6 +70,7 @@ import com.lagradost.quicknovel.util.Apis.Companion.getApiFromNameOrNull
 import com.lagradost.quicknovel.util.AppUtils.textToHtmlChapter
 import com.lagradost.quicknovel.util.Coroutines.ioSafe
 import com.lagradost.quicknovel.util.Coroutines.main
+import com.lagradost.quicknovel.util.Coroutines.runOnMainThread
 import com.lagradost.quicknovel.util.Event
 import com.lagradost.quicknovel.util.ResultCached
 import com.lagradost.quicknovel.util.UIHelper.colorFromAttribute
@@ -1272,7 +1273,12 @@ object ImageDownloader {
 
 object BookDownloader2 {
     fun openQuickStream(uri: Uri?) = main {
-        BookDownloader2Helper.openQuickStream(activity, uri)
+        val act = activity
+        if (act == null) {
+            showToast(R.string.error_loading_novel, Toast.LENGTH_SHORT)
+            return@main
+        }
+        BookDownloader2Helper.openQuickStream(act, uri)
     }
 
     private val streamMutex = Mutex()
@@ -1377,7 +1383,11 @@ object BookDownloader2 {
         generating: () -> Unit = {},
     ) {
         try {
-            val activity = activity ?: return
+            val activity = activity
+            if (activity == null) {
+                showToast(R.string.error_loading_novel, Toast.LENGTH_SHORT)
+                return
+            }
             val context = activity
 
             if (alwaysGenerateNewFile) {
@@ -1439,19 +1449,22 @@ object BookDownloader2 {
         activity: Activity,
         uri: Uri
     ) {
-        val settingsManager = PreferenceManager.getDefaultSharedPreferences(activity)
+        // File generation may run on a worker; startActivity must run on the main thread.
+        runOnMainThread {
+            val settingsManager = PreferenceManager.getDefaultSharedPreferences(activity)
 
-        val externalReader = settingsManager.getBoolean(
-            activity.getString(R.string.external_reader_key),
-            true
-        )
+            val externalReader = settingsManager.getBoolean(
+                activity.getString(R.string.external_reader_key),
+                true
+            )
 
-        FileOpener.open(
-            activity,
-            uri,
-            FileHelper.EPUB_MIME,
-            if (externalReader) OpenMode.OtherApp else OpenMode.InApp
-        )
+            FileOpener.open(
+                activity,
+                uri,
+                FileHelper.EPUB_MIME,
+                if (externalReader) OpenMode.OtherApp else OpenMode.InApp
+            )
+        }
     }
 
     private val readEpubMutex = Mutex()

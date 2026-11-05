@@ -22,7 +22,8 @@ env:
   EMU_AVD: qn_ci_api30_gapis
 
 jobs:
-  # Drop prior-run Allure/WDIO/APK/report artifacts so Actions storage does not accumulate.
+  # Wipe ALL prior-run artifacts (CI + release APKs) so Actions storage stays empty.
+  # Uses GITHUB_TOKEN (actions: write) — do not put a personal PAT in the workflow.
   cleanup-artifacts:
     name: Prune old artifacts
     runs-on: ubuntu-latest
@@ -36,17 +37,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prefixes = [
-              'validate-test-reports',
-              'unit-test-reports',
-              'quicknovel-ultimate-apk',
-              'allure-results-',
-              'wdio-logs-',
-              'allure-report',
-            ];
-            const match = (name) =>
-              prefixes.some((p) => name === p || name.startsWith(p));
             let deleted = 0;
+            let bytes = 0;
             let page = 1;
             for (;;) {
               const { data } = await github.rest.actions.listArtifactsForRepo({
@@ -57,20 +49,26 @@ jobs:
               });
               if (!data.artifacts.length) break;
               for (const a of data.artifacts) {
+                // Keep anything uploaded by this run; remove everything else.
                 if (a.workflow_run && a.workflow_run.id === context.runId) continue;
-                if (!match(a.name)) continue;
-                core.info(`Deleting ${a.name} (#${a.id}) from run ${a.workflow_run?.id}`);
+                core.info(
+                  `Deleting ${a.name} (#${a.id}, ${(a.size_in_bytes / 1048576).toFixed(1)} MB)` +
+                    ` from run ${a.workflow_run?.id ?? '?'}`
+                );
                 await github.rest.actions.deleteArtifact({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   artifact_id: a.id,
                 });
                 deleted++;
+                bytes += a.size_in_bytes || 0;
               }
               if (data.artifacts.length < 100) break;
               page++;
             }
-            core.info(`Deleted ${deleted} artifact(s)`);
+            core.info(
+              `Deleted ${deleted} artifact(s), ~${(bytes / 1048576).toFixed(1)} MB freed`
+            );
 
   validate:
     name: Validate i18n & timing

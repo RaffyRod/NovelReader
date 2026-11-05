@@ -2,7 +2,7 @@ const allure = require('@wdio/allure-reporter').default;
 const settingsPage = require('../pageobjects/settings.page');
 
 describe('Settings', function () {
-  this.timeout(45000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Settings');

@@ -47,7 +47,7 @@ object ProviderManage {
     /**
      * Built-ins + customs + plugins (plugins already represented by a custom name are skipped).
      */
-    fun loadRows(activeNames: Set<String>): List<Row> {
+    fun loadRows(context: Context, activeNames: Set<String>): List<Row> {
         val customs = CustomProviders.load()
         val customNames = customs.map { it.name.trim().lowercase() }.toSet()
 
@@ -55,7 +55,7 @@ object ProviderManage {
             Row(
                 key = "builtin:${api.name}",
                 title = api.name,
-                subtitle = "Built-in · ${api.lang}",
+                subtitle = context.getString(R.string.search_sources_builtin_subtitle, api.lang),
                 kind = Kind.BUILTIN,
                 searchName = api.name,
                 activeInSearch = activeNames.contains(api.name),
@@ -68,7 +68,7 @@ object ProviderManage {
             Row(
                 key = "custom:${cfg.name}",
                 title = cfg.name,
-                subtitle = "$host · Proveedor",
+                subtitle = context.getString(R.string.search_sources_custom_subtitle, host),
                 kind = Kind.CUSTOM,
                 searchName = cfg.name,
                 activeInSearch = activeNames.contains(cfg.name),
@@ -89,8 +89,12 @@ object ProviderManage {
                 Row(
                     key = "plugin:${plugin.id}",
                     title = plugin.localName.ifBlank { plugin.name },
-                    // Clean line: host · Plugin (no JS / sin búsqueda clutter — mock A)
-                    subtitle = if (host.isNotBlank()) "$host · Plugin" else "Plugin",
+                    // Clean line: host · Plugin (no JS / Search clutter — mock A)
+                    subtitle = if (host.isNotBlank()) {
+                        context.getString(R.string.search_sources_plugin_subtitle, host)
+                    } else {
+                        context.getString(R.string.search_sources_plugin_only)
+                    },
                     kind = Kind.PLUGIN,
                     searchName = mapped,
                     activeInSearch = inSearch,
@@ -103,7 +107,8 @@ object ProviderManage {
     }
 
     /** Manageable count for Settings subtitle (customs + plugins, not built-ins). */
-    fun count(): Int = loadRows(emptySet()).count { it.kind != Kind.BUILTIN }
+    fun count(context: Context): Int =
+        loadRows(context, emptySet()).count { it.kind != Kind.BUILTIN }
 
     fun filterTab(rows: List<Row>, tab: Tab): List<Row> =
         when (tab) {
@@ -147,4 +152,19 @@ object ProviderManage {
         val n = raw?.trim()?.toIntOrNull() ?: return null
         return n.coerceIn(1, pageCount) - 1
     }
+
+    /**
+     * Active flags for already-built rows after a Search-name toggle.
+     * Same-URL siblings with different [Row.searchName] stay independent.
+     */
+    fun withSearchActive(rows: List<Row>, activeNames: Set<String>): List<Row> =
+        rows.map { row ->
+            val active = when {
+                row.searchName.isBlank() -> false
+                row.kind == Kind.PLUGIN ->
+                    row.canToggleSearch && activeNames.contains(row.searchName)
+                else -> activeNames.contains(row.searchName)
+            }
+            if (row.activeInSearch == active) row else row.copy(activeInSearch = active)
+        }
 }

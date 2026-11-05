@@ -153,11 +153,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         fun importEpub() {
-            mainActivity?.openEpubPicker()
+            val act = mainActivity ?: (activity as? MainActivity)
+            if (act == null) {
+                showToast(R.string.error_loading_novel, android.widget.Toast.LENGTH_SHORT)
+                return
+            }
+            act.openEpubPicker()
         }
 
         fun importEpubs() {
-            mainActivity?.openEpubPickers()
+            val act = mainActivity ?: (activity as? MainActivity)
+            if (act == null) {
+                showToast(R.string.error_loading_novel, android.widget.Toast.LENGTH_SHORT)
+                return
+            }
+            act.openEpubPickers()
         }
 
         var app = Requests(
@@ -452,6 +462,12 @@ class MainActivity : AppCompatActivity() {
             importUri(uri)
         }
 
+    /** Used by Compose Import-B when LocalActivity is available (avoids WeakReference no-ops). */
+    fun importEpubFromUi() = openEpubPicker()
+
+    /** Used by Compose Import-B when LocalActivity is available (avoids WeakReference no-ops). */
+    fun importEpubsFromUi() = openEpubPickers()
+
     private fun openEpubPicker() {
         safe {
             epubPathPicker.launch(IMPORT_DOCUMENT_MIME_TYPES)
@@ -579,6 +595,10 @@ class MainActivity : AppCompatActivity() {
         val item = binding?.navView?.menu?.findItem(R.id.navigation_sections) ?: return
         val shouldShow = destination?.id == R.id.navigation_download
         if (item.isVisible != shouldShow) item.isVisible = shouldShow
+        // Close the rail when leaving Biblioteca so it does not stay open across tabs.
+        if (!shouldShow && LibraryRailState.open) {
+            LibraryRailState.open = false
+        }
     }
 
 

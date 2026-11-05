@@ -24,10 +24,22 @@ class SearchQuerySanitizerTest {
     }
 
     @Test
-    fun `strict mode removes punctuation and emoji`() {
+    fun `strict mode removes punctuation and emoji but keeps host dots colons and slashes`() {
         assertEquals(
-            "martial",
+            "martial:./",
             SearchQuerySanitizer.filter("martial@#\$%^&*()[]{}|;:\"<>?,./~`⭐", allowSpecialChars = false),
+        )
+    }
+
+    @Test
+    fun `strict mode keeps hostnames for provider grid filter`() {
+        assertEquals(
+            "wattpad.com",
+            SearchQuerySanitizer.filter("wattpad.com", allowSpecialChars = false),
+        )
+        assertEquals(
+            "https://www.skynovels.net",
+            SearchQuerySanitizer.filter("https://www.skynovels.net", allowSpecialChars = false),
         )
     }
 

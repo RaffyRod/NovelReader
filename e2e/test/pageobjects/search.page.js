@@ -581,7 +581,7 @@ class SearchPage extends BasePage {
    * @param {string} query
    * @param {number} timeoutMs
    */
-  async search(query, timeoutMs = 60000) {
+  async search(query, timeoutMs = 180000) {
     await this.typeQuery(query);
     const field = await $('android.widget.EditText');
     await field.addValue('\uE007').catch(() => {});

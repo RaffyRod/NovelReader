@@ -8,6 +8,8 @@
     <string name="history_reading_pill">Reading</string>
     <string name="history_visited_pill">Visited</string>
     <string name="title_settings">Settings</string>
+    <string name="settings_tab_configuration">Configuration</string>
+    <string name="settings_tab_administration">Administration</string>
     <string name="title_home">Explore</string>
     <string name="title_download">Library</string>
 
@@ -326,7 +328,7 @@
     <string name="bookmark">Bookmark</string>
     <string name="read">Read</string>
     <string name="import_epub">Import a book</string>
-    <string name="import_epub_hint">EPUB or PDF · tap to choose</string>
+    <string name="import_epub_hint">EPUB or PDF · tap to choose · long-press for several</string>
     <string name="import_epubs">Import books</string>
     <string name="show_authors_notes">Show authors notes</string>
 
@@ -506,6 +508,10 @@
     <string name="search_sources_tab_installed">Installed</string>
     <string name="search_sources_tab_all">All</string>
     <string name="search_sources_builtin_hint">Built-in source — use the switch for Search</string>
+    <string name="search_sources_builtin_subtitle">Built-in · %1$s</string>
+    <string name="search_sources_custom_subtitle">%1$s · Custom</string>
+    <string name="search_sources_plugin_subtitle">%1$s · Plugin</string>
+    <string name="search_sources_plugin_only">Plugin</string>
     <string name="plugin_cards_filter_clear">Clear</string>
     <string name="plugin_cards_filter_all">All</string>
     <string name="plugin_cards_filter_kind_all">Any type</string>
@@ -592,7 +598,7 @@
     <string name="download_translate_engine">Translation engine</string>
     <string name="download_translate_engine_gemini">Gemini (API key)</string>
     <string name="download_translate_engine_google">Google Translate (online)</string>
-    <string name="download_translate_hint">Chapters are saved in the language you pick (default Español). Choose Original only if you want the source language.</string>
+    <string name="download_translate_hint">Default is Original (source language). Pick a language only when you want chapters translated.</string>
     <string name="download_translate_hint_gemini">Uses your free Gemini key. It is slow because of the free rate limit.</string>
     <string name="download_translate_hint_google">Uses the built-in Google Translate online path (no Gemini key). Quality varies by language.</string>
     <string name="task_translating">Translating…</string>

@@ -38,6 +38,22 @@ object DownloadTranslationGuard {
         // Real translations diverge a lot; cosmetic edits keep most of the same words.
         return jaccard < 0.78
     }
+
+    /**
+     * True when the chapter already reads as [targetCode] (e.g. Spanish → "es").
+     * Skip the translator in that case — Google/Gemini often echo the source and look like a failure.
+     */
+    fun alreadyInLanguage(chapter: LoadedChapter, targetCode: String): Boolean {
+        val wanted = targetCode.trim().lowercase().take(2)
+        if (wanted.isBlank()) return false
+        val sample = buildString {
+            append(chapter.title)
+            append(' ')
+            append(plainText(chapter.html))
+        }
+        val detected = com.lagradost.quicknovel.util.TtsVoicePicker.detectLanguage(sample)
+        return detected != null && detected.equals(wanted, ignoreCase = true)
+    }
 }
 
 /**
@@ -95,6 +111,9 @@ data class DownloadTranslateRequest(
  */
 object OnlineHtmlChapterTranslator {
     suspend fun translateChapter(chapter: LoadedChapter, toCode: String): LoadedChapter {
+        if (DownloadTranslationGuard.alreadyInLanguage(chapter, toCode)) {
+            return chapter
+        }
         val doc = Jsoup.parseBodyFragment(chapter.html)
         doc.outputSettings().prettyPrint(false)
         val nodes = ArrayList<TextNode>()
