@@ -4,6 +4,19 @@ All notable changes to **QuickNovel Ultimate** are listed here.
 Manual **Release → Telegram** auto-bumps `versionName` / `versionCode` when there are
 new commits since the last `v2.*` tag, then posts style **D** from `### Added` / `### Fixed`.
 
+## 2.0.7
+
+### Added
+- about privacy sheet
+
+### Fixed
+- tutorial TTS dialog
+- settings split e2e
+- find dark mode e2e
+
+### Notes
+- versionCode 207
+
 ## 2.0.6
 
 ### Added

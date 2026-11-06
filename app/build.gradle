@@ -26,8 +26,8 @@ android {
         applicationId "com.ultimateSoft.quicknovel.ultimate"
         minSdkVersion 23
         targetSdkVersion 37
-        versionCode 206
-        versionName "2.0.6"
+        versionCode 207
+        versionName "2.0.7"
         // Only the languages the app is translated to; libraries ship dozens more.
         resConfigs "en", "es", "ru", "tr"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
