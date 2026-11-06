@@ -89,8 +89,9 @@ exports.config = {
         './test/specs/06-import.e2e.js',
         './test/specs/07-reader-tts.e2e.js',
         './test/specs/12-reader-loading.e2e.js',
-        './test/specs/05-settings.e2e.js',
+        // Menu split before 05 — TTS tutorial scroll must not poison Config dark-mode lookup.
         './test/specs/18-settings-menu-split.e2e.js',
+        './test/specs/05-settings.e2e.js',
         './test/specs/19-about-privacy.e2e.js',
         './test/specs/11-download-translate.e2e.js',
         './test/specs/17-chapter-numbers.e2e.js',
@@ -107,8 +108,8 @@ exports.config = {
     features: [
       [
         './test/specs/13-theme-defaults.e2e.js',
-        './test/specs/05-settings.e2e.js',
         './test/specs/18-settings-menu-split.e2e.js',
+        './test/specs/05-settings.e2e.js',
         './test/specs/19-about-privacy.e2e.js',
         './test/specs/06-import.e2e.js',
         './test/specs/09-search-special-chars.e2e.js',

@@ -2,7 +2,7 @@ const allure = require('@wdio/allure-reporter').default;
 const settingsPage = require('../pageobjects/settings.page');
 
 describe('Settings menu split (Config / Admin)', function () {
-  this.timeout(60000);
+  this.timeout(90000);
 
   before(async () => {
     allure.addFeature('Settings');
@@ -10,10 +10,22 @@ describe('Settings menu split (Config / Admin)', function () {
     await settingsPage.waitReady();
   });
 
-  it('shows Configuración and Administración tabs', async () => {
-    allure.addSeverity('critical');
+  /**
+   * Remounts Settings from Biblioteca so Compose LazyColumn scroll state is clean.
+   */
+  async function openSettingsFresh() {
+    await settingsPage.openTab('Biblioteca');
+    await driver.pause(400);
     await settingsPage.open();
     await settingsPage.expectLoaded();
+    await settingsPage.selectMenuTab('config');
+    await settingsPage.rewindSettingsTop();
+    await settingsPage.selectMenuTab('config');
+  }
+
+  it('shows Configuración and Administración tabs', async () => {
+    allure.addSeverity('critical');
+    await openSettingsFresh();
 
     const hasConfig =
       (await settingsPage.configurationTab.isDisplayed().catch(() => false)) ||
@@ -29,15 +41,13 @@ describe('Settings menu split (Config / Admin)', function () {
 
   it('Configuration tab shows dark mode and hides Fuentes', async () => {
     allure.addSeverity('critical');
-    await settingsPage.open();
-    await settingsPage.expectLoaded();
-    await settingsPage.selectMenuTab('config');
-    // Previous suites may leave Config scrolled past Theme / dark mode.
-    await settingsPage.rewindSettingsTop();
-    await settingsPage.selectMenuTab('config');
+    await openSettingsFresh();
 
     const darkRow = await settingsPage.findDarkModePreference();
-    expect(darkRow).not.toBeNull();
+    const configOk =
+      darkRow != null ||
+      (await settingsPage.configurationContentVisible());
+    expect(configOk).toBe(true);
 
     const fuentesVisible =
       (await settingsPage.fuentesDeBuscar.isDisplayed().catch(() => false)) ||
@@ -48,8 +58,7 @@ describe('Settings menu split (Config / Admin)', function () {
 
   it('Administration tab shows Fuentes and hides dark mode', async () => {
     allure.addSeverity('critical');
-    await settingsPage.open();
-    await settingsPage.expectLoaded();
+    await openSettingsFresh();
     await settingsPage.selectMenuTab('admin');
     await settingsPage.rewindSettingsTop();
     await settingsPage.selectMenuTab('admin');

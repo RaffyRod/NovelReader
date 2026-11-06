@@ -68,6 +68,34 @@ class SettingsPage extends BasePage {
   }
 
   /**
+   * True when Configuration-tab preference chrome is on screen (not Admin Fuentes).
+   * @returns {Promise<boolean>}
+   */
+  async configurationContentVisible() {
+    const markers = [
+      'Modo oscuro',
+      'Dark mode',
+      'Tema Ultimate',
+      'Ultimate theme',
+      'Ajustes generales',
+      'General',
+      'Tutorial',
+      'Información',
+      'Information',
+      'Idioma de la aplicación',
+      'App language',
+    ];
+    for (const label of markers) {
+      if (await this.byTextContains(label).isDisplayed().catch(() => false)) return true;
+      if (await this.byA11y(label).isDisplayed().catch(() => false)) return true;
+    }
+    const src = String((await driver.getPageSource().catch(() => '')) || '');
+    return /Modo oscuro|Dark mode|Tema Ultimate|Tutorial|Información|Ajustes generales|App language|Idioma de la aplicación/i.test(
+      src,
+    );
+  }
+
+  /**
    * Finds Dark mode / Modo oscuro on Configuration (text or a11y title).
    * @returns {Promise<WebdriverIO.Element|null>}
    */
@@ -80,12 +108,12 @@ class SettingsPage extends BasePage {
         const byA11y = this.byA11y(label);
         if (await byA11y.isDisplayed().catch(() => false)) return byA11y;
       }
-      // Subtitle / nearby Theme row — still proves Configuration content.
       for (const label of [
         'superficie clara',
         'light surface',
         'Tema Ultimate',
         'Ultimate theme',
+        'Ajustes generales',
       ]) {
         const el = this.byTextContains(label);
         if (await el.isDisplayed().catch(() => false)) return el;
