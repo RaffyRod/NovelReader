@@ -244,20 +244,72 @@ class SettingsPage extends BasePage {
     return this.tutorialsVisible();
   }
 
-  async openTutorialTts() {
-    if (!(await this.scrollToTutorials())) return false;
+  /**
+   * True when the Tutorial TTS AlertDialog body/chrome is visible.
+   * @returns {Promise<boolean>}
+   */
+  async isTutorialTtsDialogOpen() {
+    const needles = [
+      'Abre un capítulo',
+      'Open a chapter',
+      'altavoz',
+      'speaker',
+      'Lectura en voz alta (TTS)',
+      'Text to speech (TTS)',
+      'barra TTS',
+      'TTS bar',
+    ];
+    for (const n of needles) {
+      if (await this.byTextContains(n).isDisplayed().catch(() => false)) return true;
+    }
+    if (
+      (await this.byText('Cerrar').isDisplayed().catch(() => false)) ||
+      (await this.byText('Close').isDisplayed().catch(() => false))
+    ) {
+      const src = String((await driver.getPageSource().catch(() => '')) || '');
+      if (/capítulo|chapter|altavoz|speaker|TTS/i.test(src)) return true;
+    }
+    const src = String((await driver.getPageSource().catch(() => '')) || '');
+    return /Abre un capítulo|Open a chapter|icono de altavoz|speaker icon|barra TTS|TTS bar/i.test(
+      src,
+    );
+  }
 
-    const candidates = [
+  /**
+   * Scrolls until the TTS tutorial preference is fully on-screen (not clipped by nav).
+   * @returns {Promise<WebdriverIO.Element|null>}
+   */
+  async bringTutorialTtsIntoView() {
+    await this.selectMenuTab('config');
+    if (!(await this.scrollToTutorials())) return null;
+    const candidates = () => [
       this.byText('Lectura en voz alta (TTS)'),
       this.byText('Text to speech (TTS)'),
+      this.byA11y('Lectura en voz alta (TTS)'),
+      this.byA11y('Text to speech (TTS)'),
       this.tutorialTts,
     ];
-    for (let step = 0; step < 6; step++) {
-      for (const item of candidates) {
-        if (await item.isDisplayed().catch(() => false)) {
-          await this.clickPreferenceRow(item);
-          await driver.pause(500);
-          return true;
+    for (let step = 0; step < 10; step++) {
+      for (const item of candidates()) {
+        if (!(await item.isDisplayed().catch(() => false))) continue;
+        const loc = await item.getLocation().catch(() => null);
+        const size = await item.getSize().catch(() => null);
+        if (!loc || !size) continue;
+        const midY = loc.y + size.height / 2;
+        if (midY >= 450 && midY <= 2000 && size.height >= 36) return item;
+        if (midY > 2000 || size.height < 36) {
+          await driver
+            .execute('mobile: scrollGesture', {
+              left: 80,
+              top: 500,
+              width: 600,
+              height: 900,
+              direction: 'down',
+              percent: 0.28,
+            })
+            .catch(() => {});
+          await driver.pause(200);
+          break;
         }
       }
       await driver
@@ -272,7 +324,38 @@ class SettingsPage extends BasePage {
         .catch(() => {});
       await driver.pause(160);
     }
-    return false;
+    for (const item of candidates()) {
+      if (await item.isDisplayed().catch(() => false)) return item;
+    }
+    return null;
+  }
+
+  async openTutorialTts() {
+    await this.selectMenuTab('config');
+    const row = await this.bringTutorialTtsIntoView();
+    if (!row) return false;
+
+    await this.clickPreferenceRow(row);
+    await driver.pause(700);
+    if (await this.isTutorialTtsDialogOpen()) return true;
+
+    // Retry: preference a11y node can be thin — tap slightly above midY.
+    const loc = await row.getLocation().catch(() => null);
+    const size = await row.getSize().catch(() => null);
+    if (loc && size) {
+      const { execFileSync } = require('child_process');
+      const x = Math.round(loc.x + size.width / 2);
+      const y = Math.round(Math.min(1900, Math.max(400, loc.y + size.height / 2)));
+      try {
+        execFileSync('adb', ['shell', 'input', 'tap', String(x), String(y)], {
+          stdio: 'ignore',
+        });
+      } catch (_) {
+        await driver.execute('mobile: clickGesture', { x, y }).catch(() => {});
+      }
+      await driver.pause(800);
+    }
+    return this.isTutorialTtsDialogOpen();
   }
 
   get aboutGroup() {
